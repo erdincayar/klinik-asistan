@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { processWhatsAppMessage } from "@/lib/whatsapp/message-parser";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -124,6 +125,17 @@ const tools: Anthropic.Tool[] = [
         appointmentId: { type: "string", description: "Randevu ID" },
       },
       required: ["appointmentId"],
+    },
+  },
+  {
+    name: "process_whatsapp_message",
+    description: "Bir WhatsApp mesajını işler. Mesaj randevu, gelir veya gider olabilir. AI parse edip otomatik kaydeder.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        message: { type: "string", description: "WhatsApp mesaj metni (ör: 'Ayşe hanım pazartesi 3te botoks')" },
+      },
+      required: ["message"],
     },
   },
 ];
@@ -380,6 +392,18 @@ async function executeTool(name: string, input: Record<string, unknown>, clinicI
           endTime: appointment.endTime,
           treatmentType: appointment.treatmentType,
         },
+      };
+    }
+    case "process_whatsapp_message": {
+      const { message } = input as { message: string };
+      const result = await processWhatsAppMessage(message, clinicId);
+      return {
+        success: result.success,
+        type: result.parsed.type,
+        confirmationMessage: result.confirmationMessage,
+        patientIsNew: result.patientIsNew,
+        recordId: result.recordId,
+        parsedDetails: result.parsed,
       };
     }
     default:

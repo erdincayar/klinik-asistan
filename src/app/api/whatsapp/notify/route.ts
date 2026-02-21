@@ -1,46 +1,42 @@
+import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
+import { sendWhatsAppMessage, sendDoctorNotification } from "@/lib/whatsapp/sender";
 import { prisma } from "@/lib/prisma";
 
-export async function POST(request: Request) {
+export async function POST(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const clinicId = (session.user as any).clinicId;
-    if (!clinicId) {
-      return Response.json({ error: "No clinic" }, { status: 400 });
+
+    const body = await req.json();
+    const { patientId, message, phone, type } = body;
+
+    // If type is "doctor", send to doctor
+    if (type === "doctor") {
+      const result = await sendDoctorNotification(message);
+      return Response.json(result);
     }
 
-    const { patientId, message, appointmentId } = await request.json();
-
-    if (!patientId || !message) {
-      return Response.json(
-        { error: "patientId ve message gerekli" },
-        { status: 400 }
-      );
+    // Send to specific phone or patient's phone
+    let targetPhone = phone;
+    if (!targetPhone && patientId) {
+      const patient = await prisma.patient.findUnique({
+        where: { id: patientId },
+        select: { phone: true },
+      });
+      targetPhone = patient?.phone;
     }
 
-    const patient = await prisma.patient.findFirst({
-      where: { id: patientId, clinicId },
-    });
-
-    if (!patient) {
-      return Response.json({ error: "Hasta bulunamadı" }, { status: 404 });
+    if (!targetPhone) {
+      return Response.json({ error: "Telefon numarasi bulunamadi" }, { status: 400 });
     }
 
-    // Mock: Log the WhatsApp message
-    console.log(`[WhatsApp] To: ${patient.phone || "N/A"}, Patient: ${patient.name}`);
-    console.log(`[WhatsApp] Message: ${message}`);
-    if (appointmentId) {
-      console.log(`[WhatsApp] Appointment ID: ${appointmentId}`);
-    }
-
-    return Response.json({
-      success: true,
-      message: "WhatsApp mesajı gönderildi (simülasyon)",
-    });
-  } catch {
-    return Response.json({ error: "Bir hata oluştu" }, { status: 500 });
+    const result = await sendWhatsAppMessage(targetPhone, message);
+    return Response.json(result);
+  } catch (error) {
+    console.error("[Notify] Error:", error);
+    return Response.json({ error: "Bildirim gonderilemedi" }, { status: 500 });
   }
 }

@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   Stethoscope,
+  MessageCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -24,6 +25,7 @@ const navItems = [
   { href: "/appointments", label: "Randevular", icon: Calendar },
   { href: "/finance", label: "Finans", icon: DollarSign },
   { href: "/ai-assistant", label: "AI Asistan", icon: Bot },
+  { href: "/whatsapp", label: "WhatsApp", icon: MessageCircle },
   { href: "/settings", label: "Ayarlar", icon: Settings },
 ];
 
@@ -119,6 +121,7 @@ function getPageTitle(pathname: string): string {
     "/finance/new-income": "Yeni Gelir",
     "/finance/new-expense": "Yeni Gider",
     "/ai-assistant": "AI Asistan",
+    "/whatsapp": "WhatsApp",
     "/settings": "Ayarlar",
   };
   for (const [path, title] of Object.entries(titles)) {
