@@ -15,6 +15,10 @@ export async function GET() {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
 
     const [
       totalPatients,
@@ -22,6 +26,7 @@ export async function GET() {
       monthlyExpenseRecords,
       recentTreatments,
       pendingReminders,
+      todayAppointments,
     ] = await Promise.all([
       prisma.patient.count({ where: { clinicId } }),
       prisma.treatment.findMany({
@@ -39,6 +44,11 @@ export async function GET() {
         take: 5,
       }),
       prisma.reminder.count({ where: { clinicId, isActive: true } }),
+      prisma.appointment.findMany({
+        where: { clinicId, date: { gte: today, lt: tomorrow }, status: { not: "CANCELLED" } },
+        include: { patient: { select: { name: true } } },
+        orderBy: { startTime: "asc" },
+      }),
     ]);
 
     const monthlyRevenue = monthlyTreatments.reduce((sum, t) => sum + t.amount, 0);
@@ -51,6 +61,7 @@ export async function GET() {
       netProfit: monthlyRevenue - monthlyExpenses,
       recentTreatments,
       pendingReminders,
+      todayAppointments,
     });
   } catch {
     return Response.json({ error: "Bir hata oluştu" }, { status: 500 });

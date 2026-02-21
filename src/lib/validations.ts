@@ -48,3 +48,23 @@ export type PatientInput = z.infer<typeof patientSchema>;
 export type TreatmentInput = z.infer<typeof treatmentSchema>;
 export type ExpenseInput = z.infer<typeof expenseSchema>;
 export type ReminderInput = z.infer<typeof reminderSchema>;
+
+export const appointmentSchema = z.object({
+  patientId: z.string().min(1, "Hasta seçin"),
+  date: z.string().min(1, "Tarih seçin"),
+  startTime: z.string().min(1, "Başlangıç saati seçin"),
+  endTime: z.string().min(1, "Bitiş saati seçin"),
+  treatmentType: z.string().min(1, "İşlem türü seçin"),
+  notes: z.string().optional(),
+});
+
+export const clinicScheduleSchema = z.object({
+  dayOfWeek: z.number().min(0).max(6),
+  startTime: z.string().min(1),
+  endTime: z.string().min(1),
+  slotDuration: z.number().min(10).max(120),
+  isActive: z.boolean(),
+});
+
+export type AppointmentInput = z.infer<typeof appointmentSchema>;
+export type ClinicScheduleInput = z.infer<typeof clinicScheduleSchema>;

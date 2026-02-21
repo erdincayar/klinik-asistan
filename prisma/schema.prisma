@@ -19,31 +19,34 @@ model User {
 }
 
 model Clinic {
-  id         String      @id @default(cuid())
-  name       String
-  phone      String?
-  address    String?
-  taxRate    Int         @default(20)
-  users      User[]
-  patients   Patient[]
-  treatments Treatment[]
-  expenses   Expense[]
-  reminders  Reminder[]
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  id              String           @id @default(cuid())
+  name            String
+  phone           String?
+  address         String?
+  taxRate         Int              @default(20)
+  users           User[]
+  patients        Patient[]
+  treatments      Treatment[]
+  expenses        Expense[]
+  reminders       Reminder[]
+  appointments    Appointment[]
+  clinicSchedules ClinicSchedule[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 }
 
 model Patient {
-  id         String      @id @default(cuid())
-  name       String
-  phone      String?
-  email      String?
-  notes      String?
-  clinicId   String
-  clinic     Clinic      @relation(fields: [clinicId], references: [id])
-  treatments Treatment[]
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  id           String        @id @default(cuid())
+  name         String
+  phone        String?
+  email        String?
+  notes        String?
+  clinicId     String
+  clinic       Clinic        @relation(fields: [clinicId], references: [id])
+  treatments   Treatment[]
+  appointments Appointment[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 }
 
 // TreatmentCategory values: BOTOX, DOLGU, DIS_TEDAVI, GENEL
@@ -86,4 +89,32 @@ model Reminder {
   clinic            Clinic   @relation(fields: [clinicId], references: [id])
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+}
+
+// Appointment status values: SCHEDULED, COMPLETED, CANCELLED, NO_SHOW
+model Appointment {
+  id            String   @id @default(cuid())
+  patientId     String
+  patient       Patient  @relation(fields: [patientId], references: [id])
+  clinicId      String
+  clinic        Clinic   @relation(fields: [clinicId], references: [id])
+  date          DateTime // sadece tarih (gün)
+  startTime     String   // "09:00" formatında
+  endTime       String   // "09:30" formatında
+  status        String   @default("SCHEDULED") // SCHEDULED, COMPLETED, CANCELLED, NO_SHOW
+  treatmentType String   @default("GENEL") // BOTOX, DOLGU, DIS_TEDAVI, GENEL
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model ClinicSchedule {
+  id           String  @id @default(cuid())
+  clinicId     String
+  clinic       Clinic  @relation(fields: [clinicId], references: [id])
+  dayOfWeek    Int     // 0=Pazar, 1=Pazartesi, ..., 6=Cumartesi
+  startTime    String  @default("09:00")
+  endTime      String  @default("18:00")
+  slotDuration Int     @default(30) // dakika
+  isActive     Boolean @default(true)
 }

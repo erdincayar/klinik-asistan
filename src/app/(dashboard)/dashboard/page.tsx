@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { TrendingUp, TrendingDown, DollarSign, Users } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, Users, Clock } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -18,7 +18,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { cn, formatCurrency, formatDate } from "@/lib/utils";
+import { APPOINTMENT_STATUSES, TREATMENT_CATEGORIES } from "@/lib/types";
 import {
   BarChart,
   Bar,
@@ -43,6 +46,15 @@ interface DashboardData {
   }[];
 }
 
+interface TodayAppointment {
+  id: string;
+  patientName: string;
+  startTime: string;
+  endTime: string;
+  treatmentType: string;
+  status: string;
+}
+
 interface MonthlySummary {
   month: number;
   monthName: string;
@@ -53,15 +65,19 @@ interface MonthlySummary {
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [chartData, setChartData] = useState<MonthlySummary[]>([]);
+  const [todayAppointments, setTodayAppointments] = useState<TodayAppointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [dashRes, chartRes] = await Promise.all([
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+        const [dashRes, chartRes, apptRes] = await Promise.all([
           fetch("/api/dashboard"),
           fetch(`/api/finance?type=monthly-summary&year=${new Date().getFullYear()}`),
+          fetch(`/api/appointments?date=${todayStr}`),
         ]);
 
         if (!dashRes.ok) throw new Error("Dashboard verisi alinamadi");
@@ -71,6 +87,11 @@ export default function DashboardPage() {
         if (chartRes.ok) {
           const chartJson = await chartRes.json();
           setChartData(chartJson.months || []);
+        }
+
+        if (apptRes.ok) {
+          const apptData = await apptRes.json();
+          setTodayAppointments(apptData.appointments || apptData || []);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Bir hata olustu");
@@ -144,6 +165,68 @@ export default function DashboardPage() {
           </Card>
         ))}
       </div>
+
+      {/* Today's Appointments */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-blue-600" />
+              Bugünün Randevuları
+            </CardTitle>
+            <CardDescription>
+              {todayAppointments.length > 0
+                ? `${todayAppointments.length} randevu`
+                : ""}
+            </CardDescription>
+          </div>
+          <Link href="/appointments">
+            <Button variant="outline" size="sm">
+              Tümünü Gör
+            </Button>
+          </Link>
+        </CardHeader>
+        <CardContent>
+          {todayAppointments.length === 0 ? (
+            <p className="text-sm text-gray-500">Bugün randevu yok</p>
+          ) : (
+            <div className="space-y-2">
+              {todayAppointments.map((appt) => {
+                const statusInfo = APPOINTMENT_STATUSES.find(
+                  (s) => s.value === appt.status
+                ) || APPOINTMENT_STATUSES[0];
+                const treatmentLabel =
+                  TREATMENT_CATEGORIES.find((t) => t.value === appt.treatmentType)
+                    ?.label || appt.treatmentType;
+
+                return (
+                  <div
+                    key={appt.id}
+                    className="flex items-center justify-between rounded-lg border border-gray-100 px-4 py-2.5"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-medium text-gray-500">
+                        {appt.startTime}
+                      </span>
+                      <span className="font-medium text-gray-900">
+                        {appt.patientName}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-gray-100 text-gray-700">
+                        {treatmentLabel}
+                      </Badge>
+                      <Badge className={cn(statusInfo.color)}>
+                        {statusInfo.label}
+                      </Badge>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Recent Treatments */}

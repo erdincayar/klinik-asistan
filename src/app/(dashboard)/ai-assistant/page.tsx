@@ -13,6 +13,8 @@ const quickPrompts = [
   "KDV hesaplamasını göster",
   "En son eklenen hastaları listele",
   "Bu ayki toplam gelir ne kadar?",
+  "Bugünün randevuları neler?",
+  "Yarın için müsait saatler",
 ];
 
 export default function AiAssistantPage() {

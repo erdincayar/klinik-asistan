@@ -79,6 +79,53 @@ const tools: Anthropic.Tool[] = [
       required: ["month", "year"],
     },
   },
+  {
+    name: "get_todays_appointments",
+    description: "Bugünün randevularını getirir. Hasta adı, saat, işlem türü ve durum bilgisini içerir.",
+    input_schema: {
+      type: "object" as const,
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: "get_available_slots",
+    description: "Belirtilen tarih için müsait randevu saatlerini getirir.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        date: { type: "string", description: "Tarih (YYYY-MM-DD formatında)" },
+      },
+      required: ["date"],
+    },
+  },
+  {
+    name: "create_appointment",
+    description: "Yeni bir randevu oluşturur.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        patientId: { type: "string", description: "Hasta ID" },
+        date: { type: "string", description: "Tarih (YYYY-MM-DD)" },
+        startTime: { type: "string", description: "Başlangıç saati (HH:MM)" },
+        endTime: { type: "string", description: "Bitiş saati (HH:MM)" },
+        treatmentType: { type: "string", description: "İşlem türü: BOTOX, DOLGU, DIS_TEDAVI, GENEL" },
+        notes: { type: "string", description: "Notlar (opsiyonel)" },
+      },
+      required: ["patientId", "date", "startTime", "endTime", "treatmentType"],
+    },
+  },
+  {
+    name: "cancel_appointment",
+    description: "Bir randevuyu iptal eder. İptal edilen saati ve müsait alternatifleri döner.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        appointmentId: { type: "string", description: "Randevu ID" },
+      },
+      required: ["appointmentId"],
+    },
+  },
 ];
 
 // Tool execution functions
@@ -200,6 +247,141 @@ async function executeTool(name: string, input: Record<string, unknown>, clinicI
         year,
       };
     }
+    case "get_todays_appointments": {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const appointments = await prisma.appointment.findMany({
+        where: {
+          clinicId,
+          date: { gte: today, lt: tomorrow },
+          status: { not: "CANCELLED" },
+        },
+        include: { patient: { select: { name: true, phone: true } } },
+        orderBy: { startTime: "asc" },
+      });
+      return {
+        date: today.toISOString().split("T")[0],
+        appointments: appointments.map(a => ({
+          id: a.id,
+          patientName: a.patient.name,
+          patientPhone: a.patient.phone,
+          startTime: a.startTime,
+          endTime: a.endTime,
+          treatmentType: a.treatmentType,
+          status: a.status,
+          notes: a.notes,
+        })),
+        totalCount: appointments.length,
+      };
+    }
+    case "get_available_slots": {
+      const { date } = input as { date: string };
+      const targetDate = new Date(date);
+      const dayOfWeek = targetDate.getDay();
+      const schedule = await prisma.clinicSchedule.findFirst({
+        where: { clinicId, dayOfWeek, isActive: true },
+      });
+      if (!schedule) return { message: "Bu gün için çalışma programı bulunmuyor", slots: [] };
+
+      // Generate all possible slots
+      const slots: { startTime: string; endTime: string; available: boolean }[] = [];
+      const [startH, startM] = schedule.startTime.split(":").map(Number);
+      const [endH, endM] = schedule.endTime.split(":").map(Number);
+      let currentMinutes = startH * 60 + startM;
+      const endMinutes = endH * 60 + endM;
+
+      // Get existing appointments
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+      const existing = await prisma.appointment.findMany({
+        where: { clinicId, date: { gte: startOfDay, lte: endOfDay }, status: { not: "CANCELLED" } },
+      });
+      const occupiedTimes = existing.map(a => a.startTime);
+
+      while (currentMinutes + schedule.slotDuration <= endMinutes) {
+        const h = Math.floor(currentMinutes / 60);
+        const m = currentMinutes % 60;
+        const slotStart = `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
+        const nextMinutes = currentMinutes + schedule.slotDuration;
+        const nh = Math.floor(nextMinutes / 60);
+        const nm = nextMinutes % 60;
+        const slotEnd = `${nh.toString().padStart(2, "0")}:${nm.toString().padStart(2, "0")}`;
+
+        slots.push({
+          startTime: slotStart,
+          endTime: slotEnd,
+          available: !occupiedTimes.includes(slotStart),
+        });
+        currentMinutes = nextMinutes;
+      }
+
+      return { date, slots, availableCount: slots.filter(s => s.available).length };
+    }
+    case "create_appointment": {
+      const { patientId, date, startTime, endTime, treatmentType, notes } = input as {
+        patientId: string; date: string; startTime: string; endTime: string; treatmentType: string; notes?: string;
+      };
+      // Check patient belongs to clinic
+      const patient = await prisma.patient.findFirst({ where: { id: patientId, clinicId } });
+      if (!patient) return { error: "Hasta bulunamadı" };
+
+      // Check for conflicts
+      const appointmentDate = new Date(date);
+      appointmentDate.setHours(0, 0, 0, 0);
+      const nextDay = new Date(appointmentDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+      const conflict = await prisma.appointment.findFirst({
+        where: {
+          clinicId,
+          date: { gte: appointmentDate, lt: nextDay },
+          startTime,
+          status: { not: "CANCELLED" },
+        },
+      });
+      if (conflict) return { error: "Bu saatte başka bir randevu var" };
+
+      const appointment = await prisma.appointment.create({
+        data: { patientId, clinicId, date: appointmentDate, startTime, endTime, treatmentType, notes: notes || null },
+        include: { patient: { select: { name: true } } },
+      });
+      return {
+        id: appointment.id,
+        patientName: appointment.patient.name,
+        date: date,
+        startTime,
+        endTime,
+        treatmentType,
+        message: "Randevu oluşturuldu",
+      };
+    }
+    case "cancel_appointment": {
+      const { appointmentId } = input as { appointmentId: string };
+      const appointment = await prisma.appointment.findFirst({
+        where: { id: appointmentId, clinicId },
+        include: { patient: { select: { name: true, phone: true } } },
+      });
+      if (!appointment) return { error: "Randevu bulunamadı" };
+
+      await prisma.appointment.update({
+        where: { id: appointmentId },
+        data: { status: "CANCELLED" },
+      });
+
+      return {
+        message: "Randevu iptal edildi",
+        cancelledAppointment: {
+          patientName: appointment.patient.name,
+          date: appointment.date.toISOString().split("T")[0],
+          startTime: appointment.startTime,
+          endTime: appointment.endTime,
+          treatmentType: appointment.treatmentType,
+        },
+      };
+    }
     default:
       return { error: "Unknown tool" };
   }
@@ -224,6 +406,7 @@ Görevlerin:
 - KDV hesaplamaları
 - Finansal özetler sunma
 - Klinik yönetimi tavsiyeleri verme
+- Randevu yönetimi (bugünün randevuları, müsait saatler, randevu oluşturma ve iptal)
 
 Kurallar:
 - Her zaman Türkçe yanıt ver

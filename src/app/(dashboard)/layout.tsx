@@ -7,6 +7,7 @@ import { useState } from "react";
 import {
   LayoutDashboard,
   Users,
+  Calendar,
   DollarSign,
   Bot,
   Settings,
@@ -20,6 +21,7 @@ import { Button } from "@/components/ui/button";
 const navItems = [
   { href: "/dashboard", label: "Genel Bakis", icon: LayoutDashboard },
   { href: "/patients", label: "Hastalar", icon: Users },
+  { href: "/appointments", label: "Randevular", icon: Calendar },
   { href: "/finance", label: "Finans", icon: DollarSign },
   { href: "/ai-assistant", label: "AI Asistan", icon: Bot },
   { href: "/settings", label: "Ayarlar", icon: Settings },
@@ -111,6 +113,8 @@ function getPageTitle(pathname: string): string {
     "/dashboard": "Genel Bakis",
     "/patients": "Hastalar",
     "/patients/new": "Yeni Hasta",
+    "/appointments": "Randevular",
+    "/appointments/new": "Yeni Randevu",
     "/finance": "Finans",
     "/finance/new-income": "Yeni Gelir",
     "/finance/new-expense": "Yeni Gider",
