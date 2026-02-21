@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  clinicId  String?
+  clinic    Clinic?  @relation(fields: [clinicId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Clinic {
+  id         String      @id @default(cuid())
+  name       String
+  phone      String?
+  address    String?
+  taxRate    Int         @default(20)
+  users      User[]
+  patients   Patient[]
+  treatments Treatment[]
+  expenses   Expense[]
+  reminders  Reminder[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model Patient {
+  id         String      @id @default(cuid())
+  name       String
+  phone      String?
+  email      String?
+  notes      String?
+  clinicId   String
+  clinic     Clinic      @relation(fields: [clinicId], references: [id])
+  treatments Treatment[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+// TreatmentCategory values: BOTOX, DOLGU, DIS_TEDAVI, GENEL
+// SQLite doesn't support enums, using String instead
+
+model Treatment {
+  id          String   @id @default(cuid())
+  patientId   String
+  patient     Patient  @relation(fields: [patientId], references: [id])
+  clinicId    String
+  clinic      Clinic   @relation(fields: [clinicId], references: [id])
+  name        String
+  description String?
+  amount      Int      // kuruş cinsinden
+  date        DateTime @default(now())
+  category    String   @default("GENEL") // BOTOX, DOLGU, DIS_TEDAVI, GENEL
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  clinicId    String
+  clinic      Clinic   @relation(fields: [clinicId], references: [id])
+  description String
+  amount      Int      // kuruş cinsinden
+  category    String
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Reminder {
+  id                String   @id @default(cuid())
+  treatmentCategory String   // BOTOX, DOLGU, DIS_TEDAVI, GENEL
+  intervalDays      Int      @default(180)
+  messageTemplate   String
+  isActive          Boolean  @default(true)
+  clinicId          String
+  clinic            Clinic   @relation(fields: [clinicId], references: [id])
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
