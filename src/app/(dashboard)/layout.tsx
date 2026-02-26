@@ -17,6 +17,8 @@ import {
   Stethoscope,
   MessageCircle,
   Bell,
+  BarChart3,
+  UserCog,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -27,6 +29,8 @@ const navItems = [
   { href: "/finance", label: "Finans", icon: DollarSign },
   { href: "/ai-assistant", label: "AI Asistan", icon: Bot },
   { href: "/whatsapp", label: "WhatsApp", icon: MessageCircle },
+  { href: "/reports", label: "Raporlar", icon: BarChart3 },
+  { href: "/employees", label: "Calisanlar", icon: UserCog },
   { href: "/reminders", label: "Hatirlatmalar", icon: Bell },
   { href: "/settings", label: "Ayarlar", icon: Settings },
 ];
@@ -124,6 +128,8 @@ function getPageTitle(pathname: string): string {
     "/finance/new-expense": "Yeni Gider",
     "/ai-assistant": "AI Asistan",
     "/whatsapp": "WhatsApp",
+    "/reports": "Raporlar",
+    "/employees": "Calisanlar",
     "/reminders": "Hatirlatmalar",
     "/settings": "Ayarlar",
   };

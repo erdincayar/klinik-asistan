@@ -627,6 +627,190 @@ export async function getDailySummary(clinicId: string): Promise<string> {
   return lines.join("\n");
 }
 
+// ── Report Commands ─────────────────────────────────────────────────────────
+
+export async function getDetailedReport(clinicId: string): Promise<string> {
+  const clinic = await prisma.clinic.findUnique({ where: { id: clinicId } });
+  const taxRate = clinic?.taxRate ?? 20;
+
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const monthName = TURKISH_MONTHS[now.getUTCMonth()];
+
+  const [incomeResult, expenseResult, treatmentsByCategory, patientCount, appointmentCount] =
+    await Promise.all([
+      prisma.treatment.aggregate({
+        where: { clinicId, date: { gte: monthStart, lt: monthEnd } },
+        _sum: { amount: true },
+        _count: { id: true },
+      }),
+      prisma.expense.aggregate({
+        where: { clinicId, date: { gte: monthStart, lt: monthEnd } },
+        _sum: { amount: true },
+        _count: { id: true },
+      }),
+      prisma.treatment.findMany({
+        where: { clinicId, date: { gte: monthStart, lt: monthEnd } },
+        select: { category: true, amount: true },
+      }),
+      prisma.patient.count({ where: { clinicId } }),
+      prisma.appointment.count({
+        where: { clinicId, date: { gte: monthStart, lt: monthEnd }, status: { not: "CANCELLED" } },
+      }),
+    ]);
+
+  const totalIncome = incomeResult._sum.amount || 0;
+  const totalExpense = expenseResult._sum.amount || 0;
+  const netProfit = totalIncome - totalExpense;
+  const kdv = Math.round((totalIncome * taxRate) / (100 + taxRate));
+  const profitMargin = totalIncome > 0 ? Math.round((netProfit / totalIncome) * 100) : 0;
+
+  // Category breakdown
+  const categoryTotals: Record<string, number> = {};
+  for (const t of treatmentsByCategory) {
+    categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
+  }
+  const sortedCategories = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]);
+
+  const lines: string[] = [
+    `📊 Detayli Rapor - ${monthName} ${now.getFullYear()}:`,
+    "",
+    "💰 Gelir:",
+    `Toplam: ${formatTLDetailed(totalIncome)} (${incomeResult._count.id} islem)`,
+    "",
+  ];
+
+  // Category details
+  if (sortedCategories.length > 0) {
+    lines.push("📋 Kategori Dagilimi:");
+    for (const [cat, amount] of sortedCategories) {
+      const pct = Math.round((amount / totalIncome) * 100);
+      lines.push(`${getCategoryLabel(cat)}: ${formatTL(amount)} (%${pct})`);
+    }
+    lines.push("");
+  }
+
+  lines.push("💸 Gider:");
+  lines.push(`Toplam: ${formatTLDetailed(totalExpense)} (${expenseResult._count.id} islem)`);
+  lines.push("");
+  lines.push("📈 Kar-Zarar:");
+  lines.push(`Net Kar: ${formatTLDetailed(netProfit)}`);
+  lines.push(`Kar Marji: %${profitMargin}`);
+  lines.push(`KDV (%${taxRate}): ${formatTLDetailed(kdv)}`);
+  lines.push("");
+  lines.push(`👥 Hasta: ${patientCount} | 📋 Randevu: ${appointmentCount}`);
+
+  return lines.join("\n");
+}
+
+export async function getTopServices(clinicId: string): Promise<string> {
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+  const treatments = await prisma.treatment.findMany({
+    where: { clinicId, date: { gte: monthStart, lt: monthEnd } },
+    select: { category: true, amount: true },
+  });
+
+  const categoryTotals: Record<string, { amount: number; count: number }> = {};
+  for (const t of treatments) {
+    if (!categoryTotals[t.category]) {
+      categoryTotals[t.category] = { amount: 0, count: 0 };
+    }
+    categoryTotals[t.category].amount += t.amount;
+    categoryTotals[t.category].count += 1;
+  }
+
+  const sorted = Object.entries(categoryTotals).sort((a, b) => b[1].amount - a[1].amount);
+
+  if (sorted.length === 0) {
+    return "📊 Bu ay henuz islem yapilmamis.";
+  }
+
+  const lines: string[] = [`🏆 En Cok Kazandiran Servisler (${TURKISH_MONTHS[now.getUTCMonth()]}):`];
+
+  sorted.forEach(([cat, data], i) => {
+    const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`;
+    lines.push(`${medal} ${getCategoryLabel(cat)}: ${formatTL(data.amount)} (${data.count} islem)`);
+  });
+
+  return lines.join("\n");
+}
+
+export async function getTopPatients(clinicId: string): Promise<string> {
+  const now = new Date();
+  const yearStart = new Date(now.getFullYear(), 0, 1);
+  const yearEnd = new Date(now.getFullYear() + 1, 0, 1);
+
+  const treatments = await prisma.treatment.findMany({
+    where: { clinicId, date: { gte: yearStart, lt: yearEnd } },
+    include: { patient: { select: { name: true, phone: true } } },
+  });
+
+  const patientTotals: Record<string, { name: string; amount: number; count: number }> = {};
+  for (const t of treatments) {
+    if (!patientTotals[t.patientId]) {
+      patientTotals[t.patientId] = { name: t.patient.name, amount: 0, count: 0 };
+    }
+    patientTotals[t.patientId].amount += t.amount;
+    patientTotals[t.patientId].count += 1;
+  }
+
+  const sorted = Object.entries(patientTotals).sort((a, b) => b[1].amount - a[1].amount).slice(0, 10);
+
+  if (sorted.length === 0) {
+    return "👥 Bu yil henuz islem yapilmamis.";
+  }
+
+  const lines: string[] = [`👑 En Cok Gelen Hastalar (${now.getFullYear()}):`];
+
+  sorted.forEach(([, data], i) => {
+    const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`;
+    lines.push(`${medal} ${data.name}: ${formatTL(data.amount)} (${data.count} ziyaret)`);
+  });
+
+  return lines.join("\n");
+}
+
+export async function getCommissionReport(clinicId: string): Promise<string> {
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+  const employees = await prisma.employee.findMany({
+    where: { clinicId, isActive: true },
+  });
+
+  if (employees.length === 0) {
+    return "👥 Henuz calisan kaydi bulunmuyor.";
+  }
+
+  const lines: string[] = [`💰 Prim Raporu (${TURKISH_MONTHS[now.getUTCMonth()]} ${now.getFullYear()}):`];
+
+  let totalCommission = 0;
+
+  for (const emp of employees) {
+    const result = await prisma.treatment.aggregate({
+      where: { clinicId, employeeId: emp.id, date: { gte: monthStart, lt: monthEnd } },
+      _sum: { amount: true },
+      _count: { id: true },
+    });
+
+    const revenue = result._sum.amount || 0;
+    const commission = Math.round(revenue * emp.commissionRate / 100);
+    totalCommission += commission;
+
+    lines.push(`👤 ${emp.name} (%${emp.commissionRate}): ${formatTL(revenue)} gelir → ${formatTL(commission)} prim`);
+  }
+
+  lines.push("");
+  lines.push(`Toplam Prim: ${formatTL(totalCommission)}`);
+
+  return lines.join("\n");
+}
+
 // ── Send Reminders Command ──────────────────────────────────────────────────
 
 export async function sendReminderCommand(clinicId: string): Promise<string> {
@@ -670,6 +854,12 @@ export function getHelpText(): string {
     "/gider - Bu ayin gideri",
     "/rapor - Aylik rapor",
     "/kasa - Kasa durumu",
+    "",
+    "📊 Rapor Komutlari:",
+    "/rapor detay - Detayli aylik rapor",
+    "/top servis - En cok kazandiran servisler",
+    "/top hasta - En cok gelen hastalar",
+    "/prim - Calisan prim raporu",
     "",
     "👤 Hasta Komutlari:",
     "/hasta [isim] - Hasta bilgisi",

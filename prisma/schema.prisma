@@ -42,6 +42,7 @@ model Clinic {
   patientPreferences   PatientPreference[]
   patientVisitPatterns PatientVisitPattern[]
   reminderLogs         ReminderLog[]
+  employees            Employee[]
   createdAt            DateTime         @default(now())
   updatedAt            DateTime         @updatedAt
 }
@@ -77,6 +78,8 @@ model Treatment {
   amount      Int      // kuruş cinsinden
   date        DateTime @default(now())
   category    String   @default("GENEL") // BOTOX, DOLGU, DIS_TEDAVI, GENEL
+  employeeId  String?
+  employee    Employee? @relation(fields: [employeeId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -174,4 +177,20 @@ model ReminderLog {
   status          String    @default("PENDING")  // PENDING, SENT, FAILED
   sentAt          DateTime?
   createdAt       DateTime  @default(now())
+}
+
+// Employee role values: DOKTOR, ASISTAN, SEKRETER, TEKNISYEN, DIGER
+model Employee {
+  id             String      @id @default(cuid())
+  name           String
+  role           String      @default("ASISTAN") // DOKTOR, ASISTAN, SEKRETER, TEKNISYEN, DIGER
+  phone          String?
+  email          String?
+  commissionRate Int         @default(0) // yüzde cinsinden (ör: 10 = %10)
+  isActive       Boolean     @default(true)
+  clinicId       String
+  clinic         Clinic      @relation(fields: [clinicId], references: [id])
+  treatments     Treatment[]
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 }

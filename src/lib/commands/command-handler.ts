@@ -12,6 +12,10 @@ import {
   getDailySummary,
   getHelpText,
   sendReminderCommand,
+  getDetailedReport,
+  getTopServices,
+  getTopPatients,
+  getCommissionReport,
 } from "./command-executor";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -251,8 +255,12 @@ export async function handleCommand(
       }
 
       case "rapor": {
-        const period = parsePeriodArg(args);
-        response = await getReport(clinicId, period.start, period.end, period.label);
+        if (args.toLowerCase().trim() === "detay") {
+          response = await getDetailedReport(clinicId);
+        } else {
+          const period = parsePeriodArg(args);
+          response = await getReport(clinicId, period.start, period.end, period.label);
+        }
         break;
       }
 
@@ -278,6 +286,16 @@ export async function handleCommand(
 
       case "hatirlatma": {
         response = await handleReminderSubCommand(clinicId, args);
+        break;
+      }
+
+      case "top": {
+        response = await handleTopCommand(clinicId, args);
+        break;
+      }
+
+      case "prim": {
+        response = await getCommissionReport(clinicId);
         break;
       }
 
@@ -360,5 +378,28 @@ async function handleReminderSubCommand(
     "🔔 Hatirlatma Komutlari:",
     "/hatirlatmalar - Bekleyen hatirlatmalari goster",
     "/hatirlatma gonder - Tum hatirlatmalari gonder",
+  ].join("\n");
+}
+
+// ── Top Sub-router ──────────────────────────────────────────────────────────
+
+async function handleTopCommand(
+  clinicId: string,
+  args: string
+): Promise<string> {
+  const lower = args.toLowerCase().trim();
+
+  if (lower === "servis" || lower === "hizmet") {
+    return getTopServices(clinicId);
+  }
+
+  if (lower === "hasta" || lower === "musteri") {
+    return getTopPatients(clinicId);
+  }
+
+  return [
+    "📊 Top Komutlari:",
+    "/top servis - En cok kazandiran servisler",
+    "/top hasta - En cok gelen hastalar",
   ].join("\n");
 }
