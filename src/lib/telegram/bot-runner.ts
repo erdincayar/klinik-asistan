@@ -1,26 +1,22 @@
 import "tsconfig-paths/register";
-import { createBot } from "@/lib/telegram/real-bot";
+import * as dotenv from "dotenv";
+import * as path from "path";
+dotenv.config({ path: path.resolve(process.cwd(), ".env") });
+
+import { startBot, stopBot } from "@/lib/telegram/real-bot";
 
 console.log("🤖 Klinik Asistan Telegram Bot başlatılıyor...");
 
-try {
-  const bot = createBot();
+const shutdown = () => {
+  console.log("\n🛑 Bot kapatılıyor...");
+  stopBot();
+  process.exit(0);
+};
 
-  bot.getMe().then((me) => {
-    console.log(`✅ Bot bağlandı: @${me.username}`);
-    console.log("📡 Mesaj bekleniyor...");
-  });
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
 
-  // Graceful shutdown
-  const shutdown = () => {
-    console.log("\n🛑 Bot kapatılıyor...");
-    bot.stopPolling();
-    process.exit(0);
-  };
-
-  process.on("SIGINT", shutdown);
-  process.on("SIGTERM", shutdown);
-} catch (error) {
+startBot().catch((error) => {
   console.error("❌ Bot başlatılamadı:", error);
   process.exit(1);
-}
+});

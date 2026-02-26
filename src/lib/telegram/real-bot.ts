@@ -1,4 +1,3 @@
-import TelegramBot from "node-telegram-bot-api";
 import { PrismaClient } from "@prisma/client";
 import { handleCommand } from "@/lib/commands/command-handler";
 import {
@@ -13,8 +12,49 @@ const prisma = new PrismaClient();
 // ── Config ──────────────────────────────────────────────────────────────────
 
 const AUTHORIZED_CHAT_IDS = process.env.TELEGRAM_AUTHORIZED_CHATS
-  ? process.env.TELEGRAM_AUTHORIZED_CHATS.split(",").map(Number)
+  ? process.env.TELEGRAM_AUTHORIZED_CHATS.split(",").filter(Boolean).map(Number)
   : [];
+
+// ── Telegram API ────────────────────────────────────────────────────────────
+
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!;
+const API_BASE = `https://api.telegram.org/bot${BOT_TOKEN}`;
+
+interface TgMessage {
+  message_id: number;
+  from?: { id: number; first_name: string; last_name?: string; username?: string };
+  chat: { id: number; type: string };
+  text?: string;
+  date: number;
+}
+
+interface TgUpdate {
+  update_id: number;
+  message?: TgMessage;
+}
+
+async function tgSend(chatId: number, text: string): Promise<void> {
+  await fetch(`${API_BASE}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, text }),
+  });
+}
+
+async function getUpdates(offset: number): Promise<TgUpdate[]> {
+  const res = await fetch(
+    `${API_BASE}/getUpdates?offset=${offset}&timeout=30&allowed_updates=["message"]`
+  );
+  const data = await res.json();
+  return data.ok ? data.result : [];
+}
+
+async function getMe(): Promise<{ username: string }> {
+  const res = await fetch(`${API_BASE}/getMe`);
+  const data = await res.json();
+  if (!data.ok) throw new Error("getMe failed: " + JSON.stringify(data));
+  return data.result;
+}
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -24,90 +64,76 @@ async function getDefaultClinicId(): Promise<string | null> {
 }
 
 function isAuthorized(chatId: number): boolean {
-  // If no authorized chats configured, allow all (dev mode)
   if (AUTHORIZED_CHAT_IDS.length === 0) return true;
   return AUTHORIZED_CHAT_IDS.includes(chatId);
 }
 
 // ── Message Processing ──────────────────────────────────────────────────────
 
-async function processMessage(
-  bot: TelegramBot,
-  msg: TelegramBot.Message
-): Promise<void> {
+async function processMessage(msg: TgMessage): Promise<void> {
   const chatId = msg.chat.id;
   const text = msg.text?.trim();
 
   if (!text) return;
 
+  console.log(`[Bot] ${msg.from?.first_name}: "${text}"`);
+
   if (!isAuthorized(chatId)) {
-    await bot.sendMessage(
-      chatId,
-      "⛔ Yetkiniz yok. Chat ID'nizi yöneticiye bildirin: " + chatId
-    );
+    await tgSend(chatId, "⛔ Yetkiniz yok. Chat ID'nizi yöneticiye bildirin: " + chatId);
     return;
   }
 
   const clinicId = await getDefaultClinicId();
   if (!clinicId) {
-    await bot.sendMessage(chatId, "❌ Klinik bulunamadı. Önce sisteme bir klinik ekleyin.");
+    await tgSend(chatId, "❌ Klinik bulunamadı. Önce sisteme bir klinik ekleyin.");
     return;
   }
 
   try {
-    // Handle /start command
+    // /start
     if (text === "/start") {
-      await bot.sendMessage(
-        chatId,
-        [
-          "👋 Merhaba! Klinik Asistan Bot'a hoş geldiniz.",
-          "",
-          "Doğal dilde mesaj yazarak kayıt oluşturabilirsiniz:",
-          '📅 Randevu: "Erdinç Ayar pazartesi 15:00 botoks"',
-          '💰 Gelir: "Kerem İnanır dolgu 5000tl"',
-          '💸 Gider: "Nurederm ürün 50000tl"',
-          "",
-          "Komutlar için /yardim yazın.",
-        ].join("\n")
-      );
+      await tgSend(chatId, [
+        "👋 Merhaba! Klinik Asistan Bot'a hoş geldiniz.",
+        "",
+        "Doğal dilde mesaj yazarak kayıt oluşturabilirsiniz:",
+        '📅 Randevu: "Erdinç Ayar pazartesi 15:00 botoks"',
+        '💰 Gelir: "Kerem İnanır dolgu 5000tl"',
+        '💸 Gider: "Nurederm ürün 50000tl"',
+        "",
+        "Komutlar için /yardim yazın.",
+      ].join("\n"));
       return;
     }
 
-    // Handle commands (starts with /)
+    // Commands
     if (text.startsWith("/")) {
       const result = await handleCommand(text, clinicId);
       if (result.type === "command") {
-        await bot.sendMessage(chatId, result.response);
+        await tgSend(chatId, result.response);
       } else {
-        await bot.sendMessage(chatId, "❌ Bilinmeyen komut. /yardim yazın.");
+        await tgSend(chatId, "❌ Bilinmeyen komut. /yardim yazın.");
       }
       return;
     }
 
-    // Natural language processing via AI parser
-    await bot.sendMessage(chatId, "⏳ Mesajınız işleniyor...");
+    // Natural language → AI parser
+    await tgSend(chatId, "⏳ Mesajınız işleniyor...");
 
     const parsed = await parseWhatsAppMessage(text);
 
     if (parsed.type === "ERROR") {
-      await bot.sendMessage(chatId, `❌ ${parsed.message}`);
+      await tgSend(chatId, `❌ ${parsed.message}`);
       return;
     }
 
     if (parsed.type === "AMBIGUOUS") {
       const options = parsed.options.map((o, i) => `${i + 1}. ${o}`).join("\n");
-      await bot.sendMessage(
-        chatId,
-        `🤔 ${parsed.message}\n\n${options}\n\nLütfen netleştirerek tekrar yazın.`
-      );
+      await tgSend(chatId, `🤔 ${parsed.message}\n\n${options}\n\nLütfen netleştirerek tekrar yazın.`);
       return;
     }
 
     if (parsed.type === "APPOINTMENT") {
-      const { patient, isNew } = await findOrCreatePatient(
-        parsed.patientName,
-        clinicId
-      );
+      const { patient, isNew } = await findOrCreatePatient(parsed.patientName, clinicId);
 
       const [h, m] = parsed.time.split(":").map(Number);
       const endMinutes = h * 60 + m + 30;
@@ -127,9 +153,7 @@ async function processMessage(
       });
 
       const dateFormatted = new Date(parsed.date).toLocaleDateString("tr-TR", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
+        weekday: "long", day: "numeric", month: "long",
       });
       const treatmentLabel =
         { BOTOX: "Botoks", DOLGU: "Dolgu", DIS_TEDAVI: "Diş Tedavi", GENEL: "Genel" }[
@@ -140,15 +164,12 @@ async function processMessage(
       if (parsed.notes) reply += `\n📝 ${parsed.notes}`;
       if (isNew) reply += `\n\n⚠️ Yeni hasta kaydı oluşturuldu: ${patient.name}`;
 
-      await bot.sendMessage(chatId, reply);
+      await tgSend(chatId, reply);
       return;
     }
 
     if (parsed.type === "INCOME") {
-      const { patient, isNew } = await findOrCreatePatient(
-        parsed.patientName,
-        clinicId
-      );
+      const { patient, isNew } = await findOrCreatePatient(parsed.patientName, clinicId);
 
       await prisma.treatment.create({
         data: {
@@ -171,7 +192,7 @@ async function processMessage(
       let reply = `✅ Gelir kaydedildi:\n👤 ${patient.name}\n💉 ${treatmentLabel}\n💰 ${amountTL} TL`;
       if (isNew) reply += `\n\n⚠️ Yeni hasta kaydı oluşturuldu: ${patient.name}`;
 
-      await bot.sendMessage(chatId, reply);
+      await tgSend(chatId, reply);
       return;
     }
 
@@ -192,41 +213,50 @@ async function processMessage(
           parsed.category
         ] || parsed.category;
 
-      await bot.sendMessage(
-        chatId,
-        `✅ Gider kaydedildi:\n📦 ${parsed.description}\n🏷️ ${categoryLabel}\n💸 ${amountTL} TL`
-      );
+      await tgSend(chatId, `✅ Gider kaydedildi:\n📦 ${parsed.description}\n🏷️ ${categoryLabel}\n💸 ${amountTL} TL`);
       return;
     }
 
-    await bot.sendMessage(chatId, "❌ Mesaj anlaşılamadı. /yardim yazın.");
+    await tgSend(chatId, "❌ Mesaj anlaşılamadı. /yardim yazın.");
   } catch (error) {
-    console.error("[TelegramBot] Error processing message:", error);
-    await bot.sendMessage(chatId, "❌ İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin.");
+    console.error("[Bot] Hata:", error);
+    await tgSend(chatId, "❌ İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin.");
   }
 }
 
-// ── Bot Factory ─────────────────────────────────────────────────────────────
+// ── Polling Loop ────────────────────────────────────────────────────────────
 
-export function createBot(): TelegramBot {
+let running = true;
+
+export async function startBot(): Promise<void> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token || token.length < 10) {
-    throw new Error(
-      "TELEGRAM_BOT_TOKEN ayarlanmamış. .env dosyasına bot token'ınızı ekleyin."
-    );
+    throw new Error("TELEGRAM_BOT_TOKEN ayarlanmamış.");
   }
 
-  const bot = new TelegramBot(token, { polling: true });
+  const me = await getMe();
+  console.log(`✅ Bot bağlandı: @${me.username}`);
+  console.log("📡 Mesaj bekleniyor...");
 
-  bot.on("message", (msg) => {
-    processMessage(bot, msg).catch((err) => {
-      console.error("[TelegramBot] Unhandled error:", err);
-    });
-  });
+  let offset = 0;
 
-  bot.on("polling_error", (error) => {
-    console.error("[TelegramBot] Polling error:", error.message);
-  });
+  while (running) {
+    try {
+      const updates = await getUpdates(offset);
 
-  return bot;
+      for (const update of updates) {
+        offset = update.update_id + 1;
+        if (update.message) {
+          await processMessage(update.message);
+        }
+      }
+    } catch (error: any) {
+      console.error("[Bot] Polling hatası:", error.message);
+      await new Promise((r) => setTimeout(r, 3000));
+    }
+  }
+}
+
+export function stopBot(): void {
+  running = false;
 }
