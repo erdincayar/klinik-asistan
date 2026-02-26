@@ -51,17 +51,30 @@ export async function GET() {
       }),
     ]);
 
-    const monthlyRevenue = monthlyTreatments.reduce((sum, t) => sum + t.amount, 0);
-    const monthlyExpenses = monthlyExpenseRecords.reduce((sum, e) => sum + e.amount, 0);
+    const monthlyIncome = monthlyTreatments.reduce((sum, t) => sum + (t.amount ?? 0), 0);
+    const monthlyExpense = monthlyExpenseRecords.reduce((sum, e) => sum + (e.amount ?? 0), 0);
 
     return Response.json({
       totalPatients,
-      monthlyRevenue,
-      monthlyExpenses,
-      netProfit: monthlyRevenue - monthlyExpenses,
-      recentTreatments,
+      monthlyIncome,
+      monthlyExpense,
+      netProfit: monthlyIncome - monthlyExpense,
+      recentTreatments: recentTreatments.map((t) => ({
+        id: t.id,
+        patientName: t.patient.name,
+        name: t.name,
+        amount: t.amount ?? 0,
+        date: t.date,
+      })),
       pendingReminders,
-      todayAppointments,
+      todayAppointments: todayAppointments.map((a) => ({
+        id: a.id,
+        patientName: a.patient.name,
+        startTime: a.startTime,
+        endTime: a.endTime,
+        treatmentType: a.treatmentType,
+        status: a.status,
+      })),
     });
   } catch {
     return Response.json({ error: "Bir hata oluştu" }, { status: 500 });

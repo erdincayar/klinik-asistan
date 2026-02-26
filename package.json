@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "bot": "npx tsx -r tsconfig-paths/register src/lib/telegram/bot-runner.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
@@ -20,6 +21,7 @@
     "lucide-react": "^0.575.0",
     "next": "14.2.35",
     "next-auth": "^5.0.0-beta.30",
+    "node-telegram-bot-api": "^0.67.0",
     "react": "^18",
     "react-dom": "^18",
     "react-hook-form": "^7.71.2",
@@ -31,6 +33,7 @@
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
+    "@types/node-telegram-bot-api": "^0.64.13",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.4.27",
@@ -39,6 +42,7 @@
     "postcss": "^8",
     "prisma": "^5.22.0",
     "tailwindcss": "^3.4.1",
+    "tsconfig-paths": "^4.2.0",
     "tsx": "^4.21.0",
     "typescript": "^5"
   }
