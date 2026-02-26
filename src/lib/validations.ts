@@ -68,3 +68,17 @@ export const clinicScheduleSchema = z.object({
 
 export type AppointmentInput = z.infer<typeof appointmentSchema>;
 export type ClinicScheduleInput = z.infer<typeof clinicScheduleSchema>;
+
+export const onboardingSchema = z.object({
+  name: z.string().min(2, "İsim en az 2 karakter olmalı"),
+  email: z.string().email("Geçerli bir email adresi girin"),
+  password: z.string().min(6, "Şifre en az 6 karakter olmalı"),
+  clinicName: z.string().min(2, "İşletme adı en az 2 karakter olmalı"),
+  sector: z.string().min(1, "Sektör seçin"),
+  plan: z.enum(["BASIC", "PRO"]),
+  selectedModules: z.array(z.string()).min(1, "En az 1 modül seçin"),
+  messagingPreference: z.enum(["WHATSAPP", "TELEGRAM", "BOTH"]),
+  phone: z.string().min(10, "Geçerli bir telefon numarası girin"),
+});
+
+export type OnboardingInput = z.infer<typeof onboardingSchema>;

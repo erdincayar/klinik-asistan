@@ -30,67 +30,167 @@ export interface ParsedExpense {
   category: string;
 }
 
+export interface ParsedAmbiguous {
+  type: "AMBIGUOUS";
+  message: string;
+  originalText: string;
+  options: string[];
+}
+
 export interface ParseError {
   type: "ERROR";
   message: string;
   originalText: string;
 }
 
-export type ParsedMessage = ParsedAppointment | ParsedIncome | ParsedExpense | ParseError;
+export type ParsedMessage =
+  | ParsedAppointment
+  | ParsedIncome
+  | ParsedExpense
+  | ParsedAmbiguous
+  | ParseError;
 
-export async function parseWhatsAppMessage(message: string): Promise<ParsedMessage> {
+function buildSystemPrompt(): string {
   const today = new Date();
   const todayStr = today.toISOString().split("T")[0];
-  const dayOfWeek = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"][today.getDay()];
+  const dayNames = [
+    "Pazar",
+    "Pazartesi",
+    "Salı",
+    "Çarşamba",
+    "Perşembe",
+    "Cuma",
+    "Cumartesi",
+  ];
+  const dayOfWeek = dayNames[today.getDay()];
 
-  const systemPrompt = `Sen bir WhatsApp mesajı ayrıştırıcısısın. Doktorun gönderdiği kısa mesajları yapılandırılmış veriye çeviriyorsun.
+  // Pre-calculate upcoming dates for each day name
+  const upcomingDates: Record<string, string> = {};
+  for (let i = 1; i <= 7; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() + i);
+    const name = dayNames[d.getDay()].toLowerCase();
+    if (!upcomingDates[name]) {
+      upcomingDates[name] = d.toISOString().split("T")[0];
+    }
+  }
 
-Bugün: ${todayStr} (${dayOfWeek})
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().split("T")[0];
 
-3 tip mesaj var:
+  return `Sen bir klinik yönetim sistemi için WhatsApp mesaj ayrıştırıcısısın.
+Doktorun doğal dilde yazdığı kısa Türkçe mesajları yapılandırılmış JSON verisine dönüştürüyorsun.
 
-1. RANDEVU: Hasta adı + gün/saat + işlem türü içerir.
-   Örnekler:
-   - "Ayşe Erdoğan pazartesi saat 3 botoks kontrol" → randevu
-   - "Mehmet yarın 14:30 dolgu" → randevu
-   - "Ali bey cuma 10 diş tedavi" → randevu
+## Bugünün Bilgileri
+- Bugün: ${todayStr} (${dayOfWeek})
+- Yarın: ${tomorrowStr}
+- Yaklaşan günler: ${Object.entries(upcomingDates).map(([day, date]) => `${day} → ${date}`).join(", ")}
 
-2. GELİR/TEDAVİ: Hasta adı + işlem + tutar içerir. "alındı", "ödendi", "TL", "lira" gibi kelimeler ipucu.
-   Örnekler:
-   - "Kerem İnanır dolgu 5000tl alındı" → gelir
-   - "Fatma hanım botoks 3500 lira" → gelir
-   - "Ahmet bey diş tedavi 2000tl ödendi" → gelir
+## 3 Mesaj Tipi
 
-3. GİDER: Hasta adı YOK, ürün/malzeme/kira/fatura + tutar içerir.
-   Örnekler:
-   - "Nurederm ürün alındı 50000tl" → gider
-   - "Kira 25000 ödendi" → gider
-   - "Elektrik faturası 3500tl" → gider
+### 1. RANDEVU (APPOINTMENT)
+Hasta adı + zaman bilgisi (gün/saat) içeren mesajlar.
+Örnekler:
+- "erdinç ayar çarşamba 3 dolgu randevu" → Erdinç Ayar, çarşamba 15:00, Dolgu
+- "Ayşe Yılmaz pazartesi saat 3 botoks kontrol" → randevu
+- "Mehmet yarın 14:30 dolgu" → randevu
+- "yarın 2ye mehmet diş tedavi" → Mehmet, yarın 14:00, Diş tedavi
+- "ali bey cuma 10 diş tedavi" → randevu
+- "zeynep 15:00 botoks" → bugün 15:00 randevu (gün belirtilmemişse bugün)
 
-Kurallar:
-- "saat 3" → "15:00" (mesai saati varsayımı)
-- "yarın" → bugünün ertesi günü tarih olarak hesapla
-- "pazartesi" → gelecek pazartesi tarih olarak hesapla
-- Tutarlar kuruş cinsine çevir (5000tl → 500000)
-- İşlem türleri: BOTOX, DOLGU, DIS_TEDAVI, GENEL
-- Gider kategorileri: MALZEME, KIRA, FATURA, MAAS, DIGER
-- "botoks" veya "botox" → BOTOX, "dolgu" veya "filler" → DOLGU, "diş" → DIS_TEDAVI
+### 2. GELİR (INCOME)
+Hasta adı + işlem/tedavi + tutar (TL/lira) içeren mesajlar. Bir kişiye yapılan işlem ve ödeme.
+Örnekler:
+- "Kerem İnanır dolgu 5000tl alındı" → Kerem İnanır, Dolgu, 5000 TL
+- "Ayşe botoks 3000tl" → Ayşe, Botoks, 3000 TL
+- "Fatma hanım botoks 3500 lira" → gelir
+- "Ahmet bey diş tedavi 2000tl ödendi" → gelir
+- "mehmet 7500tl dolgu" → gelir
 
-SADECE JSON döndür, başka hiçbir şey yazma.`;
+### 3. GİDER (EXPENSE)
+Hasta adı OLMAYAN, ürün/malzeme/kira/fatura/maaş gibi işletme gideri + tutar içeren mesajlar.
+Örnekler:
+- "Nurederm ürün alındı 50000tl ödendi" → Nurederm ürün alımı, 50000 TL
+- "Kira 25000 ödendi" → Kira, 25000 TL
+- "malzeme alımı 15000tl" → Malzeme alımı, 15000 TL
+- "Elektrik faturası 3500tl" → gider
+- "maaş 20000tl" → gider
 
-  const userPrompt = `Mesajı parse et: "${message}"
+### 4. BELİRSİZ (AMBIGUOUS)
+Eğer mesaj birden fazla şekilde yorumlanabiliyorsa (örneğin gelir mi gider mi belli değilse), AMBIGUOUS döndür ve seçenekleri sun.
 
-Eğer RANDEVU ise:
-{"type":"APPOINTMENT","patientName":"...","date":"YYYY-MM-DD","time":"HH:MM","treatmentType":"BOTOX|DOLGU|DIS_TEDAVI|GENEL","notes":"..."}
+## Saat Kuralları
+- Tek sayı saat: 1-6 arası → öğleden sonra kabul et (1→13:00, 2→14:00, 3→15:00, 4→16:00, 5→17:00, 6→18:00)
+- Tek sayı saat: 7-12 arası → sabah kabul et (7→07:00, 8→08:00, 9→09:00, 10→10:00, 11→11:00, 12→12:00)
+- "saat 3" → 15:00, "3e" veya "3'e" → 15:00, "2ye" veya "2'ye" → 14:00
+- "14:30" → 14:30 (24 saat formatı direkt al)
+- Saat belirtilmemişse ve randevu ise: "09:00" varsayılan
 
-Eğer GELİR ise:
-{"type":"INCOME","patientName":"...","treatmentType":"BOTOX|DOLGU|DIS_TEDAVI|GENEL","treatmentName":"...","amount":kuruş_cinsinden_sayı,"notes":"..."}
+## Gün Kuralları
+- "bugün" → ${todayStr}
+- "yarın" → ${tomorrowStr}
+- "pazartesi", "salı", vb. → yaklaşan ilk o gün (yukarıdaki tarihleri kullan)
+- Gün belirtilmemişse ve randevu ise: bugünü kullan (${todayStr})
 
-Eğer GİDER ise:
-{"type":"EXPENSE","description":"...","amount":kuruş_cinsinden_sayı,"category":"MALZEME|KIRA|FATURA|MAAS|DIGER"}
+## Tutar Kuralları
+- Tutarları HER ZAMAN kuruş cinsine çevir: 5000 TL → 500000, 3500 lira → 350000
+- "tl", "TL", "Tl", "lira", "₺" hepsini tanı
+- Binlik ayraç kullanılabilir: "50.000tl" → 5000000 kuruş
 
-Eğer anlayamıyorsan:
-{"type":"ERROR","message":"Mesaj anlaşılamadı","originalText":"..."}`;
+## Tedavi/İşlem Türleri
+- "botoks", "botox", "btx" → BOTOX
+- "dolgu", "filler" → DOLGU
+- "diş", "diş tedavi", "diş tedavisi" → DIS_TEDAVI
+- Diğer her şey → GENEL
+
+## Gider Kategorileri
+- "malzeme", "ürün", "sarf" → MALZEME
+- "kira" → KIRA
+- "elektrik", "su", "doğalgaz", "fatura", "internet", "telefon" → FATURA
+- "maaş", "personel" → MAAS
+- Diğer → DIGER
+
+## Önemli Kurallar
+- "hanım", "bey", "hoca" gibi hitap ekleri hasta adına DAHİL ETMEMELİSİN
+- Hasta adını düzgün büyük harfle yaz (Title Case): "mehmet" → "Mehmet"
+- SADECE JSON döndür, başka hiçbir metin yazma
+- JSON markdown code block kullanma, düz JSON döndür`;
+}
+
+export async function parseWhatsAppMessage(
+  message: string
+): Promise<ParsedMessage> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey || apiKey === "your-anthropic-api-key" || apiKey.length < 10) {
+    return {
+      type: "ERROR",
+      message:
+        "ANTHROPIC_API_KEY ayarlanmamış. .env dosyasına gerçek API anahtarını ekleyin.",
+      originalText: message,
+    };
+  }
+
+  const systemPrompt = buildSystemPrompt();
+
+  const userPrompt = `Mesaj: "${message}"
+
+Aşağıdaki JSON formatlarından uygun olanını döndür:
+
+RANDEVU:
+{"type":"APPOINTMENT","patientName":"Ad Soyad","date":"YYYY-MM-DD","time":"HH:MM","treatmentType":"BOTOX|DOLGU|DIS_TEDAVI|GENEL","notes":"varsa ek not"}
+
+GELİR:
+{"type":"INCOME","patientName":"Ad Soyad","treatmentType":"BOTOX|DOLGU|DIS_TEDAVI|GENEL","treatmentName":"işlem açıklaması","amount":kuruş_cinsinden_sayı,"notes":"varsa ek not"}
+
+GİDER:
+{"type":"EXPENSE","description":"gider açıklaması","amount":kuruş_cinsinden_sayı,"category":"MALZEME|KIRA|FATURA|MAAS|DIGER"}
+
+BELİRSİZ:
+{"type":"AMBIGUOUS","message":"kullanıcıya sorulacak soru","originalText":"orijinal mesaj","options":["seçenek1","seçenek2"]}
+
+HATA:
+{"type":"ERROR","message":"neden anlaşılamadı","originalText":"orijinal mesaj"}`;
 
   try {
     const response = await anthropic.messages.create({
@@ -105,10 +205,14 @@ Eğer anlayamıyorsan:
     );
 
     if (!textBlock) {
-      return { type: "ERROR", message: "AI yanıt vermedi", originalText: message };
+      return {
+        type: "ERROR",
+        message: "AI yanıt vermedi",
+        originalText: message,
+      };
     }
 
-    // Extract JSON from response (handle markdown code blocks)
+    // Extract JSON - handle both plain JSON and markdown code blocks
     let jsonStr = textBlock.text.trim();
     const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (jsonMatch) {
@@ -117,9 +221,22 @@ Eğer anlayamıyorsan:
 
     const parsed = JSON.parse(jsonStr);
     return parsed as ParsedMessage;
-  } catch (error) {
-    console.error("[WhatsApp Parser] Error:", error);
-    return { type: "ERROR", message: "Mesaj parse edilemedi", originalText: message };
+  } catch (error: any) {
+    console.error("[WhatsApp Parser] Error:", error?.message || error);
+
+    if (error?.status === 401) {
+      return {
+        type: "ERROR",
+        message: "API anahtarı geçersiz. .env dosyasındaki ANTHROPIC_API_KEY'i kontrol edin.",
+        originalText: message,
+      };
+    }
+
+    return {
+      type: "ERROR",
+      message: "Mesaj parse edilemedi. Lütfen tekrar deneyin.",
+      originalText: message,
+    };
   }
 }
 
@@ -128,15 +245,18 @@ export async function findOrCreatePatient(
   clinicId: string,
   phone?: string
 ): Promise<{ patient: any; isNew: boolean }> {
-  // Fuzzy match: search by partial name (case-insensitive via contains)
-  const nameParts = name.trim().split(/\s+/);
+  const cleanName = name
+    .trim()
+    .replace(/\s+(hanım|bey|hoca|hocam)$/i, "")
+    .trim();
+  const nameParts = cleanName.split(/\s+/);
   const firstName = nameParts[0];
 
-  // Try exact match first
+  // Try full name match first
   let patient = await prisma.patient.findFirst({
     where: {
       clinicId,
-      name: { contains: name.trim() },
+      name: { contains: cleanName },
     },
   });
 
@@ -157,7 +277,7 @@ export async function findOrCreatePatient(
   // Create new patient
   const newPatient = await prisma.patient.create({
     data: {
-      name: name.trim(),
+      name: cleanName,
       phone: phone || null,
       clinicId,
     },
@@ -184,13 +304,25 @@ export async function processWhatsAppMessage(
     return {
       success: false,
       parsed,
-      confirmationMessage: `❌ Mesaj anlaşılamadı: "${message}"\nLütfen şu formatlardan birini kullanın:\n- Randevu: "Hasta adı gün saat işlem"\n- Gelir: "Hasta adı işlem tutarTL"\n- Gider: "Açıklama tutarTL"`,
+      confirmationMessage: `❌ ${parsed.message}`,
+    };
+  }
+
+  if (parsed.type === "AMBIGUOUS") {
+    const options = parsed.options.map((o, i) => `${i + 1}. ${o}`).join("\n");
+    return {
+      success: false,
+      parsed,
+      confirmationMessage: `🤔 ${parsed.message}\n\n${options}\n\nLütfen netleştirerek tekrar yazın.`,
     };
   }
 
   try {
     if (parsed.type === "APPOINTMENT") {
-      const { patient, isNew } = await findOrCreatePatient(parsed.patientName, clinicId);
+      const { patient, isNew } = await findOrCreatePatient(
+        parsed.patientName,
+        clinicId
+      );
 
       // Calculate endTime (30 min after startTime)
       const [h, m] = parsed.time.split(":").map(Number);
@@ -216,15 +348,29 @@ export async function processWhatsAppMessage(
         month: "long",
       });
 
-      let msg = `✅ Randevu oluşturuldu:\n${patient.name} - ${dateFormatted} ${parsed.time} - ${parsed.treatmentType}`;
-      if (parsed.notes) msg += `\nNot: ${parsed.notes}`;
-      if (isNew) msg += `\n⚠️ Yeni hasta oluşturuldu: ${patient.name}`;
+      const treatmentLabel =
+        { BOTOX: "Botoks", DOLGU: "Dolgu", DIS_TEDAVI: "Diş Tedavi", GENEL: "Genel" }[
+          parsed.treatmentType
+        ] || parsed.treatmentType;
 
-      return { success: true, parsed, confirmationMessage: msg, patientIsNew: isNew, recordId: appointment.id };
+      let msg = `✅ Randevu oluşturuldu:\n📋 ${patient.name}\n📅 ${dateFormatted} saat ${parsed.time}\n💉 ${treatmentLabel}`;
+      if (parsed.notes) msg += `\n📝 ${parsed.notes}`;
+      if (isNew) msg += `\n\n⚠️ Yeni hasta kaydı oluşturuldu: ${patient.name}`;
+
+      return {
+        success: true,
+        parsed,
+        confirmationMessage: msg,
+        patientIsNew: isNew,
+        recordId: appointment.id,
+      };
     }
 
     if (parsed.type === "INCOME") {
-      const { patient, isNew } = await findOrCreatePatient(parsed.patientName, clinicId);
+      const { patient, isNew } = await findOrCreatePatient(
+        parsed.patientName,
+        clinicId
+      );
 
       const treatment = await prisma.treatment.create({
         data: {
@@ -239,10 +385,21 @@ export async function processWhatsAppMessage(
       });
 
       const amountTL = (parsed.amount / 100).toLocaleString("tr-TR");
-      let msg = `✅ ${patient.name} - ${parsed.treatmentName || parsed.treatmentType} - ${amountTL} TL kaydedildi`;
-      if (isNew) msg += `\n⚠️ Yeni hasta oluşturuldu: ${patient.name}`;
+      const treatmentLabel =
+        { BOTOX: "Botoks", DOLGU: "Dolgu", DIS_TEDAVI: "Diş Tedavi", GENEL: "Genel" }[
+          parsed.treatmentType
+        ] || parsed.treatmentType;
 
-      return { success: true, parsed, confirmationMessage: msg, patientIsNew: isNew, recordId: treatment.id };
+      let msg = `✅ Gelir kaydedildi:\n👤 ${patient.name}\n💉 ${treatmentLabel}\n💰 ${amountTL} TL`;
+      if (isNew) msg += `\n\n⚠️ Yeni hasta kaydı oluşturuldu: ${patient.name}`;
+
+      return {
+        success: true,
+        parsed,
+        confirmationMessage: msg,
+        patientIsNew: isNew,
+        recordId: treatment.id,
+      };
     }
 
     if (parsed.type === "EXPENSE") {
@@ -257,9 +414,19 @@ export async function processWhatsAppMessage(
       });
 
       const amountTL = (parsed.amount / 100).toLocaleString("tr-TR");
-      const msg = `✅ Gider kaydedildi: ${parsed.description} - ${amountTL} TL`;
+      const categoryLabel =
+        { MALZEME: "Malzeme", KIRA: "Kira", FATURA: "Fatura", MAAS: "Maaş", DIGER: "Diğer" }[
+          parsed.category
+        ] || parsed.category;
 
-      return { success: true, parsed, confirmationMessage: msg, recordId: expense.id };
+      const msg = `✅ Gider kaydedildi:\n📦 ${parsed.description}\n🏷️ ${categoryLabel}\n💸 ${amountTL} TL`;
+
+      return {
+        success: true,
+        parsed,
+        confirmationMessage: msg,
+        recordId: expense.id,
+      };
     }
 
     return {
@@ -272,7 +439,8 @@ export async function processWhatsAppMessage(
     return {
       success: false,
       parsed,
-      confirmationMessage: "❌ İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin.",
+      confirmationMessage:
+        "❌ İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin.",
     };
   }
 }

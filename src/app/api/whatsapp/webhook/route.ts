@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { processWhatsAppMessage } from "@/lib/whatsapp/message-parser";
+import { handleCommand } from "@/lib/commands/command-handler";
 import { sendWhatsAppMessage } from "@/lib/whatsapp/sender";
 import { prisma } from "@/lib/prisma";
 
@@ -49,7 +50,22 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "Invalid message format" }, { status: 400 });
     }
 
-    // Process the message through AI parser
+    // Check if message is a command
+    const commandResult = await handleCommand(messageText, clinicId);
+
+    if (commandResult.type === "command") {
+      // Send command response back
+      if (senderPhone !== "test-user") {
+        await sendWhatsAppMessage(senderPhone, commandResult.response);
+      }
+      return Response.json({
+        success: true,
+        isCommand: true,
+        confirmationMessage: commandResult.response,
+      });
+    }
+
+    // Not a command - process through AI parser (existing logic)
     const result = await processWhatsAppMessage(messageText, clinicId);
 
     // Send confirmation back via WhatsApp (mock)
