@@ -11,6 +11,7 @@ import {
   getReminders,
   getDailySummary,
   getHelpText,
+  sendReminderCommand,
 } from "./command-executor";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -275,6 +276,11 @@ export async function handleCommand(
         break;
       }
 
+      case "hatirlatma": {
+        response = await handleReminderSubCommand(clinicId, args);
+        break;
+      }
+
       case "ozet": {
         response = await getDailySummary(clinicId);
         break;
@@ -335,4 +341,24 @@ async function handleAppointmentCommand(
   // If nothing matched, try as a date anyway (could be a day name not caught)
   // Default to today
   return getAppointments(clinicId, getToday());
+}
+
+// ── Reminder Sub-router ─────────────────────────────────────────────────────
+
+async function handleReminderSubCommand(
+  clinicId: string,
+  args: string
+): Promise<string> {
+  const lower = args.toLowerCase().trim();
+
+  if (lower === "gonder" || lower === "gönder") {
+    return sendReminderCommand(clinicId);
+  }
+
+  // Default: show help
+  return [
+    "🔔 Hatirlatma Komutlari:",
+    "/hatirlatmalar - Bekleyen hatirlatmalari goster",
+    "/hatirlatma gonder - Tum hatirlatmalari gonder",
+  ].join("\n");
 }

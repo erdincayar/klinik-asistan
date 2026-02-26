@@ -138,6 +138,37 @@ const tools: Anthropic.Tool[] = [
       required: ["message"],
     },
   },
+  {
+    name: "get_pending_reminders",
+    description: "Bekleyen hasta hatirlatmalarini listeler. Kontrol zamani gelmis hastalari gosterir.",
+    input_schema: {
+      type: "object" as const,
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: "get_patient_preferences",
+    description: "Bir hastanin tercih etiketlerini ve ziyaret oruntusunu getirir.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        patientId: { type: "string", description: "Hasta ID" },
+      },
+      required: ["patientId"],
+    },
+  },
+  {
+    name: "send_patient_reminder",
+    description: "Belirtilen hastaya kisisellestirilmis hatirlatma mesaji gonderir.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        patientId: { type: "string", description: "Hasta ID" },
+      },
+      required: ["patientId"],
+    },
+  },
 ];
 
 // Tool execution functions
@@ -406,6 +437,78 @@ async function executeTool(name: string, input: Record<string, unknown>, clinicI
         parsedDetails: result.parsed,
       };
     }
+    case "get_pending_reminders": {
+      const { getPendingRemindersSummary } = await import("@/lib/reminders/reminder-engine");
+      const pending = await getPendingRemindersSummary(clinicId);
+      return {
+        pendingCount: pending.length,
+        patients: pending.map(p => ({
+          patientId: p.patientId,
+          name: p.patientName,
+          phone: p.phone,
+          category: p.treatmentCategory,
+          lastTreatment: p.lastTreatmentDate,
+          daysSince: p.daysSince,
+        })),
+      };
+    }
+    case "get_patient_preferences": {
+      const { patientId } = input as { patientId: string };
+      const patient = await prisma.patient.findFirst({
+        where: { id: patientId, clinicId },
+        include: {
+          preferences: true,
+          visitPattern: true,
+        },
+      });
+      if (!patient) return { error: "Hasta bulunamadi" };
+      return {
+        name: patient.name,
+        preferences: patient.preferences.map(p => p.type),
+        visitPattern: patient.visitPattern ? {
+          averageVisitDays: patient.visitPattern.averageVisitDays,
+          totalVisits: patient.visitPattern.totalVisits,
+          lastVisitDate: patient.visitPattern.lastVisitDate?.toISOString().split("T")[0],
+          lastCategory: patient.visitPattern.lastCategory,
+        } : null,
+      };
+    }
+    case "send_patient_reminder": {
+      const { patientId } = input as { patientId: string };
+      const { findDuePatients, generatePersonalizedMessage, sendReminder } = await import("@/lib/reminders/reminder-engine");
+
+      const patient = await prisma.patient.findFirst({
+        where: { id: patientId, clinicId },
+        include: { preferences: true },
+      });
+      if (!patient) return { error: "Hasta bulunamadi" };
+
+      // Find if this patient has any due reminders
+      const allDue = await findDuePatients(clinicId);
+      const patientDue = allDue.find(d => d.patientId === patientId);
+
+      if (!patientDue) {
+        return { message: "Bu hasta icin bekleyen hatirlatma bulunmuyor." };
+      }
+
+      const prefTypes = patient.preferences.map(p => p.type);
+      const message = await generatePersonalizedMessage(
+        patient.name,
+        patientDue.treatmentCategory,
+        patientDue.lastTreatmentDate,
+        patientDue.intervalDays,
+        prefTypes,
+        patientDue.messageTemplate
+      );
+
+      const logId = await sendReminder(patientId, clinicId, message);
+      return {
+        success: true,
+        logId,
+        message,
+        patientName: patient.name,
+      };
+    }
     default:
       return { error: "Unknown tool" };
   }
@@ -431,6 +534,7 @@ Görevlerin:
 - Finansal özetler sunma
 - Klinik yönetimi tavsiyeleri verme
 - Randevu yönetimi (bugünün randevuları, müsait saatler, randevu oluşturma ve iptal)
+- Hasta hatirlatma yonetimi (bekleyen hatirlatmalar, hasta tercihleri, hatirlatma gonderme)
 
 Kurallar:
 - Her zaman Türkçe yanıt ver

@@ -38,9 +38,12 @@ model Clinic {
   expenses            Expense[]
   reminders           Reminder[]
   appointments        Appointment[]
-  clinicSchedules     ClinicSchedule[]
-  createdAt           DateTime         @default(now())
-  updatedAt           DateTime         @updatedAt
+  clinicSchedules      ClinicSchedule[]
+  patientPreferences   PatientPreference[]
+  patientVisitPatterns PatientVisitPattern[]
+  reminderLogs         ReminderLog[]
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
 }
 
 model Patient {
@@ -53,6 +56,9 @@ model Patient {
   clinic       Clinic        @relation(fields: [clinicId], references: [id])
   treatments   Treatment[]
   appointments Appointment[]
+  preferences      PatientPreference[]
+  visitPattern     PatientVisitPattern?
+  reminderLogs     ReminderLog[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 }
@@ -125,4 +131,47 @@ model ClinicSchedule {
   endTime      String  @default("18:00")
   slotDuration Int     @default(30) // dakika
   isActive     Boolean @default(true)
+}
+
+// PatientPreference type values: INDIRIM_SEVER, HEDIYE_SEVER, ARKADASIYLA_GELIR, SADIK_MUSTERI, FIYAT_HASSAS
+model PatientPreference {
+  id         String   @id @default(cuid())
+  patientId  String
+  patient    Patient  @relation(fields: [patientId], references: [id])
+  clinicId   String
+  clinic     Clinic   @relation(fields: [clinicId], references: [id])
+  type       String   // INDIRIM_SEVER, HEDIYE_SEVER, ARKADASIYLA_GELIR, SADIK_MUSTERI, FIYAT_HASSAS
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// PatientVisitPattern lastCategory values: BOTOX, DOLGU, DIS_TEDAVI, GENEL
+model PatientVisitPattern {
+  id               String    @id @default(cuid())
+  patientId        String    @unique
+  patient          Patient   @relation(fields: [patientId], references: [id])
+  clinicId         String
+  clinic           Clinic    @relation(fields: [clinicId], references: [id])
+  averageVisitDays Int?      // Average days between visits
+  lastVisitDate    DateTime?
+  totalVisits      Int       @default(0)
+  lastCategory     String?   // Last treatment category
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+// ReminderLog channel values: WHATSAPP, TELEGRAM, SMS
+// ReminderLog status values: PENDING, SENT, FAILED
+model ReminderLog {
+  id              String    @id @default(cuid())
+  patientId       String
+  patient         Patient   @relation(fields: [patientId], references: [id])
+  clinicId        String
+  clinic          Clinic    @relation(fields: [clinicId], references: [id])
+  messageContent  String
+  channel         String    @default("WHATSAPP") // WHATSAPP, TELEGRAM, SMS
+  status          String    @default("PENDING")  // PENDING, SENT, FAILED
+  sentAt          DateTime?
+  createdAt       DateTime  @default(now())
 }

@@ -627,6 +627,31 @@ export async function getDailySummary(clinicId: string): Promise<string> {
   return lines.join("\n");
 }
 
+// ── Send Reminders Command ──────────────────────────────────────────────────
+
+export async function sendReminderCommand(clinicId: string): Promise<string> {
+  // Dynamic import to avoid circular deps
+  const { processClinicReminders } = await import("@/lib/reminders/reminder-engine");
+
+  const result = await processClinicReminders(clinicId);
+
+  if (result.sent === 0 && result.failed === 0) {
+    return "🔔 Gonderilecek hatirlatma bulunmuyor.";
+  }
+
+  const lines: string[] = ["🔔 Hatirlatma Gonderim Sonucu:"];
+
+  for (const detail of result.details) {
+    const icon = detail.status === "sent" ? "✅" : "❌";
+    lines.push(`${icon} ${detail.patientName}`);
+  }
+
+  lines.push("");
+  lines.push(`Gonderilen: ${result.sent} | Basarisiz: ${result.failed}`);
+
+  return lines.join("\n");
+}
+
 // ── Help Command ─────────────────────────────────────────────────────────────
 
 export function getHelpText(): string {
@@ -650,6 +675,7 @@ export function getHelpText(): string {
     "/hasta [isim] - Hasta bilgisi",
     "/hastalar - Hasta listesi",
     "/hatirlatmalar - Günün hatirlatmalari",
+    "/hatirlatma gonder - Hatirlatmalari gonder",
     "",
     "📋 Genel:",
     "/ozet - Günlük ozet",
