@@ -11,9 +11,22 @@ const prisma = new PrismaClient();
 
 // ── Config ──────────────────────────────────────────────────────────────────
 
-const AUTHORIZED_CHAT_IDS = process.env.TELEGRAM_AUTHORIZED_CHATS
-  ? process.env.TELEGRAM_AUTHORIZED_CHATS.split(",").filter(Boolean).map(Number)
-  : [];
+// Format: "chatId:clinicId,chatId:clinicId" or just "chatId,chatId" (legacy)
+const CHAT_CLINIC_MAP = new Map<number, string>();
+const AUTHORIZED_CHAT_IDS: number[] = [];
+
+if (process.env.TELEGRAM_AUTHORIZED_CHATS) {
+  for (const entry of process.env.TELEGRAM_AUTHORIZED_CHATS.split(",").filter(Boolean)) {
+    if (entry.includes(":")) {
+      const [chatStr, clinicId] = entry.split(":");
+      const chatId = Number(chatStr);
+      AUTHORIZED_CHAT_IDS.push(chatId);
+      CHAT_CLINIC_MAP.set(chatId, clinicId);
+    } else {
+      AUTHORIZED_CHAT_IDS.push(Number(entry));
+    }
+  }
+}
 
 // ── Telegram API ────────────────────────────────────────────────────────────
 
@@ -58,8 +71,16 @@ async function getMe(): Promise<{ username: string }> {
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
-async function getDefaultClinicId(): Promise<string | null> {
-  const clinic = await prisma.clinic.findFirst({ select: { id: true } });
+async function getClinicIdForChat(chatId: number): Promise<string | null> {
+  // First check explicit chat→clinic mapping
+  const mapped = CHAT_CLINIC_MAP.get(chatId);
+  if (mapped) return mapped;
+
+  // Fallback: find user by telegramChatId or use first clinic
+  const clinic = await prisma.clinic.findFirst({
+    orderBy: { createdAt: "desc" },
+    select: { id: true },
+  });
   return clinic?.id ?? null;
 }
 
@@ -83,7 +104,7 @@ async function processMessage(msg: TgMessage): Promise<void> {
     return;
   }
 
-  const clinicId = await getDefaultClinicId();
+  const clinicId = await getClinicIdForChat(chatId);
   if (!clinicId) {
     await tgSend(chatId, "❌ Klinik bulunamadı. Önce sisteme bir klinik ekleyin.");
     return;
