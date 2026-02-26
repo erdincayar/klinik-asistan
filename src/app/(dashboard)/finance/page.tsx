@@ -49,22 +49,42 @@ interface MonthlySummary {
   expense: number;
 }
 
-interface Transaction {
+interface TreatmentDetail {
   id: string;
-  type: "income" | "expense";
-  description: string;
-  amount: number;
-  category: string;
   date: string;
+  patientId: string;
+  patientName: string;
+  treatmentType: string;
+  amount: number;
 }
 
-interface CategoryBreakdown {
+interface ExpenseDetail {
+  id: string;
+  date: string;
+  description: string;
   category: string;
-  label: string;
-  total: number;
+  amount: number;
 }
 
 const PIE_COLORS = ["#22c55e", "#3b82f6", "#f59e0b", "#8b5cf6", "#ec4899"];
+
+const TURKISH_MONTHS = [
+  "Oca", "Şub", "Mar", "Nis", "May", "Haz",
+  "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara",
+];
+
+function formatTurkishDate(dateStr: string) {
+  const d = new Date(dateStr);
+  return `${d.getUTCDate()} ${TURKISH_MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}
+
+const EXPENSE_CATEGORY_COLORS: Record<string, string> = {
+  KIRA: "bg-purple-100 text-purple-800",
+  MAAS: "bg-blue-100 text-blue-800",
+  MALZEME: "bg-orange-100 text-orange-800",
+  FATURA: "bg-yellow-100 text-yellow-800",
+  DIGER: "bg-gray-100 text-gray-800",
+};
 
 export default function FinancePage() {
   const now = new Date();
@@ -72,6 +92,8 @@ export default function FinancePage() {
   const [year, setYear] = useState(now.getFullYear());
   const [incomeStatement, setIncomeStatement] = useState<IncomeStatement | null>(null);
   const [monthlySummary, setMonthlySummary] = useState<MonthlySummary[]>([]);
+  const [treatments, setTreatments] = useState<TreatmentDetail[]>([]);
+  const [expenses, setExpenses] = useState<ExpenseDetail[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -88,6 +110,8 @@ export default function FinancePage() {
         if (!isRes.ok) throw new Error("Finans verisi alınamadı");
         const isData = await isRes.json();
         setIncomeStatement(isData);
+        setTreatments(isData.treatments || []);
+        setExpenses(isData.expenses || []);
 
         if (msRes.ok) {
           const msData = await msRes.json();
@@ -264,6 +288,123 @@ export default function FinancePage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Gelir Detayları */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Gelir Detayları</CardTitle>
+          <CardDescription>
+            {months[month - 1]} {year} - Tedavi kayıtları
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {treatments.length === 0 ? (
+            <p className="text-sm text-gray-500">Bu ay kayıt bulunmuyor</p>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Tarih</TableHead>
+                    <TableHead>Hasta Adı</TableHead>
+                    <TableHead>İşlem Türü</TableHead>
+                    <TableHead className="text-right">Tutar</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {treatments.map((t) => {
+                    const catLabel =
+                      TREATMENT_CATEGORIES.find((c) => c.value === t.treatmentType)?.label ||
+                      t.treatmentType;
+                    return (
+                      <TableRow key={t.id}>
+                        <TableCell>{formatTurkishDate(t.date)}</TableCell>
+                        <TableCell>
+                          <Link
+                            href={`/patients/${t.patientId}`}
+                            className="text-blue-600 hover:underline"
+                          >
+                            {t.patientName}
+                          </Link>
+                        </TableCell>
+                        <TableCell>{catLabel}</TableCell>
+                        <TableCell className="text-right font-medium">
+                          {formatCurrency(t.amount)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+              <div className="mt-4 flex justify-end border-t pt-4">
+                <p className="text-sm font-semibold">
+                  Toplam Gelir:{" "}
+                  <span className="text-green-600">
+                    {formatCurrency(incomeStatement?.totalIncome ?? 0)}
+                  </span>
+                </p>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Gider Detayları */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Gider Detayları</CardTitle>
+          <CardDescription>
+            {months[month - 1]} {year} - Gider kayıtları
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {expenses.length === 0 ? (
+            <p className="text-sm text-gray-500">Bu ay kayıt bulunmuyor</p>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Tarih</TableHead>
+                    <TableHead>Açıklama</TableHead>
+                    <TableHead>Kategori</TableHead>
+                    <TableHead className="text-right">Tutar</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {expenses.map((e) => {
+                    const catLabel =
+                      EXPENSE_CATEGORIES.find((c) => c.value === e.category)?.label ||
+                      e.category;
+                    const catColor =
+                      EXPENSE_CATEGORY_COLORS[e.category] || EXPENSE_CATEGORY_COLORS.DIGER;
+                    return (
+                      <TableRow key={e.id}>
+                        <TableCell>{formatTurkishDate(e.date)}</TableCell>
+                        <TableCell>{e.description}</TableCell>
+                        <TableCell>
+                          <Badge className={catColor}>{catLabel}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          {formatCurrency(e.amount)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+              <div className="mt-4 flex justify-end border-t pt-4">
+                <p className="text-sm font-semibold">
+                  Toplam Gider:{" "}
+                  <span className="text-red-600">
+                    {formatCurrency(incomeStatement?.totalExpense ?? 0)}
+                  </span>
+                </p>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

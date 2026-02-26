@@ -28,23 +28,41 @@ export async function GET(request: Request) {
       const startDate = new Date(Date.UTC(year, month - 1, 1));
       const endDate = new Date(Date.UTC(year, month, 1));
 
-      const [treatments, expenses] = await Promise.all([
+      const [rawTreatments, rawExpenses] = await Promise.all([
         prisma.treatment.findMany({
           where: { clinicId, date: { gte: startDate, lt: endDate } },
-          select: { amount: true },
+          include: { patient: { select: { id: true, name: true } } },
+          orderBy: { date: "desc" },
         }),
         prisma.expense.findMany({
           where: { clinicId, date: { gte: startDate, lt: endDate } },
-          select: { amount: true },
+          orderBy: { date: "desc" },
         }),
       ]);
 
-      const totalIncome = treatments.reduce((sum, t) => sum + (t.amount ?? 0), 0);
-      const totalExpense = expenses.reduce((sum, e) => sum + (e.amount ?? 0), 0);
+      const totalIncome = rawTreatments.reduce((sum, t) => sum + (t.amount ?? 0), 0);
+      const totalExpense = rawExpenses.reduce((sum, e) => sum + (e.amount ?? 0), 0);
       const netProfit = totalIncome - totalExpense;
       const vatAmount = Math.round(totalIncome * taxRate / (100 + taxRate));
 
-      return Response.json({ totalIncome, totalExpense, netProfit, vatAmount, taxRate });
+      const treatments = rawTreatments.map((t) => ({
+        id: t.id,
+        date: t.date,
+        patientId: t.patient.id,
+        patientName: t.patient.name,
+        treatmentType: t.category,
+        amount: t.amount,
+      }));
+
+      const expenses = rawExpenses.map((e) => ({
+        id: e.id,
+        date: e.date,
+        description: e.description,
+        category: e.category,
+        amount: e.amount,
+      }));
+
+      return Response.json({ totalIncome, totalExpense, netProfit, vatAmount, taxRate, treatments, expenses });
     }
 
     if (type === "vat-summary") {
