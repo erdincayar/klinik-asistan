@@ -399,7 +399,7 @@ export default function AppointmentsPage() {
                                   )}
                                 >
                                   <div className="font-medium truncate">
-                                    {appt.patientName
+                                    {(appt.patientName || "?")
                                       .split(" ")
                                       .map((n) => n[0])
                                       .join("")}

@@ -39,12 +39,12 @@ export async function GET(request: Request) {
         }),
       ]);
 
-      const totalRevenue = treatments.reduce((sum, t) => sum + t.amount, 0);
-      const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
-      const netProfit = totalRevenue - totalExpenses;
-      const vatAmount = Math.round(totalRevenue * taxRate / (100 + taxRate));
+      const totalIncome = treatments.reduce((sum, t) => sum + (t.amount ?? 0), 0);
+      const totalExpense = expenses.reduce((sum, e) => sum + (e.amount ?? 0), 0);
+      const netProfit = totalIncome - totalExpense;
+      const vatAmount = Math.round(totalIncome * taxRate / (100 + taxRate));
 
-      return Response.json({ totalRevenue, totalExpenses, netProfit, vatAmount, taxRate });
+      return Response.json({ totalIncome, totalExpense, netProfit, vatAmount, taxRate });
     }
 
     if (type === "vat-summary") {
@@ -64,14 +64,19 @@ export async function GET(request: Request) {
     }
 
     if (type === "monthly-summary") {
-      const months = Array.from({ length: 12 }, (_, i) => {
+      const monthNames = [
+        "Oca", "Şub", "Mar", "Nis", "May", "Haz",
+        "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara",
+      ];
+
+      const monthRanges = Array.from({ length: 12 }, (_, i) => {
         const startDate = new Date(year, i, 1);
         const endDate = new Date(year, i + 1, 1);
-        return { month: i + 1, startDate, endDate };
+        return { month: i + 1, monthName: monthNames[i], startDate, endDate };
       });
 
-      const results = await Promise.all(
-        months.map(async ({ month, startDate, endDate }) => {
+      const months = await Promise.all(
+        monthRanges.map(async ({ month, monthName, startDate, endDate }) => {
           const [treatments, expenses] = await Promise.all([
             prisma.treatment.findMany({
               where: { clinicId, date: { gte: startDate, lt: endDate } },
@@ -83,19 +88,14 @@ export async function GET(request: Request) {
             }),
           ]);
 
-          const revenue = treatments.reduce((sum, t) => sum + t.amount, 0);
-          const expenseTotal = expenses.reduce((sum, e) => sum + e.amount, 0);
+          const income = treatments.reduce((sum, t) => sum + (t.amount ?? 0), 0);
+          const expense = expenses.reduce((sum, e) => sum + (e.amount ?? 0), 0);
 
-          return {
-            month,
-            revenue,
-            expenses: expenseTotal,
-            profit: revenue - expenseTotal,
-          };
+          return { month, monthName, income, expense };
         })
       );
 
-      return Response.json(results);
+      return Response.json({ months });
     }
 
     return Response.json({ error: "Geçersiz tip parametresi" }, { status: 400 });

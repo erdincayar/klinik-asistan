@@ -41,7 +41,7 @@ export async function GET(request: Request) {
       where.patientId = patientId;
     }
 
-    const appointments = await prisma.appointment.findMany({
+    const raw = await prisma.appointment.findMany({
       where,
       include: {
         patient: { select: { id: true, name: true, phone: true } },
@@ -49,7 +49,20 @@ export async function GET(request: Request) {
       orderBy: [{ date: "asc" }, { startTime: "asc" }],
     });
 
-    return Response.json(appointments);
+    const appointments = raw.map((a) => ({
+      id: a.id,
+      patientId: a.patient.id,
+      patientName: a.patient.name,
+      patientPhone: a.patient.phone,
+      date: a.date,
+      startTime: a.startTime,
+      endTime: a.endTime,
+      treatmentType: a.treatmentType,
+      status: a.status,
+      notes: a.notes,
+    }));
+
+    return Response.json({ appointments });
   } catch {
     return Response.json({ error: "Bir hata oluştu" }, { status: 500 });
   }
