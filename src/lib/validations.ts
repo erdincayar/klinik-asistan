@@ -82,3 +82,19 @@ export const onboardingSchema = z.object({
 });
 
 export type OnboardingInput = z.infer<typeof onboardingSchema>;
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().email("Geçerli bir email adresi girin"),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, "Token gerekli"),
+  password: z.string().min(6, "Şifre en az 6 karakter olmalı"),
+  confirmPassword: z.string().min(6, "Şifre tekrarı gerekli"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Şifreler eşleşmiyor",
+  path: ["confirmPassword"],
+});
+
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
