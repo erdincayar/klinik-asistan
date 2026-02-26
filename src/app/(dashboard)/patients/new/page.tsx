@@ -44,7 +44,7 @@ export default function NewPatientPage() {
 
       router.push("/patients");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Bir hata olu\u015ftu");
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
     } finally {
       setLoading(false);
     }
@@ -54,7 +54,7 @@ export default function NewPatientPage() {
     <div className="mx-auto max-w-2xl">
       <Card>
         <CardHeader>
-          <CardTitle>Yeni Hasta Kayd\u0131</CardTitle>
+          <CardTitle>Yeni Hasta Kaydı</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -65,7 +65,7 @@ export default function NewPatientPage() {
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 required
-                placeholder="Hasta ad\u0131"
+                placeholder="Hasta adı"
               />
             </div>
 
@@ -96,7 +96,7 @@ export default function NewPatientPage() {
                 id="notes"
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                placeholder="Hasta hakk\u0131nda notlar..."
+                placeholder="Hasta hakkında notlar..."
                 rows={4}
               />
             </div>
@@ -109,7 +109,7 @@ export default function NewPatientPage() {
               </Button>
               <Link href="/patients">
                 <Button type="button" variant="outline">
-                  \u0130ptal
+                  İptal
                 </Button>
               </Link>
             </div>

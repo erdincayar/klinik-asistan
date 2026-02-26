@@ -80,7 +80,7 @@ export default function DashboardPage() {
           fetch(`/api/appointments?date=${todayStr}`),
         ]);
 
-        if (!dashRes.ok) throw new Error("Dashboard verisi al\u0131namad\u0131");
+        if (!dashRes.ok) throw new Error("Dashboard verisi alınamadı");
         const dashData = await dashRes.json();
         setData(dashData);
 

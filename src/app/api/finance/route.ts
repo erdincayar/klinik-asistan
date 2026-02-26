@@ -25,8 +25,8 @@ export async function GET(request: Request) {
     const taxRate = clinic?.taxRate ?? 20;
 
     if (type === "income-statement") {
-      const startDate = new Date(year, month - 1, 1);
-      const endDate = new Date(year, month, 1);
+      const startDate = new Date(Date.UTC(year, month - 1, 1));
+      const endDate = new Date(Date.UTC(year, month, 1));
 
       const [treatments, expenses] = await Promise.all([
         prisma.treatment.findMany({
@@ -48,8 +48,8 @@ export async function GET(request: Request) {
     }
 
     if (type === "vat-summary") {
-      const startDate = new Date(year, month - 1, 1);
-      const endDate = new Date(year, month, 1);
+      const startDate = new Date(Date.UTC(year, month - 1, 1));
+      const endDate = new Date(Date.UTC(year, month, 1));
 
       const treatments = await prisma.treatment.findMany({
         where: { clinicId, date: { gte: startDate, lt: endDate } },
@@ -70,8 +70,8 @@ export async function GET(request: Request) {
       ];
 
       const monthRanges = Array.from({ length: 12 }, (_, i) => {
-        const startDate = new Date(year, i, 1);
-        const endDate = new Date(year, i + 1, 1);
+        const startDate = new Date(Date.UTC(year, i, 1));
+        const endDate = new Date(Date.UTC(year, i + 1, 1));
         return { month: i + 1, monthName: monthNames[i], startDate, endDate };
       });
 

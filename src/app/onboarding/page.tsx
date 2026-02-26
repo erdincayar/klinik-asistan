@@ -56,114 +56,114 @@ type ModuleId =
 // Using JS string literals so \u escapes are properly interpreted.
 
 const TEXT = {
-  step: "Ad\u0131m",
+  step: "Adım",
   continue: "Devam Et",
   back: "Geri",
-  step1Title: "Hangi Sekt\u00f6rdesiniz?",
-  step1Subtitle: "\u0130\u015fletmenize en uygun \u00e7\u00f6z\u00fcm\u00fc sunabilmemiz i\u00e7in sekt\u00f6r\u00fcn\u00fcz\u00fc se\u00e7in",
-  step2Suffix: "Sekt\u00f6r\u00fc",
-  step2Button: "Hadi sizin i\u00e7in paket se\u00e7elim",
-  step3Title: "Size Uygun Paketi Se\u00e7in",
-  selectPackage: "Bu Paketi Se\u00e7",
-  recommended: "\u00d6nerilen",
-  step4Title: "Mod\u00fcllerinizi Se\u00e7in",
-  moduleSubtitle: (limit: number) => `(${limit} mod\u00fcl se\u00e7ebilirsiniz)`,
-  moduleCounter: (count: number, limit: number) => `${count}/${limit} mod\u00fcl se\u00e7ildi`,
+  step1Title: "Hangi Sektördesiniz?",
+  step1Subtitle: "İşletmenize en uygun çözümü sunabilmemiz için sektörünüzü seçin",
+  step2Suffix: "Sektörü",
+  step2Button: "Hadi sizin için paket seçelim",
+  step3Title: "Size Uygun Paketi Seçin",
+  selectPackage: "Bu Paketi Seç",
+  recommended: "Önerilen",
+  step4Title: "Modüllerinizi Seçin",
+  moduleSubtitle: (limit: number) => `(${limit} modül seçebilirsiniz)`,
+  moduleCounter: (count: number, limit: number) => `${count}/${limit} modül seçildi`,
   proOnly: "Sadece Pro pakette",
-  step5Title: "Sistemi nereden y\u00f6netmek istersiniz?",
-  phoneLbl: "Telefon Numaran\u0131z",
-  step6Title: "Hesab\u0131n\u0131z\u0131 Olu\u015fturun",
-  nameLbl: "\u0130sim",
-  namePlaceholder: "Ad\u0131n\u0131z Soyad\u0131n\u0131z",
+  step5Title: "Sistemi nereden yönetmek istersiniz?",
+  phoneLbl: "Telefon Numaranız",
+  step6Title: "Hesabınızı Oluşturun",
+  nameLbl: "İsim",
+  namePlaceholder: "Adınız Soyadınız",
   emailLbl: "Email",
-  passwordLbl: "\u015eifre",
-  businessLbl: "\u0130\u015fletme Ad\u0131",
-  businessPlaceholder: "\u0130\u015fletmenizin ad\u0131",
-  submitBtn: "Kay\u0131t Ol ve Ba\u015fla",
-  submitting: "Kay\u0131t yap\u0131l\u0131yor...",
-  errorDefault: "Kay\u0131t s\u0131ras\u0131nda bir hata olu\u015ftu",
-  errorSignIn: "Kay\u0131t ba\u015far\u0131l\u0131 ancak giri\u015f yap\u0131lamad\u0131. L\u00fctfen giri\u015f sayfas\u0131ndan deneyin.",
-  errorGeneric: "Bir hata olu\u015ftu. L\u00fctfen tekrar deneyin.",
-  bothLabel: "Her \u0130kisi",
+  passwordLbl: "Şifre",
+  businessLbl: "İşletme Adı",
+  businessPlaceholder: "İşletmenizin adı",
+  submitBtn: "Kayıt Ol ve Başla",
+  submitting: "Kayıt yapılıyor...",
+  errorDefault: "Kayıt sırasında bir hata oluştu",
+  errorSignIn: "Kayıt başarılı ancak giriş yapılamadı. Lütfen giriş sayfasından deneyin.",
+  errorGeneric: "Bir hata oluştu. Lütfen tekrar deneyin.",
+  bothLabel: "Her İkisi",
   perMonth: "/ay",
 } as const
 
 // ── Sector Data ────────────────────────────────────────────────────────────
 
 const SECTORS: { id: Sector; label: string; icon: typeof Stethoscope }[] = [
-  { id: "SAGLIK", label: "Sa\u011fl\u0131k", icon: Stethoscope },
+  { id: "SAGLIK", label: "Sağlık", icon: Stethoscope },
   { id: "RESTORAN", label: "Restoran", icon: UtensilsCrossed },
   { id: "OTEL", label: "Otel", icon: Hotel },
-  { id: "KUAFOR", label: "Kuaf\u00f6r", icon: Scissors },
-  { id: "GUZELLIK", label: "G\u00fczellik", icon: Sparkles },
-  { id: "DIGER", label: "Di\u011fer", icon: Building2 },
+  { id: "KUAFOR", label: "Kuaför", icon: Scissors },
+  { id: "GUZELLIK", label: "Güzellik", icon: Sparkles },
+  { id: "DIGER", label: "Diğer", icon: Building2 },
 ]
 
 const SECTOR_DISPLAY_NAMES: Record<Sector, string> = {
-  SAGLIK: "Sa\u011fl\u0131k",
+  SAGLIK: "Sağlık",
   RESTORAN: "Restoran",
   OTEL: "Otel",
-  KUAFOR: "Kuaf\u00f6r",
-  GUZELLIK: "G\u00fczellik",
-  DIGER: "Di\u011fer",
+  KUAFOR: "Kuaför",
+  GUZELLIK: "Güzellik",
+  DIGER: "Diğer",
 }
 
 const SECTOR_DESCRIPTIONS: Record<Sector, string> = {
   SAGLIK:
-    "Sa\u011fl\u0131k sekt\u00f6r\u00fcnde bir klinik sahibi iseniz, sizler i\u00e7in \u00f6n muhasebe, randevu takibi, hastalarla otomatik mesajla\u015fma, randevu hat\u0131rlatma gibi hizmetleri sa\u011flayabiliriz.",
+    "Sağlık sektöründe bir klinik sahibi iseniz, sizler için ön muhasebe, randevu takibi, hastalarla otomatik mesajlaşma, randevu hatırlatma gibi hizmetleri sağlayabiliriz.",
   RESTORAN:
-    "Restoran sahibi iseniz, rezervasyon takibi, stok y\u00f6netimi, m\u00fc\u015fteri sadakat program\u0131, sipari\u015f y\u00f6netimi gibi hizmetleri sa\u011flayabiliriz.",
+    "Restoran sahibi iseniz, rezervasyon takibi, stok yönetimi, müşteri sadakat programı, sipariş yönetimi gibi hizmetleri sağlayabiliriz.",
   OTEL:
-    "Otel i\u015fletmecisi iseniz, oda rezervasyonu, misafir y\u00f6netimi, gelir takibi, otomatik hat\u0131rlatmalar gibi hizmetleri sa\u011flayabiliriz.",
+    "Otel işletmecisi iseniz, oda rezervasyonu, misafir yönetimi, gelir takibi, otomatik hatırlatmalar gibi hizmetleri sağlayabiliriz.",
   KUAFOR:
-    "Kuaf\u00f6r salonu sahibi iseniz, randevu y\u00f6netimi, m\u00fc\u015fteri takibi, gelir-gider analizi, hat\u0131rlatma mesajlar\u0131 gibi hizmetleri sa\u011flayabiliriz.",
+    "Kuaför salonu sahibi iseniz, randevu yönetimi, müşteri takibi, gelir-gider analizi, hatırlatma mesajları gibi hizmetleri sağlayabiliriz.",
   GUZELLIK:
-    "G\u00fczellik merkezi sahibi iseniz, randevu takibi, m\u00fc\u015fteri kay\u0131tlar\u0131, i\u015flem ge\u00e7mi\u015fi, otomatik hat\u0131rlatmalar gibi hizmetleri sa\u011flayabiliriz.",
+    "Güzellik merkezi sahibi iseniz, randevu takibi, müşteri kayıtları, işlem geçmişi, otomatik hatırlatmalar gibi hizmetleri sağlayabiliriz.",
   DIGER:
-    "\u0130\u015fletmeniz i\u00e7in \u00f6zel randevu takibi, m\u00fc\u015fteri y\u00f6netimi, finansal raporlama ve otomatik mesajla\u015fma gibi hizmetleri sa\u011flayabiliriz.",
+    "İşletmeniz için özel randevu takibi, müşteri yönetimi, finansal raporlama ve otomatik mesajlaşma gibi hizmetleri sağlayabiliriz.",
 }
 
 const SECTOR_FEATURES: Record<Sector, string[]> = {
   SAGLIK: [
-    "Hasta kayd\u0131 ve ge\u00e7mi\u015f y\u00f6netimi",
-    "Randevu takibi ve hat\u0131rlatma",
-    "Gelir-gider ve \u00f6n muhasebe",
-    "WhatsApp ile otomatik mesajla\u015fma",
+    "Hasta kaydı ve geçmiş yönetimi",
+    "Randevu takibi ve hatırlatma",
+    "Gelir-gider ve ön muhasebe",
+    "WhatsApp ile otomatik mesajlaşma",
     "AI destekli asistan",
   ],
   RESTORAN: [
-    "Rezervasyon y\u00f6netimi",
+    "Rezervasyon yönetimi",
     "Stok ve envanter takibi",
-    "M\u00fc\u015fteri sadakat program\u0131",
-    "Sipari\u015f y\u00f6netimi",
+    "Müşteri sadakat programı",
+    "Sipariş yönetimi",
     "Gelir-gider analizi",
   ],
   OTEL: [
     "Oda rezervasyon sistemi",
-    "Misafir kay\u0131t y\u00f6netimi",
+    "Misafir kayıt yönetimi",
     "Gelir takibi ve raporlama",
-    "Otomatik hat\u0131rlatmalar",
-    "Kanal y\u00f6netimi",
+    "Otomatik hatırlatmalar",
+    "Kanal yönetimi",
   ],
   KUAFOR: [
-    "Randevu y\u00f6netimi",
-    "M\u00fc\u015fteri kay\u0131t ve ge\u00e7mi\u015f",
+    "Randevu yönetimi",
+    "Müşteri kayıt ve geçmiş",
     "Gelir-gider analizi",
-    "SMS/WhatsApp hat\u0131rlatma",
-    "\u00c7al\u0131\u015fan ve prim takibi",
+    "SMS/WhatsApp hatırlatma",
+    "Çalışan ve prim takibi",
   ],
   GUZELLIK: [
     "Randevu ve seans takibi",
-    "M\u00fc\u015fteri kay\u0131tlar\u0131 ve ge\u00e7mi\u015f",
-    "\u0130\u015flem ge\u00e7mi\u015fi ve notlar",
-    "Otomatik hat\u0131rlatmalar",
+    "Müşteri kayıtları ve geçmiş",
+    "İşlem geçmişi ve notlar",
+    "Otomatik hatırlatmalar",
     "Finansal raporlama",
   ],
   DIGER: [
     "Randevu/rezervasyon takibi",
-    "M\u00fc\u015fteri y\u00f6netimi",
+    "Müşteri yönetimi",
     "Finansal raporlama",
-    "Otomatik mesajla\u015fma",
+    "Otomatik mesajlaşma",
     "AI destekli asistan",
   ],
 }
@@ -171,21 +171,21 @@ const SECTOR_FEATURES: Record<Sector, string[]> = {
 // ── Package Data ───────────────────────────────────────────────────────────
 
 const BASIC_FEATURES = [
-  "3 mod\u00fcl se\u00e7ebilme hakk\u0131",
+  "3 modül seçebilme hakkı",
   "WhatsApp VEYA Telegram entegrasyonu",
   "Temel raporlama",
-  "100 m\u00fc\u015fteri/hasta kayd\u0131",
+  "100 müşteri/hasta kaydı",
   "Email destek",
 ]
 
 const PRO_FEATURES = [
-  "7 mod\u00fcl se\u00e7ebilme hakk\u0131",
+  "7 modül seçebilme hakkı",
   "WhatsApp VE Telegram entegrasyonu",
-  "Geli\u015fmi\u015f raporlama ve grafikler",
-  "S\u0131n\u0131rs\u0131z m\u00fc\u015fteri/hasta kayd\u0131",
-  "\u00d6ncelikli destek",
-  "G\u00f6rsel \u00fcretme mod\u00fcl\u00fc",
-  "\u00c7al\u0131\u015fan & prim y\u00f6netimi",
+  "Gelişmiş raporlama ve grafikler",
+  "Sınırsız müşteri/hasta kaydı",
+  "Öncelikli destek",
+  "Görsel üretme modülü",
+  "Çalışan & prim yönetimi",
 ]
 
 // ── Module Data ────────────────────────────────────────────────────────────
@@ -197,12 +197,12 @@ const MODULES: {
   proOnly: boolean
 }[] = [
   { id: "RANDEVU", label: "Randevu Takip", icon: Calendar, proOnly: false },
-  { id: "FINANS", label: "Finans Y\u00f6netimi", icon: DollarSign, proOnly: false },
-  { id: "HATIRLATMA", label: "Hat\u0131rlatma Sistemi", icon: Bell, proOnly: false },
+  { id: "FINANS", label: "Finans Yönetimi", icon: DollarSign, proOnly: false },
+  { id: "HATIRLATMA", label: "Hatırlatma Sistemi", icon: Bell, proOnly: false },
   { id: "RAPORLAMA", label: "Raporlama & Analitik", icon: BarChart3, proOnly: false },
-  { id: "GORSEL", label: "G\u00f6rsel \u00dcretme", icon: Image, proOnly: true },
+  { id: "GORSEL", label: "Görsel Üretme", icon: Image, proOnly: true },
   { id: "AI_CHATBOT", label: "AI Chatbot Destek", icon: Bot, proOnly: false },
-  { id: "CALISAN", label: "\u00c7al\u0131\u015fan & Prim Y\u00f6netimi", icon: Users, proOnly: true },
+  { id: "CALISAN", label: "Çalışan & Prim Yönetimi", icon: Users, proOnly: true },
 ]
 
 // ── Messaging Options ──────────────────────────────────────────────────────
@@ -214,7 +214,7 @@ const MESSAGING_OPTIONS: {
 }[] = [
   { id: "WHATSAPP", label: "WhatsApp", icon: MessageCircle },
   { id: "TELEGRAM", label: "Telegram", icon: Send },
-  { id: "BOTH", label: "Her \u0130kisi", icon: Smartphone },
+  { id: "BOTH", label: "Her İkisi", icon: Smartphone },
 ]
 
 // ── Component ──────────────────────────────────────────────────────────────

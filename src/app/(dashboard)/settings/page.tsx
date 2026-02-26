@@ -75,7 +75,7 @@ export default function SettingsPage() {
           setReminders(data);
         }
       } catch {
-        setError("Ayarlar y\u00fcklenemedi");
+        setError("Ayarlar yüklenemedi");
       } finally {
         setLoading(false);
       }
@@ -99,7 +99,7 @@ export default function SettingsPage() {
       if (!res.ok) throw new Error("Ayarlar kaydedilemedi");
       setSuccess("Ayarlar kaydedildi");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Bir hata olu\u015ftu");
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
     } finally {
       setSaving(false);
     }
@@ -121,12 +121,12 @@ export default function SettingsPage() {
         }),
       });
 
-      if (!res.ok) throw new Error("Hat\u0131rlatma eklenemedi");
+      if (!res.ok) throw new Error("Hatırlatma eklenemedi");
       const created = await res.json();
       setReminders([...reminders, created]);
       setNewReminder({ treatmentCategory: "", intervalDays: "", messageTemplate: "" });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Bir hata olu\u015ftu");
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
     } finally {
       setReminderSaving(false);
     }
@@ -170,7 +170,7 @@ export default function SettingsPage() {
     return TREATMENT_CATEGORIES.find((c) => c.value === value)?.label || value;
   }
 
-  if (loading) return <div className="text-gray-500">Y\u00fckleniyor...</div>;
+  if (loading) return <div className="text-gray-500">Yükleniyor...</div>;
 
   return (
     <div className="space-y-6">
@@ -178,19 +178,19 @@ export default function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Klinik Bilgileri</CardTitle>
-          <CardDescription>Klinik ayarlar\u0131n\u0131z\u0131 y\u00f6netin</CardDescription>
+          <CardDescription>Klinik ayarlarınızı yönetin</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSaveSettings} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="clinicName">Klinik Ad\u0131</Label>
+              <Label htmlFor="clinicName">Klinik Adı</Label>
               <Input
                 id="clinicName"
                 value={settings.clinicName}
                 onChange={(e) =>
                   setSettings({ ...settings, clinicName: e.target.value })
                 }
-                placeholder="Klinik ad\u0131"
+                placeholder="Klinik adı"
               />
             </div>
 
@@ -220,7 +220,7 @@ export default function SettingsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="vatRate">KDV Oran\u0131 (%)</Label>
+              <Label htmlFor="vatRate">KDV Oranı (%)</Label>
               <Input
                 id="vatRate"
                 type="number"
@@ -246,9 +246,9 @@ export default function SettingsPage() {
       {/* Reminder Rules */}
       <Card>
         <CardHeader>
-          <CardTitle>Hat\u0131rlatma Kurallar\u0131</CardTitle>
+          <CardTitle>Hatırlatma Kuralları</CardTitle>
           <CardDescription>
-            Tedavi sonras\u0131 hat\u0131rlatma kurallar\u0131 olu\u015fturun
+            Tedavi sonrası hatırlatma kuralları oluşturun
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -266,7 +266,7 @@ export default function SettingsPage() {
                         {getCategoryLabel(reminder.treatmentCategory)}
                       </span>
                       <span className="text-sm text-gray-500">
-                        - {reminder.intervalDays} g\u00fcn sonra
+                        - {reminder.intervalDays} gün sonra
                       </span>
                     </div>
                     <p className="text-sm text-gray-500">
@@ -306,7 +306,7 @@ export default function SettingsPage() {
 
           {/* New reminder form */}
           <form onSubmit={handleAddReminder} className="space-y-4">
-            <h4 className="font-medium">Yeni Hat\u0131rlatma</h4>
+            <h4 className="font-medium">Yeni Hatırlatma</h4>
 
             <div className="space-y-2">
               <Label>Kategori</Label>
@@ -321,7 +321,7 @@ export default function SettingsPage() {
                 required
                 className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
               >
-                <option value="">Kategori se\u00e7in...</option>
+                <option value="">Kategori seçin...</option>
                 {TREATMENT_CATEGORIES.map((cat) => (
                   <option key={cat.value} value={cat.value}>
                     {cat.label}
@@ -331,7 +331,7 @@ export default function SettingsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>G\u00fcn Say\u0131s\u0131</Label>
+              <Label>Gün Sayısı</Label>
               <Input
                 type="number"
                 min="1"
@@ -343,12 +343,12 @@ export default function SettingsPage() {
                   })
                 }
                 required
-                placeholder="\u00d6rnek: 30"
+                placeholder="Örnek: 30"
               />
             </div>
 
             <div className="space-y-2">
-              <Label>Mesaj \u015eablonu</Label>
+              <Label>Mesaj Şablonu</Label>
               <Textarea
                 value={newReminder.messageTemplate}
                 onChange={(e) =>
@@ -358,13 +358,13 @@ export default function SettingsPage() {
                   })
                 }
                 required
-                placeholder="\u00d6rnek: Say\u0131n {hasta}, {tedavi} i\u015fleminizin \u00fczerinden {gun} g\u00fcn ge\u00e7mi\u015ftir."
+                placeholder="Örnek: Sayın {hasta}, {tedavi} işleminizin üzerinden {gun} gün geçmiştir."
                 rows={3}
               />
             </div>
 
             <Button type="submit" disabled={reminderSaving}>
-              {reminderSaving ? "Ekleniyor..." : "Hat\u0131rlatma Ekle"}
+              {reminderSaving ? "Ekleniyor..." : "Hatırlatma Ekle"}
             </Button>
           </form>
         </CardContent>

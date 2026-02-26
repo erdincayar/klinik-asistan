@@ -52,10 +52,10 @@ export default function AiAssistantPage() {
       if (res.ok) {
         setMessages([...newMessages, { role: "assistant", content: data.message }]);
       } else {
-        setMessages([...newMessages, { role: "assistant", content: "\u00dczg\u00fcn\u00fcm, bir hata olu\u015ftu. L\u00fctfen tekrar deneyin." }]);
+        setMessages([...newMessages, { role: "assistant", content: "Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin." }]);
       }
     } catch {
-      setMessages([...newMessages, { role: "assistant", content: "Ba\u011flant\u0131 hatas\u0131. L\u00fctfen tekrar deneyin." }]);
+      setMessages([...newMessages, { role: "assistant", content: "Bağlantı hatası. Lütfen tekrar deneyin." }]);
     } finally {
       setIsLoading(false);
     }
@@ -69,7 +69,7 @@ export default function AiAssistantPage() {
           AI Asistan
         </h1>
         <p className="text-sm text-muted-foreground">
-          Klinik verileriniz hakk\u0131nda sorular sorun
+          Klinik verileriniz hakkında sorular sorun
         </p>
       </div>
 
@@ -80,7 +80,7 @@ export default function AiAssistantPage() {
             <Sparkles className="h-12 w-12 text-primary/30 mb-4" />
             <h2 className="text-lg font-semibold mb-2">KlinikAsistan AI</h2>
             <p className="text-muted-foreground mb-6 max-w-md">
-              Klinik verileriniz hakk\u0131nda sorular sorabilirsiniz. Gelir-gider analizi, hasta sorgulama ve daha fazlas\u0131.
+              Klinik verileriniz hakkında sorular sorabilirsiniz. Gelir-gider analizi, hasta sorgulama ve daha fazlası.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg">
               {quickPrompts.map((prompt, i) => (
