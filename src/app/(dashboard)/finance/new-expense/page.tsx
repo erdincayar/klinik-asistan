@@ -34,7 +34,7 @@ export default function NewExpensePage() {
     try {
       const amountTL = parseFloat(form.amount);
       if (isNaN(amountTL) || amountTL <= 0) {
-        throw new Error("Gecerli bir tutar girin");
+        throw new Error("Ge\u00e7erli bir tutar girin");
       }
 
       const res = await fetch("/api/expenses", {
@@ -55,7 +55,7 @@ export default function NewExpensePage() {
 
       router.push("/finance");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Bir hata olustu");
+      setError(err instanceof Error ? err.message : "Bir hata olu\u015ftu");
     } finally {
       setLoading(false);
     }
@@ -65,12 +65,12 @@ export default function NewExpensePage() {
     <div className="mx-auto max-w-2xl">
       <Card>
         <CardHeader>
-          <CardTitle>Yeni Gider Kaydi</CardTitle>
+          <CardTitle>Yeni Gider Kayd\u0131</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="description">Aciklama *</Label>
+              <Label htmlFor="description">A\u00e7\u0131klama *</Label>
               <Input
                 id="description"
                 value={form.description}
@@ -78,7 +78,7 @@ export default function NewExpensePage() {
                   setForm({ ...form, description: e.target.value })
                 }
                 required
-                placeholder="Ornek: Kira odemesi"
+                placeholder="\u00d6rnek: Kira \u00f6demesi"
               />
             </div>
 
@@ -93,7 +93,7 @@ export default function NewExpensePage() {
                 required
                 className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
               >
-                <option value="">Kategori secin...</option>
+                <option value="">Kategori se\u00e7in...</option>
                 {EXPENSE_CATEGORIES.map((cat) => (
                   <option key={cat.value} value={cat.value}>
                     {cat.label}
@@ -135,7 +135,7 @@ export default function NewExpensePage() {
               </Button>
               <Link href="/finance">
                 <Button type="button" variant="outline">
-                  Iptal
+                  \u0130ptal
                 </Button>
               </Link>
             </div>

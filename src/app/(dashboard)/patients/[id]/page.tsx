@@ -57,7 +57,7 @@ export default function PatientDetailPage() {
     async function fetchPatient() {
       try {
         const res = await fetch(`/api/patients/${params.id}`);
-        if (!res.ok) throw new Error("Hasta bulunamadi");
+        if (!res.ok) throw new Error("Hasta bulunamad\u0131");
         const data = await res.json();
         setPatient(data);
         setEditForm({
@@ -67,7 +67,7 @@ export default function PatientDetailPage() {
           notes: data.notes || "",
         });
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Bir hata olustu");
+        setError(err instanceof Error ? err.message : "Bir hata olu\u015ftu");
       } finally {
         setLoading(false);
       }
@@ -83,12 +83,12 @@ export default function PatientDetailPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editForm),
       });
-      if (!res.ok) throw new Error("Hasta guncellenemedi");
+      if (!res.ok) throw new Error("Hasta g\u00fcncellenemedi");
       const updated = await res.json();
       setPatient({ ...patient!, ...updated });
       setEditing(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Bir hata olustu");
+      setError(err instanceof Error ? err.message : "Bir hata olu\u015ftu");
     } finally {
       setSaving(false);
     }
@@ -100,7 +100,7 @@ export default function PatientDetailPage() {
     );
   }
 
-  if (loading) return <div className="text-gray-500">Yukleniyor...</div>;
+  if (loading) return <div className="text-gray-500">Y\u00fckleniyor...</div>;
   if (error) return <div className="text-red-500">{error}</div>;
   if (!patient) return null;
 
@@ -117,12 +117,12 @@ export default function PatientDetailPage() {
               onClick={() => setEditing(!editing)}
             >
               <Pencil className="mr-2 h-4 w-4" />
-              {editing ? "Iptal" : "Duzenle"}
+              {editing ? "\u0130ptal" : "D\u00fczenle"}
             </Button>
             <Link href={`/finance/new-income?patientId=${patient.id}`}>
               <Button size="sm">
                 <Plus className="mr-2 h-4 w-4" />
-                Yeni Islem Ekle
+                Yeni \u0130\u015flem Ekle
               </Button>
             </Link>
           </div>
@@ -175,15 +175,15 @@ export default function PatientDetailPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Phone className="h-4 w-4" />
-                {patient.phone || "Telefon girilmemis"}
+                {patient.phone || "Telefon girilmemi\u015f"}
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Mail className="h-4 w-4" />
-                {patient.email || "Email girilmemis"}
+                {patient.email || "Email girilmemi\u015f"}
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Calendar className="h-4 w-4" />
-                Kayit: {formatDate(patient.createdAt)}
+                Kay\u0131t: {formatDate(patient.createdAt)}
               </div>
               {patient.notes && (
                 <div className="flex items-start gap-2 text-sm text-gray-600 sm:col-span-2">
@@ -199,11 +199,11 @@ export default function PatientDetailPage() {
       {/* Treatment History */}
       <Card>
         <CardHeader>
-          <CardTitle>Tedavi Gecmisi</CardTitle>
+          <CardTitle>Tedavi Ge\u00e7mi\u015fi</CardTitle>
         </CardHeader>
         <CardContent>
           {patient.treatments.length === 0 ? (
-            <p className="text-sm text-gray-500">Henuz tedavi kaydi yok</p>
+            <p className="text-sm text-gray-500">Hen\u00fcz tedavi kayd\u0131 yok</p>
           ) : (
             <div className="space-y-4">
               {patient.treatments

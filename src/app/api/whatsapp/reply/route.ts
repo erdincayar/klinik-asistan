@@ -92,6 +92,12 @@ export async function POST(request: Request) {
     }
 
     const selectedSlot = availableSlots[slotIndex];
+    if (!selectedSlot) {
+      return Response.json(
+        { error: "Seçilen slot bulunamadı", availableSlots },
+        { status: 400 }
+      );
+    }
 
     // Create new appointment
     const newAppointment = await prisma.appointment.create({

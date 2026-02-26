@@ -41,6 +41,16 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const { name, phone, address, taxRate } = body;
 
+    // Validate taxRate if provided
+    if (taxRate !== undefined) {
+      if (typeof taxRate !== "number" || taxRate < 0 || taxRate > 100) {
+        return Response.json(
+          { error: "KDV oranı 0-100 arasında bir sayı olmalıdır" },
+          { status: 400 }
+        );
+      }
+    }
+
     const clinic = await prisma.clinic.update({
       where: { id: clinicId },
       data: {

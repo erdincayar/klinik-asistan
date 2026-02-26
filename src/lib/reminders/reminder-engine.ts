@@ -187,10 +187,6 @@ export async function sendReminder(
     include: { patient: true },
   });
 
-  // TODO: Actually send via WhatsApp/Telegram API
-  // For now, just log it
-  console.log(`[ReminderEngine] Sent reminder to ${log.patient.name}: ${messageContent}`);
-
   return log.id;
 }
 

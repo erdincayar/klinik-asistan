@@ -332,7 +332,7 @@ export async function getReport(
   const totalIncome = incomeResult._sum.amount || 0;
   const totalExpense = expenseResult._sum.amount || 0;
   const netProfit = totalIncome - totalExpense;
-  const kdv = Math.round((totalIncome * taxRate) / 100);
+  const kdv = Math.round((totalIncome * taxRate) / (100 + taxRate));
   const uniquePatients = patientCount.length;
 
   return [

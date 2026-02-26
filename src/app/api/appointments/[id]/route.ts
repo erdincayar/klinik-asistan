@@ -57,6 +57,15 @@ export async function PUT(
     const body = await request.json();
     const { status, notes, startTime, endTime, date, treatmentType } = body;
 
+    // Validate status if provided
+    const validStatuses = ["SCHEDULED", "CONFIRMED", "COMPLETED", "CANCELLED", "NO_SHOW"];
+    if (status && !validStatuses.includes(status)) {
+      return Response.json(
+        { error: "Geçersiz randevu durumu" },
+        { status: 400 }
+      );
+    }
+
     const updateData: any = {};
     if (status) updateData.status = status;
     if (notes !== undefined) updateData.notes = notes;
@@ -101,18 +110,19 @@ export async function PUT(
       },
     });
 
-    const response: any = appointment;
-
     // If cancelled, include freed slot info
     if (status === "CANCELLED") {
-      response.cancelledSlot = {
-        date: existing.date,
-        startTime: existing.startTime,
-        endTime: existing.endTime,
-      };
+      return Response.json({
+        ...appointment,
+        cancelledSlot: {
+          date: existing.date,
+          startTime: existing.startTime,
+          endTime: existing.endTime,
+        },
+      });
     }
 
-    return Response.json(response);
+    return Response.json(appointment);
   } catch {
     return Response.json({ error: "Bir hata oluştu" }, { status: 500 });
   }

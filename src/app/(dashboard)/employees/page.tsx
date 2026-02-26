@@ -111,7 +111,7 @@ export default function EmployeesPage() {
       const res = await fetch("/api/employees");
       if (!res.ok) throw new Error("Calisanlar alinamadi");
       const data = await res.json();
-      setEmployees(data.employees);
+      setEmployees(data.employees || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Bir hata olustu");
     } finally {

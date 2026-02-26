@@ -80,8 +80,6 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    console.log(`[Cron/Reminders] Completed: ${totalSent} sent, ${totalFailed} failed`);
-
     return Response.json({
       status: "ok",
       timestamp: new Date().toISOString(),

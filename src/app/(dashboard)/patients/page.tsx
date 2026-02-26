@@ -42,11 +42,11 @@ export default function PatientsPage() {
         setLoading(true);
         const params = search ? `?search=${encodeURIComponent(search)}` : "";
         const res = await fetch(`/api/patients${params}`);
-        if (!res.ok) throw new Error("Hastalar alinamadi");
+        if (!res.ok) throw new Error("Hastalar al\u0131namad\u0131");
         const data = await res.json();
         setPatients(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Bir hata olustu");
+        setError(err instanceof Error ? err.message : "Bir hata olu\u015ftu");
       } finally {
         setLoading(false);
       }
@@ -84,20 +84,20 @@ export default function PatientsPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <p className="text-gray-500">Yukleniyor...</p>
+            <p className="text-gray-500">Y\u00fckleniyor...</p>
           ) : error ? (
             <p className="text-red-500">{error}</p>
           ) : patients.length === 0 ? (
-            <p className="text-gray-500">Henuz hasta kaydi yok</p>
+            <p className="text-gray-500">Hen\u00fcz hasta kayd\u0131 yok</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Isim</TableHead>
+                  <TableHead>\u0130sim</TableHead>
                   <TableHead>Telefon</TableHead>
                   <TableHead className="hidden md:table-cell">Email</TableHead>
-                  <TableHead>Islem Sayisi</TableHead>
-                  <TableHead className="hidden md:table-cell">Kayit Tarihi</TableHead>
+                  <TableHead>\u0130\u015flem Say\u0131s\u0131</TableHead>
+                  <TableHead className="hidden md:table-cell">Kay\u0131t Tarihi</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>

@@ -23,15 +23,15 @@ import {
 import { Button } from "@/components/ui/button";
 
 const navItems = [
-  { href: "/dashboard", label: "Genel Bakis", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Genel Bak\u0131\u015f", icon: LayoutDashboard },
   { href: "/patients", label: "Hastalar", icon: Users },
   { href: "/appointments", label: "Randevular", icon: Calendar },
   { href: "/finance", label: "Finans", icon: DollarSign },
   { href: "/ai-assistant", label: "AI Asistan", icon: Bot },
   { href: "/whatsapp", label: "WhatsApp", icon: MessageCircle },
   { href: "/reports", label: "Raporlar", icon: BarChart3 },
-  { href: "/employees", label: "Calisanlar", icon: UserCog },
-  { href: "/reminders", label: "Hatirlatmalar", icon: Bell },
+  { href: "/employees", label: "\u00c7al\u0131\u015fanlar", icon: UserCog },
+  { href: "/reminders", label: "Hat\u0131rlatmalar", icon: Bell },
   { href: "/settings", label: "Ayarlar", icon: Settings },
 ];
 
@@ -99,7 +99,7 @@ function Sidebar({
         <div className="border-t border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-gray-700 truncate">
-              {session?.user?.name || "Kullanici"}
+              {session?.user?.name || "Kullan\u0131c\u0131"}
             </span>
             <Button
               variant="ghost"
@@ -118,7 +118,7 @@ function Sidebar({
 
 function getPageTitle(pathname: string): string {
   const titles: Record<string, string> = {
-    "/dashboard": "Genel Bakis",
+    "/dashboard": "Genel Bak\u0131\u015f",
     "/patients": "Hastalar",
     "/patients/new": "Yeni Hasta",
     "/appointments": "Randevular",
@@ -129,8 +129,8 @@ function getPageTitle(pathname: string): string {
     "/ai-assistant": "AI Asistan",
     "/whatsapp": "WhatsApp",
     "/reports": "Raporlar",
-    "/employees": "Calisanlar",
-    "/reminders": "Hatirlatmalar",
+    "/employees": "\u00c7al\u0131\u015fanlar",
+    "/reminders": "Hat\u0131rlatmalar",
     "/settings": "Ayarlar",
   };
   for (const [path, title] of Object.entries(titles)) {

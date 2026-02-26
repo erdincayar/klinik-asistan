@@ -121,10 +121,6 @@ export async function POST(req: NextRequest) {
       text: responseText,
     });
 
-    console.log(
-      `[Telegram Webhook] ${senderName} (${chatId}): "${text}" -> ${result.success ? "basarili" : "basarisiz"}`
-    );
-
     return Response.json({
       ok: true,
       processed: true,

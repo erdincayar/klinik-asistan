@@ -85,7 +85,7 @@ export default function FinancePage() {
           fetch(`/api/finance?type=monthly-summary&year=${year}`),
         ]);
 
-        if (!isRes.ok) throw new Error("Finans verisi alinamadi");
+        if (!isRes.ok) throw new Error("Finans verisi al\u0131namad\u0131");
         const isData = await isRes.json();
         setIncomeStatement(isData);
 
@@ -94,7 +94,7 @@ export default function FinancePage() {
           setMonthlySummary(msData.months || []);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Bir hata olustu");
+        setError(err instanceof Error ? err.message : "Bir hata olu\u015ftu");
       } finally {
         setLoading(false);
       }
@@ -103,11 +103,11 @@ export default function FinancePage() {
   }, [month, year]);
 
   const months = [
-    "Ocak", "Subat", "Mart", "Nisan", "Mayis", "Haziran",
-    "Temmuz", "Agustos", "Eylul", "Ekim", "Kasim", "Aralik",
+    "Ocak", "\u015eubat", "Mart", "Nisan", "May\u0131s", "Haziran",
+    "Temmuz", "A\u011fustos", "Eyl\u00fcl", "Ekim", "Kas\u0131m", "Aral\u0131k",
   ];
 
-  if (loading) return <div className="text-gray-500">Yukleniyor...</div>;
+  if (loading) return <div className="text-gray-500">Y\u00fckleniyor...</div>;
   if (error) return <div className="text-red-500">{error}</div>;
 
   return (
@@ -183,7 +183,7 @@ export default function FinancePage() {
           </Card>
           <Card>
             <CardContent className="p-6">
-              <p className="text-sm text-gray-500">KDV Tutari</p>
+              <p className="text-sm text-gray-500">KDV Tutar\u0131</p>
               <p className="text-2xl font-bold text-gray-700">
                 {formatCurrency(incomeStatement.vatAmount)}
               </p>
@@ -197,8 +197,8 @@ export default function FinancePage() {
         {/* Monthly Revenue vs Expenses */}
         <Card>
           <CardHeader>
-            <CardTitle>Aylik Gelir / Gider</CardTitle>
-            <CardDescription>{year} yili karsilastirma</CardDescription>
+            <CardTitle>Ayl\u0131k Gelir / Gider</CardTitle>
+            <CardDescription>{year} y\u0131l\u0131 kar\u015f\u0131la\u015ft\u0131rma</CardDescription>
           </CardHeader>
           <CardContent>
             {monthlySummary.length === 0 ? (
@@ -229,15 +229,15 @@ export default function FinancePage() {
         {/* Category Breakdown Pie */}
         <Card>
           <CardHeader>
-            <CardTitle>Kategori Dagilimi</CardTitle>
-            <CardDescription>Tedavi kategorilerine gore gelir</CardDescription>
+            <CardTitle>Kategori Da\u011f\u0131l\u0131m\u0131</CardTitle>
+            <CardDescription>Tedavi kategorilerine g\u00f6re gelir</CardDescription>
           </CardHeader>
           <CardContent>
             {incomeStatement && incomeStatement.totalIncome > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
                   <Pie
-                    data={TREATMENT_CATEGORIES.map((cat, i) => ({
+                    data={TREATMENT_CATEGORIES.map((cat) => ({
                       name: cat.label,
                       value: 1,
                     }))}

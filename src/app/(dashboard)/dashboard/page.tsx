@@ -80,7 +80,7 @@ export default function DashboardPage() {
           fetch(`/api/appointments?date=${todayStr}`),
         ]);
 
-        if (!dashRes.ok) throw new Error("Dashboard verisi alinamadi");
+        if (!dashRes.ok) throw new Error("Dashboard verisi al\u0131namad\u0131");
         const dashData = await dashRes.json();
         setData(dashData);
 
@@ -94,7 +94,7 @@ export default function DashboardPage() {
           setTodayAppointments(apptData.appointments || apptData || []);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Bir hata olustu");
+        setError(err instanceof Error ? err.message : "Bir hata oluştu");
       } finally {
         setLoading(false);
       }
@@ -103,7 +103,7 @@ export default function DashboardPage() {
   }, []);
 
   if (loading) {
-    return <div className="text-gray-500">Yukleniyor...</div>;
+    return <div className="text-gray-500">Yükleniyor...</div>;
   }
 
   if (error) {
@@ -114,14 +114,14 @@ export default function DashboardPage() {
 
   const statCards = [
     {
-      title: "Aylik Gelir",
+      title: "Aylık Gelir",
       value: formatCurrency(data.monthlyIncome),
       icon: TrendingUp,
       color: "text-green-600",
       bg: "bg-green-50",
     },
     {
-      title: "Aylik Gider",
+      title: "Aylık Gider",
       value: formatCurrency(data.monthlyExpense),
       icon: TrendingDown,
       color: "text-red-600",
@@ -232,18 +232,18 @@ export default function DashboardPage() {
         {/* Recent Treatments */}
         <Card>
           <CardHeader>
-            <CardTitle>Son Islemler</CardTitle>
-            <CardDescription>Son 5 tedavi islemi</CardDescription>
+            <CardTitle>Son İşlemler</CardTitle>
+            <CardDescription>Son 5 tedavi işlemi</CardDescription>
           </CardHeader>
           <CardContent>
             {data.recentTreatments.length === 0 ? (
-              <p className="text-sm text-gray-500">Henuz islem yok</p>
+              <p className="text-sm text-gray-500">Henüz işlem yok</p>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Hasta</TableHead>
-                    <TableHead>Islem</TableHead>
+                    <TableHead>İşlem</TableHead>
                     <TableHead>Tutar</TableHead>
                     <TableHead>Tarih</TableHead>
                   </TableRow>
@@ -268,8 +268,8 @@ export default function DashboardPage() {
         {/* Monthly Revenue Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Aylik Gelir</CardTitle>
-            <CardDescription>{new Date().getFullYear()} yili aylik gelir grafigi</CardDescription>
+            <CardTitle>Aylık Gelir</CardTitle>
+            <CardDescription>{new Date().getFullYear()} yılı aylık gelir grafiği</CardDescription>
           </CardHeader>
           <CardContent>
             {chartData.length === 0 ? (

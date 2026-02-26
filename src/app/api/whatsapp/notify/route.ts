@@ -10,8 +10,17 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const clinicId = (session.user as any).clinicId;
+    if (!clinicId) {
+      return Response.json({ error: "No clinic" }, { status: 400 });
+    }
+
     const body = await req.json();
     const { patientId, message, phone, type } = body;
+
+    if (!message) {
+      return Response.json({ error: "Mesaj gerekli" }, { status: 400 });
+    }
 
     // If type is "doctor", send to doctor
     if (type === "doctor") {
@@ -22,8 +31,8 @@ export async function POST(req: NextRequest) {
     // Send to specific phone or patient's phone
     let targetPhone = phone;
     if (!targetPhone && patientId) {
-      const patient = await prisma.patient.findUnique({
-        where: { id: patientId },
+      const patient = await prisma.patient.findFirst({
+        where: { id: patientId, clinicId },
         select: { phone: true },
       });
       targetPhone = patient?.phone;
