@@ -238,6 +238,62 @@ async function processMessage(msg: TgMessage): Promise<void> {
       return;
     }
 
+    if (parsed.type === "STOCK_IN" || parsed.type === "STOCK_OUT") {
+      const searchTerm = parsed.productName.trim().toLowerCase();
+      const products = await prisma.product.findMany({
+        where: { clinicId, isActive: true, name: { contains: parsed.productName.trim() } },
+      });
+      const product = products.find((p) => p.name.toLowerCase().includes(searchTerm));
+
+      if (!product) {
+        await tgSend(chatId, `❌ Urun bulunamadi: "${parsed.productName}"`);
+        return;
+      }
+
+      if (parsed.type === "STOCK_OUT" && product.currentStock < parsed.quantity) {
+        await tgSend(chatId, `❌ Yetersiz stok! ${product.name} mevcut: ${product.currentStock} ${product.unit}`);
+        return;
+      }
+
+      const isIn = parsed.type === "STOCK_IN";
+      const unitPrice = isIn ? product.purchasePrice : product.salePrice;
+
+      await prisma.$transaction([
+        prisma.stockMovement.create({
+          data: {
+            productId: product.id,
+            clinicId,
+            type: isIn ? "IN" : "OUT",
+            quantity: parsed.quantity,
+            unitPrice,
+            totalPrice: unitPrice * parsed.quantity,
+            description: parsed.notes || `Telegram dogal dil ile stok ${isIn ? "girisi" : "cikisi"}`,
+            date: new Date(),
+          },
+        }),
+        prisma.product.update({
+          where: { id: product.id },
+          data: {
+            currentStock: isIn
+              ? { increment: parsed.quantity }
+              : { decrement: parsed.quantity },
+          },
+        }),
+      ]);
+
+      const newStock = isIn
+        ? product.currentStock + parsed.quantity
+        : product.currentStock - parsed.quantity;
+
+      await tgSend(chatId, [
+        `✅ Stok ${isIn ? "girisi" : "cikisi"} kaydedildi:`,
+        `📦 ${product.name}`,
+        `${isIn ? "➕" : "➖"} ${parsed.quantity} ${product.unit}`,
+        `📊 Yeni stok: ${newStock} ${product.unit}`,
+      ].join("\n"));
+      return;
+    }
+
     await tgSend(chatId, "❌ Mesaj anlaşılamadı. /yardim yazın.");
   } catch (error) {
     console.error("[Bot] Hata:", error);

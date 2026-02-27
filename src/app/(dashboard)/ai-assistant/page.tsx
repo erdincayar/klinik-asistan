@@ -15,6 +15,8 @@ const quickPrompts = [
   "Bu ayki toplam gelir ne kadar?",
   "Bugünün randevuları neler?",
   "Yarın için müsait saatler",
+  "Stok durumu nasıl?",
+  "Düşük stoklu ürünler hangileri?",
 ];
 
 export default function AiAssistantPage() {

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { TrendingUp, TrendingDown, DollarSign, Users, Clock } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, Users, Clock, Package } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -66,6 +66,7 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [chartData, setChartData] = useState<MonthlySummary[]>([]);
   const [todayAppointments, setTodayAppointments] = useState<TodayAppointment[]>([]);
+  const [lowStockCount, setLowStockCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -74,10 +75,11 @@ export default function DashboardPage() {
       try {
         const today = new Date();
         const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-        const [dashRes, chartRes, apptRes] = await Promise.all([
+        const [dashRes, chartRes, apptRes, lowStockRes] = await Promise.all([
           fetch("/api/dashboard"),
           fetch(`/api/finance?type=monthly-summary&year=${new Date().getFullYear()}`),
           fetch(`/api/appointments?date=${todayStr}`),
+          fetch("/api/products/low-stock"),
         ]);
 
         if (!dashRes.ok) throw new Error("Dashboard verisi alınamadı");
@@ -92,6 +94,11 @@ export default function DashboardPage() {
         if (apptRes.ok) {
           const apptData = await apptRes.json();
           setTodayAppointments(apptData.appointments || apptData || []);
+        }
+
+        if (lowStockRes.ok) {
+          const lowStockData = await lowStockRes.json();
+          setLowStockCount(Array.isArray(lowStockData) ? lowStockData.length : 0);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Bir hata oluştu");
@@ -165,6 +172,44 @@ export default function DashboardPage() {
           </Card>
         ))}
       </div>
+
+      {/* Low Stock Warning */}
+      <Link href="/inventory">
+        <Card className={cn(
+          "cursor-pointer transition-colors hover:shadow-md",
+          lowStockCount > 0 ? "border-orange-300 bg-orange-50" : "border-green-300 bg-green-50"
+        )}>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "rounded-full p-2",
+                lowStockCount > 0 ? "bg-orange-100" : "bg-green-100"
+              )}>
+                <Package className={cn(
+                  "h-5 w-5",
+                  lowStockCount > 0 ? "text-orange-600" : "text-green-600"
+                )} />
+              </div>
+              <div>
+                <p className={cn(
+                  "text-sm font-semibold",
+                  lowStockCount > 0 ? "text-orange-800" : "text-green-800"
+                )}>
+                  {lowStockCount > 0
+                    ? `${lowStockCount} urun dusuk stokta`
+                    : "Stok seviyeleri normal"}
+                </p>
+                <p className={cn(
+                  "text-xs",
+                  lowStockCount > 0 ? "text-orange-600" : "text-green-600"
+                )}>
+                  {lowStockCount > 0 ? "Stok sayfasina gitmek icin tiklayin" : "Tum urunler yeterli stokta"}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </Link>
 
       {/* Today's Appointments */}
       <Card>

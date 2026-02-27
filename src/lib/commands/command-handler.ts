@@ -16,6 +16,10 @@ import {
   getTopServices,
   getTopPatients,
   getCommissionReport,
+  getStockOverview,
+  searchStock,
+  stockEntry,
+  stockExit,
 } from "./command-executor";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -299,6 +303,11 @@ export async function handleCommand(
         break;
       }
 
+      case "stok": {
+        response = await handleStockCommand(clinicId, args);
+        break;
+      }
+
       case "ozet": {
         response = await getDailySummary(clinicId);
         break;
@@ -402,4 +411,51 @@ async function handleTopCommand(
     "/top servis - En cok kazandiran servisler",
     "/top hasta - En cok gelen hastalar",
   ].join("\n");
+}
+
+// ── Stock Sub-router ─────────────────────────────────────────────────────────
+
+async function handleStockCommand(
+  clinicId: string,
+  args: string
+): Promise<string> {
+  const lower = args.toLowerCase().trim();
+
+  // No args → stock overview
+  if (!lower) {
+    return getStockOverview(clinicId);
+  }
+
+  // "giris [ürün] [miktar]" → stock entry
+  if (lower.startsWith("giris") || lower.startsWith("giriş")) {
+    const rest = args.replace(/^giri[sş]\s*/i, "").trim();
+    const parts = rest.split(/\s+/);
+    const quantityStr = parts[parts.length - 1];
+    const quantity = parseInt(quantityStr, 10);
+
+    if (isNaN(quantity) || parts.length < 2) {
+      return "⚠️ Kullanim: /stok giris [urun adi] [miktar]\nOrnek: /stok giris Nurederm 10";
+    }
+
+    const productName = parts.slice(0, -1).join(" ");
+    return stockEntry(clinicId, productName, quantity);
+  }
+
+  // "cikis [ürün] [miktar]" → stock exit
+  if (lower.startsWith("cikis") || lower.startsWith("çıkış") || lower.startsWith("cıkıs")) {
+    const rest = args.replace(/^[cç][iı]k[iı][sş]\s*/i, "").trim();
+    const parts = rest.split(/\s+/);
+    const quantityStr = parts[parts.length - 1];
+    const quantity = parseInt(quantityStr, 10);
+
+    if (isNaN(quantity) || parts.length < 2) {
+      return "⚠️ Kullanim: /stok cikis [urun adi] [miktar]\nOrnek: /stok cikis Botox 5";
+    }
+
+    const productName = parts.slice(0, -1).join(" ");
+    return stockExit(clinicId, productName, quantity);
+  }
+
+  // Otherwise → search by product name
+  return searchStock(clinicId, args);
 }

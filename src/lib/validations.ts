@@ -98,3 +98,27 @@ export const resetPasswordSchema = z.object({
 
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+
+export const productSchema = z.object({
+  name: z.string().min(2, "Ürün adı en az 2 karakter olmalı"),
+  sku: z.string().min(1, "SKU kodu gerekli"),
+  category: z.enum(["KOZMETIK", "MEDIKAL", "SARF_MALZEME", "DIGER"]),
+  unit: z.enum(["ADET", "KUTU", "ML", "GR"]),
+  currentStock: z.number().int().min(0, "Stok negatif olamaz").optional(),
+  minStock: z.number().int().min(0).optional(),
+  purchasePrice: z.number().int().min(0, "Fiyat negatif olamaz"),
+  salePrice: z.number().int().min(0, "Fiyat negatif olamaz"),
+});
+
+export const stockMovementSchema = z.object({
+  productId: z.string().min(1, "Ürün seçimi gerekli"),
+  type: z.enum(["IN", "OUT", "ADJUSTMENT"]),
+  quantity: z.number().int().min(1, "Miktar en az 1 olmalı"),
+  unitPrice: z.number().int().min(0).optional(),
+  description: z.string().optional(),
+  reference: z.string().optional(),
+  date: z.string().optional(),
+});
+
+export type ProductInput = z.infer<typeof productSchema>;
+export type StockMovementInput = z.infer<typeof stockMovementSchema>;

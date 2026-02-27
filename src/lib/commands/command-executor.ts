@@ -836,6 +836,204 @@ export async function sendReminderCommand(clinicId: string): Promise<string> {
   return lines.join("\n");
 }
 
+// ── Stock Commands ───────────────────────────────────────────────────────────
+
+export async function getStockOverview(clinicId: string): Promise<string> {
+  const products = await prisma.product.findMany({
+    where: { clinicId, isActive: true },
+  });
+
+  if (products.length === 0) {
+    return "📦 Henuz urun kaydi bulunmuyor.";
+  }
+
+  const totalValue = products.reduce(
+    (sum, p) => sum + p.currentStock * p.purchasePrice,
+    0
+  );
+  const lowStock = products.filter((p) => p.currentStock <= p.minStock);
+
+  const lines: string[] = [
+    "📦 Stok Durumu:",
+    `Toplam Urun: ${products.length}`,
+    `Toplam Stok Degeri: ${formatTL(totalValue)}`,
+    `Dusuk Stok Uyarisi: ${lowStock.length} urun`,
+  ];
+
+  if (lowStock.length > 0) {
+    lines.push("");
+    lines.push("⚠️ Dusuk Stoklu Urunler:");
+    for (const p of lowStock) {
+      lines.push(`- ${p.name}: ${p.currentStock} ${p.unit} (min: ${p.minStock})`);
+    }
+  }
+
+  return lines.join("\n");
+}
+
+export async function searchStock(
+  clinicId: string,
+  query: string
+): Promise<string> {
+  if (!query.trim()) {
+    return "⚠️ Urun adi belirtmelisiniz. Ornek: /stok Nurederm";
+  }
+
+  const searchTerm = query.trim().toLowerCase();
+
+  const products = await prisma.product.findMany({
+    where: {
+      clinicId,
+      isActive: true,
+      OR: [
+        { name: { contains: query.trim() } },
+        { sku: { contains: query.trim() } },
+      ],
+    },
+  });
+
+  const filtered = products.filter(
+    (p) =>
+      p.name.toLowerCase().includes(searchTerm) ||
+      p.sku.toLowerCase().includes(searchTerm)
+  );
+
+  if (filtered.length === 0) {
+    return `❌ Urun bulunamadi: "${query.trim()}"`;
+  }
+
+  const lines: string[] = [];
+  for (const p of filtered) {
+    const stockStatus =
+      p.currentStock <= p.minStock ? "⚠️ DUSUK" : "✅ Normal";
+    lines.push(
+      [
+        `📦 ${p.name}`,
+        `SKU: ${p.sku}`,
+        `Kategori: ${p.category}`,
+        `Stok: ${p.currentStock} ${p.unit} (min: ${p.minStock}) ${stockStatus}`,
+        `Alis: ${formatTL(p.purchasePrice)} | Satis: ${formatTL(p.salePrice)}`,
+      ].join("\n")
+    );
+  }
+
+  return lines.join("\n\n");
+}
+
+export async function stockEntry(
+  clinicId: string,
+  productName: string,
+  quantity: number
+): Promise<string> {
+  if (!productName.trim()) {
+    return "⚠️ Urun adi belirtmelisiniz. Ornek: /stok giris Nurederm 10";
+  }
+
+  if (quantity <= 0) {
+    return "⚠️ Miktar pozitif bir sayi olmalidir.";
+  }
+
+  const searchTerm = productName.trim().toLowerCase();
+  const products = await prisma.product.findMany({
+    where: { clinicId, isActive: true, name: { contains: productName.trim() } },
+  });
+
+  const product = products.find((p) =>
+    p.name.toLowerCase().includes(searchTerm)
+  );
+
+  if (!product) {
+    return `❌ Urun bulunamadi: "${productName.trim()}"`;
+  }
+
+  await prisma.$transaction([
+    prisma.stockMovement.create({
+      data: {
+        productId: product.id,
+        clinicId,
+        type: "IN",
+        quantity,
+        unitPrice: product.purchasePrice,
+        totalPrice: product.purchasePrice * quantity,
+        description: `Telegram ile stok girisi`,
+        date: new Date(),
+      },
+    }),
+    prisma.product.update({
+      where: { id: product.id },
+      data: { currentStock: { increment: quantity } },
+    }),
+  ]);
+
+  const newStock = product.currentStock + quantity;
+
+  return [
+    "✅ Stok girisi yapildi:",
+    `📦 ${product.name}`,
+    `➕ ${quantity} ${product.unit} eklendi`,
+    `📊 Yeni stok: ${newStock} ${product.unit}`,
+  ].join("\n");
+}
+
+export async function stockExit(
+  clinicId: string,
+  productName: string,
+  quantity: number
+): Promise<string> {
+  if (!productName.trim()) {
+    return "⚠️ Urun adi belirtmelisiniz. Ornek: /stok cikis Botox 5";
+  }
+
+  if (quantity <= 0) {
+    return "⚠️ Miktar pozitif bir sayi olmalidir.";
+  }
+
+  const searchTerm = productName.trim().toLowerCase();
+  const products = await prisma.product.findMany({
+    where: { clinicId, isActive: true, name: { contains: productName.trim() } },
+  });
+
+  const product = products.find((p) =>
+    p.name.toLowerCase().includes(searchTerm)
+  );
+
+  if (!product) {
+    return `❌ Urun bulunamadi: "${productName.trim()}"`;
+  }
+
+  if (product.currentStock < quantity) {
+    return `❌ Yetersiz stok! ${product.name} mevcut stok: ${product.currentStock} ${product.unit}`;
+  }
+
+  await prisma.$transaction([
+    prisma.stockMovement.create({
+      data: {
+        productId: product.id,
+        clinicId,
+        type: "OUT",
+        quantity,
+        unitPrice: product.salePrice,
+        totalPrice: product.salePrice * quantity,
+        description: `Telegram ile stok cikisi`,
+        date: new Date(),
+      },
+    }),
+    prisma.product.update({
+      where: { id: product.id },
+      data: { currentStock: { decrement: quantity } },
+    }),
+  ]);
+
+  const newStock = product.currentStock - quantity;
+
+  return [
+    "✅ Stok cikisi yapildi:",
+    `📦 ${product.name}`,
+    `➖ ${quantity} ${product.unit} cikarildi`,
+    `📊 Yeni stok: ${newStock} ${product.unit}`,
+  ].join("\n");
+}
+
 // ── Help Command ─────────────────────────────────────────────────────────────
 
 export function getHelpText(): string {
@@ -866,6 +1064,12 @@ export function getHelpText(): string {
     "/hastalar - Hasta listesi",
     "/hatirlatmalar - Günün hatirlatmalari",
     "/hatirlatma gonder - Hatirlatmalari gonder",
+    "",
+    "📦 Stok Komutlari:",
+    "/stok - Stok durumu ozeti",
+    "/stok [urun adi] - Urun ara",
+    "/stok giris [urun] [miktar] - Stok girisi",
+    "/stok cikis [urun] [miktar] - Stok cikisi",
     "",
     "📋 Genel:",
     "/ozet - Günlük ozet",

@@ -30,6 +30,20 @@ export interface ParsedExpense {
   category: string;
 }
 
+export interface ParsedStockIn {
+  type: "STOCK_IN";
+  productName: string;
+  quantity: number;
+  notes: string;
+}
+
+export interface ParsedStockOut {
+  type: "STOCK_OUT";
+  productName: string;
+  quantity: number;
+  notes: string;
+}
+
 export interface ParsedAmbiguous {
   type: "AMBIGUOUS";
   message: string;
@@ -47,6 +61,8 @@ export type ParsedMessage =
   | ParsedAppointment
   | ParsedIncome
   | ParsedExpense
+  | ParsedStockIn
+  | ParsedStockOut
   | ParsedAmbiguous
   | ParseError;
 
@@ -117,7 +133,21 @@ Hasta adı OLMAYAN, ürün/malzeme/kira/fatura/maaş gibi işletme gideri + tuta
 - "Elektrik faturası 3500tl" → gider
 - "maaş 20000tl" → gider
 
-### 4. BELİRSİZ (AMBIGUOUS)
+### 4. STOK GİRİŞ (STOCK_IN)
+Ürün/malzeme adı + miktar + "geldi", "alındı", "girdi", "eklendi", "kutu geldi" gibi giriş ifadeleri.
+Örnekler:
+- "Nurederm 10 kutu geldi" → Nurederm, 10 adet giriş
+- "Botox 5 adet alındı" → Botox, 5 adet giriş
+- "20 adet dolgu malzemesi geldi" → dolgu malzemesi, 20 adet giriş
+
+### 5. STOK ÇIKIŞ (STOCK_OUT)
+Ürün/malzeme adı + miktar + "kullanıldı", "harcandı", "çıkış", "bitti", "tükendi" gibi çıkış ifadeleri.
+Örnekler:
+- "5 adet Botox kullanıldı" → Botox, 5 adet çıkış
+- "Nurederm 3 kutu harcandı" → Nurederm, 3 adet çıkış
+- "2 adet dolgu kullanıldı" → dolgu, 2 adet çıkış
+
+### 6. BELİRSİZ (AMBIGUOUS)
 Eğer mesaj birden fazla şekilde yorumlanabiliyorsa (örneğin gelir mi gider mi belli değilse), AMBIGUOUS döndür ve seçenekleri sun.
 
 ## Saat Kuralları
@@ -185,6 +215,12 @@ GELİR:
 
 GİDER:
 {"type":"EXPENSE","description":"gider açıklaması","amount":kuruş_cinsinden_sayı,"category":"MALZEME|KIRA|FATURA|MAAS|DIGER"}
+
+STOK GİRİŞ:
+{"type":"STOCK_IN","productName":"ürün adı","quantity":adet_sayısı,"notes":"varsa ek not"}
+
+STOK ÇIKIŞ:
+{"type":"STOCK_OUT","productName":"ürün adı","quantity":adet_sayısı,"notes":"varsa ek not"}
 
 BELİRSİZ:
 {"type":"AMBIGUOUS","message":"kullanıcıya sorulacak soru","originalText":"orijinal mesaj","options":["seçenek1","seçenek2"]}
@@ -426,6 +462,67 @@ export async function processWhatsAppMessage(
         parsed,
         confirmationMessage: msg,
         recordId: expense.id,
+      };
+    }
+
+    if (parsed.type === "STOCK_IN" || parsed.type === "STOCK_OUT") {
+      const searchTerm = parsed.productName.trim().toLowerCase();
+      const products = await prisma.product.findMany({
+        where: { clinicId, isActive: true, name: { contains: parsed.productName.trim() } },
+      });
+      const product = products.find((p) => p.name.toLowerCase().includes(searchTerm));
+
+      if (!product) {
+        return {
+          success: false,
+          parsed,
+          confirmationMessage: `❌ Urun bulunamadi: "${parsed.productName}"`,
+        };
+      }
+
+      const isIn = parsed.type === "STOCK_IN";
+
+      if (!isIn && product.currentStock < parsed.quantity) {
+        return {
+          success: false,
+          parsed,
+          confirmationMessage: `❌ Yetersiz stok! ${product.name} mevcut: ${product.currentStock} ${product.unit}`,
+        };
+      }
+
+      const unitPrice = isIn ? product.purchasePrice : product.salePrice;
+
+      const movement = await prisma.stockMovement.create({
+        data: {
+          productId: product.id,
+          clinicId,
+          type: isIn ? "IN" : "OUT",
+          quantity: parsed.quantity,
+          unitPrice,
+          totalPrice: unitPrice * parsed.quantity,
+          description: parsed.notes || `Dogal dil ile stok ${isIn ? "girisi" : "cikisi"}`,
+          date: new Date(),
+        },
+      });
+
+      await prisma.product.update({
+        where: { id: product.id },
+        data: {
+          currentStock: isIn
+            ? { increment: parsed.quantity }
+            : { decrement: parsed.quantity },
+        },
+      });
+
+      const newStock = isIn
+        ? product.currentStock + parsed.quantity
+        : product.currentStock - parsed.quantity;
+
+      return {
+        success: true,
+        parsed,
+        confirmationMessage: `✅ Stok ${isIn ? "girisi" : "cikisi"} kaydedildi:\n📦 ${product.name}\n${isIn ? "➕" : "➖"} ${parsed.quantity} ${product.unit}\n📊 Yeni stok: ${newStock} ${product.unit}`,
+        recordId: movement.id,
       };
     }
 

@@ -169,6 +169,49 @@ const tools: Anthropic.Tool[] = [
       required: ["patientId"],
     },
   },
+  {
+    name: "get_stock_summary",
+    description: "Stok ozeti: toplam urun sayisi, toplam stok degeri, dusuk stok uyarisi sayisi ve kategori dagilimi.",
+    input_schema: {
+      type: "object" as const,
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: "get_low_stock",
+    description: "Minimum stok seviyesinin altindaki urunleri listeler.",
+    input_schema: {
+      type: "object" as const,
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: "search_products",
+    description: "Urun adina veya SKU'ya gore urun arar. Stok bilgilerini doner.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        query: { type: "string", description: "Arama terimi (urun adi veya SKU)" },
+      },
+      required: ["query"],
+    },
+  },
+  {
+    name: "record_stock_movement",
+    description: "Stok hareketi kaydeder (giris veya cikis). Urunu ada gore bulur, stok hareketini olusturur ve mevcut stogu gunceller.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        productName: { type: "string", description: "Urun adi" },
+        type: { type: "string", description: "Hareket tipi: IN (giris) veya OUT (cikis)" },
+        quantity: { type: "number", description: "Miktar" },
+        description: { type: "string", description: "Aciklama (opsiyonel)" },
+      },
+      required: ["productName", "type", "quantity"],
+    },
+  },
 ];
 
 // Tool execution functions
@@ -509,6 +552,122 @@ async function executeTool(name: string, input: Record<string, unknown>, clinicI
         patientName: patient.name,
       };
     }
+    case "get_stock_summary": {
+      const products = await prisma.product.findMany({
+        where: { clinicId, isActive: true },
+      });
+      const totalValue = products.reduce((sum, p) => sum + p.currentStock * p.purchasePrice, 0);
+      const lowStockCount = products.filter((p) => p.currentStock <= p.minStock).length;
+      const categoryDist: Record<string, number> = {};
+      for (const p of products) {
+        categoryDist[p.category] = (categoryDist[p.category] || 0) + 1;
+      }
+      return {
+        totalProducts: products.length,
+        totalStockValueTL: totalValue / 100,
+        lowStockCount,
+        categoryDistribution: categoryDist,
+      };
+    }
+    case "get_low_stock": {
+      const allProducts = await prisma.product.findMany({
+        where: { clinicId, isActive: true },
+      });
+      const lowStock = allProducts
+        .filter((p) => p.currentStock <= p.minStock)
+        .map((p) => ({
+          name: p.name,
+          sku: p.sku,
+          category: p.category,
+          currentStock: p.currentStock,
+          minStock: p.minStock,
+          unit: p.unit,
+          purchasePriceTL: p.purchasePrice / 100,
+          salePriceTL: p.salePrice / 100,
+        }));
+      return { count: lowStock.length, products: lowStock };
+    }
+    case "search_products": {
+      const { query } = input as { query: string };
+      const found = await prisma.product.findMany({
+        where: {
+          clinicId,
+          isActive: true,
+          OR: [
+            { name: { contains: query } },
+            { sku: { contains: query } },
+          ],
+        },
+        take: 10,
+      });
+      return {
+        products: found.map((p) => ({
+          id: p.id,
+          name: p.name,
+          sku: p.sku,
+          category: p.category,
+          currentStock: p.currentStock,
+          minStock: p.minStock,
+          unit: p.unit,
+          purchasePriceTL: p.purchasePrice / 100,
+          salePriceTL: p.salePrice / 100,
+        })),
+      };
+    }
+    case "record_stock_movement": {
+      const { productName, type: movementType, quantity, description: desc } = input as {
+        productName: string; type: string; quantity: number; description?: string;
+      };
+      const searchTerm = productName.trim().toLowerCase();
+      const matchingProducts = await prisma.product.findMany({
+        where: { clinicId, isActive: true, name: { contains: productName.trim() } },
+      });
+      const product = matchingProducts.find((p) => p.name.toLowerCase().includes(searchTerm));
+      if (!product) return { error: `Urun bulunamadi: "${productName}"` };
+
+      if (movementType === "OUT" && product.currentStock < quantity) {
+        return { error: `Yetersiz stok! ${product.name} mevcut: ${product.currentStock} ${product.unit}` };
+      }
+
+      const unitPrice = movementType === "IN" ? product.purchasePrice : product.salePrice;
+
+      await prisma.$transaction([
+        prisma.stockMovement.create({
+          data: {
+            productId: product.id,
+            clinicId,
+            type: movementType,
+            quantity,
+            unitPrice,
+            totalPrice: unitPrice * quantity,
+            description: desc || `AI asistan ile stok ${movementType === "IN" ? "girisi" : "cikisi"}`,
+            date: new Date(),
+          },
+        }),
+        prisma.product.update({
+          where: { id: product.id },
+          data: {
+            currentStock: movementType === "IN"
+              ? { increment: quantity }
+              : { decrement: quantity },
+          },
+        }),
+      ]);
+
+      const newStock = movementType === "IN"
+        ? product.currentStock + quantity
+        : product.currentStock - quantity;
+
+      return {
+        success: true,
+        productName: product.name,
+        movementType,
+        quantity,
+        unit: product.unit,
+        newStock,
+        message: `${product.name}: ${quantity} ${product.unit} ${movementType === "IN" ? "eklendi" : "cikarildi"}. Yeni stok: ${newStock}`,
+      };
+    }
     default:
       return { error: "Unknown tool" };
   }
@@ -535,6 +694,7 @@ Görevlerin:
 - Klinik yönetimi tavsiyeleri verme
 - Randevu yönetimi (bugünün randevuları, müsait saatler, randevu oluşturma ve iptal)
 - Hasta hatirlatma yonetimi (bekleyen hatirlatmalar, hasta tercihleri, hatirlatma gonderme)
+- Stok yonetimi (stok durumu, dusuk stoklu urunler, urun arama, stok giris/cikis)
 
 Kurallar:
 - Her zaman Türkçe yanıt ver

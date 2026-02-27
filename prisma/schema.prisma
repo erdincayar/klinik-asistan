@@ -54,6 +54,8 @@ model Clinic {
   patientVisitPatterns PatientVisitPattern[]
   reminderLogs         ReminderLog[]
   employees            Employee[]
+  products             Product[]
+  stockMovements       StockMovement[]
   createdAt            DateTime         @default(now())
   updatedAt            DateTime         @updatedAt
 }
@@ -204,4 +206,41 @@ model Employee {
   treatments     Treatment[]
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
+}
+
+// ProductCategory values: KOZMETIK, MEDIKAL, SARF_MALZEME, DIGER
+// ProductUnit values: ADET, KUTU, ML, GR
+model Product {
+  id            String          @id @default(cuid())
+  name          String
+  sku           String          @unique
+  category      String          @default("DIGER") // KOZMETIK, MEDIKAL, SARF_MALZEME, DIGER
+  unit          String          @default("ADET") // ADET, KUTU, ML, GR
+  currentStock  Int             @default(0)
+  minStock      Int             @default(0)
+  purchasePrice Int             @default(0) // kuruş
+  salePrice     Int             @default(0) // kuruş
+  clinicId      String
+  clinic        Clinic          @relation(fields: [clinicId], references: [id])
+  isActive      Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  movements     StockMovement[]
+}
+
+// StockMovementType values: IN, OUT, ADJUSTMENT
+model StockMovement {
+  id          String   @id @default(cuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  type        String   // IN, OUT, ADJUSTMENT
+  quantity    Int
+  unitPrice   Int      @default(0) // kuruş
+  totalPrice  Int      @default(0) // kuruş
+  description String?
+  reference   String?  // fatura no vb.
+  date        DateTime @default(now())
+  clinicId    String
+  clinic      Clinic   @relation(fields: [clinicId], references: [id])
+  createdAt   DateTime @default(now())
 }
