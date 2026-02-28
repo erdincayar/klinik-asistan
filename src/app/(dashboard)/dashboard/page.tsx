@@ -196,14 +196,14 @@ export default function DashboardPage() {
                   lowStockCount > 0 ? "text-orange-800" : "text-green-800"
                 )}>
                   {lowStockCount > 0
-                    ? `${lowStockCount} urun dusuk stokta`
+                    ? `${lowStockCount} ürün düşük stokta`
                     : "Stok seviyeleri normal"}
                 </p>
                 <p className={cn(
                   "text-xs",
                   lowStockCount > 0 ? "text-orange-600" : "text-green-600"
                 )}>
-                  {lowStockCount > 0 ? "Stok sayfasina gitmek icin tiklayin" : "Tum urunler yeterli stokta"}
+                  {lowStockCount > 0 ? "Stok sayfasına gitmek için tıklayın" : "Tüm ürünler yeterli stokta"}
                 </p>
               </div>
             </div>
