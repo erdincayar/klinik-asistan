@@ -92,7 +92,7 @@ const CATEGORIES = [
   { value: "KOZMETIK", label: "Kozmetik" },
   { value: "MEDIKAL", label: "Medikal" },
   { value: "SARF_MALZEME", label: "Sarf Malzeme" },
-  { value: "DIGER", label: "Diger" },
+  { value: "DIGER", label: "Diğer" },
 ];
 
 const UNITS = [
@@ -117,9 +117,9 @@ const CATEGORY_PIE_COLORS: Record<string, string> = {
 };
 
 const TYPE_BADGE: Record<string, { label: string; className: string }> = {
-  IN: { label: "Giris", className: "bg-green-100 text-green-800" },
-  OUT: { label: "Cikis", className: "bg-red-100 text-red-800" },
-  ADJUSTMENT: { label: "Duzeltme", className: "bg-yellow-100 text-yellow-800" },
+  IN: { label: "Giriş", className: "bg-green-100 text-green-800" },
+  OUT: { label: "Çıkış", className: "bg-red-100 text-red-800" },
+  ADJUSTMENT: { label: "Düzeltme", className: "bg-yellow-100 text-yellow-800" },
 };
 
 function getCategoryLabel(value: string) {
@@ -140,15 +140,15 @@ export default function InventoryPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Stok Takibi</h1>
         <p className="text-muted-foreground">
-          Urun, stok hareketi ve alarm yonetimi
+          Ürün, stok hareketi ve alarm yönetimi
         </p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="products">Urunler</TabsTrigger>
+          <TabsTrigger value="products">Ürünler</TabsTrigger>
           <TabsTrigger value="movements">Stok Hareketleri</TabsTrigger>
-          <TabsTrigger value="alerts">Stok Alarmlari</TabsTrigger>
+          <TabsTrigger value="alerts">Stok Alarmları</TabsTrigger>
           <TabsTrigger value="report">Stok Raporu</TabsTrigger>
         </TabsList>
 
@@ -191,11 +191,11 @@ function ProductsTab() {
       if (categoryFilter) params.set("category", categoryFilter);
       const qs = params.toString();
       const res = await fetch(`/api/products${qs ? `?${qs}` : ""}`);
-      if (!res.ok) throw new Error("Urunler alinamadi");
+      if (!res.ok) throw new Error("Ürünler alınamadı");
       const data = await res.json();
       setProducts(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Bir hata olustu");
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
     } finally {
       setLoading(false);
     }
@@ -210,7 +210,7 @@ function ProductsTab() {
     setDetailLoading(true);
     try {
       const res = await fetch(`/api/products/${product.id}`);
-      if (!res.ok) throw new Error("Urun detayi alinamadi");
+      if (!res.ok) throw new Error("Ürün detayı alınamadı");
       const data = await res.json();
       setSelectedProduct(data);
     } catch {
@@ -228,7 +228,7 @@ function ProductsTab() {
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <Input
-              placeholder="Urun ara..."
+              placeholder="Ürün ara..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10"
@@ -239,7 +239,7 @@ function ProductsTab() {
             onChange={(e) => setCategoryFilter(e.target.value)}
             className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
           >
-            <option value="">Tumu</option>
+            <option value="">Tümü</option>
             {CATEGORIES.map((c) => (
               <option key={c.value} value={c.value}>
                 {c.label}
@@ -249,7 +249,7 @@ function ProductsTab() {
         </div>
         <Button onClick={() => setShowNewProduct(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          Yeni Urun
+          Yeni Ürün
         </Button>
       </div>
 
@@ -257,11 +257,11 @@ function ProductsTab() {
       <Card>
         <CardContent className="p-0">
           {loading ? (
-            <p className="p-6 text-gray-500">Yukleniyor...</p>
+            <p className="p-6 text-gray-500">Yükleniyor...</p>
           ) : error ? (
             <p className="p-6 text-red-500">{error}</p>
           ) : products.length === 0 ? (
-            <p className="p-6 text-gray-500">Urun bulunamadi</p>
+            <p className="p-6 text-gray-500">Ürün bulunamadı</p>
           ) : (
             <Table>
               <TableHeader>
@@ -271,8 +271,8 @@ function ProductsTab() {
                   <TableHead>Kategori</TableHead>
                   <TableHead className="text-right">Mevcut Stok</TableHead>
                   <TableHead className="hidden md:table-cell text-right">Min Stok</TableHead>
-                  <TableHead className="hidden lg:table-cell text-right">Alis Fiyati</TableHead>
-                  <TableHead className="hidden lg:table-cell text-right">Satis Fiyati</TableHead>
+                  <TableHead className="hidden lg:table-cell text-right">Alış Fiyatı</TableHead>
+                  <TableHead className="hidden lg:table-cell text-right">Satış Fiyatı</TableHead>
                   <TableHead>Durum</TableHead>
                 </TableRow>
               </TableHeader>
@@ -308,7 +308,7 @@ function ProductsTab() {
                       </TableCell>
                       <TableCell>
                         {isLow ? (
-                          <Badge className="bg-red-100 text-red-800">Dusuk Stok</Badge>
+                          <Badge className="bg-red-100 text-red-800">Düşük Stok</Badge>
                         ) : (
                           <Badge className="bg-green-100 text-green-800">Yeterli</Badge>
                         )}
@@ -333,7 +333,7 @@ function ProductsTab() {
       <Dialog open={selectedProduct !== null} onOpenChange={(open) => { if (!open) setSelectedProduct(null); }}>
         <DialogContent className="max-h-[80vh] overflow-y-auto">
           {detailLoading ? (
-            <p className="text-gray-500">Yukleniyor...</p>
+            <p className="text-gray-500">Yükleniyor...</p>
           ) : selectedProduct ? (
             <>
               <DialogHeader>
@@ -358,11 +358,11 @@ function ProductsTab() {
                   {selectedProduct.minStock}
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Alis Fiyati:</span>{" "}
+                  <span className="text-muted-foreground">Alış Fiyatı:</span>{" "}
                   {formatCurrency(selectedProduct.purchasePrice)}
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Satis Fiyati:</span>{" "}
+                  <span className="text-muted-foreground">Satış Fiyatı:</span>{" "}
                   {formatCurrency(selectedProduct.salePrice)}
                 </div>
               </div>
@@ -370,12 +370,12 @@ function ProductsTab() {
               {/* Movement history */}
               {selectedProduct.movements && selectedProduct.movements.length > 0 && (
                 <div className="mt-4">
-                  <h4 className="mb-2 font-semibold">Hareket Gecmisi</h4>
+                  <h4 className="mb-2 font-semibold">Hareket Geçmişi</h4>
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Tarih</TableHead>
-                        <TableHead>Tur</TableHead>
+                        <TableHead>Tür</TableHead>
                         <TableHead className="text-right">Miktar</TableHead>
                         <TableHead className="text-right">Fiyat</TableHead>
                       </TableRow>
@@ -450,7 +450,7 @@ function NewProductDialog({
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Urun olusturulamadi");
+        throw new Error(data.error || "Ürün oluşturulamadı");
       }
 
       onOpenChange(false);
@@ -466,7 +466,7 @@ function NewProductDialog({
       });
       onSuccess();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Bir hata olustu");
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
     } finally {
       setSaving(false);
     }
@@ -476,13 +476,13 @@ function NewProductDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Yeni Urun</DialogTitle>
-          <DialogDescription>Yeni bir urun ekleyin</DialogDescription>
+          <DialogTitle>Yeni Ürün</DialogTitle>
+          <DialogDescription>Yeni bir ürün ekleyin</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Urun Adi</Label>
+              <Label htmlFor="name">Ürün Adı</Label>
               <Input
                 id="name"
                 value={form.name}
@@ -556,7 +556,7 @@ function NewProductDialog({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="purchasePrice">Alis Fiyati (TL)</Label>
+              <Label htmlFor="purchasePrice">Alış Fiyatı (TL)</Label>
               <Input
                 id="purchasePrice"
                 type="number"
@@ -567,7 +567,7 @@ function NewProductDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="salePrice">Satis Fiyati (TL)</Label>
+              <Label htmlFor="salePrice">Satış Fiyatı (TL)</Label>
               <Input
                 id="salePrice"
                 type="number"
@@ -581,7 +581,7 @@ function NewProductDialog({
           {error && <p className="text-sm text-red-500">{error}</p>}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Iptal
+              İptal
             </Button>
             <Button type="submit" disabled={saving}>
               {saving ? "Kaydediliyor..." : "Kaydet"}
@@ -614,11 +614,11 @@ function MovementsTab() {
       if (endDate) params.set("endDate", endDate);
       const qs = params.toString();
       const res = await fetch(`/api/stock-movements${qs ? `?${qs}` : ""}`);
-      if (!res.ok) throw new Error("Hareketler alinamadi");
+      if (!res.ok) throw new Error("Hareketler alınamadı");
       const data = await res.json();
       setMovements(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Bir hata olustu");
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
     } finally {
       setLoading(false);
     }
@@ -634,7 +634,7 @@ function MovementsTab() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex gap-2">
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Baslangic</Label>
+            <Label className="text-xs text-muted-foreground">Başlangıç</Label>
             <Input
               type="date"
               value={startDate}
@@ -643,7 +643,7 @@ function MovementsTab() {
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Bitis</Label>
+            <Label className="text-xs text-muted-foreground">Bitiş</Label>
             <Input
               type="date"
               value={endDate}
@@ -658,14 +658,14 @@ function MovementsTab() {
             className="bg-green-600 hover:bg-green-700"
           >
             <Plus className="mr-2 h-4 w-4" />
-            Stok Girisi
+            Stok Girişi
           </Button>
           <Button
             onClick={() => setShowStockOut(true)}
             variant="destructive"
           >
             <Plus className="mr-2 h-4 w-4" />
-            Stok Cikisi
+            Stok Çıkışı
           </Button>
         </div>
       </div>
@@ -674,22 +674,22 @@ function MovementsTab() {
       <Card>
         <CardContent className="p-0">
           {loading ? (
-            <p className="p-6 text-gray-500">Yukleniyor...</p>
+            <p className="p-6 text-gray-500">Yükleniyor...</p>
           ) : error ? (
             <p className="p-6 text-red-500">{error}</p>
           ) : movements.length === 0 ? (
-            <p className="p-6 text-gray-500">Stok hareketi bulunamadi</p>
+            <p className="p-6 text-gray-500">Stok hareketi bulunamadı</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Tarih</TableHead>
-                  <TableHead>Urun</TableHead>
-                  <TableHead>Tur</TableHead>
+                  <TableHead>Ürün</TableHead>
+                  <TableHead>Tür</TableHead>
                   <TableHead className="text-right">Miktar</TableHead>
                   <TableHead className="hidden sm:table-cell text-right">Birim Fiyat</TableHead>
                   <TableHead className="hidden sm:table-cell text-right">Toplam</TableHead>
-                  <TableHead className="hidden md:table-cell">Aciklama</TableHead>
+                  <TableHead className="hidden md:table-cell">Açıklama</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -798,7 +798,7 @@ function StockMovementDialog({
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Hareket olusturulamadi");
+        throw new Error(data.error || "Hareket oluşturulamadı");
       }
 
       onOpenChange(false);
@@ -812,13 +812,13 @@ function StockMovementDialog({
       });
       onSuccess();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Bir hata olustu");
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
     } finally {
       setSaving(false);
     }
   };
 
-  const title = type === "IN" ? "Stok Girisi" : "Stok Cikisi";
+  const title = type === "IN" ? "Stok Girişi" : "Stok Çıkışı";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -826,12 +826,12 @@ function StockMovementDialog({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
-            {type === "IN" ? "Stoga urun girisi yapin" : "Stoktan urun cikisi yapin"}
+            {type === "IN" ? "Stoğa ürün girişi yapın" : "Stoktan ürün çıkışı yapın"}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="productId">Urun</Label>
+            <Label htmlFor="productId">Ürün</Label>
             <select
               id="productId"
               value={form.productId}
@@ -839,7 +839,7 @@ function StockMovementDialog({
               required
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             >
-              <option value="">Urun secin...</option>
+              <option value="">Ürün seçin...</option>
               {products.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name} ({p.sku})
@@ -872,12 +872,12 @@ function StockMovementDialog({
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="description">Aciklama</Label>
+            <Label htmlFor="description">Açıklama</Label>
             <Textarea
               id="description"
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="Opsiyonel aciklama..."
+              placeholder="Opsiyonel açıklama..."
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -903,7 +903,7 @@ function StockMovementDialog({
           {error && <p className="text-sm text-red-500">{error}</p>}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Iptal
+              İptal
             </Button>
             <Button
               type="submit"
@@ -936,11 +936,11 @@ function AlertsTab() {
       try {
         setLoading(true);
         const res = await fetch("/api/products/low-stock");
-        if (!res.ok) throw new Error("Dusuk stok verileri alinamadi");
+        if (!res.ok) throw new Error("Düşük stok verileri alınamadı");
         const data = await res.json();
         setLowStockProducts(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Bir hata olustu");
+        setError(err instanceof Error ? err.message : "Bir hata oluştu");
       } finally {
         setLoading(false);
       }
@@ -948,7 +948,7 @@ function AlertsTab() {
     fetchLowStock();
   }, []);
 
-  if (loading) return <p className="text-gray-500">Yukleniyor...</p>;
+  if (loading) return <p className="text-gray-500">Yükleniyor...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
 
   if (lowStockProducts.length === 0) {
@@ -957,9 +957,9 @@ function AlertsTab() {
         <CardContent className="flex items-center gap-3 p-6">
           <CheckCircle className="h-6 w-6 text-green-600" />
           <div>
-            <p className="font-medium text-green-800">Tum urunler yeterli stokta</p>
+            <p className="font-medium text-green-800">Tüm ürünler yeterli stokta</p>
             <p className="text-sm text-green-600">
-              Stok seviyesi dusuk urun bulunmuyor.
+              Stok seviyesi düşük ürün bulunmuyor.
             </p>
           </div>
         </CardContent>
@@ -971,7 +971,7 @@ function AlertsTab() {
     <div className="space-y-4">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <AlertTriangle className="h-4 w-4 text-orange-500" />
-        <span>{lowStockProducts.length} urun dusuk stokta</span>
+        <span>{lowStockProducts.length} ürün düşük stokta</span>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -1020,7 +1020,7 @@ function AlertsTab() {
                   }
                 >
                   <Package className="mr-2 h-4 w-4" />
-                  Siparis Ver
+                  Sipariş Ver
                 </Button>
               </CardContent>
             </Card>
@@ -1032,9 +1032,9 @@ function AlertsTab() {
       <Dialog open={orderNote !== null} onOpenChange={(open) => { if (!open) setOrderNote(null); }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Siparis Notu</DialogTitle>
+            <DialogTitle>Sipariş Notu</DialogTitle>
             <DialogDescription>
-              {orderNote?.name} icin siparis notu ekleyin
+              {orderNote?.name} için sipariş notu ekleyin
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -1044,7 +1044,7 @@ function AlertsTab() {
                 id="orderNote"
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="Siparis detaylari, tedarikci bilgileri vb."
+                placeholder="Sipariş detayları, tedarikçi bilgileri vb."
               />
             </div>
           </div>
@@ -1076,11 +1076,11 @@ function ReportTab() {
       try {
         setLoading(true);
         const res = await fetch("/api/stock/summary");
-        if (!res.ok) throw new Error("Rapor verileri alinamadi");
+        if (!res.ok) throw new Error("Rapor verileri alınamadı");
         const data = await res.json();
         setSummary(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Bir hata olustu");
+        setError(err instanceof Error ? err.message : "Bir hata oluştu");
       } finally {
         setLoading(false);
       }
@@ -1088,7 +1088,7 @@ function ReportTab() {
     fetchSummary();
   }, []);
 
-  if (loading) return <p className="text-gray-500">Yukleniyor...</p>;
+  if (loading) return <p className="text-gray-500">Yükleniyor...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
   if (!summary) return null;
 
@@ -1099,8 +1099,8 @@ function ReportTab() {
   }));
 
   const barData = [
-    { name: "Giris", value: summary.recentMovements.in, fill: "#22c55e" },
-    { name: "Cikis", value: summary.recentMovements.out, fill: "#ef4444" },
+    { name: "Giriş", value: summary.recentMovements.in, fill: "#22c55e" },
+    { name: "Çıkış", value: summary.recentMovements.out, fill: "#ef4444" },
   ];
 
   return (
@@ -1109,19 +1109,19 @@ function ReportTab() {
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Card>
           <CardContent className="p-6">
-            <p className="text-sm text-gray-500">Toplam Urun</p>
+            <p className="text-sm text-gray-500">Toplam Ürün</p>
             <p className="text-2xl font-bold">{summary.totalProducts}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6">
-            <p className="text-sm text-gray-500">Aktif Urun</p>
+            <p className="text-sm text-gray-500">Aktif Ürün</p>
             <p className="text-2xl font-bold text-blue-600">{summary.activeProducts}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6">
-            <p className="text-sm text-gray-500">Dusuk Stok</p>
+            <p className="text-sm text-gray-500">Düşük Stok</p>
             <p
               className={`text-2xl font-bold ${
                 summary.lowStockCount > 0 ? "text-red-600" : "text-green-600"
@@ -1133,7 +1133,7 @@ function ReportTab() {
         </Card>
         <Card>
           <CardContent className="p-6">
-            <p className="text-sm text-gray-500">Toplam Stok Degeri</p>
+            <p className="text-sm text-gray-500">Toplam Stok Değeri</p>
             <p className="text-2xl font-bold text-green-600">
               {formatCurrency(summary.totalStockValue.purchase)}
             </p>
@@ -1146,8 +1146,8 @@ function ReportTab() {
         {/* Category pie chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Kategori Dagilimi</CardTitle>
-            <CardDescription>Urun kategorilerine gore dagilim</CardDescription>
+            <CardTitle>Kategori Dağılımı</CardTitle>
+            <CardDescription>Ürün kategorilerine göre dağılım</CardDescription>
           </CardHeader>
           <CardContent>
             {pieData.length === 0 ? (
@@ -1180,8 +1180,8 @@ function ReportTab() {
         {/* Recent movements bar chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Son 30 Gun Hareketler</CardTitle>
-            <CardDescription>Giris ve cikis hareketleri</CardDescription>
+            <CardTitle>Son 30 Gün Hareketler</CardTitle>
+            <CardDescription>Giriş ve çıkış hareketleri</CardDescription>
           </CardHeader>
           <CardContent>
             {barData.every((d) => d.value === 0) ? (
@@ -1208,19 +1208,19 @@ function ReportTab() {
       {/* Top consumed products */}
       <Card>
         <CardHeader>
-          <CardTitle>En Cok Tuketilen Urunler</CardTitle>
-          <CardDescription>Son 30 gunde en cok cikis yapilan urunler</CardDescription>
+          <CardTitle>En Çok Tüketilen Ürünler</CardTitle>
+          <CardDescription>Son 30 günde en çok çıkış yapılan ürünler</CardDescription>
         </CardHeader>
         <CardContent>
           {summary.topConsumed.length === 0 ? (
-            <p className="text-sm text-gray-500">Henuz veri bulunmuyor</p>
+            <p className="text-sm text-gray-500">Henüz veri bulunmuyor</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-16">Sira</TableHead>
-                  <TableHead>Urun Adi</TableHead>
-                  <TableHead className="text-right">Toplam Cikis Miktari</TableHead>
+                  <TableHead className="w-16">Sıra</TableHead>
+                  <TableHead>Ürün Adı</TableHead>
+                  <TableHead className="text-right">Toplam Çıkış Miktarı</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
