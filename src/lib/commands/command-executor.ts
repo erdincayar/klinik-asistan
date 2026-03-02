@@ -1034,6 +1034,107 @@ export async function stockExit(
   ].join("\n");
 }
 
+// ── Invoice Commands ─────────────────────────────────────────────────────────
+
+export async function getInvoiceSummary(clinicId: string): Promise<string> {
+  const now = new Date();
+  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0));
+  const monthEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0, 23, 59, 59, 999));
+  const monthName = TURKISH_MONTHS[now.getUTCMonth()];
+
+  const invoices = await prisma.invoice.findMany({
+    where: {
+      clinicId,
+      issueDate: { gte: monthStart, lte: monthEnd },
+    },
+  });
+
+  if (invoices.length === 0) {
+    return `🧾 ${monthName} ${now.getUTCFullYear()} - Henuz fatura kesilmemis.`;
+  }
+
+  const totalAmount = invoices.reduce((sum, inv) => sum + inv.total, 0);
+  const eFaturaCount = invoices.filter((inv) => inv.type === "EFATURA").length;
+  const eArsivCount = invoices.filter((inv) => inv.type === "EARSIV").length;
+  const draftCount = invoices.filter((inv) => inv.status === "DRAFT").length;
+  const sentCount = invoices.filter((inv) => inv.status === "SENT").length;
+  const approvedCount = invoices.filter((inv) => inv.status === "APPROVED").length;
+  const cancelledCount = invoices.filter((inv) => inv.status === "CANCELLED").length;
+
+  const lines: string[] = [
+    `🧾 Fatura Ozeti - ${monthName} ${now.getUTCFullYear()}:`,
+    "",
+    `📊 Toplam: ${invoices.length} fatura`,
+    `💰 Toplam Tutar: ${formatTLDetailed(totalAmount)}`,
+    "",
+    "📋 Tur Dagilimi:",
+    `e-Fatura: ${eFaturaCount}`,
+    `e-Arsiv: ${eArsivCount}`,
+    "",
+    "📌 Durum Dagilimi:",
+  ];
+
+  if (draftCount > 0) lines.push(`Taslak: ${draftCount}`);
+  if (sentCount > 0) lines.push(`Gonderildi: ${sentCount}`);
+  if (approvedCount > 0) lines.push(`Onaylandi: ${approvedCount}`);
+  if (cancelledCount > 0) lines.push(`Iptal: ${cancelledCount}`);
+
+  return lines.join("\n");
+}
+
+export async function createInvoiceForPatient(
+  clinicId: string,
+  patientName: string
+): Promise<string> {
+  const searchName = patientName.toLowerCase();
+
+  const patients = await prisma.patient.findMany({
+    where: {
+      clinicId,
+      name: { contains: patientName },
+    },
+  });
+
+  const filtered = patients.filter((p) =>
+    p.name.toLowerCase().includes(searchName)
+  );
+
+  if (filtered.length === 0) {
+    return `❌ Hasta bulunamadi: "${patientName}"`;
+  }
+
+  const patient = filtered[0];
+
+  // Get recent treatments
+  const treatments = await prisma.treatment.findMany({
+    where: { patientId: patient.id, clinicId },
+    orderBy: { date: "desc" },
+    take: 5,
+  });
+
+  const lines: string[] = [
+    `🧾 ${patient.name} - Fatura Bilgileri:`,
+    "",
+  ];
+
+  if (treatments.length > 0) {
+    lines.push("📋 Son Islemler:");
+    for (const t of treatments) {
+      const dateStr = formatDateShort(t.date);
+      lines.push(`- ${t.name}: ${formatTL(t.amount)} (${dateStr})`);
+    }
+    lines.push("");
+  } else {
+    lines.push("Henuz islem kaydi bulunmuyor.");
+    lines.push("");
+  }
+
+  lines.push("🔗 Fatura olusturmak icin web panelini kullanin:");
+  lines.push("/invoices?tab=create");
+
+  return lines.join("\n");
+}
+
 // ── Help Command ─────────────────────────────────────────────────────────────
 
 export function getHelpText(): string {
@@ -1070,6 +1171,10 @@ export function getHelpText(): string {
     "/stok [urun adi] - Urun ara",
     "/stok giris [urun] [miktar] - Stok girisi",
     "/stok cikis [urun] [miktar] - Stok cikisi",
+    "",
+    "🧾 Fatura Komutlari:",
+    "/fatura - Bu ayin fatura ozeti",
+    "/fatura [hasta adi] - Hasta icin fatura bilgisi",
     "",
     "📋 Genel:",
     "/ozet - Günlük ozet",

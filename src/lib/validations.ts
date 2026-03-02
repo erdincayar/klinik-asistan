@@ -122,3 +122,33 @@ export const stockMovementSchema = z.object({
 
 export type ProductInput = z.infer<typeof productSchema>;
 export type StockMovementInput = z.infer<typeof stockMovementSchema>;
+
+export const invoiceItemSchema = z.object({
+  description: z.string().min(1, "Açıklama gerekli"),
+  quantity: z.number().min(1, "Miktar en az 1 olmalı"),
+  unitPrice: z.number().int().min(0, "Birim fiyat negatif olamaz"),
+  taxRate: z.number().int().min(0).max(100).default(20),
+  total: z.number().int().min(0, "Toplam negatif olamaz"),
+});
+
+export const invoiceSchema = z.object({
+  type: z.enum(["EFATURA", "EARSIV"]),
+  customerName: z.string().min(2, "Müşteri adı en az 2 karakter olmalı"),
+  customerTaxNumber: z.string().optional(),
+  customerTaxOffice: z.string().optional(),
+  customerAddress: z.string().optional(),
+  customerEmail: z.string().email("Geçerli bir email girin").optional().or(z.literal("")),
+  items: z.array(invoiceItemSchema).min(1, "En az 1 kalem gerekli"),
+  subtotal: z.number().int().min(0),
+  taxRate: z.number().int().min(0).max(100).default(20),
+  taxAmount: z.number().int().min(0),
+  total: z.number().int().min(0),
+  notes: z.string().optional(),
+  issueDate: z.string().min(1, "Fatura tarihi gerekli"),
+  dueDate: z.string().optional(),
+  patientId: z.string().optional(),
+  treatmentId: z.string().optional(),
+});
+
+export type InvoiceInput = z.infer<typeof invoiceSchema>;
+export type InvoiceItemInput = z.infer<typeof invoiceItemSchema>;

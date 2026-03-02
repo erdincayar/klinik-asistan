@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -173,6 +173,12 @@ export default function FinancePage() {
             <Button variant="outline">
               <Plus className="mr-2 h-4 w-4" />
               Yeni Gider
+            </Button>
+          </Link>
+          <Link href="/invoices?tab=create">
+            <Button variant="outline">
+              <FileText className="mr-2 h-4 w-4" />
+              Fatura Kes
             </Button>
           </Link>
         </div>

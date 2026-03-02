@@ -20,6 +20,8 @@ import {
   searchStock,
   stockEntry,
   stockExit,
+  getInvoiceSummary,
+  createInvoiceForPatient,
 } from "./command-executor";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -305,6 +307,15 @@ export async function handleCommand(
 
       case "stok": {
         response = await handleStockCommand(clinicId, args);
+        break;
+      }
+
+      case "fatura": {
+        if (args.trim()) {
+          response = await createInvoiceForPatient(clinicId, args.trim());
+        } else {
+          response = await getInvoiceSummary(clinicId);
+        }
         break;
       }
 

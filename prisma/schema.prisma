@@ -56,6 +56,7 @@ model Clinic {
   employees            Employee[]
   products             Product[]
   stockMovements       StockMovement[]
+  invoices             Invoice[]
   createdAt            DateTime         @default(now())
   updatedAt            DateTime         @updatedAt
 }
@@ -73,6 +74,7 @@ model Patient {
   preferences      PatientPreference[]
   visitPattern     PatientVisitPattern?
   reminderLogs     ReminderLog[]
+  invoices         Invoice[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 }
@@ -93,6 +95,7 @@ model Treatment {
   category    String   @default("GENEL") // BOTOX, DOLGU, DIS_TEDAVI, GENEL
   employeeId  String?
   employee    Employee? @relation(fields: [employeeId], references: [id])
+  invoices    Invoice[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -243,4 +246,34 @@ model StockMovement {
   clinicId    String
   clinic      Clinic   @relation(fields: [clinicId], references: [id])
   createdAt   DateTime @default(now())
+}
+
+// Invoice type values: EFATURA, EARSIV
+// Invoice status values: DRAFT, SENT, APPROVED, CANCELLED
+model Invoice {
+  id                 String     @id @default(cuid())
+  invoiceNumber      String     @unique
+  type               String     // EFATURA, EARSIV
+  status             String     @default("DRAFT") // DRAFT, SENT, APPROVED, CANCELLED
+  customerName       String
+  customerTaxNumber  String?
+  customerTaxOffice  String?
+  customerAddress    String?
+  customerEmail      String?
+  items              Json       // [{description, quantity, unitPrice, taxRate, total}]
+  subtotal           Int        // kuruş
+  taxRate            Int        @default(20)
+  taxAmount          Int        // kuruş
+  total              Int        // kuruş
+  notes              String?
+  issueDate          DateTime
+  dueDate            DateTime?
+  clinicId           String
+  clinic             Clinic     @relation(fields: [clinicId], references: [id])
+  patientId          String?
+  patient            Patient?   @relation(fields: [patientId], references: [id])
+  treatmentId        String?
+  treatment          Treatment? @relation(fields: [treatmentId], references: [id])
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
 }
