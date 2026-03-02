@@ -1,413 +1,718 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { motion, useInView, useAnimation } from "framer-motion";
 import {
+  Users,
   Calendar,
   DollarSign,
-  Bell,
-  Image,
+  FileText,
+  Package,
   Bot,
-  BarChart3,
   ArrowRight,
-  CheckCircle,
-  MessageCircle,
-  Smartphone,
+  BarChart3,
+  Settings,
+  Menu,
+  X,
 } from "lucide-react";
+
+/* ──────────────────────────── DATA ──────────────────────────── */
+
+const navLinks = [
+  { href: "#features", label: "Özellikler" },
+  { href: "#sectors", label: "Sektörler" },
+  { href: "#", label: "Fiyatlandırma" },
+  { href: "#", label: "Destek" },
+];
 
 const features = [
   {
+    icon: Users,
+    title: "Müşteri Yönetimi",
+    description:
+      "Hasta ve müşteri kayıtlarını detaylı profiller ile yönetin. Geçmiş işlemler, notlar ve iletişim bilgileri tek yerde.",
+    bg: "bg-blue-50",
+    color: "text-blue-600",
+  },
+  {
     icon: Calendar,
-    title: "Randevu Takip",
-    description: "Müşteri randevularını kolayca yönetin, hatırlatmalar gönderin",
-    color: "bg-blue-100 text-blue-600",
+    title: "Randevu Sistemi",
+    description:
+      "Akıllı takvim ile randevuları kolayca planlayın. Otomatik hatırlatmalar ve müsait slot yönetimi.",
+    bg: "bg-emerald-50",
+    color: "text-emerald-600",
   },
   {
     icon: DollarSign,
-    title: "Finans Yönetimi",
-    description: "Gelir-gider takibi, ön muhasebe ve finansal raporlar",
-    color: "bg-green-100 text-green-600",
+    title: "Finansal Takip",
+    description:
+      "Gelir ve giderlerinizi kategorize edin, detaylı raporlar alın. Aylık, haftalık ve günlük analizler.",
+    bg: "bg-amber-50",
+    color: "text-amber-600",
   },
   {
-    icon: Bell,
-    title: "Hatırlatma Sistemi",
-    description: "Otomatik müşteri hatırlatmaları ile randevu kaçırmayı önleyin",
-    color: "bg-amber-100 text-amber-600",
+    icon: FileText,
+    title: "e-Fatura Sistemi",
+    description:
+      "Profesyonel faturaları saniyeler içinde oluşturun. PDF export, e-posta ile gönderim ve arşivleme.",
+    bg: "bg-pink-50",
+    color: "text-pink-600",
   },
   {
-    icon: Image,
-    title: "Görsel Üretme",
-    description: "AI destekli sosyal medya görselleri ve tanıtım materyalleri",
-    color: "bg-pink-100 text-pink-600",
+    icon: Package,
+    title: "Stok Yönetimi",
+    description:
+      "Ürün ve malzeme stoklarınızı takip edin. Düşük stok uyarıları, hareket geçmişi ve raporlama.",
+    bg: "bg-purple-50",
+    color: "text-purple-600",
   },
   {
     icon: Bot,
-    title: "AI Chatbot",
-    description: "7/24 akıllı asistan ile müşteri sorularını yanıtlayın",
-    color: "bg-purple-100 text-purple-600",
-  },
-  {
-    icon: BarChart3,
-    title: "Raporlama",
-    description: "Detaylı analitik ve raporlarla işletmenizi büyütün",
-    color: "bg-indigo-100 text-indigo-600",
+    title: "AI Asistan",
+    description:
+      "Yapay zekâ destekli akıllı asistan ile raporlar oluşturun, analizler yapın ve operasyonlarınızı optimize edin.",
+    bg: "bg-sky-50",
+    color: "text-sky-600",
   },
 ];
 
-const steps = [
-  {
-    number: "1",
-    title: "Sektörünüzü Seçin",
-    description: "İşletmenize uygun sektörü belirleyin",
-  },
-  {
-    number: "2",
-    title: "Paketinizi Belirleyin",
-    description: "İhtiyaçlarınıza uygun paketi seçin",
-  },
-  {
-    number: "3",
-    title: "Yönetmeye Başlayın",
-    description: "WhatsApp veya Telegram'dan işletmenizi yönetin",
-  },
+const sectors = [
+  { emoji: "🩺", title: "Sağlık", desc: "Klinik, muayenehane, diş hekimliği" },
+  { emoji: "🍴", title: "Restoran", desc: "Kafe, restoran, yemek servisi" },
+  { emoji: "✂️", title: "Güzellik", desc: "Kuaför, güzellik merkezi, SPA" },
+  { emoji: "🏨", title: "Otel", desc: "Otel, pansiyon, apart" },
 ];
+
+const stats = [
+  { target: 500, label: "Aktif İşletme", suffix: "+" },
+  { target: 50, label: "İşlem / Ay", suffix: "K+" },
+  { target: 99.9, label: "Uptime", suffix: "%" },
+  { target: 4, label: "Sektör Desteği", suffix: "+" },
+];
+
+const sidebarItems = [
+  { icon: BarChart3, label: "Dashboard", active: true },
+  { icon: Users, label: "Hastalar", active: false },
+  { icon: Calendar, label: "Randevular", active: false },
+  { icon: DollarSign, label: "Finans", active: false },
+  { icon: FileText, label: "Faturalar", active: false },
+  { icon: Package, label: "Stok", active: false },
+  { icon: Bot, label: "AI Asistan", active: false },
+  { icon: Settings, label: "Ayarlar", active: false },
+];
+
+const chartHeights = [45, 65, 35, 80, 55, 90, 70, 50, 75, 60, 85, 95];
+
+const footerLinks = {
+  Ürün: ["Özellikler", "Fiyatlandırma", "Entegrasyonlar"],
+  Destek: ["Yardım Merkezi", "İletişim", "SSS"],
+  Yasal: ["Kullanım Koşulları", "Gizlilik Politikası", "KVKK"],
+};
+
+/* ──────────────────────────── HELPERS ──────────────────────────── */
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, delay: i * 0.1, ease: "easeOut" as const },
+  }),
+};
+
+const staggerContainer = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.1 } },
+};
+
+function AnimatedCounter({
+  target,
+  suffix,
+}: {
+  target: number;
+  suffix: string;
+}) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true });
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    if (!inView) return;
+    let current = 0;
+    const increment = target / 60;
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= target) {
+        current = target;
+        clearInterval(timer);
+      }
+      setValue(current);
+    }, 16);
+    return () => clearInterval(timer);
+  }, [inView, target]);
+
+  const display =
+    target >= 50 && target < 100
+      ? `${Math.floor(value)}${value >= target ? suffix : ""}`
+      : target === 99.9
+        ? `${value >= target ? "99.9" : value.toFixed(1)}${suffix}`
+        : `${Math.floor(value)}${value >= target ? suffix : ""}`;
+
+  return <span ref={ref}>{display}</span>;
+}
+
+/* ──────────────────────────── COMPONENT ──────────────────────────── */
 
 export default function Home() {
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const previewControls = useAnimation();
+  const previewRef = useRef(null);
+  const previewInView = useInView(previewRef, { once: true, margin: "-100px" });
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    if (previewInView) {
+      previewControls.start({ opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } });
+    }
+  }, [previewInView, previewControls]);
+
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* ========== HERO SECTION ========== */}
-      <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 overflow-hidden">
-        {/* Decorative floating shapes */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="animate-float absolute top-20 left-[10%] h-16 w-16 rounded-full bg-white/10" />
-          <div
-            className="animate-float absolute top-40 right-[15%] h-24 w-24 rounded-full bg-white/5"
-            style={{ animationDelay: "0.5s" }}
-          />
-          <div
-            className="animate-float absolute bottom-32 left-[20%] h-20 w-20 rounded-full bg-white/10"
-            style={{ animationDelay: "1s" }}
-          />
-          <div
-            className="animate-float absolute top-1/3 right-[8%] h-12 w-12 rounded-full bg-white/15"
-            style={{ animationDelay: "1.5s" }}
-          />
-          <div
-            className="animate-float absolute bottom-20 right-[25%] h-14 w-14 rounded-full bg-white/10"
-            style={{ animationDelay: "2s" }}
-          />
-          <div className="animate-float absolute top-16 left-[50%] h-10 w-10 rounded-lg rotate-45 bg-white/10" />
-          <div
-            className="animate-float absolute bottom-40 left-[5%] h-8 w-8 rounded-lg rotate-12 bg-white/15"
-            style={{ animationDelay: "0.8s" }}
-          />
-        </div>
+    <div className="min-h-screen bg-white">
+      {/* ════════════ NAVBAR ════════════ */}
+      <nav
+        className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
+          scrolled
+            ? "border-b border-gray-200 bg-white/80 shadow-sm backdrop-blur-xl"
+            : "bg-white/80 backdrop-blur-xl"
+        }`}
+      >
+        <div className="mx-auto flex max-w-[1200px] items-center justify-between px-6 py-4">
+          <Link href="/" className="text-2xl font-extrabold tracking-tight">
+            <span className="text-blue-600">in</span>
+            <span className="text-gray-800">Pobi</span>
+          </Link>
 
-        <div className="relative z-10 mx-auto max-w-4xl px-4 py-20 text-center">
-          {/* Badge */}
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm text-white backdrop-blur-sm">
-            <Smartphone className="h-4 w-4" />
-            <span>Bilgisayara ihtiyaç yok</span>
-          </div>
-
-          <h1 className="mb-6 text-4xl font-extrabold leading-tight tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl">
-            İşletmelere Özel{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-blue-200">
-              Kişisel Asistanınız
-            </span>{" "}
-            Yanınızda
-          </h1>
-
-          <p className="mx-auto mb-10 max-w-2xl text-lg text-blue-100 sm:text-xl">
-            WhatsApp veya Telegram üzerinden işletmenizi yönetin. Bilgisayara
-            ihtiyaç yok.
-          </p>
-
-          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Link
-              href="/onboarding"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-white px-8 text-base font-semibold text-gray-900 shadow-lg transition-all hover:bg-gray-100 hover:shadow-xl hover:scale-105 sm:h-14 sm:px-10 sm:text-lg"
-            >
-              Hadi Başlayalım
-              <ArrowRight className="h-5 w-5" />
-            </Link>
-
+          {/* Desktop links */}
+          <div className="hidden items-center gap-8 md:flex">
+            {navLinks.map((link) => (
+              <Link
+                key={link.label}
+                href={link.href}
+                className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
+              >
+                {link.label}
+              </Link>
+            ))}
             <Link
               href="/login"
-              className="inline-flex items-center gap-1 text-base text-white/80 underline-offset-4 transition-colors hover:text-white hover:underline"
+              className="inline-flex items-center gap-2 rounded-[10px] bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/30"
             >
               Giriş Yap
             </Link>
           </div>
 
-          {/* Social proof hint */}
-          <div className="mt-12 flex flex-col items-center gap-3 text-white/60">
-            <div className="flex items-center gap-1">
-              {[...Array(5)].map((_, i) => (
-                <svg
-                  key={i}
-                  className="h-4 w-4 fill-yellow-400"
-                  viewBox="0 0 20 20"
-                >
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-              ))}
-            </div>
-            <p className="text-sm">
-              İşletme sahiplerinin tercihi
-            </p>
-          </div>
-        </div>
-
-        {/* Bottom wave */}
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg
-            viewBox="0 0 1440 100"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-full"
+          {/* Mobile menu button */}
+          <button
+            className="md:hidden rounded-lg p-2 text-gray-600 hover:bg-gray-100"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            <path
-              d="M0 50L48 45.7C96 41.3 192 32.7 288 30.2C384 27.7 480 31.3 576 38.5C672 45.7 768 56.3 864 58.8C960 61.3 1056 55.7 1152 48.5C1248 41.3 1344 32.7 1392 28.3L1440 24V100H1392C1344 100 1248 100 1152 100C1056 100 960 100 864 100C768 100 672 100 576 100C480 100 384 100 288 100C192 100 96 100 48 100H0V50Z"
-              fill="white"
-            />
-          </svg>
-        </div>
-      </section>
-
-      {/* ========== FEATURES SECTION ========== */}
-      <section className="bg-white py-20 sm:py-28">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-sm font-medium text-blue-700">
-              <CheckCircle className="h-4 w-4" />
-              Özellikler
-            </div>
-            <h2 className="mb-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Tüm İhtiyaçlarınız Tek Platformda
-            </h2>
-            <p className="text-lg text-gray-600">
-              İşletmenizi yönetmek için ihtiyacınız olan her şey tek bir yerde.
-            </p>
-          </div>
-
-          <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map((feature) => {
-              const Icon = feature.icon;
-              return (
-                <div
-                  key={feature.title}
-                  className="group rounded-xl border border-gray-200 bg-white p-6 transition-all hover:shadow-lg hover:border-gray-300"
-                >
-                  <div
-                    className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl ${feature.color}`}
-                  >
-                    <Icon className="h-6 w-6" />
-                  </div>
-                  <h3 className="mb-2 text-lg font-semibold text-gray-900">
-                    {feature.title}
-                  </h3>
-                  <p className="text-sm leading-relaxed text-gray-600">
-                    {feature.description}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ========== HOW IT WORKS SECTION ========== */}
-      <section className="bg-gray-50 py-20 sm:py-28">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-purple-50 px-4 py-1.5 text-sm font-medium text-purple-700">
-              <MessageCircle className="h-4 w-4" />
-              Nasıl Çalışır?
-            </div>
-            <h2 className="mb-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Nasıl Çalışır?
-            </h2>
-            <p className="text-lg text-gray-600">
-              Sadece 3 adımda işletmenizi yönetmeye başlayın.
-            </p>
-          </div>
-
-          <div className="relative mt-16">
-            {/* Connecting line for desktop */}
-            <div className="absolute left-0 right-0 top-8 hidden h-0.5 bg-gradient-to-r from-blue-200 via-purple-200 to-indigo-200 lg:block lg:left-[16.67%] lg:right-[16.67%]" />
-
-            <div className="grid grid-cols-1 gap-12 lg:grid-cols-3 lg:gap-8">
-              {steps.map((step) => (
-                <div key={step.number} className="relative flex flex-col items-center text-center">
-                  {/* Step number */}
-                  <div className="relative z-10 mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-purple-600 text-2xl font-bold text-white shadow-lg ring-4 ring-white">
-                    {step.number}
-                  </div>
-                  <h3 className="mb-2 text-xl font-semibold text-gray-900">
-                    {step.title}
-                  </h3>
-                  <p className="max-w-xs text-gray-600">{step.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ========== CTA SECTION ========== */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 py-20 sm:py-28">
-        {/* Decorative shapes */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="animate-float absolute -top-10 -left-10 h-40 w-40 rounded-full bg-white/5" />
-          <div
-            className="animate-float absolute -bottom-10 -right-10 h-56 w-56 rounded-full bg-white/5"
-            style={{ animationDelay: "1s" }}
-          />
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
 
-        <div className="relative z-10 mx-auto max-w-3xl px-4 text-center">
-          <h2 className="mb-4 text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl">
-            Hemen Başlayın
-          </h2>
-          <p className="mx-auto mb-10 max-w-xl text-lg text-blue-100">
-            Ücretsiz deneme ile tüm özellikleri keşfedin
-          </p>
-          <Link
-            href="/onboarding"
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-white px-8 text-base font-semibold text-gray-900 shadow-lg transition-all hover:bg-gray-100 hover:shadow-xl hover:scale-105 sm:h-14 sm:px-10 sm:text-lg"
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="border-t border-gray-200 bg-white px-6 py-4 md:hidden"
           >
-            Hadi Başlayalım
-            <ArrowRight className="h-5 w-5" />
-          </Link>
+            <div className="flex flex-col gap-4">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className="text-sm font-medium text-gray-600"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              ))}
+              <Link
+                href="/login"
+                className="inline-flex items-center justify-center gap-2 rounded-[10px] bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Giriş Yap
+              </Link>
+            </div>
+          </motion.div>
+        )}
+      </nav>
+
+      {/* ════════════ HERO ════════════ */}
+      <section className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 pb-20 pt-32">
+        {/* Background */}
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,#dbeafe_0%,transparent_70%)]" />
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(59,130,246,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.03) 1px,transparent 1px)",
+            backgroundSize: "60px 60px",
+          }}
+        />
+
+        {/* Floating cards */}
+        <motion.div
+          initial={{ opacity: 0, x: -30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8, delay: 1.2 }}
+          className="absolute left-[5%] top-[25%] z-10 hidden items-center gap-3 rounded-2xl border border-gray-100 bg-white px-5 py-4 shadow-lg shadow-black/[0.04] lg:flex"
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-emerald-50 text-lg">
+            ✔
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-800">12 randevu</p>
+            <p className="text-xs text-gray-400">bugün tamamlandı</p>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, x: 30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8, delay: 1.4 }}
+          className="absolute right-[5%] top-[20%] z-10 hidden items-center gap-3 rounded-2xl border border-gray-100 bg-white px-5 py-4 shadow-lg shadow-black/[0.04] lg:flex"
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-blue-50 text-lg">
+            📊
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-800">+34% gelir</p>
+            <p className="text-xs text-gray-400">bu ay arttı</p>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, x: -30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8, delay: 1.6 }}
+          className="absolute bottom-[25%] left-[8%] z-10 hidden items-center gap-3 rounded-2xl border border-gray-100 bg-white px-5 py-4 shadow-lg shadow-black/[0.04] lg:flex"
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-amber-50 text-lg">
+            📦
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-800">Stok uyarısı</p>
+            <p className="text-xs text-gray-400">3 ürün azaldı</p>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, x: 30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8, delay: 1.8 }}
+          className="absolute bottom-[20%] right-[8%] z-10 hidden items-center gap-3 rounded-2xl border border-gray-100 bg-white px-5 py-4 shadow-lg shadow-black/[0.04] lg:flex"
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-pink-50 text-lg">
+            🤖
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-800">AI Asistan</p>
+            <p className="text-xs text-gray-400">rapor hazırlandı</p>
+          </div>
+        </motion.div>
+
+        {/* Hero content */}
+        <div className="relative z-20 mx-auto max-w-[800px] text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-[13px] font-medium text-blue-700"
+          >
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-blue-500" />
+            Yeni: AI destekli işletme yönetimi
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="mb-5 text-[clamp(40px,6vw,72px)] font-extrabold leading-[1.05] tracking-[-2px] text-gray-900"
+          >
+            İşletmeni yönet,
+            <br />
+            <span className="bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
+              geleceğini planla.
+            </span>
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+            className="mx-auto mb-10 max-w-[560px] text-lg leading-relaxed text-gray-500"
+          >
+            inPobi ile klinik, restoran, kuaför veya eczane farketmez — tüm
+            işletme operasyonlarını tek panelden yönetin.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+            className="flex flex-wrap items-center justify-center gap-3"
+          >
+            <Link
+              href="/register"
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-8 py-3.5 text-[15px] font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/30"
+            >
+              Ücretsiz Dene
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="#features"
+              className="inline-flex items-center gap-2 rounded-xl border-[1.5px] border-gray-300 bg-transparent px-8 py-3.5 text-[15px] font-semibold text-gray-700 transition-all hover:border-gray-400 hover:bg-gray-50"
+            >
+              Özellikleri Gör
+            </Link>
+          </motion.div>
         </div>
       </section>
 
-      {/* ========== FOOTER ========== */}
-      <footer className="bg-gray-900 py-16">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {/* Brand */}
-            <div className="sm:col-span-2 lg:col-span-1">
-              <h3 className="text-xl font-bold text-white">inPobi</h3>
-              <p className="mt-3 max-w-xs text-sm leading-relaxed text-gray-400">
-                İşletmenizi WhatsApp veya Telegram üzerinden kolayca yönetin.
-                AI destekli kişisel asistanınız her zaman yanınızda.
-              </p>
-              <div className="mt-4 flex items-center gap-2 text-sm text-gray-400">
-                <MessageCircle className="h-4 w-4" />
-                <span>info@inpobi.com</span>
+      {/* ════════════ DASHBOARD PREVIEW ════════════ */}
+      <section className="px-6 pb-24">
+        <motion.div
+          ref={previewRef}
+          initial={{ opacity: 0, y: 60 }}
+          animate={previewControls}
+          className="mx-auto max-w-[1100px]"
+          style={{ perspective: "1000px" }}
+        >
+          <div className="rounded-2xl bg-gradient-to-br from-gray-900 to-gray-800 p-3 shadow-2xl shadow-black/15 transition-transform duration-500 hover:[transform:rotateX(0deg)] [transform:rotateX(4deg)]">
+            {/* Browser bar */}
+            <div className="mb-2 flex items-center gap-2 px-3 py-2">
+              <div className="h-3 w-3 rounded-full bg-red-500" />
+              <div className="h-3 w-3 rounded-full bg-yellow-500" />
+              <div className="h-3 w-3 rounded-full bg-green-500" />
+              <div className="ml-2 flex-1 rounded-md bg-white/5 px-3 py-1.5 text-center text-xs text-gray-400">
+                inpobi.com/dashboard
               </div>
             </div>
 
-            {/* Urun */}
-            <div>
-              <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-300">
-                Ürün
-              </h4>
-              <ul className="space-y-3">
-                <li>
-                  <Link
-                    href="#"
-                    className="text-sm text-gray-400 transition-colors hover:text-white"
-                  >
-                    Özellikler
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="#"
-                    className="text-sm text-gray-400 transition-colors hover:text-white"
-                  >
-                    Fiyatlandırma
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="#"
-                    className="text-sm text-gray-400 transition-colors hover:text-white"
-                  >
-                    Entegrasyonlar
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="#"
-                    className="text-sm text-gray-400 transition-colors hover:text-white"
-                  >
-                    Sektörler
-                  </Link>
-                </li>
-              </ul>
-            </div>
+            {/* Dashboard content */}
+            <div className="flex overflow-hidden rounded-lg bg-white">
+              {/* Sidebar */}
+              <div className="hidden w-[220px] shrink-0 border-r border-gray-200 bg-gray-50 p-5 md:block">
+                <div className="mb-6 px-1 text-base font-bold text-blue-600">
+                  inPobi
+                </div>
+                {sidebarItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <div
+                      key={item.label}
+                      className={`mb-1 flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] ${
+                        item.active
+                          ? "bg-blue-50 font-semibold text-blue-700"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {item.label}
+                    </div>
+                  );
+                })}
+              </div>
 
-            {/* Destek */}
-            <div>
-              <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-300">
-                Destek
-              </h4>
-              <ul className="space-y-3">
-                <li>
-                  <Link
-                    href="#"
-                    className="text-sm text-gray-400 transition-colors hover:text-white"
-                  >
-                    Yardım Merkezi
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="#"
-                    className="text-sm text-gray-400 transition-colors hover:text-white"
-                  >
-                    İletişim
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="#"
-                    className="text-sm text-gray-400 transition-colors hover:text-white"
-                  >
-                    SSS
-                  </Link>
-                </li>
-              </ul>
-            </div>
+              {/* Main */}
+              <div className="flex-1 p-6">
+                <div className="mb-6 flex items-center justify-between">
+                  <h3 className="text-xl font-bold text-gray-900">Dashboard</h3>
+                  <div className="flex gap-2">
+                    <span className="rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-xs font-medium text-gray-600">
+                      Bu Hafta
+                    </span>
+                    <span className="rounded-lg bg-blue-600 px-3.5 py-2 text-xs font-medium text-white">
+                      Rapor İndir
+                    </span>
+                  </div>
+                </div>
 
-            {/* Yasal */}
-            <div>
-              <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-300">
-                Yasal
-              </h4>
-              <ul className="space-y-3">
-                <li>
-                  <Link
-                    href="#"
-                    className="text-sm text-gray-400 transition-colors hover:text-white"
-                  >
-                    Kullanım Koşulları
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="#"
-                    className="text-sm text-gray-400 transition-colors hover:text-white"
-                  >
-                    Gizlilik Politikası
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="#"
-                    className="text-sm text-gray-400 transition-colors hover:text-white"
-                  >
-                    KVKK
-                  </Link>
-                </li>
-              </ul>
+                {/* Stat cards */}
+                <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+                  {[
+                    { label: "Toplam Hasta", value: "1,284", change: "+12%", up: true },
+                    { label: "Bugünün Randevuları", value: "18", change: "+3 yeni", up: true },
+                    { label: "Aylık Gelir", value: "₺84,500", change: "+34%", up: true },
+                    { label: "Stok Uyarıları", value: "3", change: "Kontrol et", up: false },
+                  ].map((s) => (
+                    <div
+                      key={s.label}
+                      className="rounded-xl border border-gray-200 bg-white p-4"
+                    >
+                      <p className="text-xs text-gray-400">{s.label}</p>
+                      <p className="mt-1.5 text-[22px] font-bold text-gray-900">
+                        {s.value}
+                      </p>
+                      <p
+                        className={`mt-1 text-[11px] font-semibold ${
+                          s.up ? "text-emerald-500" : "text-red-500"
+                        }`}
+                      >
+                        {s.change}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Chart */}
+                <div className="overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+                  <div className="flex h-[200px] items-end gap-3 px-6 py-5">
+                    {chartHeights.map((h, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, height: 0 }}
+                        whileInView={{ opacity: 1, height: `${h}%` }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.5, delay: i * 0.05 }}
+                        className="flex-1 rounded-t-md bg-gradient-to-t from-blue-500 to-blue-400"
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
+        </motion.div>
+      </section>
 
-          {/* Bottom bar */}
-          <div className="mt-12 border-t border-gray-800 pt-8 text-center">
-            <p className="text-sm text-gray-500">
+      {/* ════════════ FEATURES ════════════ */}
+      <section id="features" className="bg-gray-50 px-6 py-24">
+        <div className="mx-auto max-w-[1100px]">
+          <motion.span
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="mb-3 inline-block text-[13px] font-semibold uppercase tracking-widest text-blue-600"
+          >
+            Özellikler
+          </motion.span>
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-4 text-[clamp(28px,4vw,42px)] font-extrabold leading-tight tracking-tight text-gray-900"
+          >
+            İşletmeni yönetmek için
+            <br />
+            ihtiyacın olan her şey.
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="mb-14 max-w-[500px] text-base leading-relaxed text-gray-500"
+          >
+            Tek platform üzerinden müşteri yönetimi, randevu, finans, stok ve
+            daha fazlasını AI destekli araçlarla yönet.
+          </motion.p>
+
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+            className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            {features.map((feature, i) => {
+              const Icon = feature.icon;
+              return (
+                <motion.div
+                  key={feature.title}
+                  variants={fadeUp}
+                  custom={i}
+                  className="group cursor-default rounded-2xl border border-gray-200 bg-white p-8 transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-600/[0.06]"
+                >
+                  <div
+                    className={`mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl ${feature.bg}`}
+                  >
+                    <Icon className={`h-[22px] w-[22px] ${feature.color}`} />
+                  </div>
+                  <h3 className="mb-2 text-[17px] font-bold text-gray-900">
+                    {feature.title}
+                  </h3>
+                  <p className="text-sm leading-relaxed text-gray-500">
+                    {feature.description}
+                  </p>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ════════════ SECTORS ════════════ */}
+      <section id="sectors" className="px-6 py-24">
+        <div className="mx-auto max-w-[1100px] text-center">
+          <motion.span
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="mb-3 inline-block text-[13px] font-semibold uppercase tracking-widest text-blue-600"
+          >
+            Sektörler
+          </motion.span>
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-4 text-[clamp(28px,4vw,42px)] font-extrabold tracking-tight text-gray-900"
+          >
+            Her işletme için tasarlandı.
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="mx-auto mb-14 max-w-[500px] text-base leading-relaxed text-gray-500"
+          >
+            Sektörünüz ne olursa olsun, inPobi işletmenize uyum sağlar.
+          </motion.p>
+
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+            className="grid grid-cols-2 gap-5 lg:grid-cols-4"
+          >
+            {sectors.map((sector, i) => (
+              <motion.div
+                key={sector.title}
+                variants={fadeUp}
+                custom={i}
+                className="cursor-default rounded-2xl border border-gray-200 bg-white px-6 py-8 transition-all duration-300 hover:-translate-y-1 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-600/[0.08]"
+              >
+                <span className="mb-4 block text-4xl">{sector.emoji}</span>
+                <h4 className="mb-1.5 text-base font-bold text-gray-900">
+                  {sector.title}
+                </h4>
+                <p className="text-[13px] leading-snug text-gray-500">
+                  {sector.desc}
+                </p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ════════════ STATS BAR ════════════ */}
+      <section className="bg-gradient-to-r from-blue-600 to-blue-800 px-6 py-16">
+        <div className="mx-auto grid max-w-[1100px] grid-cols-2 gap-10 text-center lg:grid-cols-4">
+          {stats.map((stat) => (
+            <div key={stat.label}>
+              <p className="text-[42px] font-extrabold tracking-tight text-white">
+                <AnimatedCounter target={stat.target} suffix={stat.suffix} />
+              </p>
+              <p className="mt-1 text-sm text-blue-200">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ════════════ CTA ════════════ */}
+      <section className="relative overflow-hidden px-6 py-28">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_100%,#eff6ff_0%,transparent_70%)]" />
+        <div className="relative z-10 mx-auto max-w-[600px] text-center">
+          <motion.h2
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-4 text-[clamp(28px,4vw,48px)] font-extrabold tracking-[-1.5px] text-gray-900"
+          >
+            İşletmeni dijitalleştir,
+            <br />
+            bir adım öne geç.
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="mx-auto mb-10 max-w-[480px] text-[17px] leading-relaxed text-gray-500"
+          >
+            14 gün ücretsiz dene, kredi kartı gerekmez. Hemen başla ve farkı
+            gör.
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3 }}
+          >
+            <Link
+              href="/register"
+              className="inline-flex items-center gap-2 rounded-[14px] bg-blue-600 px-10 py-4 text-base font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/30"
+            >
+              Hemen Başla
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ════════════ FOOTER ════════════ */}
+      <footer className="border-t border-gray-200 bg-gray-50 px-6 pb-8 pt-16">
+        <div className="mx-auto max-w-[1100px]">
+          <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr]">
+            {/* Brand */}
+            <div>
+              <Link href="/" className="text-xl font-extrabold">
+                <span className="text-blue-600">in</span>
+                <span className="text-gray-800">Pobi</span>
+              </Link>
+              <p className="mt-3 max-w-[280px] text-[13px] leading-relaxed text-gray-500">
+                İşletmenizin cebindeki akıllı asistan. Tüm operasyonlarınızı tek
+                panelden yönetin.
+              </p>
+            </div>
+
+            {/* Link columns */}
+            {Object.entries(footerLinks).map(([title, links]) => (
+              <div key={title}>
+                <h5 className="mb-4 text-[13px] font-semibold uppercase tracking-wider text-gray-800">
+                  {title}
+                </h5>
+                <ul className="space-y-2.5">
+                  {links.map((link) => (
+                    <li key={link}>
+                      <Link
+                        href="#"
+                        className="text-[13px] text-gray-500 transition-colors hover:text-blue-600"
+                      >
+                        {link}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-10 border-t border-gray-200 pt-6 text-center">
+            <p className="text-xs text-gray-400">
               &copy; 2026 inPobi. Tüm hakları saklıdır.
             </p>
           </div>

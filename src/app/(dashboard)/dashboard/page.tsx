@@ -2,29 +2,23 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { TrendingUp, TrendingDown, DollarSign, Users, Clock, Package } from "lucide-react";
+import { motion } from "framer-motion";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+  Users,
+  Calendar,
+  DollarSign,
+  Package,
+  TrendingUp,
+  TrendingDown,
+  ArrowRight,
+  Bell,
+  Clock,
+} from "lucide-react";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import { APPOINTMENT_STATUSES, TREATMENT_CATEGORIES } from "@/lib/types";
 import {
-  BarChart,
-  Bar,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -32,11 +26,14 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+/* ──────────────────────── TYPES ──────────────────────── */
+
 interface DashboardData {
   monthlyIncome: number;
   monthlyExpense: number;
   netProfit: number;
   totalPatients: number;
+  pendingReminders: number;
   recentTreatments: {
     id: string;
     patientName: string;
@@ -44,15 +41,14 @@ interface DashboardData {
     amount: number;
     date: string;
   }[];
-}
-
-interface TodayAppointment {
-  id: string;
-  patientName: string;
-  startTime: string;
-  endTime: string;
-  treatmentType: string;
-  status: string;
+  todayAppointments: {
+    id: string;
+    patientName: string;
+    startTime: string;
+    endTime: string;
+    treatmentType: string;
+    status: string;
+  }[];
 }
 
 interface MonthlySummary {
@@ -62,10 +58,102 @@ interface MonthlySummary {
   expense: number;
 }
 
+/* ──────────────────────── ANIMATION ──────────────────────── */
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 16 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.4, delay: i * 0.08, ease: "easeOut" as const },
+  }),
+};
+
+/* ──────────────────────── SKELETON ──────────────────────── */
+
+function Skeleton({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        "animate-pulse rounded-xl bg-gray-100",
+        className
+      )}
+    />
+  );
+}
+
+function StatCardSkeleton() {
+  return (
+    <div className="rounded-2xl border border-gray-100 bg-white p-6">
+      <div className="flex items-start justify-between">
+        <div className="space-y-3">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-8 w-32" />
+          <Skeleton className="h-3 w-20" />
+        </div>
+        <Skeleton className="h-12 w-12 rounded-xl" />
+      </div>
+    </div>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+        {[...Array(4)].map((_, i) => (
+          <StatCardSkeleton key={i} />
+        ))}
+      </div>
+      <Skeleton className="h-[350px] w-full rounded-2xl" />
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Skeleton className="h-[380px] rounded-2xl" />
+        <Skeleton className="h-[380px] rounded-2xl" />
+      </div>
+    </div>
+  );
+}
+
+/* ──────────────────────── TOOLTIP ──────────────────────── */
+
+function ChartTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-lg">
+      <p className="mb-1 text-xs font-medium text-gray-500">{label}</p>
+      {payload.map((entry: any) => (
+        <p key={entry.dataKey} className="text-sm font-semibold text-gray-900">
+          {entry.dataKey === "income" ? "Gelir" : "Gider"}:{" "}
+          {formatCurrency(entry.value)}
+        </p>
+      ))}
+    </div>
+  );
+}
+
+/* ──────────────────────── STATUS BADGE ──────────────────────── */
+
+function StatusBadge({ status }: { status: string }) {
+  const info =
+    APPOINTMENT_STATUSES.find((s) => s.value === status) ||
+    APPOINTMENT_STATUSES[0];
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-lg px-2.5 py-1 text-[11px] font-semibold",
+        info.color
+      )}
+    >
+      {info.label}
+    </span>
+  );
+}
+
+/* ──────────────────────── MAIN ──────────────────────── */
+
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [chartData, setChartData] = useState<MonthlySummary[]>([]);
-  const [todayAppointments, setTodayAppointments] = useState<TodayAppointment[]>([]);
   const [lowStockCount, setLowStockCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -74,31 +162,28 @@ export default function DashboardPage() {
     async function fetchData() {
       try {
         const today = new Date();
-        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-        const [dashRes, chartRes, apptRes, lowStockRes] = await Promise.all([
+
+        const [dashRes, chartRes, lowStockRes] = await Promise.all([
           fetch("/api/dashboard"),
-          fetch(`/api/finance?type=monthly-summary&year=${new Date().getFullYear()}`),
-          fetch(`/api/appointments?date=${todayStr}`),
+          fetch(
+            `/api/finance?type=monthly-summary&year=${today.getFullYear()}`
+          ),
           fetch("/api/products/low-stock"),
         ]);
 
         if (!dashRes.ok) throw new Error("Dashboard verisi alınamadı");
-        const dashData = await dashRes.json();
-        setData(dashData);
+        setData(await dashRes.json());
 
         if (chartRes.ok) {
           const chartJson = await chartRes.json();
           setChartData(chartJson.months || []);
         }
 
-        if (apptRes.ok) {
-          const apptData = await apptRes.json();
-          setTodayAppointments(apptData.appointments || apptData || []);
-        }
-
         if (lowStockRes.ok) {
           const lowStockData = await lowStockRes.json();
-          setLowStockCount(Array.isArray(lowStockData) ? lowStockData.length : 0);
+          setLowStockCount(
+            Array.isArray(lowStockData) ? lowStockData.length : 0
+          );
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Bir hata oluştu");
@@ -109,237 +194,371 @@ export default function DashboardPage() {
     fetchData();
   }, []);
 
-  if (loading) {
-    return <div className="text-gray-500">Yükleniyor...</div>;
-  }
+  if (loading) return <DashboardSkeleton />;
 
   if (error) {
-    return <div className="text-red-500">{error}</div>;
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="text-center">
+          <p className="text-sm text-red-500">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-3 text-sm font-medium text-blue-600 hover:underline"
+          >
+            Tekrar dene
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (!data) return null;
 
+  /* ── Stat cards config ── */
   const statCards = [
+    {
+      title: "Toplam Hasta",
+      value: data.totalPatients.toLocaleString("tr-TR"),
+      change: null,
+      icon: Users,
+      iconBg: "bg-blue-50",
+      iconColor: "text-blue-600",
+    },
+    {
+      title: "Bugünün Randevuları",
+      value: data.todayAppointments.length.toString(),
+      change:
+        data.todayAppointments.length > 0
+          ? `${data.todayAppointments.filter((a) => a.status === "COMPLETED").length} tamamlandı`
+          : null,
+      icon: Calendar,
+      iconBg: "bg-emerald-50",
+      iconColor: "text-emerald-600",
+    },
     {
       title: "Aylık Gelir",
       value: formatCurrency(data.monthlyIncome),
-      icon: TrendingUp,
-      color: "text-green-600",
-      bg: "bg-green-50",
-    },
-    {
-      title: "Aylık Gider",
-      value: formatCurrency(data.monthlyExpense),
-      icon: TrendingDown,
-      color: "text-red-600",
-      bg: "bg-red-50",
-    },
-    {
-      title: "Net Kar",
-      value: formatCurrency(data.netProfit),
+      change:
+        data.netProfit >= 0
+          ? `+${formatCurrency(data.netProfit)} net kâr`
+          : `${formatCurrency(data.netProfit)} net zarar`,
+      changeUp: data.netProfit >= 0,
       icon: DollarSign,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
+      iconBg: "bg-amber-50",
+      iconColor: "text-amber-600",
     },
     {
-      title: "Toplam Hasta",
-      value: data.totalPatients.toString(),
-      icon: Users,
-      color: "text-purple-600",
-      bg: "bg-purple-50",
+      title: "Stok Uyarıları",
+      value: lowStockCount.toString(),
+      change:
+        lowStockCount > 0
+          ? `${lowStockCount} ürün düşük stokta`
+          : "Stok normal",
+      changeUp: lowStockCount === 0,
+      icon: Package,
+      iconBg: lowStockCount > 0 ? "bg-red-50" : "bg-emerald-50",
+      iconColor: lowStockCount > 0 ? "text-red-600" : "text-emerald-600",
     },
   ];
 
   return (
     <div className="space-y-6">
-      {/* Stat Cards */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {statCards.map((stat) => (
-          <Card key={stat.title}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+      {/* ── STAT CARDS ── */}
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+        {statCards.map((stat, i) => {
+          const Icon = stat.icon;
+          return (
+            <motion.div
+              key={stat.title}
+              variants={fadeUp}
+              initial="hidden"
+              animate="visible"
+              custom={i}
+              className="group rounded-2xl border border-gray-100 bg-white p-6 transition-shadow hover:shadow-md"
+            >
+              <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">{stat.title}</p>
-                  <p className={`text-2xl font-bold ${stat.color}`}>
+                  <p className="text-[13px] font-medium text-gray-500">
+                    {stat.title}
+                  </p>
+                  <p className="mt-2 text-2xl font-bold tracking-tight text-gray-900">
                     {stat.value}
                   </p>
+                  {stat.change && (
+                    <div className="mt-2 flex items-center gap-1">
+                      {"changeUp" in stat ? (
+                        stat.changeUp ? (
+                          <TrendingUp className="h-3 w-3 text-emerald-500" />
+                        ) : (
+                          <TrendingDown className="h-3 w-3 text-red-500" />
+                        )
+                      ) : null}
+                      <span
+                        className={cn(
+                          "text-xs font-medium",
+                          "changeUp" in stat
+                            ? stat.changeUp
+                              ? "text-emerald-600"
+                              : "text-red-600"
+                            : "text-gray-500"
+                        )}
+                      >
+                        {stat.change}
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <div className={`rounded-full p-3 ${stat.bg}`}>
-                  <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                <div
+                  className={cn(
+                    "flex h-12 w-12 items-center justify-center rounded-xl",
+                    stat.iconBg
+                  )}
+                >
+                  <Icon className={cn("h-5 w-5", stat.iconColor)} />
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        ))}
+            </motion.div>
+          );
+        })}
       </div>
 
-      {/* Low Stock Warning */}
-      <Link href="/inventory">
-        <Card className={cn(
-          "cursor-pointer transition-colors hover:shadow-md",
-          lowStockCount > 0 ? "border-orange-300 bg-orange-50" : "border-green-300 bg-green-50"
-        )}>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className={cn(
-                "rounded-full p-2",
-                lowStockCount > 0 ? "bg-orange-100" : "bg-green-100"
-              )}>
-                <Package className={cn(
-                  "h-5 w-5",
-                  lowStockCount > 0 ? "text-orange-600" : "text-green-600"
-                )} />
-              </div>
-              <div>
-                <p className={cn(
-                  "text-sm font-semibold",
-                  lowStockCount > 0 ? "text-orange-800" : "text-green-800"
-                )}>
-                  {lowStockCount > 0
-                    ? `${lowStockCount} ürün düşük stokta`
-                    : "Stok seviyeleri normal"}
-                </p>
-                <p className={cn(
-                  "text-xs",
-                  lowStockCount > 0 ? "text-orange-600" : "text-green-600"
-                )}>
-                  {lowStockCount > 0 ? "Stok sayfasına gitmek için tıklayın" : "Tüm ürünler yeterli stokta"}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </Link>
-
-      {/* Today's Appointments */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+      {/* ── REVENUE CHART ── */}
+      <motion.div
+        variants={fadeUp}
+        initial="hidden"
+        animate="visible"
+        custom={4}
+        className="rounded-2xl border border-gray-100 bg-white p-6"
+      >
+        <div className="mb-6 flex items-center justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-blue-600" />
-              Bugünün Randevuları
-            </CardTitle>
-            <CardDescription>
-              {todayAppointments.length > 0
-                ? `${todayAppointments.length} randevu`
-                : ""}
-            </CardDescription>
+            <h2 className="text-base font-semibold text-gray-900">
+              Gelir Grafiği
+            </h2>
+            <p className="mt-0.5 text-[13px] text-gray-500">
+              {new Date().getFullYear()} yılı aylık gelir özeti
+            </p>
           </div>
-          <Link href="/appointments">
-            <Button variant="outline" size="sm">
-              Tümünü Gör
-            </Button>
+          <Link
+            href="/reports"
+            className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700"
+          >
+            Detaylı Rapor
+            <ArrowRight className="h-3 w-3" />
           </Link>
-        </CardHeader>
-        <CardContent>
-          {todayAppointments.length === 0 ? (
-            <p className="text-sm text-gray-500">Bugün randevu yok</p>
-          ) : (
-            <div className="space-y-2">
-              {todayAppointments.map((appt) => {
-                const statusInfo = APPOINTMENT_STATUSES.find(
-                  (s) => s.value === appt.status
-                ) || APPOINTMENT_STATUSES[0];
-                const treatmentLabel =
-                  TREATMENT_CATEGORIES.find((t) => t.value === appt.treatmentType)
-                    ?.label || appt.treatmentType;
+        </div>
 
-                return (
+        {chartData.length === 0 ? (
+          <div className="flex h-[260px] items-center justify-center">
+            <p className="text-sm text-gray-400">Grafik verisi henüz yok</p>
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height={260}>
+            <AreaChart data={chartData}>
+              <defs>
+                <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#2563eb" stopOpacity={0.15} />
+                  <stop offset="100%" stopColor="#2563eb" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                vertical={false}
+                stroke="#f3f4f6"
+              />
+              <XAxis
+                dataKey="monthName"
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
+                dy={8}
+                tick={{ fill: "#9ca3af" }}
+              />
+              <YAxis
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
+                dx={-4}
+                tick={{ fill: "#9ca3af" }}
+                tickFormatter={(v) =>
+                  `${(v / 100).toLocaleString("tr-TR")}₺`
+                }
+              />
+              <Tooltip content={<ChartTooltip />} />
+              <Area
+                type="monotone"
+                dataKey="income"
+                stroke="#2563eb"
+                strokeWidth={2.5}
+                fill="url(#incomeGrad)"
+                dot={false}
+                activeDot={{ r: 5, fill: "#2563eb", strokeWidth: 2, stroke: "#fff" }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
+      </motion.div>
+
+      {/* ── BOTTOM TWO-COLUMN ── */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Today's Appointments */}
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          animate="visible"
+          custom={5}
+          className="rounded-2xl border border-gray-100 bg-white"
+        >
+          <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-blue-600" />
+              <h2 className="text-sm font-semibold text-gray-900">
+                Bugünün Randevuları
+              </h2>
+              {data.todayAppointments.length > 0 && (
+                <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700">
+                  {data.todayAppointments.length}
+                </span>
+              )}
+            </div>
+            <Link
+              href="/appointments"
+              className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700"
+            >
+              Tümünü Gör
+              <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+
+          <div className="p-4">
+            {data.todayAppointments.length === 0 ? (
+              <div className="flex h-[280px] items-center justify-center">
+                <div className="text-center">
+                  <Clock className="mx-auto mb-2 h-8 w-8 text-gray-300" />
+                  <p className="text-sm text-gray-400">
+                    Bugün randevu bulunmuyor
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {data.todayAppointments.slice(0, 5).map((appt) => {
+                  const treatmentLabel =
+                    TREATMENT_CATEGORIES.find(
+                      (t) => t.value === appt.treatmentType
+                    )?.label || appt.treatmentType;
+
+                  return (
+                    <div
+                      key={appt.id}
+                      className="flex items-center justify-between rounded-xl px-4 py-3 transition-colors hover:bg-gray-50"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-xs font-bold text-blue-700">
+                          {appt.startTime}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            {appt.patientName}
+                          </p>
+                          <p className="text-[11px] text-gray-400">
+                            {treatmentLabel}
+                          </p>
+                        </div>
+                      </div>
+                      <StatusBadge status={appt.status} />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Reminders & Recent Treatments */}
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          animate="visible"
+          custom={6}
+          className="rounded-2xl border border-gray-100 bg-white"
+        >
+          <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+            <div className="flex items-center gap-2">
+              <Bell className="h-4 w-4 text-amber-500" />
+              <h2 className="text-sm font-semibold text-gray-900">
+                Son İşlemler
+              </h2>
+            </div>
+            <Link
+              href="/finance"
+              className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700"
+            >
+              Tümünü Gör
+              <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+
+          <div className="p-4">
+            {data.recentTreatments.length === 0 ? (
+              <div className="flex h-[280px] items-center justify-center">
+                <div className="text-center">
+                  <DollarSign className="mx-auto mb-2 h-8 w-8 text-gray-300" />
+                  <p className="text-sm text-gray-400">
+                    Henüz işlem bulunmuyor
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {data.recentTreatments.slice(0, 5).map((t) => (
                   <div
-                    key={appt.id}
-                    className="flex items-center justify-between rounded-lg border border-gray-100 px-4 py-2.5"
+                    key={t.id}
+                    className="flex items-center justify-between rounded-xl px-4 py-3 transition-colors hover:bg-gray-50"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium text-gray-500">
-                        {appt.startTime}
-                      </span>
-                      <span className="font-medium text-gray-900">
-                        {appt.patientName}
-                      </span>
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50">
+                        <DollarSign className="h-4 w-4 text-emerald-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {t.patientName}
+                        </p>
+                        <p className="text-[11px] text-gray-400">{t.name}</p>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Badge className="bg-gray-100 text-gray-700">
-                        {treatmentLabel}
-                      </Badge>
-                      <Badge className={cn(statusInfo.color)}>
-                        {statusInfo.label}
-                      </Badge>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-gray-900">
+                        {formatCurrency(t.amount)}
+                      </p>
+                      <p className="text-[11px] text-gray-400">
+                        {formatDate(t.date)}
+                      </p>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Pending reminders footer */}
+          {data.pendingReminders > 0 && (
+            <Link
+              href="/reminders"
+              className="flex items-center justify-between border-t border-gray-100 px-6 py-3 transition-colors hover:bg-gray-50"
+            >
+              <div className="flex items-center gap-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-100 text-[10px] font-bold text-amber-700">
+                  {data.pendingReminders}
+                </span>
+                <span className="text-xs font-medium text-gray-600">
+                  Aktif hatırlatma
+                </span>
+              </div>
+              <ArrowRight className="h-3 w-3 text-gray-400" />
+            </Link>
           )}
-        </CardContent>
-      </Card>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Recent Treatments */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Son İşlemler</CardTitle>
-            <CardDescription>Son 5 tedavi işlemi</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {data.recentTreatments.length === 0 ? (
-              <p className="text-sm text-gray-500">Henüz işlem yok</p>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Hasta</TableHead>
-                    <TableHead>İşlem</TableHead>
-                    <TableHead>Tutar</TableHead>
-                    <TableHead>Tarih</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.recentTreatments.map((t) => (
-                    <TableRow key={t.id}>
-                      <TableCell className="font-medium">
-                        {t.patientName}
-                      </TableCell>
-                      <TableCell>{t.name}</TableCell>
-                      <TableCell>{formatCurrency(t.amount)}</TableCell>
-                      <TableCell>{formatDate(t.date)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Monthly Revenue Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Aylık Gelir</CardTitle>
-            <CardDescription>{new Date().getFullYear()} yılı aylık gelir grafiği</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {chartData.length === 0 ? (
-              <p className="text-sm text-gray-500">Grafik verisi yok</p>
-            ) : (
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="monthName" fontSize={12} />
-                  <YAxis
-                    fontSize={12}
-                    tickFormatter={(v) => `${(v / 100).toLocaleString("tr-TR")} TL`}
-                  />
-                  <Tooltip
-                    formatter={(value: any) => [
-                      formatCurrency(Number(value)),
-                      "Gelir",
-                    ]}
-                  />
-                  <Bar dataKey="income" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
+        </motion.div>
       </div>
     </div>
   );

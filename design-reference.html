@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>inPobi - Landing Page Concept</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--blue-50:#eff6ff;--blue-100:#dbeafe;--blue-200:#bfdbfe;--blue-300:#93c5fd;--blue-400:#60a5fa;--blue-500:#3b82f6;--blue-600:#2563eb;--blue-700:#1d4ed8;--blue-800:#1e40af;--gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;--gray-300:#d1d5db;--gray-400:#9ca3af;--gray-500:#6b7280;--gray-600:#4b5563;--gray-700:#374151;--gray-800:#1f2937;--gray-900:#111827}
+body{font-family:'Inter',-apple-system,sans-serif;color:var(--gray-800);background:#fff;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+.navbar{position:fixed;top:0;left:0;right:0;z-index:100;padding:16px 0;transition:all .3s;background:rgba(255,255,255,.8);backdrop-filter:blur(20px);border-bottom:1px solid transparent}
+.navbar.scrolled{border-bottom-color:var(--gray-200);box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.nav-inner{max-width:1200px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:24px;font-weight:800;color:var(--blue-600);text-decoration:none;letter-spacing:-.5px}
+.logo span{color:var(--gray-800)}
+.nav-links{display:flex;gap:32px;align-items:center}
+.nav-links a{text-decoration:none;color:var(--gray-600);font-size:14px;font-weight:500;transition:color .2s}
+.nav-links a:hover{color:var(--gray-900)}
+.btn-primary{display:inline-flex;align-items:center;gap:8px;padding:10px 24px;background:var(--blue-600);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none}
+.btn-primary:hover{background:var(--blue-700);transform:translateY(-1px);box-shadow:0 4px 12px rgba(37,99,235,.3)}
+.btn-secondary{display:inline-flex;align-items:center;gap:8px;padding:10px 24px;background:transparent;color:var(--gray-700);border:1.5px solid var(--gray-300);border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none}
+.btn-secondary:hover{border-color:var(--gray-400);background:var(--gray-50)}
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:120px 24px 80px;position:relative;overflow:hidden}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% -20%,var(--blue-100) 0%,transparent 70%);pointer-events:none}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(59,130,246,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.03) 1px,transparent 1px);background-size:60px 60px;pointer-events:none}
+.hero-content{text-align:center;max-width:800px;position:relative;z-index:2}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;background:var(--blue-50);border:1px solid var(--blue-200);border-radius:100px;font-size:13px;font-weight:500;color:var(--blue-700);margin-bottom:24px}
+.hero-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--blue-500);animation:pulse-dot 2s infinite}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.3}}
+.hero h1{font-size:clamp(40px,6vw,72px);font-weight:800;line-height:1.05;letter-spacing:-2px;color:var(--gray-900);margin-bottom:20px}
+.hero h1 .gradient{background:linear-gradient(135deg,var(--blue-600),var(--blue-400));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero p{font-size:18px;line-height:1.7;color:var(--gray-500);max-width:560px;margin:0 auto 40px}
+.hero-buttons{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.hero-buttons .btn-primary{padding:14px 32px;font-size:15px;border-radius:12px}
+.hero-buttons .btn-secondary{padding:14px 32px;font-size:15px;border-radius:12px}
+.float-card{position:absolute;background:#fff;border-radius:16px;padding:16px 20px;box-shadow:0 8px 32px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);border:1px solid var(--gray-100);display:flex;align-items:center;gap:12px;font-size:13px;font-weight:500;z-index:3;opacity:0}
+.float-card .icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.float-1{top:25%;left:5%}.float-1 .icon{background:#ecfdf5}
+.float-2{top:20%;right:5%}.float-2 .icon{background:var(--blue-50)}
+.float-3{bottom:25%;left:8%}.float-3 .icon{background:#fef3c7}
+.float-4{bottom:20%;right:8%}.float-4 .icon{background:#fce7f3}
+.preview-section{padding:0 24px 100px;position:relative}
+.preview-wrapper{max-width:1100px;margin:0 auto;perspective:1000px}
+.preview-frame{background:linear-gradient(145deg,var(--gray-900),var(--gray-800));border-radius:16px;padding:12px;box-shadow:0 40px 80px rgba(0,0,0,.15);transform:rotateX(4deg);transition:transform .4s}
+.preview-frame:hover{transform:rotateX(0deg)}
+.preview-topbar{display:flex;align-items:center;gap:8px;padding:8px 12px;margin-bottom:8px}
+.preview-dot{width:12px;height:12px;border-radius:50%}.preview-dot.red{background:#ef4444}.preview-dot.yellow{background:#eab308}.preview-dot.green{background:#22c55e}
+.preview-url{flex:1;text-align:center;font-size:12px;color:var(--gray-400);background:rgba(255,255,255,.05);padding:6px;border-radius:6px;margin-left:8px}
+.preview-content{background:#fff;border-radius:8px;min-height:500px;display:flex;overflow:hidden}
+.preview-sidebar{width:220px;background:var(--gray-50);border-right:1px solid var(--gray-200);padding:20px 16px;flex-shrink:0}
+.sidebar-logo{font-weight:700;font-size:16px;color:var(--blue-600);margin-bottom:24px;padding:0 4px}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;font-size:13px;color:var(--gray-500);margin-bottom:4px}
+.sidebar-item.active{background:var(--blue-50);color:var(--blue-700);font-weight:600}
+.preview-main{flex:1;padding:24px}
+.preview-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+.preview-header h3{font-size:20px;font-weight:700;color:var(--gray-900)}
+.mini-btn{padding:8px 14px;border-radius:8px;font-size:12px;font-weight:500;border:1px solid var(--gray-200);background:#fff;color:var(--gray-600)}
+.mini-btn.blue{background:var(--blue-600);color:#fff;border-color:var(--blue-600)}
+.stat-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{padding:16px;border-radius:12px;border:1px solid var(--gray-200);background:#fff}
+.stat-card .label{font-size:12px;color:var(--gray-400);margin-bottom:6px}
+.stat-card .value{font-size:22px;font-weight:700;color:var(--gray-900)}
+.stat-card .change{font-size:11px;font-weight:600;margin-top:4px}
+.stat-card .change.up{color:#10b981}.stat-card .change.down{color:#ef4444}
+.preview-chart{height:200px;background:var(--gray-50);border-radius:12px;border:1px solid var(--gray-200);position:relative;overflow:hidden}
+.chart-bars{display:flex;align-items:flex-end;gap:12px;padding:20px 24px;height:100%}
+.chart-bar{flex:1;background:linear-gradient(to top,var(--blue-500),var(--blue-400));border-radius:6px 6px 0 0;min-height:20px;opacity:0}
+.chart-bar:nth-child(1){height:45%}.chart-bar:nth-child(2){height:65%}.chart-bar:nth-child(3){height:35%}.chart-bar:nth-child(4){height:80%}.chart-bar:nth-child(5){height:55%}.chart-bar:nth-child(6){height:90%}.chart-bar:nth-child(7){height:70%}.chart-bar:nth-child(8){height:50%}.chart-bar:nth-child(9){height:75%}.chart-bar:nth-child(10){height:60%}.chart-bar:nth-child(11){height:85%}.chart-bar:nth-child(12){height:95%}
+.features{padding:100px 24px;background:var(--gray-50)}
+.features-inner{max-width:1100px;margin:0 auto}
+.section-label{display:inline-block;font-size:13px;font-weight:600;color:var(--blue-600);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+.section-title{font-size:clamp(28px,4vw,42px);font-weight:800;color:var(--gray-900);letter-spacing:-1px;margin-bottom:16px;line-height:1.15}
+.section-desc{font-size:16px;color:var(--gray-500);max-width:500px;line-height:1.7;margin-bottom:60px}
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.feature-card{background:#fff;border-radius:16px;padding:32px;border:1px solid var(--gray-200);transition:all .3s;cursor:default}
+.feature-card:hover{border-color:var(--blue-200);box-shadow:0 8px 24px rgba(59,130,246,.08);transform:translateY(-4px)}
+.feature-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:20px}
+.feature-card h3{font-size:17px;font-weight:700;color:var(--gray-900);margin-bottom:8px}
+.feature-card p{font-size:14px;color:var(--gray-500);line-height:1.6}
+.sectors{padding:100px 24px}
+.sectors-inner{max-width:1100px;margin:0 auto;text-align:center}
+.sectors-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:60px}
+.sector-card{padding:32px 24px;border-radius:16px;border:1px solid var(--gray-200);background:#fff;transition:all .3s;cursor:default}
+.sector-card:hover{border-color:var(--blue-300);box-shadow:0 12px 32px rgba(59,130,246,.1);transform:translateY(-4px)}
+.sector-emoji{font-size:36px;margin-bottom:16px;display:block}
+.sector-card h4{font-size:16px;font-weight:700;color:var(--gray-900);margin-bottom:6px}
+.sector-card p{font-size:13px;color:var(--gray-500);line-height:1.5}
+.stats-bar{padding:60px 24px;background:linear-gradient(135deg,var(--blue-600),var(--blue-800))}
+.stats-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:40px;text-align:center}
+.stat-item .number{font-size:42px;font-weight:800;color:#fff;letter-spacing:-1px}
+.stat-item .text{font-size:14px;color:var(--blue-200);margin-top:4px}
+.cta{padding:120px 24px;text-align:center;position:relative;overflow:hidden}
+.cta-bg{position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 100%,var(--blue-50) 0%,transparent 70%);pointer-events:none}
+.cta-content{position:relative;z-index:2}
+.cta h2{font-size:clamp(28px,4vw,48px);font-weight:800;color:var(--gray-900);letter-spacing:-1.5px;margin-bottom:16px}
+.cta p{font-size:17px;color:var(--gray-500);margin-bottom:40px;max-width:480px;margin-left:auto;margin-right:auto;line-height:1.7}
+.cta .btn-primary{padding:16px 40px;font-size:16px;border-radius:14px}
+.footer{padding:60px 24px 32px;border-top:1px solid var(--gray-200);background:var(--gray-50)}
+.footer-inner{max-width:1100px;margin:0 auto}
+.footer-top{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
+.footer-brand .logo{font-size:20px;display:block;margin-bottom:12px}
+.footer-brand p{font-size:13px;color:var(--gray-500);line-height:1.6;max-width:280px}
+.footer-col h5{font-size:13px;font-weight:600;color:var(--gray-800);text-transform:uppercase;letter-spacing:.5px;margin-bottom:16px}
+.footer-col a{display:block;font-size:13px;color:var(--gray-500);text-decoration:none;margin-bottom:10px;transition:color .2s}
+.footer-col a:hover{color:var(--blue-600)}
+.footer-bottom{border-top:1px solid var(--gray-200);padding-top:24px;text-align:center;font-size:12px;color:var(--gray-400)}
+@media(max-width:768px){.nav-links{display:none}.features-grid{grid-template-columns:1fr}.sectors-grid{grid-template-columns:repeat(2,1fr)}.stats-inner{grid-template-columns:repeat(2,1fr);gap:24px}.stat-cards{grid-template-columns:repeat(2,1fr)}.footer-top{grid-template-columns:1fr 1fr}.float-card{display:none}.preview-sidebar{display:none}}
+</style>
+</head>
+<body>
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a href="#" class="logo">in<span>Pobi</span></a>
+    <div class="nav-links">
+      <a href="#features">Ozellikler</a>
+      <a href="#sectors">Sektorler</a>
+      <a href="#pricing">Fiyatlandirma</a>
+      <a href="#">Destek</a>
+      <a href="/login" class="btn-primary">Giris Yap</a>
+    </div>
+  </div>
+</nav>
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="float-card float-1"><div class="icon">&#x2714;</div><div><strong>12 randevu</strong><br><span style="color:var(--gray-400);font-size:12px">bugun tamamlandi</span></div></div>
+  <div class="float-card float-2"><div class="icon">&#x1F4CA;</div><div><strong>+34% gelir</strong><br><span style="color:var(--gray-400);font-size:12px">bu ay artti</span></div></div>
+  <div class="float-card float-3"><div class="icon">&#x1F4E6;</div><div><strong>Stok uyarisi</strong><br><span style="color:var(--gray-400);font-size:12px">3 urun azaldi</span></div></div>
+  <div class="float-card float-4"><div class="icon">&#x1F916;</div><div><strong>AI Asistan</strong><br><span style="color:var(--gray-400);font-size:12px">rapor hazirlandi</span></div></div>
+  <div class="hero-content">
+    <div class="hero-badge"><span class="dot"></span>Yeni: AI destekli isletme yonetimi</div>
+    <h1>Isletmeni yonet,<br><span class="gradient">gelecegini planla.</span></h1>
+    <p>inPobi ile klinik, restoran, kuafor veya eczane farketmez — tum isletme operasyonlarini tek panelden yonetin.</p>
+    <div class="hero-buttons">
+      <a href="/register" class="btn-primary">Ucretsiz Dene <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+      <a href="#features" class="btn-secondary">Ozellikleri Gor</a>
+    </div>
+  </div>
+</section>
+<section class="preview-section">
+  <div class="preview-wrapper">
+    <div class="preview-frame">
+      <div class="preview-topbar">
+        <div class="preview-dot red"></div><div class="preview-dot yellow"></div><div class="preview-dot green"></div>
+        <div class="preview-url">inpobi.com/dashboard</div>
+      </div>
+      <div class="preview-content">
+        <div class="preview-sidebar">
+          <div class="sidebar-logo">inPobi</div>
+          <div class="sidebar-item active"><span>&#x1F4CA;</span> Dashboard</div>
+          <div class="sidebar-item"><span>&#x1F465;</span> Hastalar</div>
+          <div class="sidebar-item"><span>&#x1F4C5;</span> Randevular</div>
+          <div class="sidebar-item"><span>&#x1F4B0;</span> Finans</div>
+          <div class="sidebar-item"><span>&#x1F9FE;</span> Faturalar</div>
+          <div class="sidebar-item"><span>&#x1F4E6;</span> Stok</div>
+          <div class="sidebar-item"><span>&#x1F916;</span> AI Asistan</div>
+          <div class="sidebar-item"><span>&#x2699;</span> Ayarlar</div>
+        </div>
+        <div class="preview-main">
+          <div class="preview-header"><h3>Dashboard</h3><div style="display:flex;gap:8px"><div class="mini-btn">Bu Hafta</div><div class="mini-btn blue">Rapor Indir</div></div></div>
+          <div class="stat-cards">
+            <div class="stat-card"><div class="label">Toplam Hasta</div><div class="value">1,284</div><div class="change up">+12%</div></div>
+            <div class="stat-card"><div class="label">Bugunun Randevulari</div><div class="value">18</div><div class="change up">+3 yeni</div></div>
+            <div class="stat-card"><div class="label">Aylik Gelir</div><div class="value">&#x20BA;84,500</div><div class="change up">+34%</div></div>
+            <div class="stat-card"><div class="label">Stok Uyarilari</div><div class="value">3</div><div class="change down">Kontrol et</div></div>
+          </div>
+          <div class="preview-chart"><div class="chart-bars"><div class="chart-bar"></div><div class="chart-bar"></div><div class="chart-bar"></div><div class="chart-bar"></div><div class="chart-bar"></div><div class="chart-bar"></div><div class="chart-bar"></div><div class="chart-bar"></div><div class="chart-bar"></div><div class="chart-bar"></div><div class="chart-bar"></div><div class="chart-bar"></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="features" id="features">
+  <div class="features-inner">
+    <span class="section-label">Ozellikler</span>
+    <h2 class="section-title">Isletmeni yonetmek icin<br>ihtiyacin olan her sey.</h2>
+    <p class="section-desc">Tek platform uzerinden musteri yonetimi, randevu, finans, stok ve daha fazlasini AI destekli araclarla yonet.</p>
+    <div class="features-grid">
+      <div class="feature-card"><div class="feature-icon" style="background:var(--blue-50)">&#x1F465;</div><h3>Musteri Yonetimi</h3><p>Hasta ve musteri kayitlarini detayli profiller ile yonetin. Gecmis islemler, notlar ve iletisim bilgileri tek yerde.</p></div>
+      <div class="feature-card"><div class="feature-icon" style="background:#ecfdf5">&#x1F4C5;</div><h3>Randevu Sistemi</h3><p>Akilli takvim ile randevulari kolayca planlayin. Otomatik hatirlatmalar ve musait slot yonetimi.</p></div>
+      <div class="feature-card"><div class="feature-icon" style="background:#fef3c7">&#x1F4B0;</div><h3>Finansal Takip</h3><p>Gelir ve giderlerinizi kategorize edin, detayli raporlar alin. Aylik, haftalik ve gunluk analizler.</p></div>
+      <div class="feature-card"><div class="feature-icon" style="background:#fce7f3">&#x1F9FE;</div><h3>e-Fatura Sistemi</h3><p>Profesyonel faturalari saniyeler icinde olusturun. PDF export, e-posta ile gonderim ve arsivleme.</p></div>
+      <div class="feature-card"><div class="feature-icon" style="background:#f3e8ff">&#x1F4E6;</div><h3>Stok Yonetimi</h3><p>Urun ve malzeme stoklarinizi takip edin. Dusuk stok uyarilari, hareket gecmisi ve raporlama.</p></div>
+      <div class="feature-card"><div class="feature-icon" style="background:#e0f2fe">&#x1F916;</div><h3>AI Asistan</h3><p>Yapay zeka destekli akilli asistan ile raporlar olusturun, analizler yapin ve operasyonlarinizi optimize edin.</p></div>
+    </div>
+  </div>
+</section>
+<section class="sectors" id="sectors">
+  <div class="sectors-inner">
+    <span class="section-label">Sektorler</span>
+    <h2 class="section-title">Her isletme icin tasarlandi.</h2>
+    <p class="section-desc" style="margin:0 auto">Sektorunuz ne olursa olsun, inPobi isletmenize uyum saglar.</p>
+    <div class="sectors-grid">
+      <div class="sector-card"><span class="sector-emoji">&#x1FA7A;</span><h4>Saglik</h4><p>Klinik, muayenehane, dis hekimligi</p></div>
+      <div class="sector-card"><span class="sector-emoji">&#x1F374;</span><h4>Restoran</h4><p>Kafe, restoran, yemek servisi</p></div>
+      <div class="sector-card"><span class="sector-emoji">&#x2702;</span><h4>Guzellik</h4><p>Kuafor, guzellik merkezi, SPA</p></div>
+      <div class="sector-card"><span class="sector-emoji">&#x1F3E8;</span><h4>Otel</h4><p>Otel, pansiyon, apart</p></div>
+    </div>
+  </div>
+</section>
+<section class="stats-bar">
+  <div class="stats-inner">
+    <div class="stat-item"><div class="number" data-target="500">0</div><div class="text">Aktif Isletme</div></div>
+    <div class="stat-item"><div class="number" data-target="50000">0</div><div class="text">Islem / Ay</div></div>
+    <div class="stat-item"><div class="number" data-target="99">0</div><div class="text">% Uptime</div></div>
+    <div class="stat-item"><div class="number" data-target="4">0</div><div class="text">Sektor Destegi</div></div>
+  </div>
+</section>
+<section class="cta">
+  <div class="cta-bg"></div>
+  <div class="cta-content">
+    <h2>Isletmeni dijitallestir,<br>bir adim one gec.</h2>
+    <p>14 gun ucretsiz dene, kredi karti gerekmez. Hemen basla ve farki gor.</p>
+    <a href="/register" class="btn-primary">Hemen Basla <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+  </div>
+</section>
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand"><a href="#" class="logo">in<span>Pobi</span></a><p>Isletmenizin cebindeki akilli asistan. Tum operasyonlarinizi tek panelden yonetin.</p></div>
+      <div class="footer-col"><h5>Urun</h5><a href="#">Ozellikler</a><a href="#">Fiyatlandirma</a><a href="#">Entegrasyonlar</a></div>
+      <div class="footer-col"><h5>Destek</h5><a href="#">Yardim Merkezi</a><a href="#">Iletisim</a><a href="#">SSS</a></div>
+      <div class="footer-col"><h5>Yasal</h5><a href="#">Kullanim Kosullari</a><a href="#">Gizlilik Politikasi</a><a href="#">KVKK</a></div>
+    </div>
+    <div class="footer-bottom">&copy; 2026 inPobi. Tum haklari saklidir.</div>
+  </div>
+</footer>
+<script>
+const navbar=document.getElementById('navbar');
+window.addEventListener('scroll',()=>{navbar.classList.toggle('scrolled',window.scrollY>20)});
+gsap.registerPlugin(ScrollTrigger);
+gsap.from('.hero-badge',{opacity:0,y:20,duration:.6,delay:.2});
+gsap.from('.hero h1',{opacity:0,y:30,duration:.8,delay:.4});
+gsap.from('.hero p',{opacity:0,y:20,duration:.6,delay:.6});
+gsap.from('.hero-buttons',{opacity:0,y:20,duration:.6,delay:.8});
+gsap.to('.float-1',{opacity:1,x:0,duration:.8,delay:1.2});gsap.from('.float-1',{x:-30,duration:.8,delay:1.2});
+gsap.to('.float-2',{opacity:1,x:0,duration:.8,delay:1.4});gsap.from('.float-2',{x:30,duration:.8,delay:1.4});
+gsap.to('.float-3',{opacity:1,x:0,duration:.8,delay:1.6});gsap.from('.float-3',{x:-30,duration:.8,delay:1.6});
+gsap.to('.float-4',{opacity:1,x:0,duration:.8,delay:1.8});gsap.from('.float-4',{x:30,duration:.8,delay:1.8});
+gsap.to('.float-1',{y:-10,duration:3,repeat:-1,yoyo:true,ease:'sine.inOut',delay:2});
+gsap.to('.float-2',{y:10,duration:3.5,repeat:-1,yoyo:true,ease:'sine.inOut',delay:2.2});
+gsap.to('.float-3',{y:8,duration:2.8,repeat:-1,yoyo:true,ease:'sine.inOut',delay:2.4});
+gsap.to('.float-4',{y:-12,duration:3.2,repeat:-1,yoyo:true,ease:'sine.inOut',delay:2.6});
+gsap.from('.preview-frame',{scrollTrigger:{trigger:'.preview-section',start:'top 80%'},opacity:0,y:60,duration:1,ease:'power3.out'});
+gsap.to('.chart-bar',{scrollTrigger:{trigger:'.preview-chart',start:'top 90%'},opacity:1,stagger:.05,duration:.6});
+gsap.from('.feature-card',{scrollTrigger:{trigger:'.features-grid',start:'top 80%'},opacity:0,y:30,stagger:.1,duration:.6});
+gsap.from('.sector-card',{scrollTrigger:{trigger:'.sectors-grid',start:'top 80%'},opacity:0,y:30,stagger:.1,duration:.6});
+ScrollTrigger.create({trigger:'.stats-bar',start:'top 80%',onEnter:()=>{document.querySelectorAll('.stat-item .number').forEach(c=>{const t=parseInt(c.dataset.target);let cur=0;const inc=t/60;const timer=setInterval(()=>{cur+=inc;if(cur>=t){cur=t;clearInterval(timer);if(t===99)c.textContent='99.9%';else if(t>=50000)c.textContent='50K+';else c.textContent=t+'+';}else c.textContent=Math.floor(cur);},16);});},once:true});
+gsap.from('.cta h2',{scrollTrigger:{trigger:'.cta',start:'top 80%'},opacity:0,y:30,duration:.8});
+gsap.from('.cta p',{scrollTrigger:{trigger:'.cta',start:'top 80%'},opacity:0,y:20,duration:.6,delay:.2});
+</script>
+</body>
+</html>

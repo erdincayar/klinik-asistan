@@ -57,6 +57,16 @@ model Clinic {
   products             Product[]
   stockMovements       StockMovement[]
   invoices             Invoice[]
+  telegramChatId       String?
+  telegramLinks        TelegramLink[]
+  clinicModules        ClinicModule[]
+  onboardingChats      OnboardingChat[]
+  uploadedInvoices     UploadedInvoice[]
+  financialReports     FinancialReport[]
+  metaAdsConnection    MetaAdsConnection?
+  adCampaignMetrics    AdCampaignMetric[]
+  socialMediaAssets    SocialMediaAsset[]
+  scheduledPosts       ScheduledPost[]
   createdAt            DateTime         @default(now())
   updatedAt            DateTime         @updatedAt
 }
@@ -75,6 +85,7 @@ model Patient {
   visitPattern     PatientVisitPattern?
   reminderLogs     ReminderLog[]
   invoices         Invoice[]
+  photos           PatientPhoto[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 }
@@ -276,4 +287,178 @@ model Invoice {
   treatment          Treatment? @relation(fields: [treatmentId], references: [id])
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
+}
+
+// ═══════════════════════════════════════════════════════════
+// Modüler Fiyatlandırma
+// ═══════════════════════════════════════════════════════════
+
+model Module {
+  id            String         @id @default(cuid())
+  name          String         @unique
+  displayName   String
+  description   String
+  price         Float
+  icon          String?
+  isCore        Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  clinicModules ClinicModule[]
+}
+
+model ClinicModule {
+  id          String   @id @default(cuid())
+  clinicId    String
+  clinic      Clinic   @relation(fields: [clinicId], references: [id])
+  moduleId    String
+  module      Module   @relation(fields: [moduleId], references: [id])
+  isActive    Boolean  @default(true)
+  activatedAt DateTime @default(now())
+
+  @@unique([clinicId, moduleId])
+}
+
+// ═══════════════════════════════════════════════════════════
+// AI Onboarding Chat
+// ═══════════════════════════════════════════════════════════
+
+model OnboardingChat {
+  id               String   @id @default(cuid())
+  sessionId        String   @unique @default(cuid())
+  clinicId         String?
+  clinic           Clinic?  @relation(fields: [clinicId], references: [id])
+  messages         Json
+  suggestedModules Json?
+  selectedModules  Json?
+  totalPrice       Float?
+  completed        Boolean  @default(false)
+  createdAt        DateTime @default(now())
+}
+
+// ═══════════════════════════════════════════════════════════
+// Fatura OCR & Mali Tablo
+// ═══════════════════════════════════════════════════════════
+
+// UploadedInvoice status values: PENDING, PROCESSING, COMPLETED, FAILED
+model UploadedInvoice {
+  id              String    @id @default(cuid())
+  clinicId        String
+  clinic          Clinic    @relation(fields: [clinicId], references: [id])
+  fileName        String
+  fileUrl         String
+  fileType        String
+  ocrData         Json?
+  status          String    @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  category        String?
+  amount          Float?
+  invoiceDate     DateTime?
+  vendor          String?
+  linkedExpenseId String?
+  createdAt       DateTime  @default(now())
+}
+
+model FinancialReport {
+  id        String   @id @default(cuid())
+  clinicId  String
+  clinic    Clinic   @relation(fields: [clinicId], references: [id])
+  month     Int
+  year      Int
+  data      Json
+  createdAt DateTime @default(now())
+
+  @@unique([clinicId, month, year])
+}
+
+// ═══════════════════════════════════════════════════════════
+// Telegram QR Bağlantı
+// ═══════════════════════════════════════════════════════════
+
+model TelegramLink {
+  id        String   @id @default(cuid())
+  clinicId  String
+  clinic    Clinic   @relation(fields: [clinicId], references: [id])
+  code      String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// ═══════════════════════════════════════════════════════════
+// Hasta Fotoğraf Yönetimi
+// ═══════════════════════════════════════════════════════════
+
+// PatientPhoto category values: GENERAL, BEFORE, AFTER, XRAY, OTHER
+model PatientPhoto {
+  id         String    @id @default(cuid())
+  patientId  String
+  patient    Patient   @relation(fields: [patientId], references: [id])
+  fileName   String
+  fileUrl    String
+  category   String    @default("GENERAL") // GENERAL, BEFORE, AFTER, XRAY, OTHER
+  notes      String?
+  takenAt    DateTime?
+  uploadedAt DateTime  @default(now())
+}
+
+// ═══════════════════════════════════════════════════════════
+// Instagram / Meta Ads
+// ═══════════════════════════════════════════════════════════
+
+model MetaAdsConnection {
+  id          String   @id @default(cuid())
+  clinicId    String   @unique
+  clinic      Clinic   @relation(fields: [clinicId], references: [id])
+  accessToken String
+  adAccountId String
+  pageId      String?
+  connectedAt DateTime @default(now())
+}
+
+model AdCampaignMetric {
+  id           String   @id @default(cuid())
+  clinicId     String
+  clinic       Clinic   @relation(fields: [clinicId], references: [id])
+  campaignId   String
+  campaignName String
+  date         DateTime
+  impressions  Int      @default(0)
+  clicks       Int      @default(0)
+  spend        Float    @default(0)
+  conversions  Int      @default(0)
+  cpc          Float?
+  cpm          Float?
+  ctr          Float?
+  fetchedAt    DateTime @default(now())
+
+  @@unique([clinicId, campaignId, date])
+}
+
+// ═══════════════════════════════════════════════════════════
+// Sosyal Medya İçerik
+// ═══════════════════════════════════════════════════════════
+
+model SocialMediaAsset {
+  id        String   @id @default(cuid())
+  clinicId  String
+  clinic    Clinic   @relation(fields: [clinicId], references: [id])
+  fileName  String
+  fileUrl   String
+  type      String
+  createdAt DateTime @default(now())
+}
+
+// ScheduledPost status values: SCHEDULED, POSTED, FAILED, CANCELLED
+model ScheduledPost {
+  id              String    @id @default(cuid())
+  clinicId        String
+  clinic          Clinic    @relation(fields: [clinicId], references: [id])
+  type            String
+  platform        String
+  content         String?
+  imageUrl        String?
+  scheduledAt     DateTime
+  postedAt        DateTime?
+  status          String    @default("SCHEDULED") // SCHEDULED, POSTED, FAILED, CANCELLED
+  isAutoGenerated Boolean   @default(false)
+  occasion        String?
+  createdAt       DateTime  @default(now())
 }
