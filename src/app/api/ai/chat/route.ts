@@ -685,7 +685,7 @@ export async function POST(req: NextRequest) {
 
   const { messages } = await req.json();
 
-  const systemPrompt = `Sen KlinikAsistan AI asistanısın. Bir klinik yönetim sistemi için akıllı bir yardımcısın.
+  const systemPrompt = `Sen inPobi AI asistanısın. Bir işletme yönetim platformu için akıllı bir yardımcısın.
 Görevlerin:
 - Klinik gelir-gider analizleri yapma
 - Hasta bilgilerini sorgulama

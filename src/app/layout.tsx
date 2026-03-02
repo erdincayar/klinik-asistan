@@ -5,8 +5,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "KlinikAsistan - Klinik Yönetim Sistemi",
-  description: "Doktor klinikleri ve küçük işletmeler için AI destekli yönetim paneli",
+  title: "inPobi - İşletme Yönetim Platformu",
+  description: "İşletmeler için AI destekli yönetim platformu",
 };
 
 export default function RootLayout({

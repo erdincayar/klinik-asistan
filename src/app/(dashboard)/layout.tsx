@@ -67,7 +67,7 @@ function Sidebar({
         {/* Logo */}
         <div className="flex h-16 items-center gap-2 border-b border-gray-200 px-6">
           <Stethoscope className="h-6 w-6 text-blue-600" />
-          <span className="text-lg font-bold text-gray-900">KlinikAsistan</span>
+          <span className="text-lg font-bold text-gray-900">inPobi</span>
           <button
             onClick={onClose}
             className="ml-auto rounded-md p-1 text-gray-400 hover:text-gray-600 lg:hidden"
@@ -143,7 +143,7 @@ function getPageTitle(pathname: string): string {
     if (pathname === path) return title;
   }
   if (pathname.startsWith("/patients/")) return "Hasta Detay";
-  return "KlinikAsistan";
+  return "inPobi";
 }
 
 function DashboardContent({ children }: { children: React.ReactNode }) {

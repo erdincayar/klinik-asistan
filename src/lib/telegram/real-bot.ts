@@ -114,7 +114,7 @@ async function processMessage(msg: TgMessage): Promise<void> {
     // /start
     if (text === "/start") {
       await tgSend(chatId, [
-        "👋 Merhaba! Klinik Asistan Bot'a hoş geldiniz.",
+        "👋 Merhaba! inPobi Bot'a hoş geldiniz.",
         "",
         "Doğal dilde mesaj yazarak kayıt oluşturabilirsiniz:",
         '📅 Randevu: "Erdinç Ayar pazartesi 15:00 botoks"',

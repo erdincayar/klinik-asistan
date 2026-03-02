@@ -1,8 +1,8 @@
-# KlinikAsistan — Proje Kılavuzu
+# inPobi — Proje Kılavuzu
 
 ## Proje Açıklaması
-Doktor klinikleri ve küçük işletmeler için AI destekli SaaS uygulaması.
-Hasta kaydı, gelir-gider takibi, WhatsApp entegrasyonu ve AI asistan içerir.
+İşletmeler için AI destekli SaaS yönetim platformu.
+Müşteri kaydı, gelir-gider takibi, WhatsApp entegrasyonu ve AI asistan içerir.
 
 ## Teknoloji Yığını
 - Frontend: Next.js 14 (App Router), Tailwind CSS, shadcn/ui

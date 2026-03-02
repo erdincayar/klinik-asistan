@@ -95,7 +95,7 @@ function buildSystemPrompt(): string {
   tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowStr = tomorrow.toISOString().split("T")[0];
 
-  return `Sen bir klinik yönetim sistemi için WhatsApp mesaj ayrıştırıcısısın.
+  return `Sen bir işletme yönetim platformu için WhatsApp mesaj ayrıştırıcısısın.
 Doktorun doğal dilde yazdığı kısa Türkçe mesajları yapılandırılmış JSON verisine dönüştürüyorsun.
 
 ## Bugünün Bilgileri

@@ -80,7 +80,7 @@ export default function AiAssistantPage() {
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <Sparkles className="h-12 w-12 text-primary/30 mb-4" />
-            <h2 className="text-lg font-semibold mb-2">KlinikAsistan AI</h2>
+            <h2 className="text-lg font-semibold mb-2">inPobi AI</h2>
             <p className="text-muted-foreground mb-6 max-w-md">
               Klinik verileriniz hakkında sorular sorabilirsiniz. Gelir-gider analizi, hasta sorgulama ve daha fazlası.
             </p>

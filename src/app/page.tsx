@@ -286,14 +286,14 @@ export default function Home() {
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {/* Brand */}
             <div className="sm:col-span-2 lg:col-span-1">
-              <h3 className="text-xl font-bold text-white">KlinikAsistan</h3>
+              <h3 className="text-xl font-bold text-white">inPobi</h3>
               <p className="mt-3 max-w-xs text-sm leading-relaxed text-gray-400">
                 İşletmenizi WhatsApp veya Telegram üzerinden kolayca yönetin.
                 AI destekli kişisel asistanınız her zaman yanınızda.
               </p>
               <div className="mt-4 flex items-center gap-2 text-sm text-gray-400">
                 <MessageCircle className="h-4 w-4" />
-                <span>info@klinikasistan.com</span>
+                <span>info@inpobi.com</span>
               </div>
             </div>
 
@@ -408,7 +408,7 @@ export default function Home() {
           {/* Bottom bar */}
           <div className="mt-12 border-t border-gray-800 pt-8 text-center">
             <p className="text-sm text-gray-500">
-              &copy; 2026 KlinikAsistan. Tüm hakları saklıdır.
+              &copy; 2026 inPobi. Tüm hakları saklıdır.
             </p>
           </div>
         </div>

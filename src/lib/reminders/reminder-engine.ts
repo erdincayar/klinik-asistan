@@ -124,7 +124,7 @@ export async function generatePersonalizedMessage(
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 300,
-      system: `Sen bir klinik asistanisin. Hastalara hatirlatma mesajlari yaziyorsun.
+      system: `Sen bir isletme asistanisin. Musterilere hatirlatma mesajlari yaziyorsun.
 Mesajlar kisa, samimi ve profesyonel olmali. WhatsApp mesaji olarak gonderilecek.
 Emoji kullanabilirsin ama asiri kullanma. Mesaj 2-3 cumle olmali.`,
       messages: [

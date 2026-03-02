@@ -4,7 +4,7 @@ import { handleCommand } from "@/lib/commands/command-handler";
 import { processWhatsAppMessage } from "@/lib/whatsapp/message-parser";
 import { prisma } from "@/lib/prisma";
 
-const WELCOME_MESSAGE = `Merhaba! KlinikAsistan Telegram botuna hosgeldiniz.
+const WELCOME_MESSAGE = `Merhaba! inPobi Telegram botuna hosgeldiniz.
 
 Kullanilabilir komutlar:
 /start - Hosgeldin mesaji
@@ -22,7 +22,7 @@ Veya dogal dilde mesaj yazabilirsiniz:
 export async function GET() {
   return Response.json({
     status: "ok",
-    bot: "KlinikAsistan Telegram Bot",
+    bot: "inPobi Telegram Bot",
     timestamp: new Date().toISOString(),
   });
 }

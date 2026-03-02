@@ -52,7 +52,7 @@ export default function LoginPage() {
     <Card>
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">Giriş Yap</CardTitle>
-        <CardDescription>Klinik Asistan hesabınıza giriş yapın</CardDescription>
+        <CardDescription>inPobi hesabınıza giriş yapın</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
