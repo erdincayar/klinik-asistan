@@ -147,11 +147,15 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Google placeholder */}
+        {/* Google login */}
         <button
           type="button"
-          disabled
-          className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-400 transition-all"
+          onClick={() => {
+            setLoading(true);
+            signIn("google", { callbackUrl: "/dashboard" });
+          }}
+          disabled={loading}
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 disabled:opacity-60"
         >
           <svg className="h-4 w-4" viewBox="0 0 24 24">
             <path
@@ -171,7 +175,7 @@ export default function LoginPage() {
               fill="#EA4335"
             />
           </svg>
-          Google ile giriş (yakında)
+          Google ile giriş yap
         </button>
       </form>
 

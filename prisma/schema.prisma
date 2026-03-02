@@ -11,8 +11,9 @@ datasource db {
 model User {
   id                  String               @id @default(cuid())
   email               String               @unique
-  password            String
+  password            String?
   name                String
+  image               String?
   role                String               @default("USER") // USER, ADMIN, DEMO
   isActive            Boolean              @default(true)
   lastLoginAt         DateTime?
@@ -21,8 +22,27 @@ model User {
   onboardingCompleted Boolean              @default(false)
   passwordResetTokens PasswordResetToken[]
   activityLogs        ActivityLog[]
+  accounts            Account[]
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  @@unique([provider, providerAccountId])
 }
 
 model PasswordResetToken {
