@@ -111,8 +111,38 @@ async function processMessage(msg: TgMessage): Promise<void> {
   }
 
   try {
-    // /start
-    if (text === "/start") {
+    // /start with optional linking code
+    if (text.startsWith("/start")) {
+      const parts = text.split(" ");
+      if (parts.length > 1) {
+        // Handle QR link code
+        const code = parts[1].trim();
+        try {
+          const link = await prisma.telegramLink.findUnique({
+            where: { code },
+          });
+          if (link && !link.used && link.expiresAt > new Date()) {
+            // Link the clinic
+            await prisma.clinic.update({
+              where: { id: link.clinicId },
+              data: { telegramChatId: String(chatId) },
+            });
+            await prisma.telegramLink.update({
+              where: { id: link.id },
+              data: { used: true },
+            });
+            await tgSend(chatId, "✅ Telegram bağlantısı başarılı! Artık bu chat üzerinden işletmenizi yönetebilirsiniz.");
+            return;
+          } else {
+            await tgSend(chatId, "❌ Bu bağlantı kodu geçersiz veya süresi dolmuş. Lütfen yeni bir kod oluşturun.");
+            return;
+          }
+        } catch {
+          await tgSend(chatId, "❌ Bağlantı kodu işlenirken bir hata oluştu.");
+          return;
+        }
+      }
+
       await tgSend(chatId, [
         "👋 Merhaba! inPobi Bot'a hoş geldiniz.",
         "",

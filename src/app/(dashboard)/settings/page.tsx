@@ -1,20 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
+import { useEffect, useState, useCallback } from "react";
+import { motion } from "framer-motion";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Settings as SettingsIcon,
+  Trash2,
+  Send,
+  QrCode,
+  CheckCircle,
+  Loader2,
+  Link as LinkIcon,
+  X,
+  Copy,
+  Check,
+} from "lucide-react";
 import { TREATMENT_CATEGORIES } from "@/lib/types";
+import QRCode from "qrcode";
 
 interface ClinicSettings {
   clinicName: string;
@@ -29,6 +30,16 @@ interface Reminder {
   intervalDays: number;
   messageTemplate: string;
   isActive: boolean;
+}
+
+interface TelegramLink {
+  code: string;
+  link: string;
+  expiresAt: string;
+}
+
+function Skeleton({ className }: { className?: string }) {
+  return <div className={`animate-pulse rounded-xl bg-gray-100 ${className || ""}`} />;
 }
 
 export default function SettingsPage() {
@@ -51,6 +62,15 @@ export default function SettingsPage() {
     messageTemplate: "",
   });
   const [reminderSaving, setReminderSaving] = useState(false);
+
+  // Telegram
+  const [telegramConnected, setTelegramConnected] = useState(false);
+  const [telegramLoading, setTelegramLoading] = useState(true);
+  const [telegramLink, setTelegramLink] = useState<TelegramLink | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState("");
+  const [showTelegramModal, setShowTelegramModal] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -82,6 +102,86 @@ export default function SettingsPage() {
     }
     fetchData();
   }, []);
+
+  // Check telegram status
+  const checkTelegramStatus = useCallback(async () => {
+    try {
+      const res = await fetch("/api/settings/telegram/status");
+      if (res.ok) {
+        const data = await res.json();
+        setTelegramConnected(data.connected);
+        if (data.connected && showTelegramModal) {
+          setShowTelegramModal(false);
+          setTelegramLink(null);
+        }
+      }
+    } catch {
+      // Silently fail
+    } finally {
+      setTelegramLoading(false);
+    }
+  }, [showTelegramModal]);
+
+  useEffect(() => {
+    checkTelegramStatus();
+  }, [checkTelegramStatus]);
+
+  // Poll telegram status every 5 seconds when modal is open
+  useEffect(() => {
+    if (!showTelegramModal) return;
+    const interval = setInterval(checkTelegramStatus, 5000);
+    return () => clearInterval(interval);
+  }, [showTelegramModal, checkTelegramStatus]);
+
+  // Countdown timer
+  useEffect(() => {
+    if (!telegramLink) return;
+    const expiresAt = new Date(telegramLink.expiresAt).getTime();
+    const interval = setInterval(() => {
+      const remaining = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
+      setCountdown(remaining);
+      if (remaining <= 0) {
+        clearInterval(interval);
+        setTelegramLink(null);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [telegramLink]);
+
+  async function handleGenerateTelegramLink() {
+    try {
+      const res = await fetch("/api/settings/telegram/generate-link", {
+        method: "POST",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTelegramLink(data);
+        // Generate QR code
+        const dataUrl = await QRCode.toDataURL(data.link, {
+          width: 200,
+          margin: 2,
+          color: { dark: "#1e40af", light: "#ffffff" },
+        });
+        setQrDataUrl(dataUrl);
+        setShowTelegramModal(true);
+      }
+    } catch {
+      setError("Telegram bağlantı kodu oluşturulamadı");
+    }
+  }
+
+  async function handleDisconnectTelegram() {
+    try {
+      const res = await fetch("/api/settings/telegram/status", {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setTelegramConnected(false);
+      }
+    } catch {
+      // Silently fail
+    }
+  }
 
   async function handleSaveSettings(e: React.FormEvent) {
     e.preventDefault();
@@ -170,114 +270,243 @@ export default function SettingsPage() {
     return TREATMENT_CATEGORIES.find((c) => c.value === value)?.label || value;
   }
 
-  if (loading) return <div className="text-gray-500">Yükleniyor...</div>;
+  function copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-64" />
+        <Skeleton className="h-48" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       {/* Clinic Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Klinik Bilgileri</CardTitle>
-          <CardDescription>Klinik ayarlarınızı yönetin</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSaveSettings} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="clinicName">Klinik Adı</Label>
-              <Input
-                id="clinicName"
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
+      >
+        <div className="flex items-center gap-2 border-b border-gray-100 px-6 py-4">
+          <SettingsIcon className="h-4 w-4 text-blue-600" />
+          <h2 className="text-sm font-semibold text-gray-900">İşletme Bilgileri</h2>
+        </div>
+        <form onSubmit={handleSaveSettings} className="space-y-4 p-6">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-gray-600">İşletme Adı</label>
+              <input
                 value={settings.clinicName}
-                onChange={(e) =>
-                  setSettings({ ...settings, clinicName: e.target.value })
-                }
-                placeholder="Klinik adı"
+                onChange={(e) => setSettings({ ...settings, clinicName: e.target.value })}
+                className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                placeholder="İşletme adı"
               />
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phone">Telefon</Label>
-              <Input
-                id="phone"
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-gray-600">Telefon</label>
+              <input
                 value={settings.phone}
-                onChange={(e) =>
-                  setSettings({ ...settings, phone: e.target.value })
-                }
-                placeholder="Klinik telefonu"
+                onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
+                className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                placeholder="Telefon"
               />
             </div>
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-gray-600">Adres</label>
+            <textarea
+              value={settings.address}
+              onChange={(e) => setSettings({ ...settings, address: e.target.value })}
+              rows={2}
+              className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+              placeholder="Adres"
+            />
+          </div>
+          <div className="w-32">
+            <label className="mb-1.5 block text-xs font-medium text-gray-600">KDV Oranı (%)</label>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              value={settings.vatRate}
+              onChange={(e) => setSettings({ ...settings, vatRate: Number(e.target.value) })}
+              className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="address">Adres</Label>
-              <Textarea
-                id="address"
-                value={settings.address}
-                onChange={(e) =>
-                  setSettings({ ...settings, address: e.target.value })
-                }
-                placeholder="Klinik adresi"
-                rows={3}
-              />
+          {error && <p className="text-sm text-red-500">{error}</p>}
+          {success && <p className="text-sm text-green-600">{success}</p>}
+
+          <button
+            type="submit"
+            disabled={saving}
+            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+          >
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            {saving ? "Kaydediliyor..." : "Kaydet"}
+          </button>
+        </form>
+      </motion.div>
+
+      {/* Telegram Connection */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.05 }}
+        className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
+      >
+        <div className="flex items-center gap-2 border-b border-gray-100 px-6 py-4">
+          <Send className="h-4 w-4 text-blue-600" />
+          <h2 className="text-sm font-semibold text-gray-900">Telegram Bağlantısı</h2>
+        </div>
+        <div className="p-6">
+          {telegramLoading ? (
+            <Skeleton className="h-20" />
+          ) : telegramConnected ? (
+            <div className="flex items-center justify-between rounded-xl bg-green-50 px-5 py-4">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                <div>
+                  <p className="text-sm font-semibold text-green-800">Telegram Bağlı</p>
+                  <p className="text-xs text-green-600">Bot başarıyla bağlandı</p>
+                </div>
+              </div>
+              <button
+                onClick={handleDisconnectTelegram}
+                className="rounded-xl border border-red-200 bg-white px-4 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50"
+              >
+                Bağlantıyı Kaldır
+              </button>
+            </div>
+          ) : (
+            <div className="text-center">
+              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50">
+                <Send className="h-6 w-6 text-blue-600" />
+              </div>
+              <p className="mb-1 text-sm font-medium text-gray-800">Telegram ile Bağlan</p>
+              <p className="mb-4 text-xs text-gray-500">
+                Telegram botunu bağlayarak mesaj ile işlem yapın
+              </p>
+              <button
+                onClick={handleGenerateTelegramLink}
+                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+              >
+                <QrCode className="h-4 w-4" />
+                Telegram Bağla
+              </button>
+            </div>
+          )}
+        </div>
+      </motion.div>
+
+      {/* Telegram Modal */}
+      {showTelegramModal && telegramLink && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          onClick={() => setShowTelegramModal(false)}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="mx-4 w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Telegram Bağla</h3>
+              <button
+                onClick={() => setShowTelegramModal(false)}
+                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="vatRate">KDV Oranı (%)</Label>
-              <Input
-                id="vatRate"
-                type="number"
-                min="0"
-                max="100"
-                value={settings.vatRate}
-                onChange={(e) =>
-                  setSettings({ ...settings, vatRate: Number(e.target.value) })
-                }
-              />
+            {/* QR Code */}
+            <div className="flex justify-center mb-4">
+              {qrDataUrl && (
+                <img src={qrDataUrl} alt="QR Code" className="h-48 w-48 rounded-xl" />
+              )}
             </div>
 
-            {error && <p className="text-sm text-red-500">{error}</p>}
-            {success && <p className="text-sm text-green-600">{success}</p>}
+            {/* Link */}
+            <div className="mb-4 rounded-xl bg-gray-50 p-3">
+              <p className="mb-1 text-xs text-gray-500">veya bu linki kullanın:</p>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 truncate text-xs text-blue-600">
+                  {telegramLink.link}
+                </code>
+                <button
+                  onClick={() => copyToClipboard(telegramLink.link)}
+                  className="shrink-0 rounded-lg p-1.5 text-gray-400 hover:bg-gray-200"
+                >
+                  {copied ? (
+                    <Check className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+            </div>
 
-            <Button type="submit" disabled={saving}>
-              {saving ? "Kaydediliyor..." : "Kaydet"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+            {/* Countdown */}
+            <div className="flex items-center justify-center gap-2 text-sm">
+              <LinkIcon className="h-3.5 w-3.5 text-gray-400" />
+              <span className="text-gray-500">
+                Kod geçerliliği:{" "}
+                <span className={`font-semibold ${countdown < 60 ? "text-red-500" : "text-gray-800"}`}>
+                  {Math.floor(countdown / 60)}:{(countdown % 60).toString().padStart(2, "0")}
+                </span>
+              </span>
+            </div>
+
+            <p className="mt-3 text-center text-[11px] text-gray-400">
+              QR kodu telefonunuzla okutun veya linki Telegram&apos;da açın
+            </p>
+          </motion.div>
+        </div>
+      )}
 
       {/* Reminder Rules */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Hatırlatma Kuralları</CardTitle>
-          <CardDescription>
-            Tedavi sonrası hatırlatma kuralları oluşturun
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.1 }}
+        className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
+      >
+        <div className="border-b border-gray-100 px-6 py-4">
+          <h2 className="text-sm font-semibold text-gray-900">Hatırlatma Kuralları</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Tedavi sonrası hatırlatma kuralları oluşturun</p>
+        </div>
+        <div className="p-6 space-y-6">
           {/* Existing reminders */}
           {reminders.length > 0 && (
             <div className="space-y-3">
               {reminders.map((reminder) => (
                 <div
                   key={reminder.id}
-                  className="flex items-center justify-between rounded-lg border p-4"
+                  className="flex items-center justify-between rounded-xl border border-gray-100 p-4"
                 >
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">
+                      <span className="text-sm font-medium text-gray-800">
                         {getCategoryLabel(reminder.treatmentCategory)}
                       </span>
-                      <span className="text-sm text-gray-500">
+                      <span className="text-xs text-gray-500">
                         - {reminder.intervalDays} gün sonra
                       </span>
                     </div>
-                    <p className="text-sm text-gray-500">
-                      {reminder.messageTemplate}
-                    </p>
+                    <p className="text-xs text-gray-500">{reminder.messageTemplate}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() =>
-                        handleToggleReminder(reminder.id, reminder.isActive)
-                      }
+                      onClick={() => handleToggleReminder(reminder.id, reminder.isActive)}
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                         reminder.isActive ? "bg-blue-600" : "bg-gray-300"
                       }`}
@@ -288,87 +517,74 @@ export default function SettingsPage() {
                         }`}
                       />
                     </button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
+                    <button
                       onClick={() => handleDeleteReminder(reminder.id)}
-                      className="text-red-500 hover:text-red-700"
+                      className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
                     >
                       <Trash2 className="h-4 w-4" />
-                    </Button>
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
           )}
 
-          <Separator />
+          <div className="h-px bg-gray-100" />
 
           {/* New reminder form */}
           <form onSubmit={handleAddReminder} className="space-y-4">
-            <h4 className="font-medium">Yeni Hatırlatma</h4>
+            <h4 className="text-sm font-medium text-gray-800">Yeni Hatırlatma</h4>
 
-            <div className="space-y-2">
-              <Label>Kategori</Label>
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-gray-600">Kategori</label>
               <select
                 value={newReminder.treatmentCategory}
-                onChange={(e) =>
-                  setNewReminder({
-                    ...newReminder,
-                    treatmentCategory: e.target.value,
-                  })
-                }
+                onChange={(e) => setNewReminder({ ...newReminder, treatmentCategory: e.target.value })}
                 required
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
+                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
               >
                 <option value="">Kategori seçin...</option>
                 {TREATMENT_CATEGORIES.map((cat) => (
-                  <option key={cat.value} value={cat.value}>
-                    {cat.label}
-                  </option>
+                  <option key={cat.value} value={cat.value}>{cat.label}</option>
                 ))}
               </select>
             </div>
 
-            <div className="space-y-2">
-              <Label>Gün Sayısı</Label>
-              <Input
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-gray-600">Gün Sayısı</label>
+              <input
                 type="number"
                 min="1"
                 value={newReminder.intervalDays}
-                onChange={(e) =>
-                  setNewReminder({
-                    ...newReminder,
-                    intervalDays: e.target.value,
-                  })
-                }
+                onChange={(e) => setNewReminder({ ...newReminder, intervalDays: e.target.value })}
                 required
                 placeholder="Örnek: 30"
+                className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>Mesaj Şablonu</Label>
-              <Textarea
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-gray-600">Mesaj Şablonu</label>
+              <textarea
                 value={newReminder.messageTemplate}
-                onChange={(e) =>
-                  setNewReminder({
-                    ...newReminder,
-                    messageTemplate: e.target.value,
-                  })
-                }
+                onChange={(e) => setNewReminder({ ...newReminder, messageTemplate: e.target.value })}
                 required
                 placeholder="Örnek: Sayın {hasta}, {tedavi} işleminizin üzerinden {gun} gün geçmiştir."
                 rows={3}
+                className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
               />
             </div>
 
-            <Button type="submit" disabled={reminderSaving}>
+            <button
+              type="submit"
+              disabled={reminderSaving}
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+            >
               {reminderSaving ? "Ekleniyor..." : "Hatırlatma Ekle"}
-            </Button>
+            </button>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </motion.div>
     </div>
   );
 }

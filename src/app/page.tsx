@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { motion, useInView, useAnimation } from "framer-motion";
+import { motion, useInView, useAnimation, AnimatePresence } from "framer-motion";
 import {
   Users,
   Calendar,
@@ -15,6 +15,10 @@ import {
   Settings,
   Menu,
   X,
+  MessageCircle,
+  Send,
+  Check,
+  Loader2,
 } from "lucide-react";
 
 /* ──────────────────────────── DATA ──────────────────────────── */
@@ -160,6 +164,282 @@ function AnimatedCounter({
         : `${Math.floor(value)}${value >= target ? suffix : ""}`;
 
   return <span ref={ref}>{display}</span>;
+}
+
+/* ──────────────────────── MODULE SUGGESTION ──────────────────────── */
+
+interface SuggestedModule {
+  name: string;
+  displayName: string;
+  price: number;
+  reason: string;
+}
+
+interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+function OnboardingChat() {
+  const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [suggestedModules, setSuggestedModules] = useState<SuggestedModule[] | null>(null);
+  const [selectedModules, setSelectedModules] = useState<Set<string>>(new Set());
+  const [sessionId] = useState(() => `onb_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading]);
+
+  useEffect(() => {
+    if (open && messages.length === 0) {
+      setMessages([
+        {
+          role: "assistant",
+          content: "Merhaba! Ben inPobi asistanı. İşletmenizi anlatır mısınız? Hangi sektörde faaliyet gösteriyorsunuz?",
+        },
+      ]);
+    }
+  }, [open, messages.length]);
+
+  useEffect(() => {
+    if (open) inputRef.current?.focus();
+  }, [open]);
+
+  async function handleSend() {
+    if (!input.trim() || loading) return;
+    const userMsg: ChatMessage = { role: "user", content: input.trim() };
+    const newMessages = [...messages, userMsg];
+    setMessages(newMessages);
+    setInput("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/ai/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: newMessages, sessionId }),
+      });
+      const data = await res.json();
+      if (data.message) {
+        setMessages((prev) => [...prev, { role: "assistant", content: data.message }]);
+      }
+      if (data.suggestedModules) {
+        setSuggestedModules(data.suggestedModules);
+        const allNames = new Set<string>(data.suggestedModules.map((m: SuggestedModule) => m.name));
+        setSelectedModules(allNames);
+      }
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: "Bir hata oluştu, tekrar dener misiniz?" },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function toggleModule(name: string) {
+    setSelectedModules((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  }
+
+  function handleStartNow() {
+    if (suggestedModules) {
+      const selected = suggestedModules.filter((m) => selectedModules.has(m.name));
+      sessionStorage.setItem("selectedModules", JSON.stringify(selected));
+      sessionStorage.setItem("onboardingSessionId", sessionId);
+    }
+    window.location.href = "/register";
+  }
+
+  const selectedTotal = suggestedModules
+    ? suggestedModules.filter((m) => selectedModules.has(m.name)).reduce((sum, m) => sum + m.price, 0)
+    : 0;
+
+  return (
+    <>
+      {/* Floating button */}
+      <motion.button
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: 2, type: "spring", stiffness: 200 }}
+        onClick={() => setOpen(!open)}
+        className="fixed bottom-6 right-6 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-600/30 transition-transform hover:scale-105"
+      >
+        {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
+      </motion.button>
+
+      {/* Chat window */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ duration: 0.25, ease: "easeOut" as const }}
+            className="fixed bottom-24 right-6 z-[60] flex w-[380px] max-w-[calc(100vw-48px)] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl shadow-black/10"
+            style={{ height: suggestedModules ? "560px" : "480px" }}
+          >
+            {/* Header */}
+            <div className="flex items-center gap-3 border-b border-gray-100 bg-blue-600 px-5 py-4">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20">
+                <Bot className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-white">inPobi Asistan</p>
+                <p className="text-[11px] text-blue-200">İşletmeniz için en uygun planı bulalım</p>
+              </div>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+              {messages.map((msg, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                >
+                  <div
+                    className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed ${
+                      msg.role === "user"
+                        ? "bg-blue-600 text-white rounded-br-md"
+                        : "bg-gray-100 text-gray-800 rounded-bl-md"
+                    }`}
+                  >
+                    {msg.content}
+                  </div>
+                </motion.div>
+              ))}
+
+              {/* Typing indicator */}
+              {loading && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex justify-start"
+                >
+                  <div className="flex items-center gap-1.5 rounded-2xl rounded-bl-md bg-gray-100 px-4 py-3">
+                    <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "0ms" }} />
+                    <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "150ms" }} />
+                    <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "300ms" }} />
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Module suggestions */}
+              {suggestedModules && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-2 pt-2"
+                >
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Önerilen Modüller
+                  </p>
+                  {suggestedModules.map((mod) => (
+                    <button
+                      key={mod.name}
+                      onClick={() => toggleModule(mod.name)}
+                      className={`flex w-full items-start gap-3 rounded-xl border p-3 text-left transition-all ${
+                        selectedModules.has(mod.name)
+                          ? "border-blue-300 bg-blue-50"
+                          : "border-gray-200 bg-white hover:border-gray-300"
+                      }`}
+                    >
+                      <div
+                        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors ${
+                          selectedModules.has(mod.name)
+                            ? "border-blue-600 bg-blue-600"
+                            : "border-gray-300"
+                        }`}
+                      >
+                        {selectedModules.has(mod.name) && (
+                          <Check className="h-3 w-3 text-white" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[13px] font-semibold text-gray-800">
+                            {mod.displayName}
+                          </span>
+                          <span className="text-[13px] font-bold text-blue-600">
+                            ₺{mod.price}/ay
+                          </span>
+                        </div>
+                        <p className="mt-0.5 text-[11px] text-gray-500 leading-snug">
+                          {mod.reason}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+
+                  <div className="rounded-xl bg-gray-50 px-4 py-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-600">
+                        Toplam ({selectedModules.size} modül)
+                      </span>
+                      <span className="text-lg font-bold text-gray-900">
+                        ₺{selectedTotal}/ay
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleStartNow}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white transition-all hover:bg-blue-700"
+                  >
+                    Hemen Başla
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </motion.div>
+              )}
+
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input */}
+            {!suggestedModules && (
+              <div className="border-t border-gray-100 px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <input
+                    ref={inputRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                    placeholder="Mesajınızı yazın..."
+                    disabled={loading}
+                    className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                  />
+                  <button
+                    onClick={handleSend}
+                    disabled={!input.trim() || loading}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white transition-colors hover:bg-blue-700 disabled:opacity-40"
+                  >
+                    {loading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
 }
 
 /* ──────────────────────────── COMPONENT ──────────────────────────── */
@@ -718,6 +998,9 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* ════════════ AI ONBOARDING CHAT ════════════ */}
+      <OnboardingChat />
     </div>
   );
 }

@@ -24,6 +24,10 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Sparkles,
+  Upload,
+  TrendingUp,
+  Megaphone,
+  Share2,
 } from "lucide-react";
 
 /* ──────────────────────── DATA ──────────────────────── */
@@ -34,7 +38,11 @@ const navItems = [
   { href: "/appointments", label: "Randevular", icon: Calendar },
   { href: "/finance", label: "Finans", icon: DollarSign },
   { href: "/invoices", label: "Faturalar", icon: FileText },
+  { href: "/invoice-upload", label: "Fatura OCR", icon: Upload },
+  { href: "/financial-reports", label: "Mali Tablo", icon: TrendingUp },
   { href: "/inventory", label: "Stok/Envanter", icon: Package },
+  { href: "/marketing", label: "Pazarlama", icon: Megaphone },
+  { href: "/social-media", label: "Sosyal Medya", icon: Share2 },
   { href: "/ai-assistant", label: "AI Asistan", icon: Bot },
   { href: "/reports", label: "Raporlar", icon: BarChart3 },
   { href: "/whatsapp", label: "WhatsApp", icon: MessageCircle },
@@ -54,6 +62,10 @@ const pageTitles: Record<string, string> = {
   "/finance/new-expense": "Yeni Gider",
   "/inventory": "Stok/Envanter",
   "/invoices": "Faturalar",
+  "/invoice-upload": "Fatura OCR",
+  "/financial-reports": "Mali Tablo",
+  "/marketing": "Pazarlama",
+  "/social-media": "Sosyal Medya",
   "/ai-assistant": "AI Asistan",
   "/whatsapp": "WhatsApp",
   "/reports": "Raporlar",
