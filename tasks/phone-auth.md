@@ -1,0 +1,1 @@
+Auth-agent olarak çalış. Twilio ile telefon girişi ekle. PhoneVerification modeli oluştur. SMS gönderim servisi (6 haneli kod, 5dk geçerli). /api/auth/phone/send-code ve /verify endpoint'leri. Login sayfasına telefon sekmesi (+90 prefix). QA: build test yap.

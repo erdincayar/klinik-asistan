@@ -1,0 +1,1 @@
+Security-agent olarak çalış. Nginx'e security headers ekle (HSTS, CSP, X-Frame-Options, X-Content-Type-Options). Next.js middleware.ts'e rate limiting ekle (login: 5/dk, API: 100/dk). Brute force koruması kur (5 başarısız giriş = 15dk kilit). Tüm API route'larda zod validation kontrol et. QA: build test yap.

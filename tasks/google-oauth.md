@@ -1,0 +1,1 @@
+Auth-agent olarak çalış. NextAuth'a Google provider ekle. Prisma schema'ya Account modeli ekle. User.password'u optional yap (String?). Login ve register sayfalarına Google ile giriş butonu ekle. Callback ve error handling. QA: build test yap.

@@ -1,0 +1,1 @@
+Kalan dashboard sayfalarını mevcut tasarım diline güncelle (beyaz kartlar, rounded-2xl, mavi accent, framer-motion, skeleton loading): invoices, inventory, ai-assistant, whatsapp, reports, employees, reminders, settings. Mevcut API'ları koru, sadece UI değiştir. QA: build test yap.
