@@ -444,11 +444,13 @@ model UploadedInvoice {
   fileType        String
   ocrData         Json?
   status          String    @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  invoiceType     String    @default("EXPENSE") // EXPENSE, INCOME
   category        String?
   amount          Float?
   invoiceDate     DateTime?
   vendor          String?
   linkedExpenseId String?
+  approved        Boolean   @default(false)
   createdAt       DateTime  @default(now())
 }
 

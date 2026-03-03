@@ -44,6 +44,7 @@ export async function POST(req: NextRequest) {
     if (!file) {
       return NextResponse.json({ error: "Dosya gerekli" }, { status: 400 });
     }
+    const invoiceType = (formData.get("invoiceType") as string) === "INCOME" ? "INCOME" : "EXPENSE";
 
     // Validate file type
     const mediaType = getMediaType(file.name);
@@ -74,6 +75,7 @@ export async function POST(req: NextRequest) {
         fileUrl,
         fileType: file.type || mediaType,
         status: "PROCESSING",
+        invoiceType,
       },
     });
     invoiceId = invoice.id;
@@ -156,23 +158,7 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      // Auto-create expense record
-      if (parsedAmount && parsedAmount > 0) {
-        const amountKurus = Math.round(parsedAmount * 100);
-        await prisma.expense.create({
-          data: {
-            clinicId,
-            description: `Fatura - ${ocrData.vendor || file.name}`,
-            amount: amountKurus,
-            category: (ocrData.category as string) || "DIGER",
-            date: ocrData.invoiceDate
-              ? new Date(ocrData.invoiceDate as string)
-              : new Date(),
-          },
-        });
-      }
-
-      return NextResponse.json({ ...invoice, ocrData, status: "COMPLETED" });
+      return NextResponse.json({ ...invoice, ocrData, status: "COMPLETED", invoiceType });
     } else {
       await prisma.uploadedInvoice.update({
         where: { id: invoice.id },
