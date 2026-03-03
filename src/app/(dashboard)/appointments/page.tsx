@@ -73,13 +73,7 @@ function getTreatmentLabel(value: string) {
   return TREATMENT_CATEGORIES.find((t) => t.value === value)?.label || value;
 }
 
-const TIME_SLOTS: string[] = [];
-for (let h = 9; h < 18; h++) {
-  TIME_SLOTS.push(`${String(h).padStart(2, "0")}:00`);
-  TIME_SLOTS.push(`${String(h).padStart(2, "0")}:30`);
-}
-
-// All time slots for new appointment form (00:00 - 23:30)
+// All time slots 00:00 - 23:30 (used for both calendar and form)
 function generateAllTimeSlots(): string[] {
   const slots: string[] = [];
   for (let h = 0; h < 24; h++) {
@@ -90,6 +84,7 @@ function generateAllTimeSlots(): string[] {
   return slots;
 }
 const ALL_TIME_SLOTS = generateAllTimeSlots();
+const SCROLL_TO_TIME = "09:00";
 
 function getMonday(date: Date): Date {
   const d = new Date(date);
@@ -138,6 +133,8 @@ export default function AppointmentsPage() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const treatmentInputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+  const dailyScrollRef = useRef<HTMLDivElement>(null);
+  const weeklyScrollRef = useRef<HTMLDivElement>(null);
 
   const fetchDayAppointments = useCallback(async (date: Date, employeeId?: string) => {
     setLoading(true);
@@ -341,6 +338,23 @@ export default function AppointmentsPage() {
     }
   }
 
+  // Auto-scroll to 09:00 after loading
+  useEffect(() => {
+    if (loading) return;
+    const scrollToDefault = (container: HTMLDivElement | null) => {
+      if (!container) return;
+      const target = container.querySelector(`[data-time="${SCROLL_TO_TIME}"]`);
+      if (target) {
+        target.scrollIntoView({ block: "start" });
+      }
+    };
+    if (viewMode === "daily") {
+      scrollToDefault(dailyScrollRef.current);
+    } else {
+      scrollToDefault(weeklyScrollRef.current);
+    }
+  }, [loading, viewMode]);
+
   const isToday = formatDateISO(selectedDate) === formatDateISO(new Date());
   const nowTime = new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit", hour12: false });
 
@@ -441,7 +455,7 @@ export default function AppointmentsPage() {
       >
         {viewMode === "daily" ? (
           /* ── Daily view ── */
-          <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white">
+          <div ref={dailyScrollRef} className="max-h-[600px] overflow-y-auto rounded-2xl border border-gray-100 bg-white">
             {loading ? (
               <div className="space-y-0 divide-y divide-gray-50 p-0">
                 {[...Array(6)].map((_, i) => (
@@ -453,13 +467,14 @@ export default function AppointmentsPage() {
               </div>
             ) : (
               <div className="divide-y divide-gray-50">
-                {TIME_SLOTS.map((time) => {
+                {ALL_TIME_SLOTS.map((time) => {
                   const slotAppointments = getAppointmentsForSlot(time);
                   const isCurrentSlot = isToday && time === nowTime.slice(0, 5);
 
                   return (
                     <div
                       key={time}
+                      data-time={time}
                       className={cn(
                         "flex min-h-[56px] items-stretch",
                         isCurrentSlot && "bg-blue-50/50"
@@ -541,7 +556,7 @@ export default function AppointmentsPage() {
           </div>
         ) : (
           /* ── Weekly view ── */
-          <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white">
+          <div ref={weeklyScrollRef} className="max-h-[600px] overflow-y-auto rounded-2xl border border-gray-100 bg-white">
             {loading ? (
               <div className="p-6">
                 <Skeleton className="h-[400px] w-full" />
@@ -574,8 +589,8 @@ export default function AppointmentsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {TIME_SLOTS.map((time) => (
-                      <tr key={time} className="border-b border-gray-50">
+                    {ALL_TIME_SLOTS.map((time) => (
+                      <tr key={time} data-time={time} className="border-b border-gray-50">
                         <td className="border-r border-gray-50 px-2 py-1 text-xs text-gray-400">{time}</td>
                         {Array.from({ length: 7 }, (_, i) => {
                           const monday = getMonday(selectedDate);
@@ -606,10 +621,7 @@ export default function AppointmentsPage() {
                                           style={{ backgroundColor: appt.employeeColor || "#9ca3af" }}
                                           title={appt.employeeName || "Atanmamış"}
                                         />
-                                        {(appt.patientName || "?")
-                                          .split(" ")
-                                          .map((n) => n[0])
-                                          .join("")}
+                                        <span className="truncate">{appt.patientName || "?"}</span>
                                       </div>
                                       <div className="truncate text-gray-500">
                                         {getTreatmentLabel(appt.treatmentType)}
