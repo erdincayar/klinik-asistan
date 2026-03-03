@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Plus, Search, Users, ArrowRight, Phone } from "lucide-react";
+import { Plus, Search, Users, ArrowRight, Phone, Upload, Download } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -105,12 +105,26 @@ export default function PatientsPage() {
             className="block w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           />
         </div>
-        <Link href="/patients/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Yeni Müşteri
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/customers/import">
+            <Button variant="outline" size="sm" className="gap-1">
+              <Upload className="h-4 w-4" />
+              <span className="hidden sm:inline">İçe Aktar</span>
+            </Button>
+          </Link>
+          <a href="/api/customers/export" download>
+            <Button variant="outline" size="sm" className="gap-1">
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Dışa Aktar</span>
+            </Button>
+          </a>
+          <Link href="/patients/new">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Yeni Müşteri
+            </Button>
+          </Link>
+        </div>
       </motion.div>
 
       {/* Müşteri list */}

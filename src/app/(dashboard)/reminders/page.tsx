@@ -125,7 +125,7 @@ export default function RemindersPage() {
   const [newRule, setNewRule] = useState({
     treatmentCategory: "BOTOX",
     intervalDays: "180",
-    messageTemplate: "Sayin {hasta}, {islem} kontrolunuz icin randevu zamaniniz gelmistir.",
+    messageTemplate: "Sayin {musteri}, {islem} kontrolunuz icin randevu zamaniniz gelmistir.",
   });
   const [creatingRule, setCreatingRule] = useState(false);
 
@@ -286,7 +286,7 @@ export default function RemindersPage() {
         setNewRule({
           treatmentCategory: "BOTOX",
           intervalDays: "180",
-          messageTemplate: "Sayin {hasta}, {islem} kontrolunuz icin randevu zamaniniz gelmistir.",
+          messageTemplate: "Sayin {musteri}, {islem} kontrolunuz icin randevu zamaniniz gelmistir.",
         });
         fetchRules();
       }
@@ -698,10 +698,10 @@ export default function RemindersPage() {
                           messageTemplate: e.target.value,
                         }))
                       }
-                      placeholder="Sayin {hasta}, {islem} kontrolunuz icin randevu zamaniniz gelmistir."
+                      placeholder="Sayin {musteri}, {islem} kontrolunuz icin randevu zamaniniz gelmistir."
                     />
                     <p className="text-xs text-muted-foreground">
-                      Degiskenler: {"{hasta}"}, {"{islem}"}, {"{gun}"}
+                      Degiskenler: {"{musteri}"}, {"{islem}"}, {"{gun}"}
                     </p>
                   </div>
 

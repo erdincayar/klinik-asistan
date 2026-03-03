@@ -33,8 +33,8 @@ interface LogItem {
 const actionLabels: Record<string, string> = {
   LOGIN: "Giriş",
   LOGOUT: "Çıkış",
-  PATIENT_CREATE: "Hasta Ekleme",
-  PATIENT_UPDATE: "Hasta Güncelleme",
+  PATIENT_CREATE: "Müşteri Ekleme",
+  PATIENT_UPDATE: "Müşteri Güncelleme",
   APPOINTMENT_CREATE: "Randevu Oluşturma",
   APPOINTMENT_UPDATE: "Randevu Güncelleme",
   TREATMENT_CREATE: "Tedavi Kaydı",

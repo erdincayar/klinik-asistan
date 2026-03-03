@@ -106,7 +106,7 @@ Doktorun doğal dilde yazdığı kısa Türkçe mesajları yapılandırılmış 
 ## 3 Mesaj Tipi
 
 ### 1. RANDEVU (APPOINTMENT)
-Hasta adı + zaman bilgisi (gün/saat) içeren mesajlar.
+Müşteri adı + zaman bilgisi (gün/saat) içeren mesajlar.
 Örnekler:
 - "erdinç ayar çarşamba 3 dolgu randevu" → Erdinç Ayar, çarşamba 15:00, Dolgu
 - "Ayşe Yılmaz pazartesi saat 3 botoks kontrol" → randevu
@@ -116,7 +116,7 @@ Hasta adı + zaman bilgisi (gün/saat) içeren mesajlar.
 - "zeynep 15:00 botoks" → bugün 15:00 randevu (gün belirtilmemişse bugün)
 
 ### 2. GELİR (INCOME)
-Hasta adı + işlem/tedavi + tutar (TL/lira) içeren mesajlar. Bir kişiye yapılan işlem ve ödeme.
+Müşteri adı + işlem/tedavi + tutar (TL/lira) içeren mesajlar. Bir kişiye yapılan işlem ve ödeme.
 Örnekler:
 - "Kerem İnanır dolgu 5000tl alındı" → Kerem İnanır, Dolgu, 5000 TL
 - "Ayşe botoks 3000tl" → Ayşe, Botoks, 3000 TL
@@ -125,7 +125,7 @@ Hasta adı + işlem/tedavi + tutar (TL/lira) içeren mesajlar. Bir kişiye yapı
 - "mehmet 7500tl dolgu" → gelir
 
 ### 3. GİDER (EXPENSE)
-Hasta adı OLMAYAN, ürün/malzeme/kira/fatura/maaş gibi işletme gideri + tutar içeren mesajlar.
+Müşteri adı OLMAYAN, ürün/malzeme/kira/fatura/maaş gibi işletme gideri + tutar içeren mesajlar.
 Örnekler:
 - "Nurederm ürün alındı 50000tl ödendi" → Nurederm ürün alımı, 50000 TL
 - "Kira 25000 ödendi" → Kira, 25000 TL
@@ -182,8 +182,8 @@ Eğer mesaj birden fazla şekilde yorumlanabiliyorsa (örneğin gelir mi gider m
 - Diğer → DIGER
 
 ## Önemli Kurallar
-- "hanım", "bey", "hoca" gibi hitap ekleri hasta adına DAHİL ETMEMELİSİN
-- Hasta adını düzgün büyük harfle yaz (Title Case): "mehmet" → "Mehmet"
+- "hanım", "bey", "hoca" gibi hitap ekleri müşteri adına DAHİL ETMEMELİSİN
+- Müşteri adını düzgün büyük harfle yaz (Title Case): "mehmet" → "Mehmet"
 - SADECE JSON döndür, başka hiçbir metin yazma
 - JSON markdown code block kullanma, düz JSON döndür`;
 }
@@ -391,7 +391,7 @@ export async function processWhatsAppMessage(
 
       let msg = `✅ Randevu oluşturuldu:\n📋 ${patient.name}\n📅 ${dateFormatted} saat ${parsed.time}\n💉 ${treatmentLabel}`;
       if (parsed.notes) msg += `\n📝 ${parsed.notes}`;
-      if (isNew) msg += `\n\n⚠️ Yeni hasta kaydı oluşturuldu: ${patient.name}`;
+      if (isNew) msg += `\n\n⚠️ Yeni müşteri kaydı oluşturuldu: ${patient.name}`;
 
       return {
         success: true,
@@ -427,7 +427,7 @@ export async function processWhatsAppMessage(
         ] || parsed.treatmentType;
 
       let msg = `✅ Gelir kaydedildi:\n👤 ${patient.name}\n💉 ${treatmentLabel}\n💰 ${amountTL} TL`;
-      if (isNew) msg += `\n\n⚠️ Yeni hasta kaydı oluşturuldu: ${patient.name}`;
+      if (isNew) msg += `\n\n⚠️ Yeni müşteri kaydı oluşturuldu: ${patient.name}`;
 
       return {
         success: true,

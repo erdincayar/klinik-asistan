@@ -38,7 +38,6 @@ import {
 const navItems = [
   { href: "/dashboard", label: "Genel Bakış", icon: LayoutDashboard },
   { href: "/patients", label: "Müşteriler", icon: Users },
-  { href: "/customers/import", label: "Veri Aktarımı", icon: Upload },
   { href: "/appointments", label: "Randevular", icon: Calendar },
   { href: "/finance", label: "Finans", icon: DollarSign },
   { href: "/invoices", label: "Faturalar", icon: FileText },

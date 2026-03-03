@@ -110,7 +110,7 @@ const SECTOR_DISPLAY_NAMES: Record<Sector, string> = {
 
 const SECTOR_DESCRIPTIONS: Record<Sector, string> = {
   SAGLIK:
-    "Sağlık sektöründe bir klinik sahibi iseniz, sizler için ön muhasebe, randevu takibi, hastalarla otomatik mesajlaşma, randevu hatırlatma gibi hizmetleri sağlayabiliriz.",
+    "Sağlık sektöründe bir klinik sahibi iseniz, sizler için ön muhasebe, randevu takibi, müşterilerle otomatik mesajlaşma, randevu hatırlatma gibi hizmetleri sağlayabiliriz.",
   RESTORAN:
     "Restoran sahibi iseniz, rezervasyon takibi, stok yönetimi, müşteri sadakat programı, sipariş yönetimi gibi hizmetleri sağlayabiliriz.",
   OTEL:
@@ -125,7 +125,7 @@ const SECTOR_DESCRIPTIONS: Record<Sector, string> = {
 
 const SECTOR_FEATURES: Record<Sector, string[]> = {
   SAGLIK: [
-    "Hasta kaydı ve geçmiş yönetimi",
+    "Müşteri kaydı ve geçmiş yönetimi",
     "Randevu takibi ve hatırlatma",
     "Gelir-gider ve ön muhasebe",
     "WhatsApp ile otomatik mesajlaşma",
@@ -174,7 +174,7 @@ const BASIC_FEATURES = [
   "3 modül seçebilme hakkı",
   "WhatsApp VEYA Telegram entegrasyonu",
   "Temel raporlama",
-  "100 müşteri/hasta kaydı",
+  "100 müşteri kaydı",
   "Email destek",
 ]
 
@@ -182,7 +182,7 @@ const PRO_FEATURES = [
   "7 modül seçebilme hakkı",
   "WhatsApp VE Telegram entegrasyonu",
   "Gelişmiş raporlama ve grafikler",
-  "Sınırsız müşteri/hasta kaydı",
+  "Sınırsız müşteri kaydı",
   "Öncelikli destek",
   "Görsel üretme modülü",
   "Çalışan & prim yönetimi",

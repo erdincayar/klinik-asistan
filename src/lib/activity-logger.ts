@@ -50,8 +50,8 @@ export function getActionLabel(action: string): string {
   const labels: Record<string, string> = {
     LOGIN: "Giriş yapıldı",
     LOGOUT: "Çıkış yapıldı",
-    PATIENT_CREATE: "Hasta eklendi",
-    PATIENT_UPDATE: "Hasta güncellendi",
+    PATIENT_CREATE: "Müşteri eklendi",
+    PATIENT_UPDATE: "Müşteri güncellendi",
     APPOINTMENT_CREATE: "Randevu oluşturuldu",
     APPOINTMENT_UPDATE: "Randevu güncellendi",
     TREATMENT_CREATE: "Tedavi kaydı eklendi",

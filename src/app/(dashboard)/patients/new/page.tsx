@@ -39,7 +39,7 @@ export default function NewPatientPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Hasta kaydedilemedi");
+        throw new Error(data.error || "Müşteri kaydedilemedi");
       }
 
       router.push("/patients");
@@ -54,7 +54,7 @@ export default function NewPatientPage() {
     <div className="mx-auto max-w-2xl">
       <Card>
         <CardHeader>
-          <CardTitle>Yeni Hasta Kaydı</CardTitle>
+          <CardTitle>Yeni Müşteri Kaydı</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -65,7 +65,7 @@ export default function NewPatientPage() {
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 required
-                placeholder="Hasta adı"
+                placeholder="Müşteri adı"
               />
             </div>
 
@@ -96,7 +96,7 @@ export default function NewPatientPage() {
                 id="notes"
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                placeholder="Hasta hakkında notlar..."
+                placeholder="Müşteri hakkında notlar..."
                 rows={4}
               />
             </div>

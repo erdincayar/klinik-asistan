@@ -24,7 +24,7 @@ export async function GET(
     });
 
     if (!patient) {
-      return Response.json({ error: "Hasta bulunamadı" }, { status: 404 });
+      return Response.json({ error: "Müşteri bulunamadı" }, { status: 404 });
     }
 
     return Response.json(patient);
@@ -51,7 +51,7 @@ export async function PUT(
       where: { id: params.id, clinicId },
     });
     if (!existing) {
-      return Response.json({ error: "Hasta bulunamadı" }, { status: 404 });
+      return Response.json({ error: "Müşteri bulunamadı" }, { status: 404 });
     }
 
     const body = await request.json();
@@ -93,7 +93,7 @@ export async function DELETE(
       where: { id: params.id, clinicId },
     });
     if (!existing) {
-      return Response.json({ error: "Hasta bulunamadı" }, { status: 404 });
+      return Response.json({ error: "Müşteri bulunamadı" }, { status: 404 });
     }
 
     await prisma.treatment.deleteMany({ where: { patientId: params.id } });

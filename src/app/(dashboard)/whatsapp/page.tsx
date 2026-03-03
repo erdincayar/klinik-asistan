@@ -42,8 +42,8 @@ const COMMANDS = [
   { name: "gider", description: "Bugunun gider ozetini goster", icon: Wallet },
   { name: "rapor", description: "Gunluk/haftalik rapor", icon: BarChart3 },
   { name: "kasa", description: "Kasa durumunu goster", icon: DollarSign },
-  { name: "hasta", description: "Müşteri bilgisi sorgula", icon: UserPlus },
-  { name: "hastalar", description: "Müşteri listesini göster", icon: Users },
+  { name: "musteri", description: "Müşteri bilgisi sorgula", icon: UserPlus },
+  { name: "musteriler", description: "Müşteri listesini göster", icon: Users },
   { name: "hatirlatmalar", description: "Yaklaşan hatirlatmalar", icon: Bell },
   { name: "ozet", description: "Klinik genel ozeti", icon: FileText },
   { name: "yardim", description: "Tum komutlari listele", icon: HelpCircle },
@@ -54,7 +54,7 @@ const QUICK_COMMANDS = [
   { name: "/gelir", icon: DollarSign },
   { name: "/rapor", icon: BarChart3 },
   { name: "/ozet", icon: FileText },
-  { name: "/hastalar", icon: Users },
+  { name: "/musteriler", icon: Users },
   { name: "/yardim", icon: HelpCircle },
 ];
 

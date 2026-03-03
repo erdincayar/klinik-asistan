@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
 
     let responseText = result.confirmationMessage;
     if (result.patientIsNew) {
-      responseText += "\n\nYeni hasta kaydi olusturuldu.";
+      responseText += "\n\nYeni musteri kaydi olusturuldu.";
     }
 
     await sendTelegramMessage({

@@ -105,7 +105,7 @@ function NewIncomeForm() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="patientId">Hasta *</Label>
+              <Label htmlFor="patientId">Müşteri *</Label>
               <select
                 id="patientId"
                 value={form.patientId}
@@ -115,7 +115,7 @@ function NewIncomeForm() {
                 required
                 className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
               >
-                <option value="">Hasta seçin...</option>
+                <option value="">Müşteri seçin...</option>
                 {patients.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name}

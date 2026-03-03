@@ -35,7 +35,7 @@ const features = [
     icon: Users,
     title: "Müşteri Yönetimi",
     description:
-      "Hasta ve müşteri kayıtlarını detaylı profiller ile yönetin. Geçmiş işlemler, notlar ve iletişim bilgileri tek yerde.",
+      "Müşteri kayıtlarını detaylı profiller ile yönetin. Geçmiş işlemler, notlar ve iletişim bilgileri tek yerde.",
     bg: "bg-blue-50",
     color: "text-blue-600",
   },
@@ -97,7 +97,7 @@ const stats = [
 
 const sidebarItems = [
   { icon: BarChart3, label: "Dashboard", active: true },
-  { icon: Users, label: "Hastalar", active: false },
+  { icon: Users, label: "Müşteriler", active: false },
   { icon: Calendar, label: "Randevular", active: false },
   { icon: DollarSign, label: "Finans", active: false },
   { icon: FileText, label: "Faturalar", active: false },
@@ -731,7 +731,7 @@ export default function Home() {
                 {/* Stat cards */}
                 <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
                   {[
-                    { label: "Toplam Hasta", value: "1,284", change: "+12%", up: true },
+                    { label: "Toplam Müşteri", value: "1,284", change: "+12%", up: true },
                     { label: "Bugünün Randevuları", value: "18", change: "+3 yeni", up: true },
                     { label: "Aylık Gelir", value: "₺84,500", change: "+34%", up: true },
                     { label: "Stok Uyarıları", value: "3", change: "Kontrol et", up: false },

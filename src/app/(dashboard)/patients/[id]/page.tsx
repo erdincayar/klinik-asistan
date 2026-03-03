@@ -110,7 +110,7 @@ export default function PatientDetailPage() {
     async function fetchPatient() {
       try {
         const res = await fetch(`/api/patients/${params.id}`);
-        if (!res.ok) throw new Error("Hasta bulunamadı");
+        if (!res.ok) throw new Error("Müşteri bulunamadı");
         const data = await res.json();
         setPatient(data);
         setEditForm({
@@ -137,7 +137,7 @@ export default function PatientDetailPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editForm),
       });
-      if (!res.ok) throw new Error("Hasta güncellenemedi");
+      if (!res.ok) throw new Error("Müşteri güncellenemedi");
       const updated = await res.json();
       setPatient({ ...patient!, ...updated });
       setEditing(false);
@@ -192,7 +192,7 @@ export default function PatientDetailPage() {
   if (error || !patient) {
     return (
       <div className="flex min-h-[300px] items-center justify-center">
-        <p className="text-sm text-red-500">{error || "Hasta bulunamadı"}</p>
+        <p className="text-sm text-red-500">{error || "Müşteri bulunamadı"}</p>
       </div>
     );
   }

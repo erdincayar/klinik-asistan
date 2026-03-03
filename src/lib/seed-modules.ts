@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 const modules = [
-  { name: "PATIENTS", displayName: "Müşteri Yönetimi", description: "Hasta ve müşteri kayıtlarını yönetin", price: 149, icon: "Users", isCore: false },
+  { name: "PATIENTS", displayName: "Müşteri Yönetimi", description: "Müşteri kayıtlarını yönetin", price: 149, icon: "Users", isCore: false },
   { name: "APPOINTMENTS", displayName: "Randevu Sistemi", description: "Akıllı takvim ile randevu planlama", price: 99, icon: "Calendar", isCore: false },
   { name: "FINANCE", displayName: "Finansal Takip", description: "Gelir-gider takibi ve raporlama", price: 129, icon: "DollarSign", isCore: false },
   { name: "INVOICES", displayName: "e-Fatura Sistemi", description: "e-Fatura ve e-Arşiv oluşturma", price: 79, icon: "FileText", isCore: false },

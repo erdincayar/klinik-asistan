@@ -82,7 +82,7 @@ export default function AiAssistantPage() {
             <Sparkles className="h-12 w-12 text-primary/30 mb-4" />
             <h2 className="text-lg font-semibold mb-2">inPobi AI</h2>
             <p className="text-muted-foreground mb-6 max-w-md">
-              Klinik verileriniz hakkında sorular sorabilirsiniz. Gelir-gider analizi, hasta sorgulama ve daha fazlası.
+              İşletme verileriniz hakkında sorular sorabilirsiniz. Gelir-gider analizi, müşteri sorgulama ve daha fazlası.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg">
               {quickPrompts.map((prompt, i) => (

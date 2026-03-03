@@ -185,7 +185,7 @@ export async function cancelAppointment(
   patientName: string
 ): Promise<string> {
   if (!patientName.trim()) {
-    return "⚠️ Iptal icin hasta adi belirtmelisiniz. Ornek: /randevu iptal Erdinc Ayar";
+    return "⚠️ Iptal icin musteri adi belirtmelisiniz. Ornek: /randevu iptal Erdinc Ayar";
   }
 
   const searchName = patientName.trim().toLowerCase();
@@ -341,7 +341,7 @@ export async function getReport(
     `💸 Gider: ${formatTLDetailed(totalExpense)}`,
     `📈 Net Kar: ${formatTLDetailed(netProfit)}`,
     `🧾 KDV (%${taxRate}): ${formatTLDetailed(kdv)}`,
-    `👥 Hasta Sayisi: ${uniquePatients}`,
+    `👥 Musteri Sayisi: ${uniquePatients}`,
     `📋 Randevu: ${appointmentCount}`,
   ].join("\n");
 }
@@ -377,7 +377,7 @@ export async function getPatientInfo(
   patientName: string
 ): Promise<string> {
   if (!patientName.trim()) {
-    return "⚠️ Hasta adi belirtmelisiniz. Ornek: /hasta Erdinc Ayar";
+    return "⚠️ Musteri adi belirtmelisiniz. Ornek: /musteri Erdinc Ayar";
   }
 
   const searchName = patientName.trim().toLowerCase();
@@ -395,7 +395,7 @@ export async function getPatientInfo(
   );
 
   if (filtered.length === 0) {
-    return `❌ Hasta bulunamadi: ${patientName.trim()}`;
+    return `❌ Musteri bulunamadi: ${patientName.trim()}`;
   }
 
   // Use first match
@@ -466,8 +466,8 @@ export async function getPatientsList(clinicId: string): Promise<string> {
   });
 
   const lines: string[] = [
-    "👥 Hasta Listesi:",
-    `Toplam: ${totalCount} hasta`,
+    "👥 Müşteri Listesi:",
+    `Toplam: ${totalCount} müşteri`,
   ];
 
   if (recentPatients.length > 0) {
@@ -699,7 +699,7 @@ export async function getDetailedReport(clinicId: string): Promise<string> {
   lines.push(`Kar Marji: %${profitMargin}`);
   lines.push(`KDV (%${taxRate}): ${formatTLDetailed(kdv)}`);
   lines.push("");
-  lines.push(`👥 Hasta: ${patientCount} | 📋 Randevu: ${appointmentCount}`);
+  lines.push(`👥 Müşteri: ${patientCount} | 📋 Randevu: ${appointmentCount}`);
 
   return lines.join("\n");
 }
@@ -764,7 +764,7 @@ export async function getTopPatients(clinicId: string): Promise<string> {
     return "👥 Bu yil henuz islem yapilmamis.";
   }
 
-  const lines: string[] = [`👑 En Cok Gelen Hastalar (${now.getFullYear()}):`];
+  const lines: string[] = [`👑 En Cok Gelen Musteriler (${now.getFullYear()}):`];
 
   sorted.forEach(([, data], i) => {
     const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`;
@@ -1100,7 +1100,7 @@ export async function createInvoiceForPatient(
   );
 
   if (filtered.length === 0) {
-    return `❌ Hasta bulunamadi: "${patientName}"`;
+    return `❌ Musteri bulunamadi: "${patientName}"`;
   }
 
   const patient = filtered[0];
@@ -1157,12 +1157,12 @@ export function getHelpText(): string {
     "📊 Rapor Komutlari:",
     "/rapor detay - Detayli aylik rapor",
     "/top servis - En cok kazandiran servisler",
-    "/top hasta - En cok gelen hastalar",
+    "/top musteri - En cok gelen musteriler",
     "/prim - Calisan prim raporu",
     "",
-    "👤 Hasta Komutlari:",
-    "/hasta [isim] - Hasta bilgisi",
-    "/hastalar - Hasta listesi",
+    "👤 Musteri Komutlari:",
+    "/musteri [isim] - Musteri bilgisi",
+    "/musteriler - Musteri listesi",
     "/hatirlatmalar - Günün hatirlatmalari",
     "/hatirlatma gonder - Hatirlatmalari gonder",
     "",
@@ -1174,7 +1174,7 @@ export function getHelpText(): string {
     "",
     "🧾 Fatura Komutlari:",
     "/fatura - Bu ayin fatura ozeti",
-    "/fatura [hasta adi] - Hasta icin fatura bilgisi",
+    "/fatura [musteri adi] - Musteri icin fatura bilgisi",
     "",
     "📋 Genel:",
     "/ozet - Günlük ozet",

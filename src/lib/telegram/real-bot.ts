@@ -213,7 +213,7 @@ async function processMessage(msg: TgMessage): Promise<void> {
 
       let reply = `✅ Randevu oluşturuldu:\n📋 ${patient.name}\n📅 ${dateFormatted} saat ${parsed.time}\n💉 ${treatmentLabel}`;
       if (parsed.notes) reply += `\n📝 ${parsed.notes}`;
-      if (isNew) reply += `\n\n⚠️ Yeni hasta kaydı oluşturuldu: ${patient.name}`;
+      if (isNew) reply += `\n\n⚠️ Yeni müşteri kaydı oluşturuldu: ${patient.name}`;
 
       await tgSend(chatId, reply);
       return;
@@ -241,7 +241,7 @@ async function processMessage(msg: TgMessage): Promise<void> {
         ] || parsed.treatmentType;
 
       let reply = `✅ Gelir kaydedildi:\n👤 ${patient.name}\n💉 ${treatmentLabel}\n💰 ${amountTL} TL`;
-      if (isNew) reply += `\n\n⚠️ Yeni hasta kaydı oluşturuldu: ${patient.name}`;
+      if (isNew) reply += `\n\n⚠️ Yeni müşteri kaydı oluşturuldu: ${patient.name}`;
 
       await tgSend(chatId, reply);
       return;

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, useRef, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Plus, X, Check } from "lucide-react";
 import Link from "next/link";
 import {
   Card,
@@ -15,81 +15,157 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectOption } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
-import { TREATMENT_CATEGORIES } from "@/lib/types";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Patient {
   id: string;
   name: string;
 }
 
-interface TimeSlot {
-  startTime: string;
-  endTime: string;
-  available: boolean;
+// Generate all time slots from 00:00 to 23:30 in 30-minute intervals
+function generateTimeSlots(): string[] {
+  const slots: string[] = [];
+  for (let h = 0; h < 24; h++) {
+    for (let m = 0; m < 60; m += 30) {
+      slots.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
+    }
+  }
+  return slots;
 }
+
+const ALL_TIME_SLOTS = generateTimeSlots();
 
 function NewAppointmentForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const [patients, setPatients] = useState<Patient[]>([]);
-  const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
-  const [loadingSlots, setLoadingSlots] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
   const [patientId, setPatientId] = useState(searchParams.get("patientId") || "");
   const [date, setDate] = useState(searchParams.get("date") || "");
-  const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
+  const [selectedTime, setSelectedTime] = useState("");
   const [treatmentType, setTreatmentType] = useState("");
   const [notes, setNotes] = useState("");
 
-  useEffect(() => {
-    async function fetchPatients() {
-      try {
-        const res = await fetch("/api/patients");
-        if (res.ok) {
-          const data = await res.json();
-          setPatients(data.patients || data || []);
-        }
-      } catch {
-        // silently handle
+  // New customer inline form
+  const [showNewCustomer, setShowNewCustomer] = useState(false);
+  const [newCustomerName, setNewCustomerName] = useState("");
+  const [newCustomerPhone, setNewCustomerPhone] = useState("");
+  const [savingCustomer, setSavingCustomer] = useState(false);
+
+  // Treatment type autocomplete
+  const [treatmentSuggestions, setTreatmentSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const treatmentInputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+
+  const fetchPatients = useCallback(async () => {
+    try {
+      const res = await fetch("/api/patients");
+      if (res.ok) {
+        const data = await res.json();
+        setPatients(data.patients || data || []);
       }
+    } catch {
+      // silently handle
     }
-    fetchPatients();
   }, []);
 
   useEffect(() => {
-    if (!date) {
-      setAvailableSlots([]);
-      setSelectedSlot(null);
+    fetchPatients();
+  }, [fetchPatients]);
+
+  // Fetch treatment type suggestions
+  useEffect(() => {
+    if (treatmentType.length < 2) {
+      setTreatmentSuggestions([]);
+      setShowSuggestions(false);
       return;
     }
 
-    async function fetchSlots() {
-      setLoadingSlots(true);
-      setSelectedSlot(null);
+    const timer = setTimeout(async () => {
+      setLoadingSuggestions(true);
       try {
-        const res = await fetch(`/api/appointments/available-slots?date=${date}`);
+        const res = await fetch(`/api/appointments/types?q=${encodeURIComponent(treatmentType)}`);
         if (res.ok) {
           const data = await res.json();
-          setAvailableSlots(data.slots || data || []);
+          setTreatmentSuggestions(data.types || []);
+          setShowSuggestions(true);
         }
       } catch {
         // silently handle
       } finally {
-        setLoadingSlots(false);
+        setLoadingSuggestions(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [treatmentType]);
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(e.target as Node) &&
+        treatmentInputRef.current &&
+        !treatmentInputRef.current.contains(e.target as Node)
+      ) {
+        setShowSuggestions(false);
       }
     }
-    fetchSlots();
-  }, [date]);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Calculate end time (30 min after start)
+  function getEndTime(start: string): string {
+    const [h, m] = start.split(":").map(Number);
+    const totalMinutes = h * 60 + m + 30;
+    const endH = Math.floor(totalMinutes / 60) % 24;
+    const endM = totalMinutes % 60;
+    return `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`;
+  }
+
+  async function handleNewCustomer() {
+    if (!newCustomerName.trim()) return;
+    setSavingCustomer(true);
+    try {
+      const res = await fetch("/api/patients", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newCustomerName.trim(),
+          phone: newCustomerPhone.trim() || undefined,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const newId = data.id || data.patient?.id;
+        await fetchPatients();
+        if (newId) setPatientId(newId);
+        setShowNewCustomer(false);
+        setNewCustomerName("");
+        setNewCustomerPhone("");
+      } else {
+        const data = await res.json();
+        setError(data.error || "Müşteri eklenemedi");
+      }
+    } catch {
+      setError("Müşteri eklenirken hata oluştu");
+    } finally {
+      setSavingCustomer(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
 
-    if (!patientId || !date || !selectedSlot || !treatmentType) {
+    if (!patientId || !date || !selectedTime || !treatmentType) {
       setError("Lütfen tüm zorunlu alanları doldurun.");
       return;
     }
@@ -102,8 +178,8 @@ function NewAppointmentForm() {
         body: JSON.stringify({
           patientId,
           date,
-          startTime: selectedSlot.startTime,
-          endTime: selectedSlot.endTime,
+          startTime: selectedTime,
+          endTime: getEndTime(selectedTime),
           treatmentType,
           notes: notes || undefined,
         }),
@@ -134,34 +210,97 @@ function NewAppointmentForm() {
         </Link>
       </div>
 
-      <Card>
+      <Card className="rounded-2xl shadow-sm">
         <CardHeader>
           <CardTitle>Yeni Randevu</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-xl bg-red-50 p-3 text-sm text-red-600"
+              >
                 {error}
-              </div>
+              </motion.div>
             )}
 
-            {/* Patient Selection */}
+            {/* Customer Selection */}
             <div className="space-y-2">
-              <Label htmlFor="patient">Hasta *</Label>
-              <Select
-                id="patient"
-                value={patientId}
-                onChange={(e) => setPatientId(e.target.value)}
-                required
-              >
-                <SelectOption value="">Hasta seçin...</SelectOption>
-                {patients.map((p) => (
-                  <SelectOption key={p.id} value={p.id}>
-                    {p.name}
-                  </SelectOption>
-                ))}
-              </Select>
+              <Label htmlFor="patient">Müşteri *</Label>
+              <div className="flex gap-2">
+                <Select
+                  id="patient"
+                  value={patientId}
+                  onChange={(e) => setPatientId(e.target.value)}
+                  required
+                  className="flex-1"
+                >
+                  <SelectOption value="">Müşteri seçin...</SelectOption>
+                  {patients.map((p) => (
+                    <SelectOption key={p.id} value={p.id}>
+                      {p.name}
+                    </SelectOption>
+                  ))}
+                </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowNewCustomer(!showNewCustomer)}
+                  className="shrink-0 gap-1"
+                >
+                  {showNewCustomer ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                  {showNewCustomer ? "Kapat" : "Yeni Müşteri"}
+                </Button>
+              </div>
+
+              {/* Inline New Customer Form */}
+              <AnimatePresence>
+                {showNewCustomer && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-2 space-y-3 rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+                      <p className="text-sm font-medium text-blue-700">Yeni Müşteri Ekle</p>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Ad Soyad *</Label>
+                          <Input
+                            value={newCustomerName}
+                            onChange={(e) => setNewCustomerName(e.target.value)}
+                            placeholder="Müşteri adı"
+                            className="bg-white"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Telefon</Label>
+                          <Input
+                            value={newCustomerPhone}
+                            onChange={(e) => setNewCustomerPhone(e.target.value)}
+                            placeholder="05XX XXX XX XX"
+                            className="bg-white"
+                          />
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={handleNewCustomer}
+                        disabled={savingCustomer || !newCustomerName.trim()}
+                        className="gap-1"
+                      >
+                        <Check className="h-3.5 w-3.5" />
+                        {savingCustomer ? "Kaydediliyor..." : "Kaydet ve Seç"}
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Date */}
@@ -176,59 +315,68 @@ function NewAppointmentForm() {
               />
             </div>
 
-            {/* Available Slots */}
+            {/* Time Selection - Simple Dropdown */}
             <div className="space-y-2">
-              <Label>Müsait Saatler *</Label>
-              {!date ? (
-                <p className="text-sm text-gray-400">
-                  Önce tarih seçin
-                </p>
-              ) : loadingSlots ? (
-                <p className="text-sm text-gray-500">Saatler yükleniyor...</p>
-              ) : availableSlots.length === 0 ? (
-                <p className="text-sm text-gray-500">
-                  Bu tarihte müsait saat bulunamadı
-                </p>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {availableSlots.map((slot) => (
-                    <button
-                      key={slot.startTime}
-                      type="button"
-                      disabled={!slot.available}
-                      onClick={() => setSelectedSlot(slot)}
-                      className={cn(
-                        "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
-                        slot.available
-                          ? selectedSlot?.startTime === slot.startTime
-                            ? "border-blue-500 bg-blue-50 text-blue-700"
-                            : "border-gray-200 hover:border-blue-300 hover:bg-blue-50"
-                          : "cursor-not-allowed border-gray-100 bg-gray-50 text-gray-300"
-                      )}
-                    >
-                      {slot.startTime}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Treatment Type */}
-            <div className="space-y-2">
-              <Label htmlFor="treatmentType">İşlem Türü *</Label>
+              <Label htmlFor="time">Saat *</Label>
               <Select
-                id="treatmentType"
-                value={treatmentType}
-                onChange={(e) => setTreatmentType(e.target.value)}
+                id="time"
+                value={selectedTime}
+                onChange={(e) => setSelectedTime(e.target.value)}
                 required
               >
-                <SelectOption value="">İşlem türü seçin...</SelectOption>
-                {TREATMENT_CATEGORIES.map((t) => (
-                  <SelectOption key={t.value} value={t.value}>
-                    {t.label}
+                <SelectOption value="">Saat seçin...</SelectOption>
+                {ALL_TIME_SLOTS.map((time) => (
+                  <SelectOption key={time} value={time}>
+                    {time}
                   </SelectOption>
                 ))}
               </Select>
+            </div>
+
+            {/* Treatment Type - Autocomplete */}
+            <div className="relative space-y-2">
+              <Label htmlFor="treatmentType">İşlem Türü *</Label>
+              <Input
+                ref={treatmentInputRef}
+                id="treatmentType"
+                value={treatmentType}
+                onChange={(e) => setTreatmentType(e.target.value)}
+                onFocus={() => {
+                  if (treatmentSuggestions.length > 0) setShowSuggestions(true);
+                }}
+                placeholder="İşlem türünü yazın..."
+                required
+                autoComplete="off"
+              />
+              {loadingSuggestions && (
+                <p className="text-xs text-gray-400">Öneriler yükleniyor...</p>
+              )}
+              {/* Suggestions dropdown */}
+              <AnimatePresence>
+                {showSuggestions && treatmentSuggestions.length > 0 && (
+                  <motion.div
+                    ref={suggestionsRef}
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    className="absolute left-0 right-0 top-full z-10 mt-1 max-h-48 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg"
+                  >
+                    {treatmentSuggestions.map((suggestion) => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        onClick={() => {
+                          setTreatmentType(suggestion);
+                          setShowSuggestions(false);
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Notes */}

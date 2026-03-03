@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
             },
             {
               type: "text",
-              text: `Bu resimde müşteri/hasta kayıt bilgileri bulunuyor. Lütfen resimdeki tüm kişi bilgilerini çıkar.
+              text: `Bu resimde müşteri kayıt bilgileri bulunuyor. Lütfen resimdeki tüm kişi bilgilerini çıkar.
 
 Her kişi için JSON formatında şu bilgileri ver:
 - name: Ad Soyad

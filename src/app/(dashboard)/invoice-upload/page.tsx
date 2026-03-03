@@ -41,6 +41,8 @@ export default function InvoiceUploadPage() {
   const [invoices, setInvoices] = useState<UploadedInvoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const [uploadSuccess, setUploadSuccess] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<UploadedInvoice | null>(null);
 
@@ -65,6 +67,11 @@ export default function InvoiceUploadPage() {
   async function handleUpload(files: FileList | null) {
     if (!files || files.length === 0) return;
     setUploading(true);
+    setUploadError("");
+    setUploadSuccess("");
+
+    let successCount = 0;
+    let failCount = 0;
 
     for (const file of Array.from(files)) {
       const formData = new FormData();
@@ -74,14 +81,28 @@ export default function InvoiceUploadPage() {
           method: "POST",
           body: formData,
         });
-        if (res.ok) {
-          await fetchInvoices();
+        const data = await res.json();
+        if (res.ok && data.status !== "FAILED") {
+          successCount++;
+        } else {
+          failCount++;
         }
       } catch {
-        // Handle error
+        failCount++;
       }
     }
+
+    await fetchInvoices();
     setUploading(false);
+
+    if (successCount > 0) {
+      setUploadSuccess(`${successCount} fatura başarıyla işlendi.`);
+      setTimeout(() => setUploadSuccess(""), 5000);
+    }
+    if (failCount > 0) {
+      setUploadError(`${failCount} fatura işlenemedi. Lütfen tekrar deneyin.`);
+      setTimeout(() => setUploadError(""), 8000);
+    }
   }
 
   const handleDrop = (e: React.DragEvent) => {
@@ -140,6 +161,27 @@ export default function InvoiceUploadPage() {
             </div>
           )}
         </div>
+
+        {uploadError && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-3 flex items-center gap-2 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600"
+          >
+            <XCircle className="h-4 w-4 shrink-0" />
+            {uploadError}
+          </motion.div>
+        )}
+        {uploadSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-3 flex items-center gap-2 rounded-xl bg-green-50 px-4 py-3 text-sm text-green-600"
+          >
+            <CheckCircle className="h-4 w-4 shrink-0" />
+            {uploadSuccess}
+          </motion.div>
+        )}
       </motion.div>
 
       {/* Invoice List */}

@@ -53,21 +53,23 @@ export async function POST(req: NextRequest) {
     });
 
     // Send to Claude Vision
-    const anthropic = new Anthropic();
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 2048,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "image",
-              source: { type: "base64", media_type: mediaType === "application/pdf" ? "image/jpeg" : mediaType, data: base64 },
-            },
-            {
-              type: "text",
-              text: `Bu bir faturadır. Lütfen şu bilgileri JSON formatında çıkar:
+    let ocrData = null;
+    try {
+      const anthropic = new Anthropic();
+      const response = await anthropic.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 2048,
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "image",
+                source: { type: "base64", media_type: mediaType === "application/pdf" ? "image/jpeg" : mediaType, data: base64 },
+              },
+              {
+                type: "text",
+                text: `Bu bir faturadır. Lütfen şu bilgileri JSON formatında çıkar:
 {
   "vendor": "Satıcı/firma adı",
   "invoiceDate": "YYYY-MM-DD formatında fatura tarihi",
@@ -77,27 +79,36 @@ export async function POST(req: NextRequest) {
   "items": [{"description": "kalem açıklaması", "quantity": adet, "unitPrice": birim fiyat, "total": toplam}]
 }
 Sadece JSON döndür, başka açıklama yapma.`,
-            },
-          ],
-        },
-      ],
-    });
+              },
+            ],
+          },
+        ],
+      });
 
-    const aiText = response.content[0].type === "text" ? response.content[0].text : "";
+      const aiText = response.content[0].type === "text" ? response.content[0].text : "";
 
-    let ocrData = null;
-    try {
-      // Extract JSON from response
-      const jsonMatch = aiText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        ocrData = JSON.parse(jsonMatch[0]);
+      try {
+        const jsonMatch = aiText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          ocrData = JSON.parse(jsonMatch[0]);
+        }
+      } catch {
+        // JSON parse failed
       }
-    } catch {
-      // Parse failed
+    } catch (aiError) {
+      console.error("Claude Vision API error:", aiError);
+      // Mark as failed if AI call fails
+      await prisma.uploadedInvoice.update({
+        where: { id: invoice.id },
+        data: { status: "FAILED" },
+      });
+      return NextResponse.json(
+        { ...invoice, status: "FAILED", error: "AI fatura okuma başarısız oldu. Lütfen tekrar deneyin." },
+        { status: 200 }
+      );
     }
 
     if (ocrData) {
-      // Update invoice with OCR data
       await prisma.uploadedInvoice.update({
         where: { id: invoice.id },
         data: {
@@ -110,7 +121,6 @@ Sadece JSON döndür, başka açıklama yapma.`,
         },
       });
 
-      // Create expense record
       if (ocrData.amount) {
         const amountKurus = Math.round(parseFloat(ocrData.amount) * 100);
         await prisma.expense.create({

@@ -275,12 +275,14 @@ export async function handleCommand(
         break;
       }
 
-      case "hasta": {
+      case "hasta":
+      case "musteri": {
         response = await getPatientInfo(clinicId, args);
         break;
       }
 
-      case "hastalar": {
+      case "hastalar":
+      case "musteriler": {
         response = await getPatientsList(clinicId);
         break;
       }
@@ -420,7 +422,7 @@ async function handleTopCommand(
   return [
     "📊 Top Komutlari:",
     "/top servis - En cok kazandiran servisler",
-    "/top hasta - En cok gelen hastalar",
+    "/top musteri - En cok gelen musteriler",
   ].join("\n");
 }
 

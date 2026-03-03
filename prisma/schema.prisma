@@ -265,8 +265,9 @@ model Product {
   unit          String          @default("ADET") // ADET, KUTU, ML, GR
   currentStock  Int             @default(0)
   minStock      Int             @default(0)
-  purchasePrice Int             @default(0) // kuruş
-  salePrice     Int             @default(0) // kuruş
+  purchasePrice    Int             @default(0) // kuruş (TL)
+  purchasePriceUSD Float?          // Alış fiyatı USD
+  salePrice        Int             @default(0) // kuruş
   clinicId      String
   clinic        Clinic          @relation(fields: [clinicId], references: [id])
   isActive      Boolean         @default(true)

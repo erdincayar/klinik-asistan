@@ -48,7 +48,7 @@ const tools: Anthropic.Tool[] = [
   },
   {
     name: "search_patients",
-    description: "Hasta adı veya telefon numarasına göre hasta arar.",
+    description: "Müşteri adı veya telefon numarasına göre müşteri arar.",
     input_schema: {
       type: "object" as const,
       properties: {
@@ -59,11 +59,11 @@ const tools: Anthropic.Tool[] = [
   },
   {
     name: "get_patient_history",
-    description: "Belirtilen hastanın detaylı bilgilerini ve tedavi geçmişini getirir.",
+    description: "Belirtilen müşterinin detaylı bilgilerini ve işlem geçmişini getirir.",
     input_schema: {
       type: "object" as const,
       properties: {
-        patientId: { type: "string", description: "Hasta ID" },
+        patientId: { type: "string", description: "Müşteri ID" },
       },
       required: ["patientId"],
     },
@@ -82,7 +82,7 @@ const tools: Anthropic.Tool[] = [
   },
   {
     name: "get_todays_appointments",
-    description: "Bugünün randevularını getirir. Hasta adı, saat, işlem türü ve durum bilgisini içerir.",
+    description: "Bugünün randevularını getirir. Müşteri adı, saat, işlem türü ve durum bilgisini içerir.",
     input_schema: {
       type: "object" as const,
       properties: {},
@@ -106,7 +106,7 @@ const tools: Anthropic.Tool[] = [
     input_schema: {
       type: "object" as const,
       properties: {
-        patientId: { type: "string", description: "Hasta ID" },
+        patientId: { type: "string", description: "Müşteri ID" },
         date: { type: "string", description: "Tarih (YYYY-MM-DD)" },
         startTime: { type: "string", description: "Başlangıç saati (HH:MM)" },
         endTime: { type: "string", description: "Bitiş saati (HH:MM)" },
@@ -140,7 +140,7 @@ const tools: Anthropic.Tool[] = [
   },
   {
     name: "get_pending_reminders",
-    description: "Bekleyen hasta hatirlatmalarini listeler. Kontrol zamani gelmis hastalari gosterir.",
+    description: "Bekleyen musteri hatirlatmalarini listeler. Kontrol zamani gelmis musterileri gosterir.",
     input_schema: {
       type: "object" as const,
       properties: {},
@@ -149,22 +149,22 @@ const tools: Anthropic.Tool[] = [
   },
   {
     name: "get_patient_preferences",
-    description: "Bir hastanin tercih etiketlerini ve ziyaret oruntusunu getirir.",
+    description: "Bir musterinin tercih etiketlerini ve ziyaret oruntusunu getirir.",
     input_schema: {
       type: "object" as const,
       properties: {
-        patientId: { type: "string", description: "Hasta ID" },
+        patientId: { type: "string", description: "Müşteri ID" },
       },
       required: ["patientId"],
     },
   },
   {
     name: "send_patient_reminder",
-    description: "Belirtilen hastaya kisisellestirilmis hatirlatma mesaji gonderir.",
+    description: "Belirtilen musteriye kisisellestirilmis hatirlatma mesaji gonderir.",
     input_schema: {
       type: "object" as const,
       properties: {
-        patientId: { type: "string", description: "Hasta ID" },
+        patientId: { type: "string", description: "Müşteri ID" },
       },
       required: ["patientId"],
     },
@@ -298,7 +298,7 @@ async function executeTool(name: string, input: Record<string, unknown>, clinicI
           treatments: { orderBy: { date: "desc" } },
         },
       });
-      if (!patient) return { error: "Hasta bulunamadı" };
+      if (!patient) return { error: "Müşteri bulunamadı" };
       return {
         name: patient.name,
         phone: patient.phone,
@@ -413,7 +413,7 @@ async function executeTool(name: string, input: Record<string, unknown>, clinicI
       };
       // Check patient belongs to clinic
       const patient = await prisma.patient.findFirst({ where: { id: patientId, clinicId } });
-      if (!patient) return { error: "Hasta bulunamadı" };
+      if (!patient) return { error: "Müşteri bulunamadı" };
 
       // Check for conflicts
       const appointmentDate = new Date(date);
@@ -504,7 +504,7 @@ async function executeTool(name: string, input: Record<string, unknown>, clinicI
           visitPattern: true,
         },
       });
-      if (!patient) return { error: "Hasta bulunamadi" };
+      if (!patient) return { error: "Musteri bulunamadi" };
       return {
         name: patient.name,
         preferences: patient.preferences.map(p => p.type),
@@ -524,14 +524,14 @@ async function executeTool(name: string, input: Record<string, unknown>, clinicI
         where: { id: patientId, clinicId },
         include: { preferences: true },
       });
-      if (!patient) return { error: "Hasta bulunamadi" };
+      if (!patient) return { error: "Musteri bulunamadi" };
 
       // Find if this patient has any due reminders
       const allDue = await findDuePatients(clinicId);
       const patientDue = allDue.find(d => d.patientId === patientId);
 
       if (!patientDue) {
-        return { message: "Bu hasta icin bekleyen hatirlatma bulunmuyor." };
+        return { message: "Bu musteri icin bekleyen hatirlatma bulunmuyor." };
       }
 
       const prefTypes = patient.preferences.map(p => p.type);
@@ -688,12 +688,12 @@ export async function POST(req: NextRequest) {
   const systemPrompt = `Sen inPobi AI asistanısın. Bir işletme yönetim platformu için akıllı bir yardımcısın.
 Görevlerin:
 - Klinik gelir-gider analizleri yapma
-- Hasta bilgilerini sorgulama
+- Müşteri bilgilerini sorgulama
 - KDV hesaplamaları
 - Finansal özetler sunma
 - Klinik yönetimi tavsiyeleri verme
 - Randevu yönetimi (bugünün randevuları, müsait saatler, randevu oluşturma ve iptal)
-- Hasta hatirlatma yonetimi (bekleyen hatirlatmalar, hasta tercihleri, hatirlatma gonderme)
+- Musteri hatirlatma yonetimi (bekleyen hatirlatmalar, musteri tercihleri, hatirlatma gonderme)
 - Stok yonetimi (stok durumu, dusuk stoklu urunler, urun arama, stok giris/cikis)
 
 Kurallar:

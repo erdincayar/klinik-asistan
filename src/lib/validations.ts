@@ -107,6 +107,7 @@ export const productSchema = z.object({
   currentStock: z.number().int().min(0, "Stok negatif olamaz").optional(),
   minStock: z.number().int().min(0).optional(),
   purchasePrice: z.number().int().min(0, "Fiyat negatif olamaz"),
+  purchasePriceUSD: z.number().min(0, "Fiyat negatif olamaz").nullable().optional(),
   salePrice: z.number().int().min(0, "Fiyat negatif olamaz"),
 });
 

@@ -569,7 +569,7 @@ export default function SettingsPage() {
                 value={newReminder.messageTemplate}
                 onChange={(e) => setNewReminder({ ...newReminder, messageTemplate: e.target.value })}
                 required
-                placeholder="Örnek: Sayın {hasta}, {tedavi} işleminizin üzerinden {gun} gün geçmiştir."
+                placeholder="Örnek: Sayın {musteri}, {tedavi} işleminizin üzerinden {gun} gün geçmiştir."
                 rows={3}
                 className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
               />

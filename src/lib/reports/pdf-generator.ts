@@ -120,8 +120,8 @@ export function buildMonthlyReport(
       {
         heading: "Musteri Ozeti",
         rows: [
-          { label: "Toplam Hasta", value: String(data.patientCount) },
-          { label: "Hasta Basina Ort. Gelir", value: data.patientCount > 0 ? formatTL(data.totalIncome / data.patientCount) : "0 TL" },
+          { label: "Toplam Müşteri", value: String(data.patientCount) },
+          { label: "Müşteri Başına Ort. Gelir", value: data.patientCount > 0 ? formatTL(data.totalIncome / data.patientCount) : "0 TL" },
         ],
       },
     ],

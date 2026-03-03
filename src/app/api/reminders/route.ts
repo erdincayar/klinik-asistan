@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
           new Date(lastTreatmentDate),
           intervalDays,
           prefTypes,
-          reminder?.messageTemplate || "Sayin {hasta}, {islem} kontrolunuz icin randevu zamaniniz gelmistir."
+          reminder?.messageTemplate || "Sayin {musteri}, {islem} kontrolunuz icin randevu zamaniniz gelmistir."
         );
 
         const logId = await sendReminder(patientId, clinicId, message);

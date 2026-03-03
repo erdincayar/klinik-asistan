@@ -57,6 +57,7 @@ interface Product {
   currentStock: number;
   minStock: number;
   purchasePrice: number;
+  purchasePriceUSD: number | null;
   salePrice: number;
   isActive: boolean;
   createdAt: string;
@@ -273,6 +274,7 @@ function ProductsTab() {
                   <TableHead className="hidden md:table-cell text-right">Min Stok</TableHead>
                   <TableHead className="hidden lg:table-cell text-right">Alış Fiyatı</TableHead>
                   <TableHead className="hidden lg:table-cell text-right">Satış Fiyatı</TableHead>
+                  <TableHead className="hidden xl:table-cell text-right">Kâr</TableHead>
                   <TableHead>Durum</TableHead>
                 </TableRow>
               </TableHeader>
@@ -305,6 +307,15 @@ function ProductsTab() {
                       </TableCell>
                       <TableCell className="hidden lg:table-cell text-right">
                         {formatCurrency(product.salePrice)}
+                      </TableCell>
+                      <TableCell className="hidden xl:table-cell text-right">
+                        {product.salePrice > 0 && product.purchasePrice > 0 ? (
+                          <span className={product.salePrice - product.purchasePrice >= 0 ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
+                            {formatCurrency(product.salePrice - product.purchasePrice)}
+                          </span>
+                        ) : (
+                          <span className="text-gray-300">&mdash;</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         {isLow ? (
@@ -358,13 +369,27 @@ function ProductsTab() {
                   {selectedProduct.minStock}
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Alış Fiyatı:</span>{" "}
+                  <span className="text-muted-foreground">Alış Fiyatı (TL):</span>{" "}
                   {formatCurrency(selectedProduct.purchasePrice)}
                 </div>
+                {selectedProduct.purchasePriceUSD != null && selectedProduct.purchasePriceUSD > 0 && (
+                  <div>
+                    <span className="text-muted-foreground">Alış Fiyatı (USD):</span>{" "}
+                    ${selectedProduct.purchasePriceUSD.toFixed(2)}
+                  </div>
+                )}
                 <div>
                   <span className="text-muted-foreground">Satış Fiyatı:</span>{" "}
                   {formatCurrency(selectedProduct.salePrice)}
                 </div>
+                {selectedProduct.salePrice > 0 && selectedProduct.purchasePrice > 0 && (
+                  <div>
+                    <span className="text-muted-foreground">Kâr:</span>{" "}
+                    <span className={selectedProduct.salePrice - selectedProduct.purchasePrice >= 0 ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
+                      {formatCurrency(selectedProduct.salePrice - selectedProduct.purchasePrice)}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Movement history */}
@@ -427,6 +452,7 @@ function NewProductDialog({
     currentStock: 0,
     minStock: 0,
     purchasePrice: 0,
+    purchasePriceUSD: "",
     salePrice: 0,
   });
   const [saving, setSaving] = useState(false);
@@ -444,6 +470,7 @@ function NewProductDialog({
         body: JSON.stringify({
           ...form,
           purchasePrice: toKurus(form.purchasePrice),
+          purchasePriceUSD: form.purchasePriceUSD ? parseFloat(form.purchasePriceUSD) : null,
           salePrice: toKurus(form.salePrice),
         }),
       });
@@ -462,6 +489,7 @@ function NewProductDialog({
         currentStock: 0,
         minStock: 0,
         purchasePrice: 0,
+        purchasePriceUSD: "",
         salePrice: 0,
       });
       onSuccess();
@@ -567,16 +595,28 @@ function NewProductDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="salePrice">Satış Fiyatı (TL)</Label>
+              <Label htmlFor="purchasePriceUSD">Alış Fiyatı (USD)</Label>
               <Input
-                id="salePrice"
+                id="purchasePriceUSD"
                 type="number"
                 min={0}
                 step="0.01"
-                value={form.salePrice}
-                onChange={(e) => setForm({ ...form, salePrice: Number(e.target.value) })}
+                placeholder="Opsiyonel"
+                value={form.purchasePriceUSD}
+                onChange={(e) => setForm({ ...form, purchasePriceUSD: e.target.value })}
               />
             </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="salePrice">Satış Fiyatı (TL)</Label>
+            <Input
+              id="salePrice"
+              type="number"
+              min={0}
+              step="0.01"
+              value={form.salePrice}
+              onChange={(e) => setForm({ ...form, salePrice: Number(e.target.value) })}
+            />
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}
           <DialogFooter>

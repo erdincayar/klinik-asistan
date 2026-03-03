@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Calendar, DollarSign, Users, Bot, Shield } from "lucide-react";
 
 const features = [
-  { icon: Users, text: "Müşteri ve hasta yönetimi" },
+  { icon: Users, text: "Müşteri yönetimi" },
   { icon: Calendar, text: "Akıllı randevu sistemi" },
   { icon: DollarSign, text: "Gelir-gider takibi" },
   { icon: Bot, text: "AI destekli asistan" },

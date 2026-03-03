@@ -132,15 +132,15 @@ Emoji kullanabilirsin ama asiri kullanma. Mesaj 2-3 cumle olmali.`,
           role: "user",
           content: `Asagidaki bilgilere gore kisisellestirilmis bir hatirlatma mesaji yaz:
 
-Hasta Adi: ${patientName}
+Musteri Adi: ${patientName}
 Islem Turu: ${categoryLabel}
 Son Islem: ${monthsSince} ay once
 Beklenen Aralik: ${intervalDays} gun
-Hasta Tercihleri: ${prefLabels.length > 0 ? prefLabels.join(", ") : "Bilinmiyor"}
+Musteri Tercihleri: ${prefLabels.length > 0 ? prefLabels.join(", ") : "Bilinmiyor"}
 Sablon: ${messageTemplate}
 
 Kuralar:
-- Hasta adini kullan
+- Musteri adini kullan
 - Islem turune gore ozel mesaj yaz
 ${prefLabels.includes("Indirim sever") ? "- Indirim firsati oldugundan bahset" : ""}
 ${prefLabels.includes("Hediye sever") ? "- Kucuk bir surpriz hediye olacagindan bahset" : ""}
@@ -161,6 +161,7 @@ ${prefLabels.includes("Fiyat hassas") ? "- Uygun fiyat seceneklerinden bahset" :
     console.error("[ReminderEngine] AI message generation failed:", error);
     // Fallback to template-based message
     return messageTemplate
+      .replace("{musteri}", patientName)
       .replace("{hasta}", patientName)
       .replace("{islem}", categoryLabel)
       .replace("{gun}", String(intervalDays));

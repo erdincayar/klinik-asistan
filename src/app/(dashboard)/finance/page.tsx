@@ -12,6 +12,8 @@ import {
   ArrowRight,
   RefreshCw,
   CalendarDays,
+  Upload,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -431,7 +433,22 @@ export default function FinancePage() {
                   ))}
                 </select>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  href="/invoice-upload"
+                  className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 transition-all hover:bg-gray-50"
+                >
+                  <Upload className="h-4 w-4" />
+                  İçe Aktar
+                </Link>
+                <a
+                  href={`/api/finance/export?month=${month}&year=${year}`}
+                  download
+                  className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 transition-all hover:bg-gray-50"
+                >
+                  <Download className="h-4 w-4" />
+                  Dışa Aktar
+                </a>
                 <Link
                   href="/finance/new-income"
                   className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/20"
