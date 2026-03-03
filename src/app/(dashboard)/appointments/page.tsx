@@ -84,7 +84,10 @@ function generateAllTimeSlots(): string[] {
   return slots;
 }
 const ALL_TIME_SLOTS = generateAllTimeSlots();
-const SCROLL_TO_TIME = "09:00";
+
+function isOutsideWorkHours(time: string, workStart: string, workEnd: string): boolean {
+  return time < workStart || time >= workEnd;
+}
 
 function getMonday(date: Date): Date {
   const d = new Date(date);
@@ -114,6 +117,8 @@ export default function AppointmentsPage() {
   const [updating, setUpdating] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<string>("all");
+  const [workStartTime, setWorkStartTime] = useState("09:00");
+  const [workEndTime, setWorkEndTime] = useState("17:30");
 
   // New appointment dialog state
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -193,6 +198,13 @@ export default function AppointmentsPage() {
       .then((res) => (res.ok ? res.json() : { patients: [] }))
       .then((data) => {
         setPatients(data.patients || data || []);
+      })
+      .catch(() => {});
+    fetch("/api/settings")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.workStartTime) setWorkStartTime(data.workStartTime);
+        if (data?.workEndTime) setWorkEndTime(data.workEndTime);
       })
       .catch(() => {});
   }, []);
@@ -338,12 +350,38 @@ export default function AppointmentsPage() {
     }
   }
 
-  // Auto-scroll to 09:00 after loading
+  function saveWorkHours(start: string, end: string) {
+    fetch("/api/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ workStartTime: start, workEndTime: end }),
+    }).catch(() => {});
+  }
+
+  function handleWorkStartChange(val: string) {
+    setWorkStartTime(val);
+    saveWorkHours(val, workEndTime);
+    // Scroll to new start time
+    setTimeout(() => {
+      const container = viewMode === "daily" ? dailyScrollRef.current : weeklyScrollRef.current;
+      if (container) {
+        const target = container.querySelector(`[data-time="${val}"]`);
+        if (target) target.scrollIntoView({ block: "start" });
+      }
+    }, 50);
+  }
+
+  function handleWorkEndChange(val: string) {
+    setWorkEndTime(val);
+    saveWorkHours(workStartTime, val);
+  }
+
+  // Auto-scroll to work start time after loading
   useEffect(() => {
     if (loading) return;
     const scrollToDefault = (container: HTMLDivElement | null) => {
       if (!container) return;
-      const target = container.querySelector(`[data-time="${SCROLL_TO_TIME}"]`);
+      const target = container.querySelector(`[data-time="${workStartTime}"]`);
       if (target) {
         target.scrollIntoView({ block: "start" });
       }
@@ -353,7 +391,7 @@ export default function AppointmentsPage() {
     } else {
       scrollToDefault(weeklyScrollRef.current);
     }
-  }, [loading, viewMode]);
+  }, [loading, viewMode, workStartTime]);
 
   const isToday = formatDateISO(selectedDate) === formatDateISO(new Date());
   const nowTime = new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit", hour12: false });
@@ -374,7 +412,30 @@ export default function AppointmentsPage() {
           </button>
           <h2 className="text-base font-semibold text-gray-900">{formatDateTR(selectedDate)}</h2>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Work hours */}
+          <div className="flex items-center gap-1 rounded-xl border border-gray-200 bg-white px-2.5 py-1.5">
+            <span className="text-xs font-medium text-gray-500">Mesai:</span>
+            <select
+              value={workStartTime}
+              onChange={(e) => handleWorkStartChange(e.target.value)}
+              className="border-0 bg-transparent py-0 pl-1 pr-0 text-sm font-medium text-gray-700 focus:outline-none focus:ring-0"
+            >
+              {ALL_TIME_SLOTS.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+            <span className="text-xs text-gray-400">-</span>
+            <select
+              value={workEndTime}
+              onChange={(e) => handleWorkEndChange(e.target.value)}
+              className="border-0 bg-transparent py-0 pl-1 pr-0 text-sm font-medium text-gray-700 focus:outline-none focus:ring-0"
+            >
+              {ALL_TIME_SLOTS.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
           <input
             type="date"
             value={formatDateISO(selectedDate)}
@@ -471,17 +532,23 @@ export default function AppointmentsPage() {
                   const slotAppointments = getAppointmentsForSlot(time);
                   const isCurrentSlot = isToday && time === nowTime.slice(0, 5);
 
+                  const isOffHours = isOutsideWorkHours(time, workStartTime, workEndTime);
+
                   return (
                     <div
                       key={time}
                       data-time={time}
                       className={cn(
                         "flex min-h-[56px] items-stretch",
-                        isCurrentSlot && "bg-blue-50/50"
+                        isCurrentSlot && "bg-blue-50/50",
+                        isOffHours && !isCurrentSlot && "bg-gray-50/70"
                       )}
                     >
                       {/* Time label */}
-                      <div className="flex w-20 shrink-0 items-center justify-center border-r border-gray-100 text-sm font-medium text-gray-500">
+                      <div className={cn(
+                        "flex w-20 shrink-0 items-center justify-center border-r border-gray-100 text-sm font-medium",
+                        isOffHours ? "text-gray-300" : "text-gray-500"
+                      )}>
                         {time}
                       </div>
 
@@ -589,9 +656,11 @@ export default function AppointmentsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {ALL_TIME_SLOTS.map((time) => (
-                      <tr key={time} data-time={time} className="border-b border-gray-50">
-                        <td className="border-r border-gray-50 px-2 py-1 text-xs text-gray-400">{time}</td>
+                    {ALL_TIME_SLOTS.map((time) => {
+                      const isOffHours = isOutsideWorkHours(time, workStartTime, workEndTime);
+                      return (
+                      <tr key={time} data-time={time} className={cn("border-b border-gray-50", isOffHours && "bg-gray-50/70")}>
+                        <td className={cn("border-r border-gray-50 px-2 py-1 text-xs", isOffHours ? "text-gray-300" : "text-gray-400")}>{time}</td>
                         {Array.from({ length: 7 }, (_, i) => {
                           const monday = getMonday(selectedDate);
                           const d = new Date(monday);
@@ -639,7 +708,8 @@ export default function AppointmentsPage() {
                           );
                         })}
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

@@ -14,7 +14,7 @@ export async function GET() {
 
     const clinic = await prisma.clinic.findUnique({
       where: { id: clinicId },
-      select: { id: true, name: true, phone: true, address: true, taxRate: true },
+      select: { id: true, name: true, phone: true, address: true, taxRate: true, workStartTime: true, workEndTime: true },
     });
 
     if (!clinic) {
@@ -39,7 +39,7 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const { name, phone, address, taxRate } = body;
+    const { name, phone, address, taxRate, workStartTime, workEndTime } = body;
 
     // Validate taxRate if provided
     if (taxRate !== undefined) {
@@ -58,8 +58,10 @@ export async function PUT(request: Request) {
         ...(phone !== undefined && { phone }),
         ...(address !== undefined && { address }),
         ...(taxRate !== undefined && { taxRate }),
+        ...(workStartTime !== undefined && { workStartTime }),
+        ...(workEndTime !== undefined && { workEndTime }),
       },
-      select: { name: true, phone: true, address: true, taxRate: true },
+      select: { name: true, phone: true, address: true, taxRate: true, workStartTime: true, workEndTime: true },
     });
 
     return Response.json(clinic);

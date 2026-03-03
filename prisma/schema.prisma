@@ -68,6 +68,8 @@ model Clinic {
   plan                  String?                // BASIC, PRO
   selectedModules       String?                // JSON array string
   messagingPreference   String?                // WHATSAPP, TELEGRAM, BOTH
+  workStartTime         String                 @default("09:00")
+  workEndTime           String                 @default("17:30")
   users                 User[]
   patients              Patient[]
   treatments            Treatment[]
