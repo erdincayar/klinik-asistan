@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Search, AlertTriangle, CheckCircle, Package } from "lucide-react";
+import { Plus, Search, AlertTriangle, CheckCircle, Package, Upload, Download, Loader2, FileSpreadsheet, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -183,6 +183,7 @@ function ProductsTab() {
   const [showNewProduct, setShowNewProduct] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [showImport, setShowImport] = useState(false);
 
   const fetchProducts = async () => {
     try {
@@ -248,10 +249,22 @@ function ProductsTab() {
             ))}
           </select>
         </div>
-        <Button onClick={() => setShowNewProduct(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Yeni Ürün
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowImport(true)}>
+            <Upload className="mr-2 h-4 w-4" />
+            İçe Aktar
+          </Button>
+          <a href="/api/inventory/export" download>
+            <Button variant="outline">
+              <Download className="mr-2 h-4 w-4" />
+              Dışa Aktar
+            </Button>
+          </a>
+          <Button onClick={() => setShowNewProduct(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Yeni Ürün
+          </Button>
+        </div>
       </div>
 
       {/* Products table */}
@@ -337,6 +350,13 @@ function ProductsTab() {
       <NewProductDialog
         open={showNewProduct}
         onOpenChange={setShowNewProduct}
+        onSuccess={fetchProducts}
+      />
+
+      {/* Import dialog */}
+      <ImportDialog
+        open={showImport}
+        onOpenChange={setShowImport}
         onSuccess={fetchProducts}
       />
 
@@ -628,6 +648,325 @@ function NewProductDialog({
             </Button>
           </DialogFooter>
         </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// --- Import Dialog ---
+
+interface ImportPreview {
+  columns: string[];
+  preview: Record<string, any>[];
+  totalRows: number;
+}
+
+interface ImportResult {
+  added: number;
+  updated: number;
+  errors: number;
+  total: number;
+}
+
+const MAPPING_FIELDS = [
+  { key: "name", label: "Ürün Adı", required: true },
+  { key: "category", label: "Kategori", required: false },
+  { key: "quantity", label: "Miktar", required: false },
+  { key: "unit", label: "Birim", required: false },
+  { key: "purchasePrice", label: "Alış Fiyatı TL", required: false },
+  { key: "purchasePriceUSD", label: "Alış Fiyatı USD", required: false },
+  { key: "salePrice", label: "Satış Fiyatı", required: false },
+  { key: "minStock", label: "Minimum Stok", required: false },
+];
+
+function ImportDialog({
+  open,
+  onOpenChange,
+  onSuccess,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
+}) {
+  const [step, setStep] = useState<"upload" | "mapping" | "importing" | "result">("upload");
+  const [preview, setPreview] = useState<ImportPreview | null>(null);
+  const [mapping, setMapping] = useState<Record<string, string>>({});
+  const [result, setResult] = useState<ImportResult | null>(null);
+  const [error, setError] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+
+  function reset() {
+    setStep("upload");
+    setPreview(null);
+    setMapping({});
+    setResult(null);
+    setError("");
+    setUploading(false);
+    setImportFile(null);
+  }
+
+  function handleClose(isOpen: boolean) {
+    if (!isOpen) reset();
+    onOpenChange(isOpen);
+  }
+
+  async function handleFileSelect(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+
+    const validExts = [".xlsx", ".xls", ".csv"];
+    if (!validExts.some((ext) => file.name.toLowerCase().endsWith(ext))) {
+      setError("Desteklenmeyen format. Excel (.xlsx) veya CSV (.csv) yükleyin.");
+      return;
+    }
+
+    setUploading(true);
+    setError("");
+    setImportFile(file);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/inventory/import", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Dosya okunamadı");
+        return;
+      }
+
+      setPreview(data);
+
+      // Auto-map columns by guessing
+      const autoMapping: Record<string, string> = {};
+      const cols = data.columns as string[];
+      for (const field of MAPPING_FIELDS) {
+        const match = cols.find((c) => {
+          const cl = c.toLowerCase();
+          if (field.key === "name") return cl.includes("ürün") || cl.includes("urun") || cl.includes("ad") || cl === "name" || cl === "product";
+          if (field.key === "category") return cl.includes("kategori") || cl.includes("category");
+          if (field.key === "quantity") return cl.includes("miktar") || cl.includes("stok") || cl.includes("quantity") || cl.includes("stock");
+          if (field.key === "unit") return cl.includes("birim") || cl.includes("unit");
+          if (field.key === "purchasePrice") return (cl.includes("alış") || cl.includes("alis") || cl.includes("purchase")) && cl.includes("tl");
+          if (field.key === "purchasePriceUSD") return (cl.includes("alış") || cl.includes("alis") || cl.includes("purchase")) && cl.includes("usd");
+          if (field.key === "salePrice") return cl.includes("satış") || cl.includes("satis") || cl.includes("sale");
+          if (field.key === "minStock") return cl.includes("min") || cl.includes("minimum");
+          return false;
+        });
+        if (match) autoMapping[field.key] = match;
+      }
+      setMapping(autoMapping);
+      setStep("mapping");
+    } catch {
+      setError("Dosya yüklenirken hata oluştu");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleImport() {
+    if (!importFile || !mapping.name) return;
+
+    setStep("importing");
+    setError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", importFile);
+      formData.append("mapping", JSON.stringify(mapping));
+
+      const res = await fetch("/api/inventory/import", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "İçe aktarma hatası");
+        setStep("mapping");
+        return;
+      }
+
+      setResult(data);
+      setStep("result");
+      onSuccess();
+    } catch {
+      setError("İçe aktarma sırasında hata oluştu");
+      setStep("mapping");
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <FileSpreadsheet className="h-5 w-5 text-blue-600" />
+            Stok Verisi İçe Aktar
+          </DialogTitle>
+          <DialogDescription>
+            {step === "upload" && "Excel (.xlsx) veya CSV (.csv) dosyası yükleyin"}
+            {step === "mapping" && "Sütunları eşleştirin ve verileri kontrol edin"}
+            {step === "importing" && "Veriler içe aktarılıyor..."}
+            {step === "result" && "İçe aktarma tamamlandı"}
+          </DialogDescription>
+        </DialogHeader>
+
+        {/* Step 1: File upload */}
+        {step === "upload" && (
+          <div className="space-y-4">
+            <div className="rounded-xl border-2 border-dashed border-gray-200 p-8 text-center">
+              {uploading ? (
+                <div className="flex flex-col items-center gap-3">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                  <p className="text-sm text-gray-600">Dosya okunuyor...</p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-3">
+                  <Upload className="h-8 w-8 text-gray-400" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Dosya seçin veya sürükleyin</p>
+                    <p className="text-xs text-gray-400">Excel (.xlsx) veya CSV (.csv)</p>
+                  </div>
+                  <label className="cursor-pointer rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                    Dosya Seç
+                    <input
+                      type="file"
+                      accept=".xlsx,.xls,.csv"
+                      onChange={(e) => handleFileSelect(e.target.files)}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              )}
+            </div>
+            {error && <p className="text-sm text-red-500">{error}</p>}
+          </div>
+        )}
+
+        {/* Step 2: Column mapping + preview */}
+        {step === "mapping" && preview && (
+          <div className="space-y-4">
+            <div className="rounded-lg bg-blue-50 p-3">
+              <p className="text-sm text-blue-700">
+                <strong>{preview.totalRows}</strong> satır bulundu. Sütunları eşleştirin:
+              </p>
+            </div>
+
+            {/* Mapping selects */}
+            <div className="grid grid-cols-2 gap-3">
+              {MAPPING_FIELDS.map((field) => (
+                <div key={field.key} className="space-y-1">
+                  <Label className="text-xs">
+                    {field.label}
+                    {field.required && <span className="text-red-500"> *</span>}
+                  </Label>
+                  <select
+                    value={mapping[field.key] || ""}
+                    onChange={(e) =>
+                      setMapping((prev) => ({
+                        ...prev,
+                        [field.key]: e.target.value,
+                      }))
+                    }
+                    className="flex h-9 w-full rounded-md border border-input bg-background px-2 py-1 text-sm"
+                  >
+                    <option value="">— Seçin —</option>
+                    {preview.columns.map((col) => (
+                      <option key={col} value={col}>
+                        {col}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+            </div>
+
+            {/* Preview table */}
+            <div>
+              <p className="mb-2 text-xs font-semibold text-gray-500 uppercase">Önizleme (ilk 5 satır)</p>
+              <div className="overflow-x-auto rounded-lg border">
+                <table className="w-full text-xs">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      {preview.columns.map((col) => (
+                        <th key={col} className="px-3 py-2 text-left font-medium text-gray-600 whitespace-nowrap">
+                          {col}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {preview.preview.map((row, i) => (
+                      <tr key={i}>
+                        {preview.columns.map((col) => (
+                          <td key={col} className="px-3 py-1.5 text-gray-700 whitespace-nowrap max-w-[200px] truncate">
+                            {String(row[col] ?? "")}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {error && <p className="text-sm text-red-500">{error}</p>}
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => { reset(); }}>
+                Geri
+              </Button>
+              <Button onClick={handleImport} disabled={!mapping.name}>
+                <ArrowRight className="mr-2 h-4 w-4" />
+                İçe Aktar ({preview.totalRows} satır)
+              </Button>
+            </DialogFooter>
+          </div>
+        )}
+
+        {/* Step 3: Importing */}
+        {step === "importing" && (
+          <div className="flex flex-col items-center gap-4 py-8">
+            <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
+            <p className="text-sm font-medium text-gray-600">Veriler içe aktarılıyor...</p>
+            <p className="text-xs text-gray-400">Bu işlem birkaç saniye sürebilir</p>
+          </div>
+        )}
+
+        {/* Step 4: Result */}
+        {step === "result" && result && (
+          <div className="space-y-4">
+            <div className="rounded-xl bg-green-50 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                <p className="font-semibold text-green-800">İçe aktarma tamamlandı</p>
+              </div>
+              <div className="grid grid-cols-3 gap-3 text-sm">
+                <div className="rounded-lg bg-white p-3 text-center">
+                  <p className="text-2xl font-bold text-green-600">{result.added}</p>
+                  <p className="text-xs text-gray-500">Yeni eklendi</p>
+                </div>
+                <div className="rounded-lg bg-white p-3 text-center">
+                  <p className="text-2xl font-bold text-blue-600">{result.updated}</p>
+                  <p className="text-xs text-gray-500">Güncellendi</p>
+                </div>
+                <div className="rounded-lg bg-white p-3 text-center">
+                  <p className={`text-2xl font-bold ${result.errors > 0 ? "text-red-600" : "text-gray-400"}`}>{result.errors}</p>
+                  <p className="text-xs text-gray-500">Hatalı</p>
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={() => handleClose(false)}>Kapat</Button>
+            </DialogFooter>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
