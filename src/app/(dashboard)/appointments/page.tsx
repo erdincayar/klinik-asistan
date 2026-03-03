@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft,
   ChevronRight,
@@ -22,6 +22,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { APPOINTMENT_STATUSES, TREATMENT_CATEGORIES, DAY_NAMES } from "@/lib/types";
+
+interface Patient {
+  id: string;
+  name: string;
+}
 
 interface Employee {
   id: string;
@@ -74,6 +79,18 @@ for (let h = 9; h < 18; h++) {
   TIME_SLOTS.push(`${String(h).padStart(2, "0")}:30`);
 }
 
+// All time slots for new appointment form (00:00 - 23:30)
+function generateAllTimeSlots(): string[] {
+  const slots: string[] = [];
+  for (let h = 0; h < 24; h++) {
+    for (let m = 0; m < 60; m += 30) {
+      slots.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
+    }
+  }
+  return slots;
+}
+const ALL_TIME_SLOTS = generateAllTimeSlots();
+
 function getMonday(date: Date): Date {
   const d = new Date(date);
   const day = d.getDay();
@@ -102,6 +119,25 @@ export default function AppointmentsPage() {
   const [updating, setUpdating] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<string>("all");
+
+  // New appointment dialog state
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [newAppt, setNewAppt] = useState({
+    patientId: "",
+    employeeId: "",
+    date: "",
+    startTime: "",
+    treatmentType: "",
+    notes: "",
+  });
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState("");
+  // Treatment autocomplete
+  const [treatmentSuggestions, setTreatmentSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const treatmentInputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
 
   const fetchDayAppointments = useCallback(async (date: Date, employeeId?: string) => {
     setLoading(true);
@@ -156,6 +192,46 @@ export default function AppointmentsPage() {
         setEmployees(data.employees || data || []);
       })
       .catch(() => {});
+    fetch("/api/patients")
+      .then((res) => (res.ok ? res.json() : { patients: [] }))
+      .then((data) => {
+        setPatients(data.patients || data || []);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Treatment type autocomplete
+  useEffect(() => {
+    if (newAppt.treatmentType.length < 2) {
+      setTreatmentSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/appointments/types?q=${encodeURIComponent(newAppt.treatmentType)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setTreatmentSuggestions(data.types || []);
+          setShowSuggestions(true);
+        }
+      } catch { /* silently handle */ }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [newAppt.treatmentType]);
+
+  // Close suggestions on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node) &&
+        treatmentInputRef.current && !treatmentInputRef.current.contains(e.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   useEffect(() => {
@@ -206,6 +282,65 @@ export default function AppointmentsPage() {
     }
   }
 
+  function openCreateDialog() {
+    setNewAppt({
+      patientId: "",
+      employeeId: "",
+      date: formatDateISO(selectedDate),
+      startTime: "",
+      treatmentType: "",
+      notes: "",
+    });
+    setCreateError("");
+    setCreateDialogOpen(true);
+  }
+
+  function getEndTime(start: string): string {
+    const [h, m] = start.split(":").map(Number);
+    const totalMinutes = h * 60 + m + 30;
+    const endH = Math.floor(totalMinutes / 60) % 24;
+    const endM = totalMinutes % 60;
+    return `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`;
+  }
+
+  async function handleCreateAppointment() {
+    setCreateError("");
+    if (!newAppt.patientId || !newAppt.date || !newAppt.startTime || !newAppt.treatmentType) {
+      setCreateError("Lütfen tüm zorunlu alanları doldurun.");
+      return;
+    }
+    setCreating(true);
+    try {
+      const res = await fetch("/api/appointments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          patientId: newAppt.patientId,
+          employeeId: newAppt.employeeId || undefined,
+          date: newAppt.date,
+          startTime: newAppt.startTime,
+          endTime: getEndTime(newAppt.startTime),
+          treatmentType: newAppt.treatmentType,
+          notes: newAppt.notes || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Randevu oluşturulamadı");
+      }
+      setCreateDialogOpen(false);
+      if (viewMode === "daily") {
+        await fetchDayAppointments(selectedDate, selectedEmployee);
+      } else {
+        await fetchWeekAppointments(selectedDate, selectedEmployee);
+      }
+    } catch (err) {
+      setCreateError(err instanceof Error ? err.message : "Bir hata oluştu");
+    } finally {
+      setCreating(false);
+    }
+  }
+
   const isToday = formatDateISO(selectedDate) === formatDateISO(new Date());
   const nowTime = new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit", hour12: false });
 
@@ -232,13 +367,13 @@ export default function AppointmentsPage() {
             onChange={(e) => setSelectedDate(new Date(e.target.value + "T00:00:00"))}
             className="rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm text-gray-700 transition-shadow focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           />
-          <Link
-            href="/appointments/new"
+          <button
+            onClick={openCreateDialog}
             className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/20"
           >
             <Plus className="h-4 w-4" />
             Yeni Randevu
-          </Link>
+          </button>
         </div>
       </motion.div>
 
@@ -510,17 +645,164 @@ export default function AppointmentsPage() {
         >
           <Calendar className="mb-3 h-10 w-10 text-gray-300" />
           <p className="text-sm font-medium text-gray-500">Bu tarihte randevu bulunmuyor</p>
-          <Link
-            href="/appointments/new"
+          <button
+            onClick={openCreateDialog}
             className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700"
           >
             Randevu oluştur
             <Plus className="h-3 w-3" />
-          </Link>
+          </button>
         </motion.div>
       )}
 
-      {/* Dialog */}
+      {/* Create Appointment Dialog */}
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent className="rounded-2xl sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg">Yeni Randevu</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {createError && (
+              <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600">{createError}</div>
+            )}
+
+            {/* Müşteri */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-gray-700">Müşteri *</label>
+              <select
+                value={newAppt.patientId}
+                onChange={(e) => setNewAppt({ ...newAppt, patientId: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              >
+                <option value="">Müşteri seçin...</option>
+                {patients.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Çalışan */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-gray-700">Çalışan</label>
+              <select
+                value={newAppt.employeeId}
+                onChange={(e) => setNewAppt({ ...newAppt, employeeId: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              >
+                <option value="">Çalışan seçin (opsiyonel)</option>
+                {employees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>{emp.name}</option>
+                ))}
+              </select>
+              {newAppt.employeeId && employees.find((e) => e.id === newAppt.employeeId) && (
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <span
+                    className="inline-block h-3 w-3 rounded-full"
+                    style={{ backgroundColor: employees.find((e) => e.id === newAppt.employeeId)!.color }}
+                  />
+                  {employees.find((e) => e.id === newAppt.employeeId)!.name}
+                </div>
+              )}
+            </div>
+
+            {/* Tarih */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-gray-700">Tarih *</label>
+              <input
+                type="date"
+                value={newAppt.date}
+                onChange={(e) => setNewAppt({ ...newAppt, date: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+            </div>
+
+            {/* Saat */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-gray-700">Saat *</label>
+              <select
+                value={newAppt.startTime}
+                onChange={(e) => setNewAppt({ ...newAppt, startTime: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              >
+                <option value="">Saat seçin...</option>
+                {ALL_TIME_SLOTS.map((time) => (
+                  <option key={time} value={time}>{time}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* İşlem Türü */}
+            <div className="relative space-y-1.5">
+              <label className="text-sm font-medium text-gray-700">İşlem Türü *</label>
+              <input
+                ref={treatmentInputRef}
+                value={newAppt.treatmentType}
+                onChange={(e) => setNewAppt({ ...newAppt, treatmentType: e.target.value })}
+                onFocus={() => { if (treatmentSuggestions.length > 0) setShowSuggestions(true); }}
+                placeholder="İşlem türünü yazın..."
+                autoComplete="off"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+              <AnimatePresence>
+                {showSuggestions && treatmentSuggestions.length > 0 && (
+                  <motion.div
+                    ref={suggestionsRef}
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    className="absolute left-0 right-0 top-full z-50 mt-1 max-h-40 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg"
+                  >
+                    {treatmentSuggestions.map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => {
+                          setNewAppt({ ...newAppt, treatmentType: s });
+                          setShowSuggestions(false);
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Notlar */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-gray-700">Notlar</label>
+              <textarea
+                value={newAppt.notes}
+                onChange={(e) => setNewAppt({ ...newAppt, notes: e.target.value })}
+                placeholder="Randevu ile ilgili notlar..."
+                rows={2}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <div className="flex w-full gap-2">
+              <button
+                onClick={handleCreateAppointment}
+                disabled={creating}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+              >
+                {creating ? "Kaydediliyor..." : "Randevu Oluştur"}
+              </button>
+              <button
+                onClick={() => setCreateDialogOpen(false)}
+                className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              >
+                İptal
+              </button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Detail Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="rounded-2xl">
           {selectedAppointment && (

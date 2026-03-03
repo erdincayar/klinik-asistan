@@ -102,30 +102,6 @@ export async function POST(request: Request) {
       parsed.data;
 
     const appointmentDate = new Date(date);
-    const nextDay = new Date(date);
-    nextDay.setDate(nextDay.getDate() + 1);
-
-    // Check for time conflicts per employee (if employee assigned)
-    if (employeeId) {
-      const conflicts = await prisma.appointment.findMany({
-        where: {
-          clinicId,
-          employeeId,
-          date: { gte: appointmentDate, lt: nextDay },
-          status: { not: "CANCELLED" },
-          OR: [
-            { startTime: { lt: endTime }, endTime: { gt: startTime } },
-          ],
-        },
-      });
-
-      if (conflicts.length > 0) {
-        return Response.json(
-          { error: "Bu çalışanın bu saatte başka bir randevusu var" },
-          { status: 409 }
-        );
-      }
-    }
 
     const appointment = await prisma.appointment.create({
       data: {
