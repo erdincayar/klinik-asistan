@@ -13,6 +13,12 @@ import {
   X,
   Copy,
   Check,
+  Target,
+  Eye,
+  EyeOff,
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
 } from "lucide-react";
 import { TREATMENT_CATEGORIES } from "@/lib/types";
 import QRCode from "qrcode";
@@ -63,6 +69,17 @@ export default function SettingsPage() {
   });
   const [reminderSaving, setReminderSaving] = useState(false);
 
+  // Meta Ads
+  const [metaConnected, setMetaConnected] = useState(false);
+  const [metaAdAccountId, setMetaAdAccountId] = useState("");
+  const [metaForm, setMetaForm] = useState({ appId: "", accessToken: "", adAccountId: "" });
+  const [metaSaving, setMetaSaving] = useState(false);
+  const [metaTesting, setMetaTesting] = useState(false);
+  const [metaTestResult, setMetaTestResult] = useState<{ success: boolean; name?: string; error?: string } | null>(null);
+  const [metaError, setMetaError] = useState("");
+  const [showMetaToken, setShowMetaToken] = useState(false);
+  const [metaHowTo, setMetaHowTo] = useState(false);
+
   // Telegram
   const [telegramConnected, setTelegramConnected] = useState(false);
   const [telegramLoading, setTelegramLoading] = useState(true);
@@ -88,6 +105,10 @@ export default function SettingsPage() {
             address: data.address || "",
             vatRate: data.vatRate ?? 20,
           });
+          if (data.metaConnected) {
+            setMetaConnected(true);
+            setMetaAdAccountId(data.metaAdAccountId || "");
+          }
         }
 
         if (remindersRes.ok) {
@@ -353,6 +374,200 @@ export default function SettingsPage() {
             {saving ? "Kaydediliyor..." : "Kaydet"}
           </button>
         </form>
+      </motion.div>
+
+      {/* Meta Ads Connection */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.05 }}
+        className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
+      >
+        <div className="flex items-center gap-2 border-b border-gray-100 px-6 py-4">
+          <Target className="h-4 w-4 text-blue-600" />
+          <h2 className="text-sm font-semibold text-gray-900">Meta Reklam Bağlantısı</h2>
+        </div>
+        <div className="p-6">
+          {metaConnected ? (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between rounded-xl bg-green-50 px-5 py-4">
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <div>
+                    <p className="text-sm font-semibold text-green-800">Meta Hesabı: Bağlı</p>
+                    <p className="text-xs text-green-600">Reklam Hesabı: {metaAdAccountId}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await fetch("/api/ads/disconnect", { method: "DELETE" });
+                      if (res.ok) {
+                        setMetaConnected(false);
+                        setMetaAdAccountId("");
+                      }
+                    } catch { /* silent */ }
+                  }}
+                  className="rounded-xl border border-red-200 bg-white px-4 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50"
+                >
+                  Bağlantıyı Kaldır
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-gray-600">Meta App ID</label>
+                  <input
+                    value={metaForm.appId}
+                    onChange={(e) => setMetaForm({ ...metaForm, appId: e.target.value })}
+                    className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                    placeholder="123456789..."
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-gray-600">Ad Account ID</label>
+                  <input
+                    value={metaForm.adAccountId}
+                    onChange={(e) => setMetaForm({ ...metaForm, adAccountId: e.target.value })}
+                    className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                    placeholder="act_123456789..."
+                  />
+                  <p className="mt-1 text-[11px] text-gray-400">act_ prefix ile birlikte girin</p>
+                </div>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-gray-600">Access Token</label>
+                <div className="relative">
+                  <input
+                    type={showMetaToken ? "text" : "password"}
+                    value={metaForm.accessToken}
+                    onChange={(e) => setMetaForm({ ...metaForm, accessToken: e.target.value })}
+                    className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                    placeholder="EAA..."
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowMetaToken(!showMetaToken)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showMetaToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {metaTestResult && (
+                <div className={`rounded-xl px-4 py-3 text-sm ${metaTestResult.success ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"}`}>
+                  {metaTestResult.success ? (
+                    <span className="flex items-center gap-2"><CheckCircle className="h-4 w-4" /> Bağlantı başarılı{metaTestResult.name ? ` — ${metaTestResult.name}` : ""}</span>
+                  ) : (
+                    <span>{metaTestResult.error || "Bağlantı hatası"}</span>
+                  )}
+                </div>
+              )}
+              {metaError && <p className="text-sm text-red-500">{metaError}</p>}
+
+              <div className="flex gap-2">
+                <button
+                  onClick={async () => {
+                    if (!metaForm.appId || !metaForm.accessToken || !metaForm.adAccountId) {
+                      setMetaError("Tüm alanları doldurun");
+                      return;
+                    }
+                    setMetaSaving(true);
+                    setMetaError("");
+                    try {
+                      const res = await fetch("/api/ads/connect", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(metaForm),
+                      });
+                      if (!res.ok) {
+                        const data = await res.json();
+                        throw new Error(data.error);
+                      }
+                      setMetaConnected(true);
+                      setMetaAdAccountId(metaForm.adAccountId.startsWith("act_") ? metaForm.adAccountId : `act_${metaForm.adAccountId}`);
+                      setMetaForm({ appId: "", accessToken: "", adAccountId: "" });
+                    } catch (err) {
+                      setMetaError(err instanceof Error ? err.message : "Bağlantı hatası");
+                    } finally {
+                      setMetaSaving(false);
+                    }
+                  }}
+                  disabled={metaSaving}
+                  className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {metaSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                  Bağlantıyı Kaydet
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!metaForm.appId || !metaForm.accessToken || !metaForm.adAccountId) {
+                      setMetaError("Önce tüm alanları doldurun");
+                      return;
+                    }
+                    setMetaTesting(true);
+                    setMetaError("");
+                    setMetaTestResult(null);
+                    try {
+                      // Save first, then test
+                      await fetch("/api/ads/connect", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(metaForm),
+                      });
+                      const res = await fetch("/api/ads/test-connection", { method: "POST" });
+                      const data = await res.json();
+                      setMetaTestResult(data);
+                      if (data.success) {
+                        setMetaConnected(true);
+                        setMetaAdAccountId(metaForm.adAccountId.startsWith("act_") ? metaForm.adAccountId : `act_${metaForm.adAccountId}`);
+                      } else {
+                        // Remove connection if test fails
+                        await fetch("/api/ads/disconnect", { method: "DELETE" });
+                      }
+                    } catch {
+                      setMetaTestResult({ success: false, error: "Test hatası" });
+                    } finally {
+                      setMetaTesting(false);
+                    }
+                  }}
+                  disabled={metaTesting}
+                  className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                >
+                  {metaTesting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                  Bağlantıyı Test Et
+                </button>
+              </div>
+
+              {/* How-to accordion */}
+              <button
+                onClick={() => setMetaHowTo(!metaHowTo)}
+                className="flex w-full items-center justify-between rounded-xl bg-gray-50 px-4 py-3 text-left text-xs font-medium text-gray-600 hover:bg-gray-100"
+              >
+                <span>Nasıl yapılır? Token alma adımları</span>
+                {metaHowTo ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </button>
+              {metaHowTo && (
+                <div className="rounded-xl bg-gray-50 px-4 py-3 text-xs text-gray-600 space-y-2">
+                  <p><strong>1.</strong> developers.facebook.com adresine gidin ve bir uygulama oluşturun.</p>
+                  <p><strong>2.</strong> Uygulama Dashboard → Settings → Basic → App ID&apos;yi kopyalayın.</p>
+                  <p><strong>3.</strong> Tools → Graph API Explorer → Token oluşturun (ads_management, ads_read izinleri).</p>
+                  <p><strong>4.</strong> Business Settings → Ad Accounts → Hesap ID&apos;nizi kopyalayın (act_ ile başlar).</p>
+                  <p><strong>5.</strong> Uzun süreli token için: Settings → Advanced → System Users → token oluşturun.</p>
+                  <p className="flex items-center gap-1 text-blue-600">
+                    <ExternalLink className="h-3 w-3" />
+                    <a href="https://developers.facebook.com/docs/marketing-apis" target="_blank" rel="noopener noreferrer" className="underline">
+                      Meta Marketing API Dokümantasyonu
+                    </a>
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </motion.div>
 
       {/* Telegram Connection */}

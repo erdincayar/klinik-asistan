@@ -92,7 +92,12 @@ model Clinic {
   onboardingChats       OnboardingChat[]
   uploadedInvoices      UploadedInvoice[]
   financialReports      FinancialReport[]
+  metaAppId             String?
+  metaAccessToken       String?                // AES-256 encrypted
+  metaAdAccountId       String?
+  metaConnected         Boolean                @default(false)
   metaAdsConnection     MetaAdsConnection?
+  adCampaigns           AdCampaign[]
   adCampaignMetrics     AdCampaignMetric[]
   socialMediaAssets     SocialMediaAsset[]
   scheduledPosts        ScheduledPost[]
@@ -505,10 +510,39 @@ model MetaAdsConnection {
   id          String   @id @default(cuid())
   clinicId    String   @unique
   clinic      Clinic   @relation(fields: [clinicId], references: [id])
+  appId       String?
   accessToken String
   adAccountId String
   pageId      String?
   connectedAt DateTime @default(now())
+}
+
+model AdCampaign {
+  id              String    @id @default(cuid())
+  clinicId        String
+  clinic          Clinic    @relation(fields: [clinicId], references: [id])
+  metaCampaignId  String?
+  metaAdSetId     String?
+  metaAdId        String?
+  name            String
+  objective       String
+  status          String    @default("PAUSED")
+  dailyBudget     Float
+  startDate       DateTime
+  endDate         DateTime?
+  targetCity      String?
+  targetAgeMin    Int       @default(18)
+  targetAgeMax    Int       @default(65)
+  targetGender    String    @default("ALL")
+  interests       String?
+  platforms       String    @default("BOTH")
+  imageUrl        String?
+  headline        String?
+  description     String?
+  ctaType         String?
+  websiteUrl      String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 
 model AdCampaignMetric {

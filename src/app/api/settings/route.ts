@@ -14,7 +14,7 @@ export async function GET() {
 
     const clinic = await prisma.clinic.findUnique({
       where: { id: clinicId },
-      select: { id: true, name: true, phone: true, address: true, taxRate: true, workStartTime: true, workEndTime: true },
+      select: { id: true, name: true, phone: true, address: true, taxRate: true, workStartTime: true, workEndTime: true, metaConnected: true, metaAdAccountId: true, metaAppId: true },
     });
 
     if (!clinic) {
