@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import {
   Users,
   Calendar,
+  CalendarDays,
   DollarSign,
   Package,
   TrendingUp,
@@ -56,6 +57,15 @@ interface MonthlySummary {
   monthName: string;
   income: number;
   expense: number;
+}
+
+interface UpcomingPayment {
+  id: string;
+  name: string;
+  type: string; // "INCOME" or "EXPENSE"
+  amount: number | null;
+  dueDate: string;
+  dayOfMonth: number;
 }
 
 /* ──────────────────────── ANIMATION ──────────────────────── */
@@ -155,6 +165,7 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [chartData, setChartData] = useState<MonthlySummary[]>([]);
   const [lowStockCount, setLowStockCount] = useState(0);
+  const [upcomingPayments, setUpcomingPayments] = useState<UpcomingPayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -162,13 +173,15 @@ export default function DashboardPage() {
     async function fetchData() {
       try {
         const today = new Date();
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
-        const [dashRes, chartRes, lowStockRes] = await Promise.all([
+        const [dashRes, chartRes, lowStockRes, upcomingRes] = await Promise.all([
           fetch("/api/dashboard"),
           fetch(
             `/api/finance?type=monthly-summary&year=${today.getFullYear()}`
           ),
           fetch("/api/products/low-stock"),
+          fetch("/api/finance/recurring/upcoming"),
         ]);
 
         if (!dashRes.ok) throw new Error("Dashboard verisi alınamadı");
@@ -184,6 +197,11 @@ export default function DashboardPage() {
           setLowStockCount(
             Array.isArray(lowStockData) ? lowStockData.length : 0
           );
+        }
+
+        if (upcomingRes.ok) {
+          const upcomingData = await upcomingRes.json();
+          setUpcomingPayments(Array.isArray(upcomingData) ? upcomingData : []);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Bir hata oluştu");
@@ -217,7 +235,7 @@ export default function DashboardPage() {
   /* ── Stat cards config ── */
   const statCards = [
     {
-      title: "Toplam Hasta",
+      title: "Toplam Müşteri",
       value: data.totalPatients.toLocaleString("tr-TR"),
       change: null,
       icon: Users,
@@ -399,6 +417,70 @@ export default function DashboardPage() {
         )}
       </motion.div>
 
+      {/* ── UPCOMING PAYMENTS ── */}
+      <motion.div
+        variants={fadeUp}
+        initial="hidden"
+        animate="visible"
+        custom={5}
+        className="rounded-2xl border border-gray-100 bg-white"
+      >
+        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <CalendarDays className="h-4 w-4 text-orange-600" />
+              <h2 className="text-sm font-semibold text-gray-900">
+                Yaklaşan Ödemeler
+              </h2>
+            </div>
+            <p className="mt-0.5 text-[11px] text-gray-400">Önümüzdeki 7 gün içindeki ödemeler</p>
+          </div>
+          <Link
+            href="/finance?tab=upcoming"
+            className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700"
+          >
+            Tümünü Gör
+            <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+        <div className="p-4">
+          {upcomingPayments.length === 0 ? (
+            <div className="flex h-[80px] items-center justify-center">
+              <p className="text-sm text-gray-400">Yaklaşan ödeme yok</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {upcomingPayments.map((payment) => (
+                <div
+                  key={payment.id}
+                  className="flex items-center justify-between rounded-xl border border-gray-100 px-4 py-3 transition-colors hover:bg-gray-50"
+                >
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={cn(
+                        "inline-flex items-center rounded-lg px-2.5 py-1 text-[11px] font-semibold",
+                        payment.type === "INCOME"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      )}
+                    >
+                      {payment.type === "INCOME" ? "Gelir" : "Gider"}
+                    </span>
+                    <span className="text-sm font-medium text-gray-900">{payment.name}</span>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-gray-900">
+                      {payment.amount ? formatCurrency(payment.amount) : "Değişken"}
+                    </p>
+                    <p className="text-[11px] text-gray-400">Her ayın {payment.dayOfMonth}. günü</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </motion.div>
+
       {/* ── BOTTOM TWO-COLUMN ── */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Today's Appointments */}
@@ -406,7 +488,7 @@ export default function DashboardPage() {
           variants={fadeUp}
           initial="hidden"
           animate="visible"
-          custom={5}
+          custom={6}
           className="rounded-2xl border border-gray-100 bg-white"
         >
           <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
@@ -480,7 +562,7 @@ export default function DashboardPage() {
           variants={fadeUp}
           initial="hidden"
           animate="visible"
-          custom={6}
+          custom={7}
           className="rounded-2xl border border-gray-100 bg-white"
         >
           <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">

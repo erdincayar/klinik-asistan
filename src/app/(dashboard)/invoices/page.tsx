@@ -677,14 +677,14 @@ function CreateInvoiceTab({ onSuccess }: { onSuccess: () => void }) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="patientSelect">Mevcut Hastadan Seç</Label>
+            <Label htmlFor="patientSelect">Mevcut Müşteriden Seç</Label>
             <select
               id="patientSelect"
               value={selectedPatientId}
               onChange={(e) => handlePatientSelect(e.target.value)}
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             >
-              <option value="">Hasta seçin (opsiyonel)...</option>
+              <option value="">Müşteri seçin (opsiyonel)...</option>
               {patients.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.firstName} {p.lastName}

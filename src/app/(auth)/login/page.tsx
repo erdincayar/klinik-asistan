@@ -137,7 +137,7 @@ export default function LoginPage() {
           )}
         </button>
 
-        {/* Divider for future Google login */}
+        {/* Divider */}
         <div className="relative py-2">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-200" />

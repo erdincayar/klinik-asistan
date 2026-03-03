@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
 
     switch (action) {
       case "create": {
-        const { name, role, phone, email, commissionRate } = body;
+        const { name, role, phone, email, commissionRate, color, permissions } = body;
         if (!name) return Response.json({ error: "Name required" }, { status: 400 });
 
         const employee = await prisma.employee.create({
@@ -77,6 +77,8 @@ export async function POST(req: NextRequest) {
             phone: phone || null,
             email: email || null,
             commissionRate: parseInt(commissionRate) || 0,
+            color: color || "#3b82f6",
+            permissions: permissions || null,
             isActive: true,
             clinicId,
           },
@@ -84,14 +86,14 @@ export async function POST(req: NextRequest) {
         return Response.json({ success: true, employee });
       }
       case "update": {
-        const { id, name, role, phone, email, commissionRate, isActive } = body;
+        const { id, name, role, phone, email, commissionRate, isActive, color, permissions } = body;
         if (!id) return Response.json({ error: "ID required" }, { status: 400 });
         // Verify employee belongs to this clinic
         const existingEmp = await prisma.employee.findFirst({
           where: { id, clinicId },
         });
         if (!existingEmp) {
-          return Response.json({ error: "Çalışan bulunamadı" }, { status: 404 });
+          return Response.json({ error: "Calisan bulunamadi" }, { status: 404 });
         }
         const employee = await prisma.employee.update({
           where: { id },
@@ -102,6 +104,8 @@ export async function POST(req: NextRequest) {
             ...(email !== undefined && { email }),
             ...(commissionRate !== undefined && { commissionRate: parseInt(commissionRate) }),
             ...(isActive !== undefined && { isActive }),
+            ...(color !== undefined && { color }),
+            ...(permissions !== undefined && { permissions }),
           },
         });
         return Response.json({ success: true, employee });

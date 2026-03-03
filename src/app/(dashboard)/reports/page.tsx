@@ -774,7 +774,7 @@ function CustomerTab({ year, active }: { year: number; active: boolean }) {
         <Card className="border-purple-200 bg-purple-50/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-purple-700">
-              Hasta Başına Ortalama Gelir
+              Müşteri Başına Ortalama Gelir
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -797,7 +797,7 @@ function CustomerTab({ year, active }: { year: number; active: boolean }) {
                 %{(data.loyaltyRate ?? 0).toFixed(1)}
               </p>
             </div>
-            <p className="mt-1 text-xs text-indigo-500">Tekrar gelen hasta oranı</p>
+            <p className="mt-1 text-xs text-indigo-500">Tekrar gelen müşteri oranı</p>
           </CardContent>
         </Card>
       </div>
@@ -805,7 +805,7 @@ function CustomerTab({ year, active }: { year: number; active: boolean }) {
       {/* Monthly new patients chart */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Aylık Yeni Hasta Sayısı</CardTitle>
+          <CardTitle className="text-base">Aylık Yeni Müşteri Sayısı</CardTitle>
         </CardHeader>
         <CardContent>
           {monthlyNewPatients.length === 0 ? (
@@ -816,8 +816,8 @@ function CustomerTab({ year, active }: { year: number; active: boolean }) {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="monthName" fontSize={12} />
                 <YAxis fontSize={12} allowDecimals={false} />
-                <Tooltip formatter={(value) => [Number(value), "Yeni Hasta"]} />
-                <Bar dataKey="count" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="Yeni Hasta" />
+                <Tooltip formatter={(value) => [Number(value), "Yeni Müşteri"]} />
+                <Bar dataKey="count" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="Yeni Müşteri" />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -827,7 +827,7 @@ function CustomerTab({ year, active }: { year: number; active: boolean }) {
       {/* Top 10 patients table */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">En Değerli 10 Hasta</CardTitle>
+          <CardTitle className="text-base">En Değerli 10 Müşteri</CardTitle>
         </CardHeader>
         <CardContent>
           {topPatients.length === 0 ? (
@@ -837,7 +837,7 @@ function CustomerTab({ year, active }: { year: number; active: boolean }) {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12">#</TableHead>
-                  <TableHead>Hasta Adı</TableHead>
+                  <TableHead>Müşteri Adı</TableHead>
                   <TableHead className="text-right">Toplam Gelir</TableHead>
                   <TableHead className="text-right">Ziyaret Sayısı</TableHead>
                 </TableRow>

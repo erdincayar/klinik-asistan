@@ -19,8 +19,15 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { APPOINTMENT_STATUSES, TREATMENT_CATEGORIES, DAY_NAMES } from "@/lib/types";
+
+interface Employee {
+  id: string;
+  name: string;
+  color: string;
+}
 
 interface Appointment {
   id: string;
@@ -32,6 +39,9 @@ interface Appointment {
   treatmentType: string;
   status: string;
   notes?: string;
+  employeeId?: string;
+  employeeName?: string;
+  employeeColor?: string;
 }
 
 function formatDateISO(date: Date): string {
@@ -90,11 +100,17 @@ export default function AppointmentsPage() {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [selectedEmployee, setSelectedEmployee] = useState<string>("all");
 
-  const fetchDayAppointments = useCallback(async (date: Date) => {
+  const fetchDayAppointments = useCallback(async (date: Date, employeeId?: string) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/appointments?date=${formatDateISO(date)}`);
+      let url = `/api/appointments?date=${formatDateISO(date)}`;
+      if (employeeId && employeeId !== "all") {
+        url += `&employeeId=${employeeId}`;
+      }
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         setAppointments(data.appointments || data || []);
@@ -106,16 +122,19 @@ export default function AppointmentsPage() {
     }
   }, []);
 
-  const fetchWeekAppointments = useCallback(async (date: Date) => {
+  const fetchWeekAppointments = useCallback(async (date: Date, employeeId?: string) => {
     setLoading(true);
     const monday = getMonday(date);
     const weekData: Record<string, Appointment[]> = {};
+
+    const employeeParam = employeeId && employeeId !== "all" ? `&employeeId=${employeeId}` : "";
+
     try {
       const promises = Array.from({ length: 7 }, (_, i) => {
         const d = new Date(monday);
         d.setDate(monday.getDate() + i);
         const dateStr = formatDateISO(d);
-        return fetch(`/api/appointments?date=${dateStr}`)
+        return fetch(`/api/appointments?date=${dateStr}${employeeParam}`)
           .then((res) => (res.ok ? res.json() : { appointments: [] }))
           .then((data) => {
             weekData[dateStr] = data.appointments || data || [];
@@ -131,9 +150,21 @@ export default function AppointmentsPage() {
   }, []);
 
   useEffect(() => {
-    if (viewMode === "daily") fetchDayAppointments(selectedDate);
-    else fetchWeekAppointments(selectedDate);
-  }, [selectedDate, viewMode, fetchDayAppointments, fetchWeekAppointments]);
+    fetch("/api/employees")
+      .then((res) => (res.ok ? res.json() : { employees: [] }))
+      .then((data) => {
+        setEmployees(data.employees || data || []);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (viewMode === "daily") {
+      fetchDayAppointments(selectedDate, selectedEmployee);
+    } else {
+      fetchWeekAppointments(selectedDate, selectedEmployee);
+    }
+  }, [selectedDate, viewMode, selectedEmployee, fetchDayAppointments, fetchWeekAppointments]);
 
   function goToday() { setSelectedDate(new Date()); }
   function goPrev() {
@@ -160,8 +191,11 @@ export default function AppointmentsPage() {
         body: JSON.stringify({ status }),
       });
       if (res.ok) {
-        if (viewMode === "daily") await fetchDayAppointments(selectedDate);
-        else await fetchWeekAppointments(selectedDate);
+        if (viewMode === "daily") {
+          await fetchDayAppointments(selectedDate, selectedEmployee);
+        } else {
+          await fetchWeekAppointments(selectedDate, selectedEmployee);
+        }
         setDialogOpen(false);
         setSelectedAppointment(null);
       }
@@ -192,6 +226,18 @@ export default function AppointmentsPage() {
           <h2 className="text-base font-semibold text-gray-900">{formatDateTR(selectedDate)}</h2>
         </div>
         <div className="flex items-center gap-2">
+          <select
+            value={selectedEmployee}
+            onChange={(e) => setSelectedEmployee(e.target.value)}
+            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+          >
+            <option value="all">Tüm Çalışanlar</option>
+            {employees.map((emp) => (
+              <option key={emp.id} value={emp.id}>
+                {emp.name}
+              </option>
+            ))}
+          </select>
           <input
             type="date"
             value={formatDateISO(selectedDate)}
@@ -260,46 +306,68 @@ export default function AppointmentsPage() {
                       key={time}
                       className={cn(
                         "flex min-h-[56px] items-stretch",
-                        isCurrentSlot && "bg-blue-50/40"
+                        isCurrentSlot && "bg-blue-50/50"
                       )}
                     >
-                      {/* Time */}
-                      <div className="flex w-20 shrink-0 items-center justify-center border-r border-gray-100 text-sm font-medium text-gray-400">
+                      {/* Time label */}
+                      <div className="flex w-20 shrink-0 items-center justify-center border-r border-gray-100 text-sm font-medium text-gray-500">
                         {time}
                       </div>
 
-                      {/* Slot */}
+                      {/* Slot content */}
                       <div className="flex flex-1 items-center px-3 py-2">
                         {appointment ? (
                           <button
-                            onClick={() => { setSelectedAppointment(appointment); setDialogOpen(true); }}
+                            onClick={() => {
+                              setSelectedAppointment(appointment);
+                              setDialogOpen(true);
+                            }}
                             className={cn(
-                              "flex w-full items-center justify-between rounded-xl border border-gray-100 px-4 py-3 text-left transition-all hover:border-blue-200 hover:shadow-sm",
-                              isCancelled && "opacity-50"
+                              "flex w-full items-center justify-between rounded-lg border px-4 py-2 text-left transition-colors hover:bg-gray-50",
+                              isCancelled && "opacity-60"
                             )}
                           >
                             <div className="flex items-center gap-3">
-                              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-xs font-bold text-blue-700">
-                                {(appointment.patientName || "?").split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
-                              </div>
+                              {appointment.employeeColor && (
+                                <span
+                                  className="inline-block h-3 w-3 shrink-0 rounded-full"
+                                  style={{ backgroundColor: appointment.employeeColor }}
+                                  title={appointment.employeeName || ""}
+                                />
+                              )}
                               <div>
-                                <p className={cn("text-sm font-medium text-gray-900", isCancelled && "line-through")}>{appointment.patientName}</p>
-                                <p className="text-[11px] text-gray-400">{appointment.startTime} - {appointment.endTime}</p>
+                                <p
+                                  className={cn(
+                                    "font-medium text-gray-900",
+                                    isCancelled && "line-through"
+                                  )}
+                                >
+                                  {appointment.patientName}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  {appointment.startTime} - {appointment.endTime}
+                                </p>
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="hidden rounded-lg bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-600 sm:inline-flex">
+                              <Badge
+                                className={cn(
+                                  "pointer-events-none",
+                                  getTreatmentLabel(appointment.treatmentType) &&
+                                    "bg-gray-100 text-gray-700"
+                                )}
+                              >
                                 {getTreatmentLabel(appointment.treatmentType)}
-                              </span>
+                              </Badge>
                               {statusInfo && (
-                                <span className={cn("rounded-lg px-2.5 py-1 text-[11px] font-semibold", statusInfo.color)}>
+                                <Badge className={cn("pointer-events-none", statusInfo.color)}>
                                   {statusInfo.label}
-                                </span>
+                                </Badge>
                               )}
                             </div>
                           </button>
                         ) : (
-                          <div className="flex w-full items-center justify-center rounded-xl border border-dashed border-gray-200 py-2.5 text-xs text-gray-300">
+                          <div className="flex w-full items-center justify-center rounded-lg border border-dashed border-gray-200 py-2 text-sm text-gray-400">
                             Boş
                           </div>
                         )}
@@ -368,10 +436,22 @@ export default function AppointmentsPage() {
                                     appt.status === "CANCELLED" && "opacity-50"
                                   )}
                                 >
-                                  <div className="truncate font-medium text-gray-900">
-                                    {(appt.patientName || "?").split(" ").map((n) => n[0]).join("")}
+                                  <div className="flex items-center gap-1 font-medium truncate">
+                                    {appt.employeeColor && (
+                                      <span
+                                        className="inline-block h-2 w-2 shrink-0 rounded-full"
+                                        style={{ backgroundColor: appt.employeeColor }}
+                                        title={appt.employeeName || ""}
+                                      />
+                                    )}
+                                    {(appt.patientName || "?")
+                                      .split(" ")
+                                      .map((n) => n[0])
+                                      .join("")}
                                   </div>
-                                  <div className="truncate text-gray-400">{getTreatmentLabel(appt.treatmentType)}</div>
+                                  <div className="truncate text-gray-500">
+                                    {getTreatmentLabel(appt.treatmentType)}
+                                  </div>
                                   {statusInfo && (
                                     <div className={cn("mt-0.5 inline-block rounded px-1 py-0 text-[10px] font-semibold", statusInfo.color)}>
                                       {statusInfo.label}
@@ -419,28 +499,52 @@ export default function AppointmentsPage() {
               <DialogHeader>
                 <DialogTitle className="text-lg">Randevu Detayı</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4 py-2">
-                {[
-                  { label: "Hasta", value: selectedAppointment.patientName, link: `/patients/${selectedAppointment.patientId}` },
-                  { label: "Tarih", value: selectedAppointment.date },
-                  { label: "Saat", value: `${selectedAppointment.startTime} - ${selectedAppointment.endTime}` },
-                  { label: "İşlem", value: getTreatmentLabel(selectedAppointment.treatmentType) },
-                ].map((row) => (
-                  <div key={row.label} className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">{row.label}</span>
-                    {row.link ? (
-                      <Link href={row.link} className="text-sm font-medium text-blue-600 hover:underline">{row.value}</Link>
-                    ) : (
-                      <span className="text-sm font-medium text-gray-900">{row.value}</span>
-                    )}
-                  </div>
-                ))}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">Müşteri</span>
+                  <Link
+                    href={`/patients/${selectedAppointment.patientId}`}
+                    className="font-medium text-blue-600 hover:underline"
+                  >
+                    {selectedAppointment.patientName}
+                  </Link>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">Tarih</span>
+                  <span className="font-medium">{selectedAppointment.date}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">Saat</span>
+                  <span className="font-medium">
+                    {selectedAppointment.startTime} - {selectedAppointment.endTime}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">İşlem</span>
+                  <Badge className="bg-gray-100 text-gray-700">
+                    {getTreatmentLabel(selectedAppointment.treatmentType)}
+                  </Badge>
+                </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-500">Durum</span>
                   <span className={cn("rounded-lg px-2.5 py-1 text-[11px] font-semibold", getStatusInfo(selectedAppointment.status).color)}>
                     {getStatusInfo(selectedAppointment.status).label}
                   </span>
                 </div>
+                {selectedAppointment.employeeName && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500">Çalışan</span>
+                    <div className="flex items-center gap-2">
+                      {selectedAppointment.employeeColor && (
+                        <span
+                          className="inline-block h-3 w-3 rounded-full"
+                          style={{ backgroundColor: selectedAppointment.employeeColor }}
+                        />
+                      )}
+                      <span className="font-medium">{selectedAppointment.employeeName}</span>
+                    </div>
+                  </div>
+                )}
                 {selectedAppointment.notes && (
                   <div>
                     <span className="text-sm text-gray-500">Notlar</span>

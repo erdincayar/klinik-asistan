@@ -20,7 +20,7 @@ export const patientSchema = z.object({
 });
 
 export const treatmentSchema = z.object({
-  patientId: z.string().min(1, "Hasta seçin"),
+  patientId: z.string().min(1, "Müşteri seçin"),
   name: z.string().min(2, "İşlem adı girin"),
   description: z.string().optional(),
   amount: z.number().min(1, "Tutar girin"),
@@ -50,7 +50,7 @@ export type ExpenseInput = z.infer<typeof expenseSchema>;
 export type ReminderInput = z.infer<typeof reminderSchema>;
 
 export const appointmentSchema = z.object({
-  patientId: z.string().min(1, "Hasta seçin"),
+  patientId: z.string().min(1, "Müşteri seçin"),
   date: z.string().min(1, "Tarih seçin"),
   startTime: z.string().min(1, "Başlangıç saati seçin"),
   endTime: z.string().min(1, "Bitiş saati seçin"),

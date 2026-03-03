@@ -436,7 +436,7 @@ export default function RemindersPage() {
           <div>
             <h1 className="text-2xl font-bold">Hatirlatmalar</h1>
             <p className="text-sm text-muted-foreground">
-              Hasta hatirlatmalarini yonetin ve gonderin
+              Müşteri hatırlatmalarını yönetin ve gönderin
             </p>
           </div>
         </div>
@@ -536,7 +536,7 @@ export default function RemindersPage() {
                     Bekleyen hatirlatma bulunmuyor
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Tum hastalar guncel gorunuyor
+                    Tüm müşteriler güncel görünüyor
                   </p>
                 </div>
               ) : (
@@ -797,7 +797,7 @@ export default function RemindersPage() {
         <TabsContent value="preferences">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Hasta Tercihleri</CardTitle>
+              <CardTitle className="text-lg">Müşteri Tercihleri</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Patient Search */}
@@ -805,7 +805,7 @@ export default function RemindersPage() {
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Hasta adi ile arayIn..."
+                    placeholder="Müşteri adı ile arayın..."
                     value={patientSearch}
                     onChange={(e) => setPatientSearch(e.target.value)}
                     onKeyDown={(e) => {
@@ -926,7 +926,7 @@ export default function RemindersPage() {
                   {/* Preferences Checkboxes */}
                   <div className="space-y-3">
                     <Label className="text-base font-medium">
-                      Hasta Tercihleri
+                      Müşteri Tercihleri
                     </Label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {PREFERENCE_TYPES.map((pref) => {
@@ -978,7 +978,7 @@ export default function RemindersPage() {
                 <div className="text-center py-8">
                   <Search className="h-12 w-12 text-gray-300 mx-auto mb-3" />
                   <p className="text-muted-foreground">
-                    Tercihlerini duzenlemek icin bir hasta arayin
+                    Tercihlerini düzenlemek için bir müşteri arayın
                   </p>
                 </div>
               )}

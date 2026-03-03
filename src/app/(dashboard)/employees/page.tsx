@@ -38,7 +38,7 @@ const ROLE_LABELS: Record<string, string> = {
   ASISTAN: "Asistan",
   SEKRETER: "Sekreter",
   TEKNISYEN: "Teknisyen",
-  DIGER: "Diger",
+  DIGER: "Diğer",
 };
 
 const ROLE_COLORS: Record<string, string> = {
@@ -49,13 +49,39 @@ const ROLE_COLORS: Record<string, string> = {
   DIGER: "bg-gray-100 text-gray-800",
 };
 
+const PERMISSION_LABELS: Record<string, string> = {
+  canViewFinance: "Finans Görüntüleme",
+  canEditPatients: "Müşteri Düzenleme",
+  canManageAppointments: "Randevu Yönetimi",
+  canViewReports: "Rapor Görüntüleme",
+  canManageInventory: "Stok Yönetimi",
+};
+
+interface PermissionsMap {
+  canViewFinance: boolean;
+  canEditPatients: boolean;
+  canManageAppointments: boolean;
+  canViewReports: boolean;
+  canManageInventory: boolean;
+}
+
+const defaultPermissions: PermissionsMap = {
+  canViewFinance: false,
+  canEditPatients: false,
+  canManageAppointments: false,
+  canViewReports: false,
+  canManageInventory: false,
+};
+
 interface Employee {
   id: string;
   name: string;
   role: string;
   phone: string | null;
   email: string | null;
+  color: string;
   commissionRate: number;
+  permissions: PermissionsMap | null;
   isActive: boolean;
   createdAt: string;
   totalRevenue: number;
@@ -72,6 +98,8 @@ interface EmployeeForm {
   phone: string;
   email: string;
   commissionRate: string;
+  color: string;
+  permissions: PermissionsMap;
 }
 
 const emptyForm: EmployeeForm = {
@@ -80,6 +108,8 @@ const emptyForm: EmployeeForm = {
   phone: "",
   email: "",
   commissionRate: "0",
+  color: "#3b82f6",
+  permissions: { ...defaultPermissions },
 };
 
 function formatTL(amount: number): string {
@@ -109,11 +139,11 @@ export default function EmployeesPage() {
     try {
       setLoading(true);
       const res = await fetch("/api/employees");
-      if (!res.ok) throw new Error("Calisanlar alinamadi");
+      if (!res.ok) throw new Error("Çalışanlar alınamadı");
       const data = await res.json();
       setEmployees(data.employees || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Bir hata olustu");
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
     } finally {
       setLoading(false);
     }
@@ -132,12 +162,12 @@ export default function EmployeesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "create", ...form }),
       });
-      if (!res.ok) throw new Error("Calisan eklenemedi");
+      if (!res.ok) throw new Error("Çalışan eklenemedi");
       setShowAddDialog(false);
       setForm(emptyForm);
       await fetchEmployees();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Bir hata olustu");
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
     } finally {
       setSaving(false);
     }
@@ -152,12 +182,12 @@ export default function EmployeesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "update", id: editingEmployee.id, ...form }),
       });
-      if (!res.ok) throw new Error("Calisan guncellenemedi");
+      if (!res.ok) throw new Error("Çalışan güncellenemedi");
       setEditingEmployee(null);
       setForm(emptyForm);
       await fetchEmployees();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Bir hata olustu");
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
     } finally {
       setSaving(false);
     }
@@ -170,29 +200,29 @@ export default function EmployeesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "update", id: emp.id, isActive: !emp.isActive }),
       });
-      if (!res.ok) throw new Error("Durum guncellenemedi");
+      if (!res.ok) throw new Error("Durum güncellenemedi");
       await fetchEmployees();
       if (selectedEmployee?.id === emp.id) {
         setSelectedEmployee({ ...emp, isActive: !emp.isActive });
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Bir hata olustu");
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
     }
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Bu calisani silmek istediginize emin misiniz?")) return;
+    if (!confirm("Bu çalışanı silmek istediğinize emin misiniz?")) return;
     try {
       const res = await fetch("/api/employees", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "delete", id }),
       });
-      if (!res.ok) throw new Error("Calisan silinemedi");
+      if (!res.ok) throw new Error("Çalışan silinemedi");
       if (selectedEmployee?.id === id) setSelectedEmployee(null);
       await fetchEmployees();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Bir hata olustu");
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
     }
   }
 
@@ -204,6 +234,10 @@ export default function EmployeesPage() {
       phone: emp.phone || "",
       email: emp.email || "",
       commissionRate: String(emp.commissionRate),
+      color: emp.color || "#3b82f6",
+      permissions: emp.permissions
+        ? { ...defaultPermissions, ...emp.permissions }
+        : { ...defaultPermissions },
     });
   }
 
@@ -212,17 +246,119 @@ export default function EmployeesPage() {
   const activeEmployees = employees.filter((e) => e.isActive).length;
   const totalMonthlyCommission = employees.reduce((sum, e) => sum + e.monthlyCommission, 0);
 
+  // Reusable form fields renderer for both Add and Edit dialogs
+  function renderFormFields(idPrefix: string) {
+    return (
+      <div className="space-y-4 py-2">
+        <div className="space-y-2">
+          <Label htmlFor={`${idPrefix}-name`}>İsim *</Label>
+          <Input
+            id={`${idPrefix}-name`}
+            placeholder="Çalışan adı"
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor={`${idPrefix}-role`}>Rol</Label>
+          <Select
+            id={`${idPrefix}-role`}
+            value={form.role}
+            onChange={(e) => setForm({ ...form, role: e.target.value })}
+          >
+            {Object.entries(ROLE_LABELS).map(([key, label]) => (
+              <option key={key} value={key}>
+                {label}
+              </option>
+            ))}
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor={`${idPrefix}-phone`}>Telefon</Label>
+          <Input
+            id={`${idPrefix}-phone`}
+            placeholder="05xx xxx xx xx"
+            value={form.phone}
+            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor={`${idPrefix}-email`}>Email</Label>
+          <Input
+            id={`${idPrefix}-email`}
+            type="email"
+            placeholder="ornek@email.com"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor={`${idPrefix}-commission`}>Komisyon Oranı (%)</Label>
+          <Input
+            id={`${idPrefix}-commission`}
+            type="number"
+            min="0"
+            max="100"
+            placeholder="0"
+            value={form.commissionRate}
+            onChange={(e) => setForm({ ...form, commissionRate: e.target.value })}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor={`${idPrefix}-color`}>Renk</Label>
+          <div className="flex items-center gap-3">
+            <input
+              id={`${idPrefix}-color`}
+              type="color"
+              value={form.color}
+              onChange={(e) => setForm({ ...form, color: e.target.value })}
+              className="h-10 w-14 cursor-pointer rounded-md border border-input bg-background p-1"
+            />
+            <span className="text-sm text-muted-foreground">{form.color}</span>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label>İzinler</Label>
+          <div className="space-y-2 rounded-md border p-3">
+            {Object.entries(PERMISSION_LABELS).map(([key, label]) => (
+              <label
+                key={key}
+                className="flex items-center gap-2 cursor-pointer text-sm"
+              >
+                <input
+                  type="checkbox"
+                  checked={form.permissions[key as keyof PermissionsMap]}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      permissions: {
+                        ...form.permissions,
+                        [key]: e.target.checked,
+                      },
+                    })
+                  }
+                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                />
+                <span>{label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <UserCog className="h-7 w-7 text-primary" />
-          <h1 className="text-2xl font-bold tracking-tight">Calisanlar</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Çalışanlar</h1>
         </div>
         <Button onClick={() => { setForm(emptyForm); setShowAddDialog(true); }}>
           <Plus className="mr-2 h-4 w-4" />
-          Yeni Calisan Ekle
+          Yeni Çalışan Ekle
         </Button>
       </div>
 
@@ -232,7 +368,7 @@ export default function EmployeesPage() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Toplam Calisan</p>
+                <p className="text-sm text-muted-foreground">Toplam Çalışan</p>
                 <p className="text-2xl font-bold">{totalEmployees}</p>
               </div>
               <UserCog className="h-8 w-8 text-muted-foreground/50" />
@@ -243,7 +379,7 @@ export default function EmployeesPage() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Aktif Calisan</p>
+                <p className="text-sm text-muted-foreground">Aktif Çalışan</p>
                 <p className="text-2xl font-bold">{activeEmployees}</p>
               </div>
               <ToggleRight className="h-8 w-8 text-green-500/50" />
@@ -254,7 +390,7 @@ export default function EmployeesPage() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Aylik Toplam Komisyon</p>
+                <p className="text-sm text-muted-foreground">Aylık Toplam Komisyon</p>
                 <p className="text-2xl font-bold">{formatTL(totalMonthlyCommission)}</p>
               </div>
               <DollarSign className="h-8 w-8 text-muted-foreground/50" />
@@ -279,13 +415,13 @@ export default function EmployeesPage() {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Calisan Listesi</CardTitle>
+              <CardTitle>Çalışan Listesi</CardTitle>
             </CardHeader>
             <CardContent>
               {loading ? (
-                <p className="text-gray-500">Yukleniyor...</p>
+                <p className="text-gray-500">Yükleniyor...</p>
               ) : employees.length === 0 ? (
-                <p className="text-gray-500">Henuz calisan kaydi yok</p>
+                <p className="text-gray-500">Henüz çalışan kaydı yok</p>
               ) : (
                 <div className="space-y-3">
                   {employees.map((emp) => (
@@ -299,6 +435,11 @@ export default function EmployeesPage() {
                       {/* Name & Role */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
+                          <span
+                            className="inline-block h-3 w-3 rounded-full shrink-0"
+                            style={{ backgroundColor: emp.color || "#3b82f6" }}
+                            title={`Renk: ${emp.color || "#3b82f6"}`}
+                          />
                           <p className="font-medium truncate">{emp.name}</p>
                           <Badge className={ROLE_COLORS[emp.role] || ROLE_COLORS.DIGER}>
                             {ROLE_LABELS[emp.role] || emp.role}
@@ -324,11 +465,11 @@ export default function EmployeesPage() {
                           <p className="font-medium">%{emp.commissionRate}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-muted-foreground">Aylik Ciro</p>
+                          <p className="text-muted-foreground">Aylık Ciro</p>
                           <p className="font-medium">{formatTL(emp.monthlyRevenue)}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-muted-foreground">Aylik Komisyon</p>
+                          <p className="text-muted-foreground">Aylık Komisyon</p>
                           <p className="font-medium text-green-600">{formatTL(emp.monthlyCommission)}</p>
                         </div>
                       </div>
@@ -339,7 +480,7 @@ export default function EmployeesPage() {
                           variant="ghost"
                           size="sm"
                           onClick={(e) => { e.stopPropagation(); openEdit(emp); }}
-                          title="Duzenle"
+                          title="Düzenle"
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -379,7 +520,13 @@ export default function EmployeesPage() {
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">{selectedEmployee.name}</CardTitle>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="inline-block h-4 w-4 rounded-full shrink-0"
+                      style={{ backgroundColor: selectedEmployee.color || "#3b82f6" }}
+                    />
+                    <CardTitle className="text-lg">{selectedEmployee.name}</CardTitle>
+                  </div>
                   <Badge className={ROLE_COLORS[selectedEmployee.role] || ROLE_COLORS.DIGER}>
                     {ROLE_LABELS[selectedEmployee.role] || selectedEmployee.role}
                   </Badge>
@@ -402,7 +549,7 @@ export default function EmployeesPage() {
                   )}
                   <div className="flex items-center gap-2 text-sm">
                     <Percent className="h-4 w-4 text-muted-foreground" />
-                    <span>Komisyon Orani: %{selectedEmployee.commissionRate}</span>
+                    <span>Komisyon Oranı: %{selectedEmployee.commissionRate}</span>
                   </div>
                 </div>
 
@@ -431,26 +578,26 @@ export default function EmployeesPage() {
                 <div className="space-y-3">
                   <h3 className="text-sm font-semibold flex items-center gap-2">
                     <TrendingUp className="h-4 w-4" />
-                    Performans Ozeti
+                    Performans Özeti
                   </h3>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="rounded-lg border p-3 text-center">
-                      <p className="text-xs text-muted-foreground">Aylik Ciro</p>
+                      <p className="text-xs text-muted-foreground">Aylık Ciro</p>
                       <p className="text-lg font-bold">{formatTL(selectedEmployee.monthlyRevenue)}</p>
                     </div>
                     <div className="rounded-lg border p-3 text-center">
-                      <p className="text-xs text-muted-foreground">Aylik Komisyon</p>
+                      <p className="text-xs text-muted-foreground">Aylık Komisyon</p>
                       <p className="text-lg font-bold text-green-600">
                         {formatTL(selectedEmployee.monthlyCommission)}
                       </p>
                     </div>
                     <div className="rounded-lg border p-3 text-center">
-                      <p className="text-xs text-muted-foreground">Aylik Islem</p>
+                      <p className="text-xs text-muted-foreground">Aylık İşlem</p>
                       <p className="text-lg font-bold">{selectedEmployee.monthlyTreatmentCount}</p>
                     </div>
                     <div className="rounded-lg border p-3 text-center">
-                      <p className="text-xs text-muted-foreground">Toplam Islem</p>
+                      <p className="text-xs text-muted-foreground">Toplam İşlem</p>
                       <p className="text-lg font-bold">{selectedEmployee.totalTreatmentCount}</p>
                     </div>
                   </div>
@@ -478,7 +625,7 @@ export default function EmployeesPage() {
                     onClick={() => openEdit(selectedEmployee)}
                   >
                     <Pencil className="mr-2 h-4 w-4" />
-                    Duzenle
+                    Düzenle
                   </Button>
                   <Button
                     variant="outline"
@@ -496,7 +643,7 @@ export default function EmployeesPage() {
               <CardContent className="pt-6">
                 <div className="text-center text-muted-foreground py-8">
                   <UserCog className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                  <p className="text-sm">Detaylari gormek icin bir calisan secin</p>
+                  <p className="text-sm">Detayları görmek için bir çalışan seçin</p>
                 </div>
               </CardContent>
             </Card>
@@ -508,67 +655,12 @@ export default function EmployeesPage() {
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Yeni Calisan Ekle</DialogTitle>
+            <DialogTitle>Yeni Çalışan Ekle</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="add-name">Isim *</Label>
-              <Input
-                id="add-name"
-                placeholder="Calisan adi"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="add-role">Rol</Label>
-              <Select
-                id="add-role"
-                value={form.role}
-                onChange={(e) => setForm({ ...form, role: e.target.value })}
-              >
-                {Object.entries(ROLE_LABELS).map(([key, label]) => (
-                  <option key={key} value={key}>
-                    {label}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="add-phone">Telefon</Label>
-              <Input
-                id="add-phone"
-                placeholder="05xx xxx xx xx"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="add-email">Email</Label>
-              <Input
-                id="add-email"
-                type="email"
-                placeholder="ornek@email.com"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="add-commission">Komisyon Orani (%)</Label>
-              <Input
-                id="add-commission"
-                type="number"
-                min="0"
-                max="100"
-                placeholder="0"
-                value={form.commissionRate}
-                onChange={(e) => setForm({ ...form, commissionRate: e.target.value })}
-              />
-            </div>
-          </div>
+          {renderFormFields("add")}
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddDialog(false)}>
-              Iptal
+              İptal
             </Button>
             <Button onClick={handleCreate} disabled={saving || !form.name.trim()}>
               {saving ? "Kaydediliyor..." : "Kaydet"}
@@ -581,70 +673,15 @@ export default function EmployeesPage() {
       <Dialog open={!!editingEmployee} onOpenChange={(open) => { if (!open) setEditingEmployee(null); }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Calisan Duzenle</DialogTitle>
+            <DialogTitle>Çalışan Düzenle</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="edit-name">Isim *</Label>
-              <Input
-                id="edit-name"
-                placeholder="Calisan adi"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-role">Rol</Label>
-              <Select
-                id="edit-role"
-                value={form.role}
-                onChange={(e) => setForm({ ...form, role: e.target.value })}
-              >
-                {Object.entries(ROLE_LABELS).map(([key, label]) => (
-                  <option key={key} value={key}>
-                    {label}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-phone">Telefon</Label>
-              <Input
-                id="edit-phone"
-                placeholder="05xx xxx xx xx"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-email">Email</Label>
-              <Input
-                id="edit-email"
-                type="email"
-                placeholder="ornek@email.com"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-commission">Komisyon Orani (%)</Label>
-              <Input
-                id="edit-commission"
-                type="number"
-                min="0"
-                max="100"
-                placeholder="0"
-                value={form.commissionRate}
-                onChange={(e) => setForm({ ...form, commissionRate: e.target.value })}
-              />
-            </div>
-          </div>
+          {renderFormFields("edit")}
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingEmployee(null)}>
-              Iptal
+              İptal
             </Button>
             <Button onClick={handleUpdate} disabled={saving || !form.name.trim()}>
-              {saving ? "Kaydediliyor..." : "Guncelle"}
+              {saving ? "Kaydediliyor..." : "Güncelle"}
             </Button>
           </DialogFooter>
         </DialogContent>

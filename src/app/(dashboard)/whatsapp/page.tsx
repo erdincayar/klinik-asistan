@@ -42,8 +42,8 @@ const COMMANDS = [
   { name: "gider", description: "Bugunun gider ozetini goster", icon: Wallet },
   { name: "rapor", description: "Gunluk/haftalik rapor", icon: BarChart3 },
   { name: "kasa", description: "Kasa durumunu goster", icon: DollarSign },
-  { name: "hasta", description: "Hasta bilgisi sorgula", icon: UserPlus },
-  { name: "hastalar", description: "Hasta listesini goster", icon: Users },
+  { name: "hasta", description: "Müşteri bilgisi sorgula", icon: UserPlus },
+  { name: "hastalar", description: "Müşteri listesini göster", icon: Users },
   { name: "hatirlatmalar", description: "Yaklaşan hatirlatmalar", icon: Bell },
   { name: "ozet", description: "Klinik genel ozeti", icon: FileText },
   { name: "yardim", description: "Tum komutlari listele", icon: HelpCircle },
@@ -326,7 +326,7 @@ export default function WhatsAppPage() {
                       {getTypeBadge(msg)}
                       {msg.patientIsNew && (
                         <span className="text-xs text-amber-600 flex items-center gap-1">
-                          <AlertTriangle className="h-3 w-3" /> Yeni hasta
+                          <AlertTriangle className="h-3 w-3" /> Yeni müşteri
                         </span>
                       )}
                     </div>
@@ -519,7 +519,7 @@ export default function WhatsAppPage() {
                 </CardHeader>
                 <CardContent className="px-4 pb-3 text-xs text-muted-foreground">
                   <p className="font-medium text-foreground mb-1">Format:</p>
-                  <p className="italic">&quot;Hasta adi + gun + saat + islem&quot;</p>
+                  <p className="italic">&quot;Müşteri adı + gün + saat + işlem&quot;</p>
                   <p className="mt-1.5 font-medium text-foreground">Ornek:</p>
                   <p className="italic">&quot;Ayse hanim pazartesi 15:00 botoks&quot;</p>
                 </CardContent>
@@ -534,7 +534,7 @@ export default function WhatsAppPage() {
                 </CardHeader>
                 <CardContent className="px-4 pb-3 text-xs text-muted-foreground">
                   <p className="font-medium text-foreground mb-1">Format:</p>
-                  <p className="italic">&quot;Hasta adi + islem + tutar TL&quot;</p>
+                  <p className="italic">&quot;Müşteri adı + işlem + tutar TL&quot;</p>
                   <p className="mt-1.5 font-medium text-foreground">Ornek:</p>
                   <p className="italic">&quot;Kerem bey dolgu 5000tl alindi&quot;</p>
                 </CardContent>

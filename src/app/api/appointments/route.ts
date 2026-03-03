@@ -19,6 +19,7 @@ export async function GET(request: Request) {
     const endDate = searchParams.get("endDate");
     const status = searchParams.get("status");
     const patientId = searchParams.get("patientId");
+    const employeeId = searchParams.get("employeeId");
 
     const where: any = { clinicId };
 
@@ -41,10 +42,15 @@ export async function GET(request: Request) {
       where.patientId = patientId;
     }
 
+    if (employeeId) {
+      where.employeeId = employeeId;
+    }
+
     const raw = await prisma.appointment.findMany({
       where,
       include: {
         patient: { select: { id: true, name: true, phone: true } },
+        employee: { select: { id: true, name: true, color: true } },
       },
       orderBy: [{ date: "asc" }, { startTime: "asc" }],
     });
@@ -60,6 +66,9 @@ export async function GET(request: Request) {
       treatmentType: a.treatmentType,
       status: a.status,
       notes: a.notes,
+      employeeId: a.employee?.id || null,
+      employeeName: a.employee?.name || null,
+      employeeColor: a.employee?.color || null,
     }));
 
     return Response.json({ appointments });

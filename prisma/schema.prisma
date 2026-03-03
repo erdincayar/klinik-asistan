@@ -59,81 +59,83 @@ model PasswordResetToken {
 // Sector values: SAGLIK, RESTORAN, OTEL, KUAFOR, GUZELLIK, DIGER
 // MessagingPreference values: WHATSAPP, TELEGRAM, BOTH
 model Clinic {
-  id                  String           @id @default(cuid())
-  name                String
-  phone               String?
-  address             String?
-  taxRate             Int              @default(20)
-  sector              String?
-  plan                String?          // BASIC, PRO
-  selectedModules     String?          // JSON array string
-  messagingPreference String?          // WHATSAPP, TELEGRAM, BOTH
-  users               User[]
-  patients            Patient[]
-  treatments          Treatment[]
-  expenses            Expense[]
-  reminders           Reminder[]
-  appointments        Appointment[]
-  clinicSchedules      ClinicSchedule[]
-  patientPreferences   PatientPreference[]
-  patientVisitPatterns PatientVisitPattern[]
-  reminderLogs         ReminderLog[]
-  employees            Employee[]
-  products             Product[]
-  stockMovements       StockMovement[]
-  invoices             Invoice[]
-  telegramChatId       String?
-  telegramLinks        TelegramLink[]
-  clinicModules        ClinicModule[]
-  onboardingChats      OnboardingChat[]
-  uploadedInvoices     UploadedInvoice[]
-  financialReports     FinancialReport[]
-  metaAdsConnection    MetaAdsConnection?
-  adCampaignMetrics    AdCampaignMetric[]
-  socialMediaAssets    SocialMediaAsset[]
-  scheduledPosts       ScheduledPost[]
-  createdAt            DateTime         @default(now())
-  updatedAt            DateTime         @updatedAt
+  id                    String                 @id @default(cuid())
+  name                  String
+  phone                 String?
+  address               String?
+  taxRate               Int                    @default(20)
+  sector                String?
+  plan                  String?                // BASIC, PRO
+  selectedModules       String?                // JSON array string
+  messagingPreference   String?                // WHATSAPP, TELEGRAM, BOTH
+  users                 User[]
+  patients              Patient[]
+  treatments            Treatment[]
+  expenses              Expense[]
+  reminders             Reminder[]
+  appointments          Appointment[]
+  clinicSchedules       ClinicSchedule[]
+  patientPreferences    PatientPreference[]
+  patientVisitPatterns  PatientVisitPattern[]
+  reminderLogs          ReminderLog[]
+  employees             Employee[]
+  products              Product[]
+  stockMovements        StockMovement[]
+  invoices              Invoice[]
+  recurringTransactions RecurringTransaction[]
+  subscriptions         Subscription[]
+  telegramChatId        String?
+  telegramLinks         TelegramLink[]
+  clinicModules         ClinicModule[]
+  onboardingChats       OnboardingChat[]
+  uploadedInvoices      UploadedInvoice[]
+  financialReports      FinancialReport[]
+  metaAdsConnection     MetaAdsConnection?
+  adCampaignMetrics     AdCampaignMetric[]
+  socialMediaAssets     SocialMediaAsset[]
+  scheduledPosts        ScheduledPost[]
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
 }
 
 model Patient {
-  id           String        @id @default(cuid())
+  id           String               @id @default(cuid())
   name         String
   phone        String?
   email        String?
   notes        String?
   clinicId     String
-  clinic       Clinic        @relation(fields: [clinicId], references: [id])
+  clinic       Clinic               @relation(fields: [clinicId], references: [id])
   treatments   Treatment[]
   appointments Appointment[]
-  preferences      PatientPreference[]
-  visitPattern     PatientVisitPattern?
-  reminderLogs     ReminderLog[]
-  invoices         Invoice[]
-  photos           PatientPhoto[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  preferences  PatientPreference[]
+  visitPattern PatientVisitPattern?
+  reminderLogs ReminderLog[]
+  invoices     Invoice[]
+  photos       PatientPhoto[]
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
 }
 
 // TreatmentCategory values: BOTOX, DOLGU, DIS_TEDAVI, GENEL
 // SQLite doesn't support enums, using String instead
 
 model Treatment {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   patientId   String
-  patient     Patient  @relation(fields: [patientId], references: [id])
+  patient     Patient   @relation(fields: [patientId], references: [id])
   clinicId    String
-  clinic      Clinic   @relation(fields: [clinicId], references: [id])
+  clinic      Clinic    @relation(fields: [clinicId], references: [id])
   name        String
   description String?
-  amount      Int      // kuruş cinsinden
-  date        DateTime @default(now())
-  category    String   @default("GENEL") // BOTOX, DOLGU, DIS_TEDAVI, GENEL
+  amount      Int // kuruş cinsinden
+  date        DateTime  @default(now())
+  category    String    @default("GENEL") // BOTOX, DOLGU, DIS_TEDAVI, GENEL
   employeeId  String?
   employee    Employee? @relation(fields: [employeeId], references: [id])
   invoices    Invoice[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model Expense {
@@ -141,7 +143,7 @@ model Expense {
   clinicId    String
   clinic      Clinic   @relation(fields: [clinicId], references: [id])
   description String
-  amount      Int      // kuruş cinsinden
+  amount      Int // kuruş cinsinden
   category    String
   date        DateTime @default(now())
   createdAt   DateTime @default(now())
@@ -150,7 +152,7 @@ model Expense {
 
 model Reminder {
   id                String   @id @default(cuid())
-  treatmentCategory String   // BOTOX, DOLGU, DIS_TEDAVI, GENEL
+  treatmentCategory String // BOTOX, DOLGU, DIS_TEDAVI, GENEL
   intervalDays      Int      @default(180)
   messageTemplate   String
   isActive          Boolean  @default(true)
@@ -162,26 +164,28 @@ model Reminder {
 
 // Appointment status values: SCHEDULED, COMPLETED, CANCELLED, NO_SHOW
 model Appointment {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   patientId     String
-  patient       Patient  @relation(fields: [patientId], references: [id])
+  patient       Patient   @relation(fields: [patientId], references: [id])
   clinicId      String
-  clinic        Clinic   @relation(fields: [clinicId], references: [id])
+  clinic        Clinic    @relation(fields: [clinicId], references: [id])
+  employeeId    String?
+  employee      Employee? @relation(fields: [employeeId], references: [id])
   date          DateTime // sadece tarih (gün)
-  startTime     String   // "09:00" formatında
-  endTime       String   // "09:30" formatında
-  status        String   @default("SCHEDULED") // SCHEDULED, COMPLETED, CANCELLED, NO_SHOW
-  treatmentType String   @default("GENEL") // BOTOX, DOLGU, DIS_TEDAVI, GENEL
+  startTime     String // "09:00" formatında
+  endTime       String // "09:30" formatında
+  status        String    @default("SCHEDULED") // SCHEDULED, COMPLETED, CANCELLED, NO_SHOW
+  treatmentType String    @default("GENEL") // BOTOX, DOLGU, DIS_TEDAVI, GENEL
   notes         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 model ClinicSchedule {
   id           String  @id @default(cuid())
   clinicId     String
   clinic       Clinic  @relation(fields: [clinicId], references: [id])
-  dayOfWeek    Int     // 0=Pazar, 1=Pazartesi, ..., 6=Cumartesi
+  dayOfWeek    Int // 0=Pazar, 1=Pazartesi, ..., 6=Cumartesi
   startTime    String  @default("09:00")
   endTime      String  @default("18:00")
   slotDuration Int     @default(30) // dakika
@@ -190,15 +194,15 @@ model ClinicSchedule {
 
 // PatientPreference type values: INDIRIM_SEVER, HEDIYE_SEVER, ARKADASIYLA_GELIR, SADIK_MUSTERI, FIYAT_HASSAS
 model PatientPreference {
-  id         String   @id @default(cuid())
-  patientId  String
-  patient    Patient  @relation(fields: [patientId], references: [id])
-  clinicId   String
-  clinic     Clinic   @relation(fields: [clinicId], references: [id])
-  type       String   // INDIRIM_SEVER, HEDIYE_SEVER, ARKADASIYLA_GELIR, SADIK_MUSTERI, FIYAT_HASSAS
-  notes      String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        String   @id @default(cuid())
+  patientId String
+  patient   Patient  @relation(fields: [patientId], references: [id])
+  clinicId  String
+  clinic    Clinic   @relation(fields: [clinicId], references: [id])
+  type      String // INDIRIM_SEVER, HEDIYE_SEVER, ARKADASIYLA_GELIR, SADIK_MUSTERI, FIYAT_HASSAS
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // PatientVisitPattern lastCategory values: BOTOX, DOLGU, DIS_TEDAVI, GENEL
@@ -208,10 +212,10 @@ model PatientVisitPattern {
   patient          Patient   @relation(fields: [patientId], references: [id])
   clinicId         String
   clinic           Clinic    @relation(fields: [clinicId], references: [id])
-  averageVisitDays Int?      // Average days between visits
+  averageVisitDays Int? // Average days between visits
   lastVisitDate    DateTime?
   totalVisits      Int       @default(0)
-  lastCategory     String?   // Last treatment category
+  lastCategory     String? // Last treatment category
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 }
@@ -219,32 +223,36 @@ model PatientVisitPattern {
 // ReminderLog channel values: WHATSAPP, TELEGRAM, SMS
 // ReminderLog status values: PENDING, SENT, FAILED
 model ReminderLog {
-  id              String    @id @default(cuid())
-  patientId       String
-  patient         Patient   @relation(fields: [patientId], references: [id])
-  clinicId        String
-  clinic          Clinic    @relation(fields: [clinicId], references: [id])
-  messageContent  String
-  channel         String    @default("WHATSAPP") // WHATSAPP, TELEGRAM, SMS
-  status          String    @default("PENDING")  // PENDING, SENT, FAILED
-  sentAt          DateTime?
-  createdAt       DateTime  @default(now())
+  id             String    @id @default(cuid())
+  patientId      String
+  patient        Patient   @relation(fields: [patientId], references: [id])
+  clinicId       String
+  clinic         Clinic    @relation(fields: [clinicId], references: [id])
+  messageContent String
+  channel        String    @default("WHATSAPP") // WHATSAPP, TELEGRAM, SMS
+  status         String    @default("PENDING") // PENDING, SENT, FAILED
+  sentAt         DateTime?
+  createdAt      DateTime  @default(now())
 }
 
 // Employee role values: DOKTOR, ASISTAN, SEKRETER, TEKNISYEN, DIGER
 model Employee {
-  id             String      @id @default(cuid())
+  id             String        @id @default(cuid())
   name           String
-  role           String      @default("ASISTAN") // DOKTOR, ASISTAN, SEKRETER, TEKNISYEN, DIGER
+  role           String        @default("ASISTAN") // DOKTOR, ASISTAN, SEKRETER, TEKNISYEN, DIGER
   phone          String?
   email          String?
-  commissionRate Int         @default(0) // yüzde cinsinden (ör: 10 = %10)
-  isActive       Boolean     @default(true)
+  userId         String?
+  color          String        @default("#3b82f6")
+  commissionRate Int           @default(0) // yüzde cinsinden (ör: 10 = %10)
+  permissions    Json?
+  isActive       Boolean       @default(true)
   clinicId       String
-  clinic         Clinic      @relation(fields: [clinicId], references: [id])
+  clinic         Clinic        @relation(fields: [clinicId], references: [id])
   treatments     Treatment[]
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  appointments   Appointment[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
 
 // ProductCategory values: KOZMETIK, MEDIKAL, SARF_MALZEME, DIGER
@@ -272,12 +280,12 @@ model StockMovement {
   id          String   @id @default(cuid())
   productId   String
   product     Product  @relation(fields: [productId], references: [id])
-  type        String   // IN, OUT, ADJUSTMENT
+  type        String // IN, OUT, ADJUSTMENT
   quantity    Int
   unitPrice   Int      @default(0) // kuruş
   totalPrice  Int      @default(0) // kuruş
   description String?
-  reference   String?  // fatura no vb.
+  reference   String? // fatura no vb.
   date        DateTime @default(now())
   clinicId    String
   clinic      Clinic   @relation(fields: [clinicId], references: [id])
@@ -287,31 +295,91 @@ model StockMovement {
 // Invoice type values: EFATURA, EARSIV
 // Invoice status values: DRAFT, SENT, APPROVED, CANCELLED
 model Invoice {
-  id                 String     @id @default(cuid())
-  invoiceNumber      String     @unique
-  type               String     // EFATURA, EARSIV
-  status             String     @default("DRAFT") // DRAFT, SENT, APPROVED, CANCELLED
-  customerName       String
-  customerTaxNumber  String?
-  customerTaxOffice  String?
-  customerAddress    String?
-  customerEmail      String?
-  items              Json       // [{description, quantity, unitPrice, taxRate, total}]
-  subtotal           Int        // kuruş
-  taxRate            Int        @default(20)
-  taxAmount          Int        // kuruş
-  total              Int        // kuruş
-  notes              String?
-  issueDate          DateTime
-  dueDate            DateTime?
-  clinicId           String
-  clinic             Clinic     @relation(fields: [clinicId], references: [id])
-  patientId          String?
-  patient            Patient?   @relation(fields: [patientId], references: [id])
-  treatmentId        String?
-  treatment          Treatment? @relation(fields: [treatmentId], references: [id])
-  createdAt          DateTime   @default(now())
-  updatedAt          DateTime   @updatedAt
+  id                String     @id @default(cuid())
+  invoiceNumber     String     @unique
+  type              String // EFATURA, EARSIV
+  status            String     @default("DRAFT") // DRAFT, SENT, APPROVED, CANCELLED
+  customerName      String
+  customerTaxNumber String?
+  customerTaxOffice String?
+  customerAddress   String?
+  customerEmail     String?
+  items             Json // [{description, quantity, unitPrice, taxRate, total}]
+  subtotal          Int // kuruş
+  taxRate           Int        @default(20)
+  taxAmount         Int // kuruş
+  total             Int // kuruş
+  notes             String?
+  issueDate         DateTime
+  dueDate           DateTime?
+  clinicId          String
+  clinic            Clinic     @relation(fields: [clinicId], references: [id])
+  patientId         String?
+  patient           Patient?   @relation(fields: [patientId], references: [id])
+  treatmentId       String?
+  treatment         Treatment? @relation(fields: [treatmentId], references: [id])
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+}
+
+model RecurringTransaction {
+  id           String             @id @default(cuid())
+  clinicId     String
+  clinic       Clinic             @relation(fields: [clinicId], references: [id])
+  type         String // "INCOME" or "EXPENSE"
+  category     String // "FIXED" or "VARIABLE"
+  name         String
+  amount       Float?
+  currency     String             @default("TRY")
+  dayOfMonth   Int
+  isActive     Boolean            @default(true)
+  remindBefore Int                @default(3)
+  notes        String?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  payments     RecurringPayment[]
+}
+
+model RecurringPayment {
+  id                     String               @id @default(cuid())
+  recurringTransactionId String
+  recurringTransaction   RecurringTransaction @relation(fields: [recurringTransactionId], references: [id])
+  clinicId               String
+  amount                 Float
+  paidAt                 DateTime?
+  dueDate                DateTime
+  status                 String               @default("PENDING") // PENDING, PAID, OVERDUE, SKIPPED
+  notes                  String?
+  createdAt              DateTime             @default(now())
+}
+
+model Subscription {
+  id                    String                @id @default(cuid())
+  clinicId              String
+  clinic                Clinic                @relation(fields: [clinicId], references: [id])
+  plan                  String // "STARTER", "PROFESSIONAL", "BUSINESS"
+  price                 Float
+  currency              String                @default("TRY")
+  status                String                @default("ACTIVE") // ACTIVE, CANCELLED, PAST_DUE, TRIAL
+  trialEndsAt           DateTime?
+  currentPeriodStart    DateTime
+  currentPeriodEnd      DateTime
+  iyzicoSubscriptionRef String?
+  cardToken             String?
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  payments              SubscriptionPayment[]
+}
+
+model SubscriptionPayment {
+  id              String       @id @default(cuid())
+  subscriptionId  String
+  subscription    Subscription @relation(fields: [subscriptionId], references: [id])
+  amount          Float
+  status          String // SUCCESS, FAILED, PENDING
+  iyzicoPaymentId String?
+  paidAt          DateTime?
+  createdAt       DateTime     @default(now())
 }
 
 // ═══════════════════════════════════════════════════════════

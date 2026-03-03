@@ -11,7 +11,7 @@ interface Message {
 const quickPrompts = [
   "Bu ayın gelir-gider özeti nedir?",
   "KDV hesaplamasını göster",
-  "En son eklenen hastaları listele",
+  "En son eklenen müşterileri listele",
   "Bu ayki toplam gelir ne kadar?",
   "Bugünün randevuları neler?",
   "Yarın için müsait saatler",

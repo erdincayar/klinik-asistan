@@ -30,13 +30,15 @@ import {
   Share2,
   Shield,
   Activity,
+  CreditCard,
 } from "lucide-react";
 
 /* ──────────────────────── DATA ──────────────────────── */
 
 const navItems = [
   { href: "/dashboard", label: "Genel Bakış", icon: LayoutDashboard },
-  { href: "/patients", label: "Hastalar", icon: Users },
+  { href: "/patients", label: "Müşteriler", icon: Users },
+  { href: "/customers/import", label: "Veri Aktarımı", icon: Upload },
   { href: "/appointments", label: "Randevular", icon: Calendar },
   { href: "/finance", label: "Finans", icon: DollarSign },
   { href: "/invoices", label: "Faturalar", icon: FileText },
@@ -50,6 +52,7 @@ const navItems = [
   { href: "/whatsapp", label: "WhatsApp", icon: MessageCircle },
   { href: "/employees", label: "Çalışanlar", icon: UserCog },
   { href: "/reminders", label: "Hatırlatmalar", icon: Bell },
+  { href: "/billing", label: "Abonelik", icon: CreditCard },
   { href: "/settings", label: "Ayarlar", icon: Settings },
 ];
 
@@ -61,8 +64,9 @@ const adminNavItems = [
 
 const pageTitles: Record<string, string> = {
   "/dashboard": "Genel Bakış",
-  "/patients": "Hastalar",
-  "/patients/new": "Yeni Hasta",
+  "/patients": "Müşteriler",
+  "/patients/new": "Yeni Müşteri",
+  "/customers/import": "Veri Aktarımı",
   "/appointments": "Randevular",
   "/appointments/new": "Yeni Randevu",
   "/finance": "Finans",
@@ -79,6 +83,7 @@ const pageTitles: Record<string, string> = {
   "/reports": "Raporlar",
   "/employees": "Çalışanlar",
   "/reminders": "Hatırlatmalar",
+  "/billing": "Abonelik",
   "/settings": "Ayarlar",
   "/admin": "Admin Panel",
   "/admin/users": "Kullanıcı Yönetimi",
@@ -87,7 +92,7 @@ const pageTitles: Record<string, string> = {
 
 function getPageTitle(pathname: string): string {
   if (pageTitles[pathname]) return pageTitles[pathname];
-  if (pathname.startsWith("/patients/")) return "Hasta Detay";
+  if (pathname.startsWith("/patients/")) return "Müşteri Detayı";
   return "inPobi";
 }
 
