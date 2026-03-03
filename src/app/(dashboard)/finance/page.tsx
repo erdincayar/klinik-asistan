@@ -463,6 +463,8 @@ export default function FinancePage() {
                   <Plus className="h-4 w-4" />
                   Gider Ekle
                 </Link>
+                {/* Fatura Kes — ileride aktif edilecek */}
+                {false && (
                 <Link
                   href="/invoices?tab=create"
                   className="hidden items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-all hover:bg-gray-50 sm:inline-flex"
@@ -470,6 +472,7 @@ export default function FinancePage() {
                   <FileText className="h-4 w-4" />
                   Fatura Kes
                 </Link>
+                )}
               </div>
             </motion.div>
 
