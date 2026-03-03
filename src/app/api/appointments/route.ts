@@ -98,36 +98,40 @@ export async function POST(request: Request) {
       );
     }
 
-    const { patientId, date, startTime, endTime, treatmentType, notes } =
+    const { patientId, employeeId, date, startTime, endTime, treatmentType, notes } =
       parsed.data;
 
-    // Check for time conflicts
     const appointmentDate = new Date(date);
     const nextDay = new Date(date);
     nextDay.setDate(nextDay.getDate() + 1);
 
-    const conflicts = await prisma.appointment.findMany({
-      where: {
-        clinicId,
-        date: { gte: appointmentDate, lt: nextDay },
-        status: { not: "CANCELLED" },
-        OR: [
-          { startTime: { lt: endTime }, endTime: { gt: startTime } },
-        ],
-      },
-    });
+    // Check for time conflicts per employee (if employee assigned)
+    if (employeeId) {
+      const conflicts = await prisma.appointment.findMany({
+        where: {
+          clinicId,
+          employeeId,
+          date: { gte: appointmentDate, lt: nextDay },
+          status: { not: "CANCELLED" },
+          OR: [
+            { startTime: { lt: endTime }, endTime: { gt: startTime } },
+          ],
+        },
+      });
 
-    if (conflicts.length > 0) {
-      return Response.json(
-        { error: "Bu saatte başka bir randevu var" },
-        { status: 409 }
-      );
+      if (conflicts.length > 0) {
+        return Response.json(
+          { error: "Bu çalışanın bu saatte başka bir randevusu var" },
+          { status: 409 }
+        );
+      }
     }
 
     const appointment = await prisma.appointment.create({
       data: {
         patientId,
         clinicId,
+        employeeId: employeeId || null,
         date: appointmentDate,
         startTime,
         endTime,
@@ -136,6 +140,7 @@ export async function POST(request: Request) {
       },
       include: {
         patient: { select: { id: true, name: true, phone: true } },
+        employee: { select: { id: true, name: true, color: true } },
       },
     });
 

@@ -22,6 +22,12 @@ interface Patient {
   name: string;
 }
 
+interface Employee {
+  id: string;
+  name: string;
+  color: string;
+}
+
 // Generate all time slots from 00:00 to 23:30 in 30-minute intervals
 function generateTimeSlots(): string[] {
   const slots: string[] = [];
@@ -43,7 +49,9 @@ function NewAppointmentForm() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [patientId, setPatientId] = useState(searchParams.get("patientId") || "");
+  const [employeeId, setEmployeeId] = useState("");
   const [date, setDate] = useState(searchParams.get("date") || "");
   const [selectedTime, setSelectedTime] = useState("");
   const [treatmentType, setTreatmentType] = useState("");
@@ -76,6 +84,10 @@ function NewAppointmentForm() {
 
   useEffect(() => {
     fetchPatients();
+    fetch("/api/employees")
+      .then((res) => (res.ok ? res.json() : { employees: [] }))
+      .then((data) => setEmployees(data.employees || data || []))
+      .catch(() => {});
   }, [fetchPatients]);
 
   // Fetch treatment type suggestions
@@ -177,6 +189,7 @@ function NewAppointmentForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           patientId,
+          employeeId: employeeId || undefined,
           date,
           startTime: selectedTime,
           endTime: getEndTime(selectedTime),
@@ -301,6 +314,32 @@ function NewAppointmentForm() {
                   </motion.div>
                 )}
               </AnimatePresence>
+            </div>
+
+            {/* Employee Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="employee">Çalışan</Label>
+              <Select
+                id="employee"
+                value={employeeId}
+                onChange={(e) => setEmployeeId(e.target.value)}
+              >
+                <SelectOption value="">Çalışan seçin (opsiyonel)</SelectOption>
+                {employees.map((emp) => (
+                  <SelectOption key={emp.id} value={emp.id}>
+                    {emp.name}
+                  </SelectOption>
+                ))}
+              </Select>
+              {employeeId && employees.find((e) => e.id === employeeId) && (
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <span
+                    className="inline-block h-3 w-3 rounded-full"
+                    style={{ backgroundColor: employees.find((e) => e.id === employeeId)!.color }}
+                  />
+                  {employees.find((e) => e.id === employeeId)!.name}
+                </div>
+              )}
             </div>
 
             {/* Date */}

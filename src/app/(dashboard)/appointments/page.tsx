@@ -178,8 +178,8 @@ export default function AppointmentsPage() {
     setSelectedDate(d);
   }
 
-  function getAppointmentForSlot(time: string): Appointment | undefined {
-    return appointments.find((a) => a.startTime === time);
+  function getAppointmentsForSlot(time: string): Appointment[] {
+    return appointments.filter((a) => a.startTime === time);
   }
 
   async function updateAppointmentStatus(id: string, status: string) {
@@ -226,18 +226,6 @@ export default function AppointmentsPage() {
           <h2 className="text-base font-semibold text-gray-900">{formatDateTR(selectedDate)}</h2>
         </div>
         <div className="flex items-center gap-2">
-          <select
-            value={selectedEmployee}
-            onChange={(e) => setSelectedEmployee(e.target.value)}
-            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-          >
-            <option value="all">Tüm Çalışanlar</option>
-            {employees.map((emp) => (
-              <option key={emp.id} value={emp.id}>
-                {emp.name}
-              </option>
-            ))}
-          </select>
           <input
             type="date"
             value={formatDateISO(selectedDate)}
@@ -275,6 +263,41 @@ export default function AppointmentsPage() {
         ))}
       </motion.div>
 
+      {/* Employee filter pills */}
+      {employees.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setSelectedEmployee("all")}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+              selectedEmployee === "all"
+                ? "bg-gray-900 text-white"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            )}
+          >
+            Tümü
+          </button>
+          {employees.map((emp) => (
+            <button
+              key={emp.id}
+              onClick={() => setSelectedEmployee(emp.id)}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+                selectedEmployee === emp.id
+                  ? "bg-gray-900 text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              )}
+            >
+              <span
+                className="inline-block h-2.5 w-2.5 rounded-full"
+                style={{ backgroundColor: emp.color }}
+              />
+              {emp.name}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Content */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -296,9 +319,7 @@ export default function AppointmentsPage() {
             ) : (
               <div className="divide-y divide-gray-50">
                 {TIME_SLOTS.map((time) => {
-                  const appointment = getAppointmentForSlot(time);
-                  const statusInfo = appointment ? getStatusInfo(appointment.status) : null;
-                  const isCancelled = appointment?.status === "CANCELLED";
+                  const slotAppointments = getAppointmentsForSlot(time);
                   const isCurrentSlot = isToday && time === nowTime.slice(0, 5);
 
                   return (
@@ -315,57 +336,62 @@ export default function AppointmentsPage() {
                       </div>
 
                       {/* Slot content */}
-                      <div className="flex flex-1 items-center px-3 py-2">
-                        {appointment ? (
-                          <button
-                            onClick={() => {
-                              setSelectedAppointment(appointment);
-                              setDialogOpen(true);
-                            }}
-                            className={cn(
-                              "flex w-full items-center justify-between rounded-lg border px-4 py-2 text-left transition-colors hover:bg-gray-50",
-                              isCancelled && "opacity-60"
-                            )}
-                          >
-                            <div className="flex items-center gap-3">
-                              {appointment.employeeColor && (
-                                <span
-                                  className="inline-block h-3 w-3 shrink-0 rounded-full"
-                                  style={{ backgroundColor: appointment.employeeColor }}
-                                  title={appointment.employeeName || ""}
-                                />
-                              )}
-                              <div>
-                                <p
-                                  className={cn(
-                                    "font-medium text-gray-900",
-                                    isCancelled && "line-through"
-                                  )}
-                                >
-                                  {appointment.patientName}
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                  {appointment.startTime} - {appointment.endTime}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Badge
+                      <div className="flex flex-1 flex-col gap-1 px-3 py-2">
+                        {slotAppointments.length > 0 ? (
+                          slotAppointments.map((appointment) => {
+                            const statusInfo = getStatusInfo(appointment.status);
+                            const isCancelled = appointment.status === "CANCELLED";
+                            return (
+                              <button
+                                key={appointment.id}
+                                onClick={() => {
+                                  setSelectedAppointment(appointment);
+                                  setDialogOpen(true);
+                                }}
                                 className={cn(
-                                  "pointer-events-none",
-                                  getTreatmentLabel(appointment.treatmentType) &&
-                                    "bg-gray-100 text-gray-700"
+                                  "flex w-full items-center justify-between rounded-lg border px-4 py-2 text-left transition-colors hover:bg-gray-50",
+                                  isCancelled && "opacity-60"
                                 )}
                               >
-                                {getTreatmentLabel(appointment.treatmentType)}
-                              </Badge>
-                              {statusInfo && (
-                                <Badge className={cn("pointer-events-none", statusInfo.color)}>
-                                  {statusInfo.label}
-                                </Badge>
-                              )}
-                            </div>
-                          </button>
+                                <div className="flex items-center gap-3">
+                                  <span
+                                    className="inline-block h-3 w-3 shrink-0 rounded-full"
+                                    style={{ backgroundColor: appointment.employeeColor || "#9ca3af" }}
+                                    title={appointment.employeeName || "Atanmamış"}
+                                  />
+                                  <div>
+                                    <p
+                                      className={cn(
+                                        "font-medium text-gray-900",
+                                        isCancelled && "line-through"
+                                      )}
+                                    >
+                                      {appointment.patientName}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      {appointment.employeeName || "Atanmamış"} · {appointment.startTime} - {appointment.endTime}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Badge
+                                    className={cn(
+                                      "pointer-events-none",
+                                      getTreatmentLabel(appointment.treatmentType) &&
+                                        "bg-gray-100 text-gray-700"
+                                    )}
+                                  >
+                                    {getTreatmentLabel(appointment.treatmentType)}
+                                  </Badge>
+                                  {statusInfo && (
+                                    <Badge className={cn("pointer-events-none", statusInfo.color)}>
+                                      {statusInfo.label}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </button>
+                            );
+                          })
                         ) : (
                           <div className="flex w-full items-center justify-center rounded-lg border border-dashed border-gray-200 py-2 text-sm text-gray-400">
                             Boş
@@ -422,43 +448,46 @@ export default function AppointmentsPage() {
                           d.setDate(monday.getDate() + i);
                           const dateStr = formatDateISO(d);
                           const dayAppts = weekAppointments[dateStr] || [];
-                          const appt = dayAppts.find((a) => a.startTime === time);
+                          const slotAppts = dayAppts.filter((a) => a.startTime === time);
                           const isTodayCol = dateStr === formatDateISO(new Date());
-                          const statusInfo = appt ? getStatusInfo(appt.status) : null;
 
                           return (
-                            <td key={i} className={cn("px-1 py-1", isTodayCol && "bg-blue-50/30")}>
-                              {appt && (
-                                <button
-                                  onClick={() => { setSelectedAppointment(appt); setDialogOpen(true); }}
-                                  className={cn(
-                                    "w-full rounded-lg border border-gray-100 px-1.5 py-1 text-left text-xs transition-colors hover:border-blue-200",
-                                    appt.status === "CANCELLED" && "opacity-50"
-                                  )}
-                                >
-                                  <div className="flex items-center gap-1 font-medium truncate">
-                                    {appt.employeeColor && (
-                                      <span
-                                        className="inline-block h-2 w-2 shrink-0 rounded-full"
-                                        style={{ backgroundColor: appt.employeeColor }}
-                                        title={appt.employeeName || ""}
-                                      />
-                                    )}
-                                    {(appt.patientName || "?")
-                                      .split(" ")
-                                      .map((n) => n[0])
-                                      .join("")}
-                                  </div>
-                                  <div className="truncate text-gray-500">
-                                    {getTreatmentLabel(appt.treatmentType)}
-                                  </div>
-                                  {statusInfo && (
-                                    <div className={cn("mt-0.5 inline-block rounded px-1 py-0 text-[10px] font-semibold", statusInfo.color)}>
-                                      {statusInfo.label}
-                                    </div>
-                                  )}
-                                </button>
-                              )}
+                            <td key={i} className={cn("px-1 py-1 align-top", isTodayCol && "bg-blue-50/30")}>
+                              <div className="flex flex-col gap-0.5">
+                                {slotAppts.map((appt) => {
+                                  const statusInfo = getStatusInfo(appt.status);
+                                  return (
+                                    <button
+                                      key={appt.id}
+                                      onClick={() => { setSelectedAppointment(appt); setDialogOpen(true); }}
+                                      className={cn(
+                                        "w-full rounded-lg border border-gray-100 px-1.5 py-1 text-left text-xs transition-colors hover:border-blue-200",
+                                        appt.status === "CANCELLED" && "opacity-50"
+                                      )}
+                                    >
+                                      <div className="flex items-center gap-1 font-medium truncate">
+                                        <span
+                                          className="inline-block h-2 w-2 shrink-0 rounded-full"
+                                          style={{ backgroundColor: appt.employeeColor || "#9ca3af" }}
+                                          title={appt.employeeName || "Atanmamış"}
+                                        />
+                                        {(appt.patientName || "?")
+                                          .split(" ")
+                                          .map((n) => n[0])
+                                          .join("")}
+                                      </div>
+                                      <div className="truncate text-gray-500">
+                                        {getTreatmentLabel(appt.treatmentType)}
+                                      </div>
+                                      {statusInfo && (
+                                        <div className={cn("mt-0.5 inline-block rounded px-1 py-0 text-[10px] font-semibold", statusInfo.color)}>
+                                          {statusInfo.label}
+                                        </div>
+                                      )}
+                                    </button>
+                                  );
+                                })}
+                              </div>
                             </td>
                           );
                         })}
@@ -531,20 +560,18 @@ export default function AppointmentsPage() {
                     {getStatusInfo(selectedAppointment.status).label}
                   </span>
                 </div>
-                {selectedAppointment.employeeName && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">Çalışan</span>
-                    <div className="flex items-center gap-2">
-                      {selectedAppointment.employeeColor && (
-                        <span
-                          className="inline-block h-3 w-3 rounded-full"
-                          style={{ backgroundColor: selectedAppointment.employeeColor }}
-                        />
-                      )}
-                      <span className="font-medium">{selectedAppointment.employeeName}</span>
-                    </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">Çalışan</span>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="inline-block h-3 w-3 rounded-full"
+                      style={{ backgroundColor: selectedAppointment.employeeColor || "#9ca3af" }}
+                    />
+                    <span className="font-medium">
+                      {selectedAppointment.employeeName || "Atanmamış"}
+                    </span>
                   </div>
-                )}
+                </div>
                 {selectedAppointment.notes && (
                   <div>
                     <span className="text-sm text-gray-500">Notlar</span>

@@ -51,6 +51,7 @@ export type ReminderInput = z.infer<typeof reminderSchema>;
 
 export const appointmentSchema = z.object({
   patientId: z.string().min(1, "Müşteri seçin"),
+  employeeId: z.string().optional(),
   date: z.string().min(1, "Tarih seçin"),
   startTime: z.string().min(1, "Başlangıç saati seçin"),
   endTime: z.string().min(1, "Bitiş saati seçin"),
