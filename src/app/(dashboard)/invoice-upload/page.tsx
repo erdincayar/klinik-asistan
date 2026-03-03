@@ -66,6 +66,18 @@ export default function InvoiceUploadPage() {
 
   async function handleUpload(files: FileList | null) {
     if (!files || files.length === 0) return;
+
+    // Validate file types
+    const validExts = [".pdf", ".jpg", ".jpeg", ".png"];
+    const invalidFiles = Array.from(files).filter(
+      (f) => !validExts.some((ext) => f.name.toLowerCase().endsWith(ext))
+    );
+    if (invalidFiles.length > 0) {
+      setUploadError("Desteklenmeyen format. Sadece PDF, JPG, PNG yüklenebilir.");
+      setTimeout(() => setUploadError(""), 8000);
+      return;
+    }
+
     setUploading(true);
     setUploadError("");
     setUploadSuccess("");
@@ -73,34 +85,47 @@ export default function InvoiceUploadPage() {
     let successCount = 0;
     let failCount = 0;
 
-    for (const file of Array.from(files)) {
-      const formData = new FormData();
-      formData.append("file", file);
-      try {
-        const res = await fetch("/api/invoices/ocr", {
-          method: "POST",
-          body: formData,
-        });
-        const data = await res.json();
-        if (res.ok && data.status !== "FAILED") {
-          successCount++;
-        } else {
+    try {
+      for (const file of Array.from(files)) {
+        const formData = new FormData();
+        formData.append("file", file);
+        try {
+          // 2 minute safety timeout per file
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 120000);
+
+          const res = await fetch("/api/invoices/ocr", {
+            method: "POST",
+            body: formData,
+            signal: controller.signal,
+          });
+          clearTimeout(timeout);
+
+          const data = await res.json();
+          if (res.ok && data.status !== "FAILED") {
+            successCount++;
+          } else {
+            failCount++;
+          }
+        } catch {
           failCount++;
         }
-      } catch {
-        failCount++;
       }
-    }
 
-    await fetchInvoices();
-    setUploading(false);
+      await fetchInvoices();
+    } finally {
+      // ALWAYS reset uploading state
+      setUploading(false);
+    }
 
     if (successCount > 0) {
       setUploadSuccess(`${successCount} fatura başarıyla işlendi.`);
       setTimeout(() => setUploadSuccess(""), 5000);
     }
     if (failCount > 0) {
-      setUploadError(`${failCount} fatura işlenemedi. Lütfen tekrar deneyin.`);
+      setUploadError(
+        `${failCount} fatura işlenemedi. Lütfen tekrar deneyin.`
+      );
       setTimeout(() => setUploadError(""), 8000);
     }
   }

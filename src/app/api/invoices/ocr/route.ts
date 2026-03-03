@@ -5,7 +5,30 @@ import Anthropic from "@anthropic-ai/sdk";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
+const OCR_PROMPT = `Bu bir faturadır. Lütfen şu bilgileri JSON formatında çıkar:
+{
+  "vendor": "Satıcı/firma adı",
+  "invoiceDate": "YYYY-MM-DD formatında fatura tarihi",
+  "amount": toplam tutar (sayı, TL cinsinden, virgüllü ise noktaya çevir),
+  "taxAmount": KDV tutarı (sayı),
+  "category": "MALZEME|KIRA|FATURA|MAAS|DIGER" (en uygun kategori),
+  "items": [{"description": "kalem açıklaması", "quantity": adet, "unitPrice": birim fiyat, "total": toplam}]
+}
+Sadece JSON döndür, başka açıklama yapma.`;
+
+const SUPPORTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+function getMediaType(fileName: string): string {
+  const ext = fileName.toLowerCase().split(".").pop();
+  if (ext === "png") return "image/png";
+  if (ext === "webp") return "image/webp";
+  if (ext === "pdf") return "application/pdf";
+  return "image/jpeg";
+}
+
 export async function POST(req: NextRequest) {
+  let invoiceId: string | null = null;
+
   try {
     const session = await auth();
     if (!session?.user) {
@@ -22,6 +45,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Dosya gerekli" }, { status: 400 });
     }
 
+    // Validate file type
+    const mediaType = getMediaType(file.name);
+    if (mediaType !== "application/pdf" && !SUPPORTED_IMAGE_TYPES.includes(mediaType)) {
+      return NextResponse.json(
+        { error: "Desteklenmeyen format. PDF, JPG veya PNG yükleyin." },
+        { status: 400 }
+      );
+    }
+
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     const base64 = buffer.toString("base64");
@@ -34,13 +66,6 @@ export async function POST(req: NextRequest) {
     await writeFile(filePath, buffer);
     const fileUrl = `/uploads/invoices/${clinicId}/${fileName}`;
 
-    // Determine media type
-    const ext = file.name.toLowerCase().split(".").pop();
-    let mediaType: "image/jpeg" | "image/png" | "image/webp" | "application/pdf" = "image/jpeg";
-    if (ext === "png") mediaType = "image/png";
-    else if (ext === "pdf") mediaType = "application/pdf";
-    else if (ext === "webp") mediaType = "image/webp";
-
     // Create record as PROCESSING
     const invoice = await prisma.uploadedInvoice.create({
       data: {
@@ -51,85 +76,98 @@ export async function POST(req: NextRequest) {
         status: "PROCESSING",
       },
     });
+    invoiceId = invoice.id;
 
-    // Send to Claude Vision
-    let ocrData = null;
+    // Build content block — PDF uses "document", images use "image"
+    const isPdf = mediaType === "application/pdf";
+    const fileContent: Anthropic.Messages.ContentBlockParam = isPdf
+      ? {
+          type: "document",
+          source: { type: "base64", media_type: "application/pdf", data: base64 },
+        }
+      : {
+          type: "image",
+          source: {
+            type: "base64",
+            media_type: mediaType as "image/jpeg" | "image/png" | "image/webp",
+            data: base64,
+          },
+        };
+
+    // Send to Claude Vision with timeout
+    let ocrData: Record<string, unknown> | null = null;
     try {
       const anthropic = new Anthropic();
-      const response = await anthropic.messages.create({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 2048,
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "image",
-                source: { type: "base64", media_type: mediaType === "application/pdf" ? "image/jpeg" : mediaType, data: base64 },
-              },
-              {
-                type: "text",
-                text: `Bu bir faturadır. Lütfen şu bilgileri JSON formatında çıkar:
-{
-  "vendor": "Satıcı/firma adı",
-  "invoiceDate": "YYYY-MM-DD formatında fatura tarihi",
-  "amount": toplam tutar (sayı, TL cinsinden, virgüllü ise noktaya çevir),
-  "taxAmount": KDV tutarı (sayı),
-  "category": "MALZEME|KIRA|FATURA|MAAS|DIGER" (en uygun kategori),
-  "items": [{"description": "kalem açıklaması", "quantity": adet, "unitPrice": birim fiyat, "total": toplam}]
-}
-Sadece JSON döndür, başka açıklama yapma.`,
-              },
-            ],
-          },
-        ],
-      });
+      const response = await Promise.race([
+        anthropic.messages.create({
+          model: "claude-sonnet-4-6",
+          max_tokens: 4096,
+          messages: [
+            {
+              role: "user",
+              content: [fileContent, { type: "text", text: OCR_PROMPT }],
+            },
+          ],
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("API timeout")), 90000)
+        ),
+      ]);
 
-      const aiText = response.content[0].type === "text" ? response.content[0].text : "";
+      const aiText =
+        response.content[0].type === "text" ? response.content[0].text : "";
 
-      try {
-        const jsonMatch = aiText.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          ocrData = JSON.parse(jsonMatch[0]);
-        }
-      } catch {
-        // JSON parse failed
+      const jsonMatch = aiText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        ocrData = JSON.parse(jsonMatch[0]);
       }
     } catch (aiError) {
       console.error("Claude Vision API error:", aiError);
-      // Mark as failed if AI call fails
       await prisma.uploadedInvoice.update({
         where: { id: invoice.id },
         data: { status: "FAILED" },
       });
+      const msg =
+        aiError instanceof Error && aiError.message === "API timeout"
+          ? "Fatura okunamadı — zaman aşımı. Tekrar deneyin."
+          : "AI fatura okuma başarısız oldu. Lütfen tekrar deneyin.";
       return NextResponse.json(
-        { ...invoice, status: "FAILED", error: "AI fatura okuma başarısız oldu. Lütfen tekrar deneyin." },
+        { ...invoice, status: "FAILED", error: msg },
         { status: 200 }
       );
     }
 
     if (ocrData) {
+      const parsedAmount = ocrData.amount
+        ? parseFloat(String(ocrData.amount))
+        : null;
+
       await prisma.uploadedInvoice.update({
         where: { id: invoice.id },
         data: {
-          ocrData,
+          ocrData: ocrData as any,
           status: "COMPLETED",
-          vendor: ocrData.vendor || null,
-          amount: ocrData.amount ? parseFloat(ocrData.amount) : null,
-          invoiceDate: ocrData.invoiceDate ? new Date(ocrData.invoiceDate) : null,
-          category: ocrData.category || "DIGER",
+          vendor: (ocrData.vendor as string) || null,
+          amount: parsedAmount,
+          invoiceDate: ocrData.invoiceDate
+            ? new Date(ocrData.invoiceDate as string)
+            : null,
+          category: (ocrData.category as string) || "DIGER",
         },
       });
 
-      if (ocrData.amount) {
-        const amountKurus = Math.round(parseFloat(ocrData.amount) * 100);
+      // Auto-create expense record
+      if (parsedAmount && parsedAmount > 0) {
+        const amountKurus = Math.round(parsedAmount * 100);
         await prisma.expense.create({
           data: {
             clinicId,
             description: `Fatura - ${ocrData.vendor || file.name}`,
             amount: amountKurus,
-            category: ocrData.category || "DIGER",
-            date: ocrData.invoiceDate ? new Date(ocrData.invoiceDate) : new Date(),
+            category: (ocrData.category as string) || "DIGER",
+            date: ocrData.invoiceDate
+              ? new Date(ocrData.invoiceDate as string)
+              : new Date(),
           },
         });
       }
@@ -140,10 +178,20 @@ Sadece JSON döndür, başka açıklama yapma.`,
         where: { id: invoice.id },
         data: { status: "FAILED" },
       });
-      return NextResponse.json({ ...invoice, status: "FAILED", error: "OCR verisi okunamadı" });
+      return NextResponse.json({
+        ...invoice,
+        status: "FAILED",
+        error: "OCR verisi okunamadı",
+      });
     }
   } catch (error) {
     console.error("Invoice OCR error:", error);
+    // Mark as failed if record was created
+    if (invoiceId) {
+      await prisma.uploadedInvoice
+        .update({ where: { id: invoiceId }, data: { status: "FAILED" } })
+        .catch(() => {});
+    }
     return NextResponse.json({ error: "Fatura işlenemedi" }, { status: 500 });
   }
 }
