@@ -71,35 +71,29 @@ export async function testConnection(clinicId: string): Promise<{ success: boole
 
 export async function getCampaigns(clinicId: string) {
   const config = await getClinicMetaConfig(clinicId);
-  if (!config) return [];
+  if (!config) throw new Error("Meta bağlantısı bulunamadı");
 
-  try {
-    const data = await graphGet(`/${config.adAccountId}/campaigns`, config.accessToken, {
-      fields: "id,name,status,objective,daily_budget,start_time,stop_time,insights{impressions,clicks,spend,ctr,cpc}",
-      limit: "100",
-    });
-    return data.data || [];
-  } catch {
-    return [];
-  }
+  const data = await graphGet(`/${config.adAccountId}/campaigns`, config.accessToken, {
+    fields: "id,name,status,objective,daily_budget,start_time,stop_time,insights{impressions,clicks,spend,ctr,cpc}",
+    limit: "100",
+  });
+  if (data.error) throw new Error(data.error.message || "Meta API hatası");
+  return data.data || [];
 }
 
 export async function getCampaignInsights(clinicId: string, dateRange: { since: string; until: string }) {
   const config = await getClinicMetaConfig(clinicId);
-  if (!config) return [];
+  if (!config) throw new Error("Meta bağlantısı bulunamadı");
 
-  try {
-    const data = await graphGet(`/${config.adAccountId}/insights`, config.accessToken, {
-      fields: "campaign_id,campaign_name,impressions,clicks,spend,ctr,cpc,cpm,date_start,date_stop",
-      time_range: JSON.stringify(dateRange),
-      time_increment: "1",
-      level: "campaign",
-      limit: "500",
-    });
-    return data.data || [];
-  } catch {
-    return [];
-  }
+  const data = await graphGet(`/${config.adAccountId}/insights`, config.accessToken, {
+    fields: "campaign_id,campaign_name,impressions,clicks,spend,ctr,cpc,cpm,date_start,date_stop",
+    time_range: JSON.stringify(dateRange),
+    time_increment: "1",
+    level: "campaign",
+    limit: "500",
+  });
+  if (data.error) throw new Error(data.error.message || "Meta API hatası");
+  return data.data || [];
 }
 
 export async function createCampaign(clinicId: string, data: {

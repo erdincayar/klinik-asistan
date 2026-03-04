@@ -3,6 +3,13 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getCampaigns, createCampaign, createAdSet, createAd } from "@/lib/meta-ads";
 
+const OBJECTIVE_REVERSE: Record<string, string> = {
+  OUTCOME_TRAFFIC: "TRAFFIC",
+  OUTCOME_LEADS: "LEADS",
+  OUTCOME_ENGAGEMENT: "MESSAGES",
+  OUTCOME_AWARENESS: "AWARENESS",
+};
+
 export async function GET(_req: NextRequest) {
   try {
     const session = await auth();
@@ -14,16 +21,82 @@ export async function GET(_req: NextRequest) {
       return NextResponse.json({ error: "Klinik bulunamadı" }, { status: 400 });
     }
 
-    // Get campaigns from Meta API
-    const metaCampaigns = await getCampaigns(clinicId);
-
-    // Also get local campaigns
+    // Get local campaigns
     const localCampaigns = await prisma.adCampaign.findMany({
       where: { clinicId },
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ metaCampaigns, localCampaigns });
+    // Try to get campaigns from Meta API
+    let metaCampaigns: any[] = [];
+    let metaError: string | null = null;
+
+    try {
+      metaCampaigns = await getCampaigns(clinicId);
+    } catch (err) {
+      metaError = err instanceof Error ? err.message : "Meta API hatası";
+    }
+
+    // Merge: update local campaigns with real Meta data
+    const mergedIds = new Set<string>();
+    const campaigns = localCampaigns.map((local) => {
+      if (local.metaCampaignId) {
+        const meta = metaCampaigns.find((m: any) => m.id === local.metaCampaignId);
+        if (meta) {
+          mergedIds.add(meta.id);
+          const insight = meta.insights?.data?.[0];
+          return {
+            ...local,
+            status: meta.status,
+            impressions: insight ? parseInt(insight.impressions || "0") : undefined,
+            clicks: insight ? parseInt(insight.clicks || "0") : undefined,
+            spend: insight ? parseFloat(insight.spend || "0") : undefined,
+            ctr: insight ? parseFloat(insight.ctr || "0") : undefined,
+            cpc: insight ? parseFloat(insight.cpc || "0") : undefined,
+          };
+        }
+      }
+      return local;
+    });
+
+    // Add Meta campaigns not tracked locally
+    for (const meta of metaCampaigns) {
+      if (mergedIds.has(meta.id)) continue;
+      const insight = meta.insights?.data?.[0];
+      campaigns.push({
+        id: meta.id,
+        clinicId,
+        metaCampaignId: meta.id,
+        metaAdSetId: null,
+        metaAdId: null,
+        name: meta.name,
+        objective: OBJECTIVE_REVERSE[meta.objective] || meta.objective || "",
+        status: meta.status,
+        dailyBudget: meta.daily_budget ? parseInt(meta.daily_budget) / 100 : 0,
+        startDate: meta.start_time ? new Date(meta.start_time) : new Date(),
+        endDate: meta.stop_time ? new Date(meta.stop_time) : null,
+        targetCity: null,
+        targetAgeMin: 18,
+        targetAgeMax: 65,
+        targetGender: "ALL",
+        interests: null,
+        platforms: "BOTH",
+        imageUrl: null,
+        headline: null,
+        description: null,
+        ctaType: null,
+        websiteUrl: null,
+        createdAt: meta.start_time ? new Date(meta.start_time) : new Date(),
+        updatedAt: new Date(),
+        impressions: insight ? parseInt(insight.impressions || "0") : undefined,
+        clicks: insight ? parseInt(insight.clicks || "0") : undefined,
+        spend: insight ? parseFloat(insight.spend || "0") : undefined,
+        ctr: insight ? parseFloat(insight.ctr || "0") : undefined,
+        cpc: insight ? parseFloat(insight.cpc || "0") : undefined,
+      });
+    }
+
+    return NextResponse.json({ campaigns, metaError });
   } catch (error) {
     console.error("Get campaigns error:", error);
     return NextResponse.json({ error: "Kampanya hatası" }, { status: 500 });

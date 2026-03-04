@@ -25,6 +25,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(insights);
   } catch (error) {
     console.error("Insights error:", error);
-    return NextResponse.json({ error: "Veri hatası" }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Veri hatası";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

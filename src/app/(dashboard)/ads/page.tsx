@@ -25,6 +25,7 @@ import {
   ChevronRight,
   CheckCircle,
   AlertCircle,
+  Unlink,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -60,6 +61,11 @@ interface Campaign {
   ctaType: string | null;
   websiteUrl: string | null;
   createdAt: string;
+  impressions?: number;
+  clicks?: number;
+  spend?: number;
+  ctr?: number;
+  cpc?: number;
 }
 
 interface InsightDay {
@@ -263,7 +269,9 @@ export default function AdsPage() {
   // Tab 1: Campaigns
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [campaignsLoading, setCampaignsLoading] = useState(false);
+  const [campaignsError, setCampaignsError] = useState("");
   const [statusUpdating, setStatusUpdating] = useState<string | null>(null);
+  const [disconnecting, setDisconnecting] = useState(false);
 
   // Tab 2: New Campaign
   const [form, setForm] = useState<CampaignForm>(INITIAL_FORM);
@@ -276,6 +284,7 @@ export default function AdsPage() {
   // Tab 3: Insights
   const [insights, setInsights] = useState<InsightDay[]>([]);
   const [insightsLoading, setInsightsLoading] = useState(false);
+  const [insightsError, setInsightsError] = useState("");
   const [dateRangeDays, setDateRangeDays] = useState(30);
   const [analysis, setAnalysis] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
@@ -303,14 +312,23 @@ export default function AdsPage() {
   /* ──── Fetch Campaigns ──── */
   const fetchCampaigns = useCallback(async () => {
     setCampaignsLoading(true);
+    setCampaignsError("");
     try {
       const res = await fetch("/api/ads/campaigns");
-      if (res.ok) {
+      if (!res.ok) {
         const data = await res.json();
-        setCampaigns(data.localCampaigns || []);
+        setCampaignsError(data.error || "Kampanya verileri alinamadi");
+        setCampaigns([]);
+        return;
       }
+      const data = await res.json();
+      if (data.metaError) {
+        setCampaignsError(data.metaError);
+      }
+      setCampaigns(data.campaigns || []);
     } catch {
-      // Handle error silently
+      setCampaignsError("Kampanya verileri alinamadi");
+      setCampaigns([]);
     } finally {
       setCampaignsLoading(false);
     }
@@ -325,15 +343,21 @@ export default function AdsPage() {
   /* ──── Fetch Insights ──── */
   const fetchInsights = useCallback(async () => {
     setInsightsLoading(true);
+    setInsightsError("");
     try {
       const { since, until } = getDateRange(dateRangeDays);
       const res = await fetch(`/api/ads/insights?since=${since}&until=${until}`);
-      if (res.ok) {
+      if (!res.ok) {
         const data = await res.json();
-        setInsights(Array.isArray(data) ? data : data.data || []);
+        setInsightsError(data.error || "Performans verileri alinamadi");
+        setInsights([]);
+        return;
       }
+      const data = await res.json();
+      setInsights(Array.isArray(data) ? data : data.data || []);
     } catch {
-      // Handle error silently
+      setInsightsError("Performans verileri alinamadi");
+      setInsights([]);
     } finally {
       setInsightsLoading(false);
     }
@@ -472,6 +496,24 @@ export default function AdsPage() {
     }
   }
 
+  /* ──── Disconnect ──── */
+  async function handleDisconnect() {
+    if (!confirm("Meta baglantisini kesmek istediginize emin misiniz?")) return;
+    setDisconnecting(true);
+    try {
+      const res = await fetch("/api/ads/disconnect", { method: "DELETE" });
+      if (res.ok) {
+        setMetaConnected(false);
+        setCampaigns([]);
+        setInsights([]);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setDisconnecting(false);
+    }
+  }
+
   /* ──── Form Helpers ──── */
   function updateForm(field: keyof CampaignForm, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -586,6 +628,18 @@ export default function AdsPage() {
           <Megaphone className="h-5 w-5 text-blue-600" />
           <h2 className="text-lg font-semibold text-gray-900">Meta Reklam Yonetimi</h2>
         </div>
+        <button
+          onClick={handleDisconnect}
+          disabled={disconnecting}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+        >
+          {disconnecting ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Unlink className="h-3.5 w-3.5" />
+          )}
+          Baglantiyi Kes
+        </button>
       </motion.div>
 
       {/* Tab Buttons */}
@@ -623,6 +677,18 @@ export default function AdsPage() {
           transition={{ duration: 0.4 }}
           className="space-y-4"
         >
+          {/* Error */}
+          {campaignsError && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-2 rounded-xl bg-red-50 border border-red-200 px-5 py-3.5"
+            >
+              <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
+              <p className="text-sm font-medium text-red-700">{campaignsError}</p>
+            </motion.div>
+          )}
+
           {/* Action Bar */}
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-500">
@@ -678,14 +744,14 @@ export default function AdsPage() {
                       <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500">
                         Butce
                       </th>
-                      <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500">
-                        Hedef
+                      <th className="px-5 py-3.5 text-right text-xs font-semibold text-gray-500">
+                        Gosterim
                       </th>
-                      <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500">
-                        Platform
+                      <th className="px-5 py-3.5 text-right text-xs font-semibold text-gray-500">
+                        Tiklama
                       </th>
-                      <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500">
-                        Baslangic
+                      <th className="px-5 py-3.5 text-right text-xs font-semibold text-gray-500">
+                        Harcama
                       </th>
                       <th className="px-5 py-3.5 text-right text-xs font-semibold text-gray-500">
                         Islemler
@@ -724,14 +790,20 @@ export default function AdsPage() {
                           <td className="px-5 py-4 text-gray-700">
                             {formatTL(camp.dailyBudget)}/gun
                           </td>
-                          <td className="px-5 py-4 text-gray-700">
-                            {OBJECTIVES[camp.objective] || camp.objective}
+                          <td className="px-5 py-4 text-right text-gray-700">
+                            {camp.impressions != null
+                              ? camp.impressions.toLocaleString("tr-TR")
+                              : "-"}
                           </td>
-                          <td className="px-5 py-4 text-gray-700">
-                            {PLATFORM_LABELS[camp.platforms] || camp.platforms}
+                          <td className="px-5 py-4 text-right text-gray-700">
+                            {camp.clicks != null
+                              ? camp.clicks.toLocaleString("tr-TR")
+                              : "-"}
                           </td>
-                          <td className="px-5 py-4 text-gray-700">
-                            {formatDateShort(camp.startDate)}
+                          <td className="px-5 py-4 text-right text-gray-700">
+                            {camp.spend != null
+                              ? formatTL(camp.spend)
+                              : "-"}
                           </td>
                           <td className="px-5 py-4">
                             <div className="flex items-center justify-end gap-1.5">
@@ -1257,6 +1329,18 @@ export default function AdsPage() {
               {analyzing ? "Analiz Ediliyor..." : "AI Analiz"}
             </button>
           </div>
+
+          {/* Error */}
+          {insightsError && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-2 rounded-xl bg-red-50 border border-red-200 px-5 py-3.5"
+            >
+              <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
+              <p className="text-sm font-medium text-red-700">{insightsError}</p>
+            </motion.div>
+          )}
 
           {/* Summary Stats */}
           {insights.length > 0 && (
