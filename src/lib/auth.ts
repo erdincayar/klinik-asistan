@@ -4,6 +4,7 @@ import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { compare } from "bcryptjs";
 import { prisma } from "./prisma";
+import { logActivity } from "./activity-logger";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -97,6 +98,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
   events: {
+    async signIn({ user }) {
+      if (user.id) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { lastLoginAt: new Date() },
+        });
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { clinicId: true },
+        });
+        logActivity({
+          userId: user.id,
+          clinicId: dbUser?.clinicId,
+          action: "LOGIN",
+        });
+      }
+    },
     async createUser({ user }) {
       // When a new user is created via OAuth, set defaults
       if (user.id) {

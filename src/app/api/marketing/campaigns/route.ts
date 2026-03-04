@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getClinicMetaConfig } from "@/lib/meta-ads";
+
+const GRAPH_API = "https://graph.facebook.com/v19.0";
 
 export async function GET() {
   try {
@@ -13,112 +15,97 @@ export async function GET() {
       return NextResponse.json({ error: "Klinik bulunamadı" }, { status: 400 });
     }
 
-    // Check if connected
-    const connection = await prisma.metaAdsConnection.findUnique({
-      where: { clinicId },
-    });
-
-    if (!connection) {
+    const config = await getClinicMetaConfig(clinicId);
+    if (!config) {
       return NextResponse.json({ connected: false, campaigns: [] });
     }
 
-    // Get stored metrics
-    const metrics = await prisma.adCampaignMetric.findMany({
-      where: { clinicId },
-      orderBy: { date: "desc" },
-    });
+    // Fetch campaigns
+    const campaignsUrl = new URL(`${GRAPH_API}/${config.adAccountId}/campaigns`);
+    campaignsUrl.searchParams.set("fields", "name,status,daily_budget,lifetime_budget,objective");
+    campaignsUrl.searchParams.set("access_token", config.accessToken);
+    campaignsUrl.searchParams.set("limit", "100");
 
-    if (metrics.length === 0) {
-      // Return mock data for demo
-      const mockCampaigns = [
-        {
-          id: "mock_1",
-          campaignId: "camp_001",
-          campaignName: "Botoks Kampanyası",
-          date: new Date().toISOString(),
-          impressions: 12500,
-          clicks: 380,
-          spend: 450.50,
-          conversions: 12,
-          cpc: 1.19,
-          cpm: 36.04,
-          ctr: 3.04,
-        },
-        {
-          id: "mock_2",
-          campaignId: "camp_002",
-          campaignName: "Dolgu Tanıtım",
-          date: new Date().toISOString(),
-          impressions: 8900,
-          clicks: 245,
-          spend: 320.00,
-          conversions: 8,
-          cpc: 1.31,
-          cpm: 35.96,
-          ctr: 2.75,
-        },
-        {
-          id: "mock_3",
-          campaignId: "camp_003",
-          campaignName: "Genel Marka Bilinirliği",
-          date: new Date().toISOString(),
-          impressions: 25000,
-          clicks: 520,
-          spend: 680.00,
-          conversions: 15,
-          cpc: 1.31,
-          cpm: 27.20,
-          ctr: 2.08,
-        },
-      ];
+    // Fetch account-level insights (last 30 days)
+    const accountInsightsUrl = new URL(`${GRAPH_API}/${config.adAccountId}/insights`);
+    accountInsightsUrl.searchParams.set("fields", "impressions,clicks,ctr,cpc,spend,actions");
+    accountInsightsUrl.searchParams.set("date_preset", "last_30d");
+    accountInsightsUrl.searchParams.set("access_token", config.accessToken);
 
+    // Fetch campaign-level insights (last 30 days)
+    const campaignInsightsUrl = new URL(`${GRAPH_API}/${config.adAccountId}/insights`);
+    campaignInsightsUrl.searchParams.set("fields", "campaign_name,campaign_id,impressions,clicks,ctr,cpc,spend,actions");
+    campaignInsightsUrl.searchParams.set("level", "campaign");
+    campaignInsightsUrl.searchParams.set("date_preset", "last_30d");
+    campaignInsightsUrl.searchParams.set("limit", "100");
+    campaignInsightsUrl.searchParams.set("access_token", config.accessToken);
+
+    const [campaignsRes, accountInsightsRes, campaignInsightsRes] = await Promise.all([
+      fetch(campaignsUrl.toString()),
+      fetch(accountInsightsUrl.toString()),
+      fetch(campaignInsightsUrl.toString()),
+    ]);
+
+    const [campaignsData, accountInsightsData, campaignInsightsData] = await Promise.all([
+      campaignsRes.json(),
+      accountInsightsRes.json(),
+      campaignInsightsRes.json(),
+    ]);
+
+    if (campaignsData.error) {
       return NextResponse.json({
         connected: true,
-        campaigns: mockCampaigns,
-        isDemo: true,
+        campaigns: [],
+        error: campaignsData.error.message || "Meta API hatası",
       });
     }
 
-    // Aggregate campaigns
-    const campaignMap = new Map<string, {
-      campaignId: string;
-      campaignName: string;
-      impressions: number;
-      clicks: number;
-      spend: number;
-      conversions: number;
-      days: number;
-    }>();
-
-    for (const m of metrics) {
-      const existing = campaignMap.get(m.campaignId);
-      if (existing) {
-        existing.impressions += m.impressions;
-        existing.clicks += m.clicks;
-        existing.spend += m.spend;
-        existing.conversions += m.conversions;
-        existing.days++;
-      } else {
-        campaignMap.set(m.campaignId, {
-          campaignId: m.campaignId,
-          campaignName: m.campaignName,
-          impressions: m.impressions,
-          clicks: m.clicks,
-          spend: m.spend,
-          conversions: m.conversions,
-          days: 1,
-        });
+    // Build campaign insights map
+    const insightsMap = new Map<string, any>();
+    if (campaignInsightsData.data) {
+      for (const insight of campaignInsightsData.data) {
+        insightsMap.set(insight.campaign_id, insight);
       }
     }
 
-    const campaigns = Array.from(campaignMap.values()).map((c) => ({
-      ...c,
-      cpc: c.clicks > 0 ? c.spend / c.clicks : 0,
-      cpm: c.impressions > 0 ? (c.spend / c.impressions) * 1000 : 0,
-      ctr: c.impressions > 0 ? (c.clicks / c.impressions) * 100 : 0,
-    }));
+    // Merge campaigns with their insights
+    const campaigns = (campaignsData.data || []).map((camp: any) => {
+      const insight = insightsMap.get(camp.id);
+      const conversions = insight?.actions?.find((a: any) => a.action_type === "offsite_conversion.fb_pixel_lead" || a.action_type === "lead")?.value || 0;
 
-    return NextResponse.json({ connected: true, campaigns, isDemo: false });
+      return {
+        campaignId: camp.id,
+        campaignName: camp.name,
+        status: camp.status,
+        objective: camp.objective,
+        dailyBudget: camp.daily_budget ? parseInt(camp.daily_budget) / 100 : 0,
+        lifetimeBudget: camp.lifetime_budget ? parseInt(camp.lifetime_budget) / 100 : 0,
+        impressions: insight ? parseInt(insight.impressions || "0") : 0,
+        clicks: insight ? parseInt(insight.clicks || "0") : 0,
+        spend: insight ? parseFloat(insight.spend || "0") : 0,
+        conversions: parseInt(conversions) || 0,
+        cpc: insight ? parseFloat(insight.cpc || "0") : 0,
+        cpm: insight?.impressions > 0
+          ? (parseFloat(insight.spend || "0") / parseInt(insight.impressions)) * 1000
+          : 0,
+        ctr: insight ? parseFloat(insight.ctr || "0") : 0,
+      };
+    });
+
+    // Account-level summary
+    const accountSummary = accountInsightsData.data?.[0] || null;
+
+    return NextResponse.json({
+      connected: true,
+      campaigns,
+      accountSummary: accountSummary ? {
+        impressions: parseInt(accountSummary.impressions || "0"),
+        clicks: parseInt(accountSummary.clicks || "0"),
+        spend: parseFloat(accountSummary.spend || "0"),
+        ctr: parseFloat(accountSummary.ctr || "0"),
+        cpc: parseFloat(accountSummary.cpc || "0"),
+      } : null,
+    });
   } catch (error) {
     console.error("Campaigns error:", error);
     return NextResponse.json({ error: "Kampanyalar alınamadı" }, { status: 500 });

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { logActivity } from "@/lib/activity-logger";
 
 export async function DELETE(_req: NextRequest) {
   try {
@@ -21,6 +22,13 @@ export async function DELETE(_req: NextRequest) {
         metaAdAccountId: null,
         metaConnected: false,
       },
+    });
+
+    const userId = (session.user as any).id;
+    logActivity({
+      userId,
+      clinicId,
+      action: "META_DISCONNECT",
     });
 
     return NextResponse.json({ success: true });

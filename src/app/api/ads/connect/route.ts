@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { encrypt } from "@/lib/encryption";
+import { logActivity } from "@/lib/activity-logger";
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,6 +32,14 @@ export async function POST(req: NextRequest) {
         metaAdAccountId: formattedAccountId,
         metaConnected: true,
       },
+    });
+
+    const userId = (session.user as any).id;
+    logActivity({
+      userId,
+      clinicId,
+      action: "META_CONNECT",
+      details: { adAccountId: formattedAccountId },
     });
 
     return NextResponse.json({ success: true });

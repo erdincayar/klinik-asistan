@@ -23,9 +23,9 @@ function getClientIp(req: NextRequest): string {
     "unknown";
 }
 
-function checkRateLimit(ip: string, limit: number, windowMs: number): boolean {
+function checkRateLimit(ip: string, limit: number, windowMs: number, routeKey?: string): boolean {
   const now = Date.now();
-  const key = `${ip}`;
+  const key = routeKey ? `${ip}:${routeKey}` : ip;
   const record = rateLimitMap.get(key);
 
   if (!record || record.resetTime < now) {
@@ -71,6 +71,10 @@ function recordLoginAttempt(ip: string) {
   }
 }
 
+function resetLoginAttempts(ip: string) {
+  loginAttemptsMap.delete(ip);
+}
+
 // Security headers
 function addSecurityHeaders(response: NextResponse): NextResponse {
   response.headers.set("X-Frame-Options", "DENY");
@@ -92,9 +96,9 @@ export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const ip = getClientIp(req);
 
-  // Rate limiting for login
+  // Rate limiting for auth
   if (pathname.startsWith("/api/auth")) {
-    if (!checkRateLimit(ip, 5, 60000)) {
+    if (!checkRateLimit(ip, 10, 60000, "auth")) {
       return addSecurityHeaders(
         NextResponse.json(
           { error: "Cok fazla istek. Lutfen bekleyin." },
@@ -118,9 +122,21 @@ export function middleware(req: NextRequest) {
     }
   }
 
-  // Rate limiting for API endpoints
-  if (pathname.startsWith("/api/") && !pathname.startsWith("/api/auth")) {
-    if (!checkRateLimit(ip + "-api", 100, 60000)) {
+  // Rate limiting for ads endpoints
+  if (pathname.startsWith("/api/ads")) {
+    if (!checkRateLimit(ip, 30, 60000, "ads")) {
+      return addSecurityHeaders(
+        NextResponse.json(
+          { error: "Istek limiti asildi" },
+          { status: 429 }
+        )
+      );
+    }
+  }
+
+  // Rate limiting for general API endpoints
+  if (pathname.startsWith("/api/") && !pathname.startsWith("/api/auth") && !pathname.startsWith("/api/ads")) {
+    if (!checkRateLimit(ip, 60, 60000, "api")) {
       return addSecurityHeaders(
         NextResponse.json(
           { error: "Istek limiti asildi" },
@@ -157,6 +173,15 @@ export function middleware(req: NextRequest) {
           )
         );
       }
+    }
+  }
+
+  // Reset brute force counter if user has a valid session (successful login happened)
+  if (loginAttemptsMap.has(ip)) {
+    const sessionToken = req.cookies.get("next-auth.session-token") ||
+      req.cookies.get("__Secure-next-auth.session-token");
+    if (sessionToken) {
+      resetLoginAttempts(ip);
     }
   }
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getCampaigns, createCampaign, createAdSet, createAd } from "@/lib/meta-ads";
+import { logActivity } from "@/lib/activity-logger";
 
 const OBJECTIVE_REVERSE: Record<string, string> = {
   OUTCOME_TRAFFIC: "TRAFFIC",
@@ -182,6 +183,14 @@ export async function POST(req: NextRequest) {
         ctaType,
         websiteUrl,
       },
+    });
+
+    const userId = (session.user as any).id;
+    logActivity({
+      userId,
+      clinicId,
+      action: "CAMPAIGN_CREATE",
+      details: { campaignName: name, objective },
     });
 
     return NextResponse.json(campaign, { status: 201 });

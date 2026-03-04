@@ -9,6 +9,19 @@ interface MetaConfig {
   adAccountId: string;
 }
 
+function sanitizeErrorMessage(message: string): string {
+  return message.replace(/access_token=[^&\s]+/gi, "access_token=[REDACTED]");
+}
+
+async function handleOAuthError(clinicId: string, errorData: any): Promise<void> {
+  if (errorData?.type === "OAuthException" || errorData?.code === 190) {
+    await prisma.clinic.update({
+      where: { id: clinicId },
+      data: { metaConnected: false },
+    });
+  }
+}
+
 export async function getClinicMetaConfig(clinicId: string): Promise<MetaConfig | null> {
   const clinic = await prisma.clinic.findUnique({
     where: { id: clinicId },
@@ -62,7 +75,10 @@ export async function testConnection(clinicId: string): Promise<{ success: boole
     const data = await graphGet(`/${config.adAccountId}`, config.accessToken, {
       fields: "name,account_status",
     });
-    if (data.error) return { success: false, error: data.error.message };
+    if (data.error) {
+      await handleOAuthError(clinicId, data.error);
+      return { success: false, error: sanitizeErrorMessage(data.error.message) };
+    }
     return { success: true, name: data.name };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : "Bağlantı hatası" };
@@ -77,7 +93,10 @@ export async function getCampaigns(clinicId: string) {
     fields: "id,name,status,objective,daily_budget,start_time,stop_time,insights{impressions,clicks,spend,ctr,cpc}",
     limit: "100",
   });
-  if (data.error) throw new Error(data.error.message || "Meta API hatası");
+  if (data.error) {
+    await handleOAuthError(clinicId, data.error);
+    throw new Error(sanitizeErrorMessage(data.error.message || "Meta API hatası"));
+  }
   return data.data || [];
 }
 
@@ -92,7 +111,10 @@ export async function getCampaignInsights(clinicId: string, dateRange: { since: 
     level: "campaign",
     limit: "500",
   });
-  if (data.error) throw new Error(data.error.message || "Meta API hatası");
+  if (data.error) {
+    await handleOAuthError(clinicId, data.error);
+    throw new Error(sanitizeErrorMessage(data.error.message || "Meta API hatası"));
+  }
   return data.data || [];
 }
 
@@ -121,7 +143,10 @@ export async function createCampaign(clinicId: string, data: {
     special_ad_categories: [],
   });
 
-  if (result.error) throw new Error(result.error.message);
+  if (result.error) {
+    await handleOAuthError(clinicId, result.error);
+    throw new Error(sanitizeErrorMessage(result.error.message));
+  }
   return result;
 }
 
@@ -177,7 +202,10 @@ export async function createAdSet(clinicId: string, campaignId: string, data: {
     status: "PAUSED",
   });
 
-  if (result.error) throw new Error(result.error.message);
+  if (result.error) {
+    await handleOAuthError(clinicId, result.error);
+    throw new Error(sanitizeErrorMessage(result.error.message));
+  }
   return result;
 }
 
@@ -206,7 +234,10 @@ export async function createAd(clinicId: string, adSetId: string, data: {
   };
 
   const creativeResult = await graphPost(`/${config.adAccountId}/adcreatives`, config.accessToken, creative);
-  if (creativeResult.error) throw new Error(creativeResult.error.message);
+  if (creativeResult.error) {
+    await handleOAuthError(clinicId, creativeResult.error);
+    throw new Error(sanitizeErrorMessage(creativeResult.error.message));
+  }
 
   const result = await graphPost(`/${config.adAccountId}/ads`, config.accessToken, {
     name: data.name,
@@ -215,7 +246,10 @@ export async function createAd(clinicId: string, adSetId: string, data: {
     status: "PAUSED",
   });
 
-  if (result.error) throw new Error(result.error.message);
+  if (result.error) {
+    await handleOAuthError(clinicId, result.error);
+    throw new Error(sanitizeErrorMessage(result.error.message));
+  }
   return result;
 }
 
@@ -231,7 +265,10 @@ export async function updateCampaignStatus(clinicId: string, campaignId: string,
     body: JSON.stringify({ status }),
   });
   const result = await res.json();
-  if (result.error) throw new Error(result.error.message);
+  if (result.error) {
+    await handleOAuthError(clinicId, result.error);
+    throw new Error(sanitizeErrorMessage(result.error.message));
+  }
   return result;
 }
 
@@ -248,6 +285,9 @@ export async function uploadImage(clinicId: string, imageBuffer: Buffer) {
     body: formData,
   });
   const result = await res.json();
-  if (result.error) throw new Error(result.error.message);
+  if (result.error) {
+    await handleOAuthError(clinicId, result.error);
+    throw new Error(sanitizeErrorMessage(result.error.message));
+  }
   return result;
 }

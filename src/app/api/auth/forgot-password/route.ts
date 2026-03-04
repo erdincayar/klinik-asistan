@@ -45,9 +45,9 @@ export async function POST(request: Request) {
       },
     });
 
-    // TODO: Replace with actual email sending
-    const resetUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/reset-password?token=${rawToken}`;
-    console.log(`[PASSWORD RESET] ${email}: ${resetUrl}`);
+    // TODO: Replace with actual email sending service
+    const _resetUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/reset-password?token=${rawToken}`;
+    // Token intentionally NOT logged — send via email service
 
     return successResponse;
   } catch (error) {

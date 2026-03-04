@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   Megaphone,
@@ -10,9 +11,10 @@ import {
   Target,
   Loader2,
   Bot,
-  Link as LinkIcon,
-  X,
   Unlink,
+  Settings,
+  ChevronRight,
+  AlertCircle,
 } from "lucide-react";
 import {
   BarChart,
@@ -29,6 +31,7 @@ import {
 interface Campaign {
   campaignId: string;
   campaignName: string;
+  status: string;
   impressions: number;
   clicks: number;
   spend: number;
@@ -43,63 +46,56 @@ function Skeleton({ className }: { className?: string }) {
 }
 
 export default function MarketingPage() {
-  const [connected, setConnected] = useState(false);
+  const [connected, setConnected] = useState<boolean | null>(null);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isDemo, setIsDemo] = useState(false);
-  const [showConnectModal, setShowConnectModal] = useState(false);
-  const [connectForm, setConnectForm] = useState({ accessToken: "", adAccountId: "", pageId: "" });
-  const [connecting, setConnecting] = useState(false);
+  const [error, setError] = useState("");
   const [analysis, setAnalysis] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
 
   useEffect(() => {
     fetchCampaigns();
   }, []);
 
   async function fetchCampaigns() {
+    setLoading(true);
+    setError("");
     try {
       const res = await fetch("/api/marketing/campaigns");
-      if (res.ok) {
+      if (!res.ok) {
         const data = await res.json();
-        setConnected(data.connected);
-        setCampaigns(data.campaigns || []);
-        setIsDemo(data.isDemo || false);
+        setError(data.error || "Kampanya verileri alinamadi");
+        setConnected(false);
+        return;
+      }
+      const data = await res.json();
+      setConnected(data.connected);
+      setCampaigns(data.campaigns || []);
+      if (data.error) {
+        setError(data.error);
       }
     } catch {
-      // Handle error
+      setError("Kampanya verileri alinamadi");
+      setConnected(false);
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleConnect(e: React.FormEvent) {
-    e.preventDefault();
-    setConnecting(true);
+  async function handleDisconnect() {
+    if (!confirm("Meta baglantisini kesmek istediginize emin misiniz?")) return;
+    setDisconnecting(true);
     try {
-      const res = await fetch("/api/marketing/connect", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(connectForm),
-      });
+      const res = await fetch("/api/ads/disconnect", { method: "DELETE" });
       if (res.ok) {
-        setShowConnectModal(false);
-        await fetchCampaigns();
+        setConnected(false);
+        setCampaigns([]);
       }
     } catch {
-      // Handle error
+      // ignore
     } finally {
-      setConnecting(false);
-    }
-  }
-
-  async function handleDisconnect() {
-    try {
-      await fetch("/api/marketing/connect", { method: "DELETE" });
-      setConnected(false);
-      setCampaigns([]);
-    } catch {
-      // Handle error
+      setDisconnecting(false);
     }
   }
 
@@ -117,7 +113,7 @@ export default function MarketingPage() {
         setAnalysis(data.analysis);
       }
     } catch {
-      setAnalysis("Analiz sırasında bir hata oluştu.");
+      setAnalysis("Analiz sirasinda bir hata olustu.");
     } finally {
       setAnalyzing(false);
     }
@@ -131,10 +127,69 @@ export default function MarketingPage() {
   const chartData = campaigns.map((c) => ({
     name: c.campaignName.length > 15 ? c.campaignName.slice(0, 15) + "..." : c.campaignName,
     Harcama: c.spend,
-    Tıklama: c.clicks,
-    Dönüşüm: c.conversions,
+    Tiklama: c.clicks,
+    Donusum: c.conversions,
   }));
 
+  // Loading
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-12 w-64" />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28" />)}
+        </div>
+        <Skeleton className="h-96" />
+      </div>
+    );
+  }
+
+  // Not connected
+  if (!connected) {
+    return (
+      <div className="space-y-6">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="flex items-center gap-2"
+        >
+          <Megaphone className="h-5 w-5 text-blue-600" />
+          <h2 className="text-lg font-semibold text-gray-900">Pazarlama</h2>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.05 }}
+          className="flex min-h-[400px] items-center justify-center rounded-2xl border border-gray-100 bg-white"
+        >
+          <div className="text-center max-w-md px-6">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50">
+              <Megaphone className="h-8 w-8 text-blue-400" />
+            </div>
+            <h3 className="text-base font-semibold text-gray-900 mb-2">
+              Meta hesabinizi baglayin
+            </h3>
+            <p className="text-sm text-gray-500 mb-6">
+              Facebook ve Instagram reklam kampanyalarinizi goruntulemek ve AI destekli analizler almak icin
+              Meta hesabinizi Ayarlar sayfasindan baglayiniz.
+            </p>
+            <Link
+              href="/settings"
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+            >
+              <Settings className="h-4 w-4" />
+              Ayarlara Git
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // Connected
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -147,67 +202,54 @@ export default function MarketingPage() {
         <div className="flex items-center gap-2">
           <Megaphone className="h-5 w-5 text-blue-600" />
           <h2 className="text-lg font-semibold text-gray-900">Pazarlama</h2>
-          {isDemo && (
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
-              Demo Veri
-            </span>
-          )}
         </div>
         <div className="flex items-center gap-2">
-          {connected ? (
-            <>
-              <button
-                onClick={handleAnalyze}
-                disabled={analyzing || campaigns.length === 0}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
-              >
-                {analyzing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Bot className="h-3.5 w-3.5" />}
-                {analyzing ? "Analiz Ediliyor..." : "AI Analiz"}
-              </button>
-              <button
-                onClick={handleDisconnect}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 px-4 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50"
-              >
-                <Unlink className="h-3.5 w-3.5" />
-                Bağlantıyı Kes
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => setShowConnectModal(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-700"
-            >
-              <LinkIcon className="h-3.5 w-3.5" />
-              Meta Hesabını Bağla
-            </button>
-          )}
+          <button
+            onClick={handleAnalyze}
+            disabled={analyzing || campaigns.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+          >
+            {analyzing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Bot className="h-3.5 w-3.5" />}
+            {analyzing ? "Analiz Ediliyor..." : "AI Analiz"}
+          </button>
+          <button
+            onClick={handleDisconnect}
+            disabled={disconnecting}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 px-4 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+          >
+            {disconnecting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Unlink className="h-3.5 w-3.5" />}
+            Baglantiyi Kes
+          </button>
         </div>
       </motion.div>
 
-      {loading ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28" />)}
-        </div>
-      ) : !connected ? (
+      {/* Error */}
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-2 rounded-xl bg-red-50 border border-red-200 px-5 py-3.5"
+        >
+          <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
+          <p className="text-sm font-medium text-red-700">Meta baglanti hatasi: {error}</p>
+        </motion.div>
+      )}
+
+      {campaigns.length === 0 && !error ? (
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex min-h-[300px] items-center justify-center rounded-2xl border border-gray-100 bg-white"
         >
           <div className="text-center">
-            <Megaphone className="mx-auto mb-3 h-12 w-12 text-gray-300" />
-            <p className="text-sm font-medium text-gray-500">Meta Ads hesabınızı bağlayın</p>
-            <p className="mt-1 text-xs text-gray-400">Kampanya performansınızı analiz edin</p>
-            <button
-              onClick={() => setShowConnectModal(true)}
-              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
-            >
-              <LinkIcon className="h-4 w-4" />
-              Meta Hesabını Bağla
-            </button>
+            <Megaphone className="mx-auto mb-3 h-10 w-10 text-gray-300" />
+            <p className="text-sm font-medium text-gray-500">Henuz kampanyaniz yok</p>
+            <p className="mt-1 text-xs text-gray-400">
+              Meta Ads hesabinizda aktif kampanya bulunmuyor
+            </p>
           </div>
         </motion.div>
-      ) : (
+      ) : campaigns.length > 0 && (
         <>
           {/* Summary cards */}
           <motion.div
@@ -218,9 +260,9 @@ export default function MarketingPage() {
           >
             {[
               { label: "Toplam Harcama", value: `₺${totalSpend.toFixed(0)}`, icon: DollarSign, color: "text-red-600", bg: "bg-red-50" },
-              { label: "Toplam Tıklama", value: totalClicks.toLocaleString("tr-TR"), icon: MousePointerClick, color: "text-blue-600", bg: "bg-blue-50" },
+              { label: "Toplam Tiklama", value: totalClicks.toLocaleString("tr-TR"), icon: MousePointerClick, color: "text-blue-600", bg: "bg-blue-50" },
               { label: "Ortalama CPC", value: `₺${avgCpc.toFixed(2)}`, icon: TrendingUp, color: "text-amber-600", bg: "bg-amber-50" },
-              { label: "Toplam Dönüşüm", value: totalConversions.toString(), icon: Target, color: "text-emerald-600", bg: "bg-emerald-50" },
+              { label: "Toplam Donusum", value: totalConversions.toString(), icon: Target, color: "text-emerald-600", bg: "bg-emerald-50" },
             ].map((stat) => {
               const Icon = stat.icon;
               return (
@@ -262,11 +304,11 @@ export default function MarketingPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                     <div className="rounded-lg bg-gray-50 px-3 py-2">
-                      <p className="text-[10px] text-gray-400">Gösterim</p>
+                      <p className="text-[10px] text-gray-400">Gosterim</p>
                       <p className="text-sm font-semibold text-gray-800">{camp.impressions.toLocaleString("tr-TR")}</p>
                     </div>
                     <div className="rounded-lg bg-gray-50 px-3 py-2">
-                      <p className="text-[10px] text-gray-400">Tıklama</p>
+                      <p className="text-[10px] text-gray-400">Tiklama</p>
                       <p className="text-sm font-semibold text-gray-800">{camp.clicks.toLocaleString("tr-TR")}</p>
                     </div>
                     <div className="rounded-lg bg-gray-50 px-3 py-2">
@@ -274,7 +316,7 @@ export default function MarketingPage() {
                       <p className="text-sm font-semibold text-gray-800">%{camp.ctr?.toFixed(2)}</p>
                     </div>
                     <div className="rounded-lg bg-gray-50 px-3 py-2">
-                      <p className="text-[10px] text-gray-400">Dönüşüm</p>
+                      <p className="text-[10px] text-gray-400">Donusum</p>
                       <p className="text-sm font-semibold text-emerald-600">{camp.conversions}</p>
                     </div>
                   </div>
@@ -283,7 +325,7 @@ export default function MarketingPage() {
             </div>
           </motion.div>
 
-          {/* Chart */}
+          {/* Charts */}
           {chartData.length > 0 && (
             <div className="grid gap-6 lg:grid-cols-2">
               <motion.div
@@ -292,7 +334,7 @@ export default function MarketingPage() {
                 transition={{ duration: 0.4, delay: 0.15 }}
                 className="rounded-2xl border border-gray-100 bg-white p-6"
               >
-                <h3 className="mb-4 text-sm font-semibold text-gray-900">Harcama Dağılımı</h3>
+                <h3 className="mb-4 text-sm font-semibold text-gray-900">Harcama Dagilimi</h3>
                 <ResponsiveContainer width="100%" height={250}>
                   <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
@@ -310,15 +352,15 @@ export default function MarketingPage() {
                 transition={{ duration: 0.4, delay: 0.2 }}
                 className="rounded-2xl border border-gray-100 bg-white p-6"
               >
-                <h3 className="mb-4 text-sm font-semibold text-gray-900">Tıklama ve Dönüşüm</h3>
+                <h3 className="mb-4 text-sm font-semibold text-gray-900">Tiklama ve Donusum</h3>
                 <ResponsiveContainer width="100%" height={250}>
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
                     <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="#9ca3af" />
                     <YAxis tick={{ fontSize: 11 }} stroke="#9ca3af" />
                     <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid #e5e7eb" }} />
-                    <Line type="monotone" dataKey="Tıklama" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} />
-                    <Line type="monotone" dataKey="Dönüşüm" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} />
+                    <Line type="monotone" dataKey="Tiklama" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} />
+                    <Line type="monotone" dataKey="Donusum" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} />
                   </LineChart>
                 </ResponsiveContainer>
               </motion.div>
@@ -342,67 +384,6 @@ export default function MarketingPage() {
             </motion.div>
           )}
         </>
-      )}
-
-      {/* Connect Modal */}
-      {showConnectModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-          onClick={() => setShowConnectModal(false)}
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="mx-4 w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Meta Ads Bağla</h3>
-              <button onClick={() => setShowConnectModal(false)} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <form onSubmit={handleConnect} className="space-y-4">
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-600">Access Token</label>
-                <input
-                  value={connectForm.accessToken}
-                  onChange={(e) => setConnectForm({ ...connectForm, accessToken: e.target.value })}
-                  required
-                  placeholder="Meta API Access Token"
-                  className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-600">Ad Account ID</label>
-                <input
-                  value={connectForm.adAccountId}
-                  onChange={(e) => setConnectForm({ ...connectForm, adAccountId: e.target.value })}
-                  required
-                  placeholder="act_123456789"
-                  className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-600">Page ID (Opsiyonel)</label>
-                <input
-                  value={connectForm.pageId}
-                  onChange={(e) => setConnectForm({ ...connectForm, pageId: e.target.value })}
-                  placeholder="Facebook sayfa ID"
-                  className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={connecting}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
-              >
-                {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                {connecting ? "Bağlanıyor..." : "Bağlan"}
-              </button>
-            </form>
-          </motion.div>
-        </div>
       )}
     </div>
   );

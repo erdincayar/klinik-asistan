@@ -2,6 +2,7 @@ import { prisma } from "./prisma";
 
 export type ActivityAction =
   | "LOGIN"
+  | "LOGIN_FAILED"
   | "LOGOUT"
   | "PATIENT_CREATE"
   | "PATIENT_UPDATE"
@@ -15,6 +16,10 @@ export type ActivityAction =
   | "USER_CREATE"
   | "USER_UPDATE"
   | "TELEGRAM_CONNECT"
+  | "META_CONNECT"
+  | "META_DISCONNECT"
+  | "CAMPAIGN_CREATE"
+  | "CAMPAIGN_UPDATE"
   | "PHOTO_UPLOAD"
   | "POST_SCHEDULE";
 
@@ -49,6 +54,7 @@ export async function logActivity({
 export function getActionLabel(action: string): string {
   const labels: Record<string, string> = {
     LOGIN: "Giriş yapıldı",
+    LOGIN_FAILED: "Başarısız giriş denemesi",
     LOGOUT: "Çıkış yapıldı",
     PATIENT_CREATE: "Müşteri eklendi",
     PATIENT_UPDATE: "Müşteri güncellendi",
@@ -62,6 +68,10 @@ export function getActionLabel(action: string): string {
     USER_CREATE: "Kullanıcı oluşturuldu",
     USER_UPDATE: "Kullanıcı güncellendi",
     TELEGRAM_CONNECT: "Telegram bağlandı",
+    META_CONNECT: "Meta Ads bağlandı",
+    META_DISCONNECT: "Meta Ads bağlantısı kesildi",
+    CAMPAIGN_CREATE: "Kampanya oluşturuldu",
+    CAMPAIGN_UPDATE: "Kampanya güncellendi",
     PHOTO_UPLOAD: "Fotoğraf yüklendi",
     POST_SCHEDULE: "Paylaşım planlandı",
   };
