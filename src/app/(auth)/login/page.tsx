@@ -14,6 +14,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const {
     register,
@@ -31,6 +32,7 @@ export default function LoginPage() {
       const result = await signIn("credentials", {
         email: data.email,
         password: data.password,
+        rememberMe: rememberMe.toString(),
         redirect: false,
       });
 
@@ -116,6 +118,23 @@ export default function LoginPage() {
           {errors.password && (
             <p className="text-xs text-red-500">{errors.password.message}</p>
           )}
+        </div>
+
+        {/* Remember Me */}
+        <div className="flex items-center gap-2">
+          <input
+            id="rememberMe"
+            type="checkbox"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500/20"
+          />
+          <label
+            htmlFor="rememberMe"
+            className="text-sm text-gray-600 select-none cursor-pointer"
+          >
+            Beni Hatırla
+          </label>
         </div>
 
         {/* Submit */}
