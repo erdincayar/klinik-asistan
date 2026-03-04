@@ -19,6 +19,8 @@ import {
   ChevronDown,
   ChevronUp,
   ExternalLink,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 import { TREATMENT_CATEGORIES } from "@/lib/types";
 import QRCode from "qrcode";
@@ -79,6 +81,7 @@ export default function SettingsPage() {
   const [metaError, setMetaError] = useState("");
   const [showMetaToken, setShowMetaToken] = useState(false);
   const [metaHowTo, setMetaHowTo] = useState(false);
+  const [metaTokenExpiresAt, setMetaTokenExpiresAt] = useState<string | null>(null);
 
   // Telegram
   const [telegramConnected, setTelegramConnected] = useState(false);
@@ -108,6 +111,7 @@ export default function SettingsPage() {
           if (data.metaConnected) {
             setMetaConnected(true);
             setMetaAdAccountId(data.metaAdAccountId || "");
+            setMetaTokenExpiresAt(data.metaTokenExpiresAt || null);
           }
         }
 
@@ -405,6 +409,7 @@ export default function SettingsPage() {
                       if (res.ok) {
                         setMetaConnected(false);
                         setMetaAdAccountId("");
+                        setMetaTokenExpiresAt(null);
                       }
                     } catch { /* silent */ }
                   }}
@@ -413,6 +418,60 @@ export default function SettingsPage() {
                   Bağlantıyı Kaldır
                 </button>
               </div>
+              {(() => {
+                if (!metaTokenExpiresAt) return null;
+                const expiresAt = new Date(metaTokenExpiresAt);
+                const now = new Date();
+                const daysLeft = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                const isExpired = daysLeft <= 0;
+                const isExpiringSoon = daysLeft > 0 && daysLeft <= 10;
+
+                if (!isExpired && !isExpiringSoon) {
+                  return (
+                    <p className="text-xs text-gray-400 px-1">
+                      Token suresi: {expiresAt.toLocaleDateString("tr-TR")} ({daysLeft} gun kaldi)
+                    </p>
+                  );
+                }
+
+                return (
+                  <div className={`flex items-center justify-between rounded-xl px-5 py-4 ${isExpired ? "bg-red-50" : "bg-amber-50"}`}>
+                    <div className="flex items-center gap-3">
+                      <AlertCircle className={`h-5 w-5 ${isExpired ? "text-red-600" : "text-amber-600"}`} />
+                      <div>
+                        <p className={`text-sm font-semibold ${isExpired ? "text-red-800" : "text-amber-800"}`}>
+                          {isExpired
+                            ? "Meta token suresi dolmus!"
+                            : `Meta token ${daysLeft} gun sonra dolacak`}
+                        </p>
+                        <p className={`text-xs ${isExpired ? "text-red-600" : "text-amber-600"}`}>
+                          {isExpired
+                            ? "Yeni token ile tekrar baglanti kurun"
+                            : "Yenilemek icin baglantiyi kesip tekrar baglayin"}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await fetch("/api/ads/disconnect", { method: "DELETE" });
+                          setMetaConnected(false);
+                          setMetaAdAccountId("");
+                          setMetaTokenExpiresAt(null);
+                        } catch { /* silent */ }
+                      }}
+                      className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition-colors ${
+                        isExpired
+                          ? "bg-red-600 text-white hover:bg-red-700"
+                          : "border border-amber-300 bg-white text-amber-700 hover:bg-amber-50"
+                      }`}
+                    >
+                      <RefreshCw className="h-3.5 w-3.5" />
+                      Yenile
+                    </button>
+                  </div>
+                );
+              })()}
             </div>
           ) : (
             <div className="space-y-4">

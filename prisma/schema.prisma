@@ -96,6 +96,7 @@ model Clinic {
   metaAccessToken       String?                // AES-256 encrypted
   metaAdAccountId       String?
   metaConnected         Boolean                @default(false)
+  metaTokenExpiresAt    DateTime?
   metaAdsConnection     MetaAdsConnection?
   adCampaigns           AdCampaign[]
   adCampaignMetrics     AdCampaignMetric[]
