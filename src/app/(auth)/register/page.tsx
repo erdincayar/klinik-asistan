@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
@@ -28,9 +28,19 @@ type RegisterFormInput = z.infer<typeof registerFormSchema>;
 export default function RegisterPage() {
   const router = useRouter();
   const [error, setError] = useState("");
+  const [googleError, setGoogleError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const err = params.get("error");
+    if (err === "AccountExists") {
+      setError("Bu email zaten kayıtlı. Giriş yapın.");
+      setGoogleError(true);
+    }
+  }, []);
 
   const {
     register,
@@ -90,6 +100,11 @@ export default function RegisterPage() {
             className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
           >
             {error}
+            {googleError && (
+              <Link href="/login" className="ml-1 font-semibold text-blue-600 hover:text-blue-700 underline">
+                Giriş Yap
+              </Link>
+            )}
           </motion.div>
         )}
 
@@ -261,7 +276,9 @@ export default function RegisterPage() {
           type="button"
           onClick={() => {
             setLoading(true);
-            signIn("google", { callbackUrl: "/dashboard" });
+            setError("");
+            document.cookie = "google-auth-intent=register; path=/; max-age=300; SameSite=Lax";
+            signIn("google", { callbackUrl: "/register/complete" });
           }}
           disabled={loading}
           className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 disabled:opacity-60"

@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { compare } from "bcryptjs";
+import { cookies } from "next/headers";
 import { prisma } from "./prisma";
 import { logActivity } from "./activity-logger";
 
@@ -76,6 +77,32 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
+    async signIn({ user, account, profile }) {
+      if (account?.provider === "google" && profile?.email) {
+        const cookieStore = cookies();
+        const intent = cookieStore.get("google-auth-intent")?.value;
+
+        const existingUser = await prisma.user.findUnique({
+          where: { email: profile.email },
+          select: { id: true, clinicId: true },
+        });
+
+        if (intent === "register") {
+          if (existingUser) {
+            return "/register?error=AccountExists";
+          }
+          // Allow — PrismaAdapter will create user without clinic
+          return true;
+        }
+
+        // Default: login behavior
+        if (!existingUser) {
+          return "/login?error=NoAccount";
+        }
+        return true;
+      }
+      return true;
+    },
     async jwt({ token, user, trigger }) {
       if (user) {
         token.clinicId = (user as any).clinicId;

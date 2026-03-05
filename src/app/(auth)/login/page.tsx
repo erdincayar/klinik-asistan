@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
@@ -13,9 +13,19 @@ import { loginSchema, type LoginInput } from "@/lib/validations";
 export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState("");
+  const [googleError, setGoogleError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const err = params.get("error");
+    if (err === "NoAccount") {
+      setError("Bu email ile kayıtlı hesap bulunamadı. Önce kayıt olun.");
+      setGoogleError(true);
+    }
+  }, []);
 
   const {
     register,
@@ -68,6 +78,11 @@ export default function LoginPage() {
             className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
           >
             {error}
+            {googleError && (
+              <Link href="/register" className="ml-1 font-semibold text-blue-600 hover:text-blue-700 underline">
+                Kayıt Ol
+              </Link>
+            )}
           </motion.div>
         )}
 
@@ -186,6 +201,8 @@ export default function LoginPage() {
           type="button"
           onClick={() => {
             setLoading(true);
+            setError("");
+            document.cookie = "google-auth-intent=login; path=/; max-age=300; SameSite=Lax";
             signIn("google", { callbackUrl: "/dashboard" });
           }}
           disabled={loading}
