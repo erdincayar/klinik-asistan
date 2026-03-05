@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
     }
 
     // ── AI destekli doğal dil işleme ──
-    const result = await handleBotMessage(clinic.id, text);
+    const result = await handleBotMessage(clinic.id, text, `telegram:${chatId}`);
 
     await sendTelegramMessage({
       chat_id: chatId,

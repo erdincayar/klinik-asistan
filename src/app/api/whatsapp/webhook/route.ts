@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
     }
 
     // ── AI destekli doğal dil işleme (selamlama dahil) ──
-    const result = await handleBotMessage(clinic.id, messageText);
+    const result = await handleBotMessage(clinic.id, messageText, `whatsapp:${senderPhone}`);
 
     await sendWhatsAppMessage(senderPhone, result.response);
 
@@ -107,7 +107,7 @@ async function handleInternalMessage(
   clinicId: string,
   senderPhone: string
 ) {
-  const result = await handleBotMessage(clinicId, messageText);
+  const result = await handleBotMessage(clinicId, messageText, `test:${senderPhone}`);
 
   if (senderPhone !== "test-user") {
     await sendWhatsAppMessage(senderPhone, result.response);

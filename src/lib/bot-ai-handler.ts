@@ -20,8 +20,15 @@ import {
   getInvoiceSummary,
   sendReminderCommand,
 } from "./commands/command-executor";
-import { processWhatsAppMessage } from "./whatsapp/message-parser";
+import { parseWhatsAppMessage, findOrCreatePatient } from "./whatsapp/message-parser";
 import { prisma } from "./prisma";
+import {
+  getConversationState,
+  setConversationState,
+  clearConversationState,
+  type ConversationState,
+  type PendingAppointmentData,
+} from "./bot-conversation-state";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -311,12 +318,274 @@ ${clinicData}`,
   return `📋 İşletme Özeti:\n📅 Bugün ${appointmentCount} randevu\n💰 Bu ay gelir: ${(totalIncome / 100).toLocaleString("tr-TR")} TL\n💸 Bu ay gider: ${(totalExpense / 100).toLocaleString("tr-TR")} TL\n👥 Toplam müşteri: ${patientCount}\n${lowStock.length > 0 ? `⚠️ ${lowStock.length} üründe düşük stok` : "✅ Stoklar normal"}\n\nBaşka bir konuda yardım ister misiniz?`;
 }
 
+// ── Employee Selection Helpers ──────────────────────────────────────────────
+
+async function checkTimeConflict(
+  clinicId: string,
+  employeeId: string,
+  date: string,
+  startTime: string,
+  endTime: string
+): Promise<{ hasConflict: boolean; conflictInfo?: string }> {
+  const dayStart = startOfDayUTC(new Date(date));
+  const dayEnd = endOfDayUTC(new Date(date));
+
+  const existing = await prisma.appointment.findMany({
+    where: {
+      clinicId,
+      employeeId,
+      date: { gte: dayStart, lte: dayEnd },
+      status: { not: "CANCELLED" },
+    },
+    include: { patient: { select: { name: true } } },
+  });
+
+  for (const apt of existing) {
+    // Simple time overlap check: if new start < existing end AND new end > existing start
+    if (startTime < apt.endTime && endTime > apt.startTime) {
+      return {
+        hasConflict: true,
+        conflictInfo: `${apt.patient.name} - ${apt.startTime}-${apt.endTime}`,
+      };
+    }
+  }
+
+  return { hasConflict: false };
+}
+
+async function createAppointmentWithEmployee(
+  patientId: string,
+  patientName: string,
+  date: string,
+  time: string,
+  endTime: string,
+  treatmentType: string,
+  notes: string,
+  employeeId: string | undefined,
+  employeeName: string | undefined,
+  clinicId: string
+): Promise<string> {
+  const appointment = await prisma.appointment.create({
+    data: {
+      patientId,
+      clinicId,
+      employeeId: employeeId || null,
+      date: new Date(date),
+      startTime: time,
+      endTime,
+      treatmentType,
+      notes: notes || null,
+      status: "SCHEDULED",
+    },
+  });
+
+  const dateFormatted = new Date(date).toLocaleDateString("tr-TR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+
+  const treatmentLabel =
+    { BOTOX: "Botoks", DOLGU: "Dolgu", DIS_TEDAVI: "Diş Tedavi", GENEL: "Genel" }[treatmentType] || treatmentType;
+
+  let msg = `✅ Randevu oluşturuldu:\n📋 ${patientName}\n📅 ${dateFormatted} saat ${time}\n💉 ${treatmentLabel}`;
+  if (employeeName) msg += `\n👤 ${employeeName}`;
+  if (notes) msg += `\n📝 ${notes}`;
+
+  return msg;
+}
+
+async function handleDataEntry(
+  message: string,
+  clinicId: string,
+  senderId: string
+): Promise<string> {
+  const parsed = await parseWhatsAppMessage(message);
+
+  if (parsed.type === "ERROR") {
+    return `❌ ${parsed.message}`;
+  }
+
+  if (parsed.type === "AMBIGUOUS") {
+    const options = parsed.options.map((o, i) => `${i + 1}. ${o}`).join("\n");
+    return `🤔 ${parsed.message}\n\n${options}\n\nLütfen netleştirerek tekrar yazın.`;
+  }
+
+  // For APPOINTMENT type, go through employee selection flow
+  if (parsed.type === "APPOINTMENT") {
+    const { patient, isNew } = await findOrCreatePatient(parsed.patientName, clinicId);
+
+    // Calculate endTime (30 min after startTime)
+    const [h, m] = parsed.time.split(":").map(Number);
+    const endMinutes = h * 60 + m + 30;
+    const endTime = `${Math.floor(endMinutes / 60).toString().padStart(2, "0")}:${(endMinutes % 60).toString().padStart(2, "0")}`;
+
+    // Fetch active employees
+    const employees = await prisma.employee.findMany({
+      where: { clinicId, isActive: true },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    });
+
+    const newPatientNote = isNew ? `\n\n⚠️ Yeni müşteri kaydı oluşturuldu: ${patient.name}` : "";
+
+    if (employees.length === 0) {
+      // No employees — create without employee
+      const msg = await createAppointmentWithEmployee(
+        patient.id, patient.name, parsed.date, parsed.time, endTime,
+        parsed.treatmentType, parsed.notes, undefined, undefined, clinicId
+      );
+      return msg + newPatientNote;
+    }
+
+    if (employees.length === 1) {
+      // Single employee — auto-assign, check conflict
+      const emp = employees[0];
+      const conflict = await checkTimeConflict(clinicId, emp.id, parsed.date, parsed.time, endTime);
+
+      if (conflict.hasConflict) {
+        // Store state and ask for confirmation
+        const convKey = senderId;
+        setConversationState(convKey, {
+          step: "AWAITING_CONFLICT_CONFIRM",
+          clinicId,
+          pendingAppointment: {
+            patientId: patient.id,
+            patientName: patient.name,
+            date: parsed.date,
+            time: parsed.time,
+            endTime,
+            treatmentType: parsed.treatmentType,
+            notes: parsed.notes,
+            employees,
+            selectedEmployeeId: emp.id,
+            selectedEmployeeName: emp.name,
+          },
+          createdAt: Date.now(),
+        });
+
+        return `⚠️ ${emp.name} için ${parsed.time} saatinde çakışma var!\nMevcut randevu: ${conflict.conflictInfo}\n\nYine de oluşturmak istiyor musunuz? (evet/hayır)` + newPatientNote;
+      }
+
+      const msg = await createAppointmentWithEmployee(
+        patient.id, patient.name, parsed.date, parsed.time, endTime,
+        parsed.treatmentType, parsed.notes, emp.id, emp.name, clinicId
+      );
+      return msg + newPatientNote;
+    }
+
+    // Multiple employees — ask which one
+    const convKey = senderId;
+    setConversationState(convKey, {
+      step: "AWAITING_EMPLOYEE",
+      clinicId,
+      pendingAppointment: {
+        patientId: patient.id,
+        patientName: patient.name,
+        date: parsed.date,
+        time: parsed.time,
+        endTime,
+        treatmentType: parsed.treatmentType,
+        notes: parsed.notes,
+        employees,
+      },
+      createdAt: Date.now(),
+    });
+
+    const empList = employees.map((e, i) => `${i + 1}. ${e.name}`).join("\n");
+    const dateFormatted = new Date(parsed.date).toLocaleDateString("tr-TR", {
+      weekday: "long", day: "numeric", month: "long",
+    });
+    const treatmentLabel =
+      { BOTOX: "Botoks", DOLGU: "Dolgu", DIS_TEDAVI: "Diş Tedavi", GENEL: "Genel" }[parsed.treatmentType] || parsed.treatmentType;
+
+    return `📋 ${patient.name} - ${dateFormatted} ${parsed.time} - ${treatmentLabel}\n\n👤 Hangi çalışana atansın?\n${empList}\n\nNumara yazın veya "iptal" yazarak vazgeçin.` + newPatientNote;
+  }
+
+  // For non-APPOINTMENT types, use the original processWhatsAppMessage flow
+  const { processWhatsAppMessage } = await import("./whatsapp/message-parser");
+  const result = await processWhatsAppMessage(message, clinicId);
+  return result.confirmationMessage;
+}
+
+async function handleEmployeeSelection(
+  convKey: string,
+  state: ConversationState,
+  message: string
+): Promise<string> {
+  const pending = state.pendingAppointment!;
+  const lower = message.toLowerCase().trim();
+
+  // Try to parse number
+  const num = parseInt(lower, 10);
+  if (isNaN(num) || num < 1 || num > pending.employees.length) {
+    return `⚠️ Lütfen 1-${pending.employees.length} arası bir numara yazın veya "iptal" yazın.\n\n${pending.employees.map((e, i) => `${i + 1}. ${e.name}`).join("\n")}`;
+  }
+
+  const selectedEmployee = pending.employees[num - 1];
+
+  // Check for time conflicts
+  const conflict = await checkTimeConflict(
+    state.clinicId, selectedEmployee.id, pending.date, pending.time, pending.endTime
+  );
+
+  if (conflict.hasConflict) {
+    // Update state to conflict confirmation
+    setConversationState(convKey, {
+      ...state,
+      step: "AWAITING_CONFLICT_CONFIRM",
+      pendingAppointment: {
+        ...pending,
+        selectedEmployeeId: selectedEmployee.id,
+        selectedEmployeeName: selectedEmployee.name,
+      },
+      createdAt: Date.now(),
+    });
+
+    return `⚠️ ${selectedEmployee.name} için ${pending.time} saatinde çakışma var!\nMevcut randevu: ${conflict.conflictInfo}\n\nYine de oluşturmak istiyor musunuz? (evet/hayır)`;
+  }
+
+  // No conflict — create appointment
+  clearConversationState(convKey);
+
+  return createAppointmentWithEmployee(
+    pending.patientId, pending.patientName, pending.date, pending.time, pending.endTime,
+    pending.treatmentType, pending.notes, selectedEmployee.id, selectedEmployee.name, state.clinicId
+  );
+}
+
+async function handleConflictConfirmation(
+  convKey: string,
+  state: ConversationState,
+  message: string
+): Promise<string> {
+  const pending = state.pendingAppointment!;
+  const lower = message.toLowerCase().trim();
+
+  if (/^(evet|e|yes|y|olsun|tamam|ok)/.test(lower)) {
+    clearConversationState(convKey);
+    return createAppointmentWithEmployee(
+      pending.patientId, pending.patientName, pending.date, pending.time, pending.endTime,
+      pending.treatmentType, pending.notes,
+      pending.selectedEmployeeId, pending.selectedEmployeeName, state.clinicId
+    );
+  }
+
+  if (/^(hayır|hayir|h|no|n|vazgeç|vazgec|iptal)/.test(lower)) {
+    clearConversationState(convKey);
+    return "❌ Randevu oluşturma iptal edildi.";
+  }
+
+  return "Lütfen 'evet' veya 'hayır' yazın.";
+}
+
 // ── Intent Executor ─────────────────────────────────────────────────────────
 
 async function executeIntent(
   intent: ClassifiedIntent,
   clinicId: string,
-  originalMessage: string
+  originalMessage: string,
+  senderId: string
 ): Promise<string> {
   const today = new Date();
   const tomorrow = new Date(today);
@@ -395,10 +664,8 @@ async function executeIntent(
     case "FATURA_OZET":
       return getInvoiceSummary(clinicId);
 
-    case "VERI_GIRISI": {
-      const result = await processWhatsAppMessage(originalMessage, clinicId);
-      return result.confirmationMessage;
-    }
+    case "VERI_GIRISI":
+      return handleDataEntry(originalMessage, clinicId, senderId);
 
     case "YARDIM":
       return getHelpMessage();
@@ -455,14 +722,40 @@ export interface BotResponse {
 
 export async function handleBotMessage(
   clinicId: string,
-  message: string
+  message: string,
+  senderId: string = "unknown"
 ): Promise<BotResponse> {
   try {
+    const lower = message.toLowerCase().trim();
+
+    // Check for cancel/abort commands first
+    if (/^(iptal|vazgeç|vazgec|cancel)$/.test(lower)) {
+      const state = getConversationState(senderId);
+      if (state && state.step !== "IDLE") {
+        clearConversationState(senderId);
+        return { response: "❌ İşlem iptal edildi.", intent: "SERBEST_SORU" };
+      }
+    }
+
+    // Check conversation state first
+    const convState = getConversationState(senderId);
+    if (convState) {
+      if (convState.step === "AWAITING_EMPLOYEE") {
+        const response = await handleEmployeeSelection(senderId, convState, message);
+        return { response, intent: "VERI_GIRISI" };
+      }
+      if (convState.step === "AWAITING_CONFLICT_CONFIRM") {
+        const response = await handleConflictConfirmation(senderId, convState, message);
+        return { response, intent: "VERI_GIRISI" };
+      }
+    }
+
+    // Normal intent classification
     const intent = await classifyIntent(message);
 
     console.log(`[BotAI] Message: "${message}" → Intent: ${intent.action}${intent.param ? ` (${intent.param})` : ""}`);
 
-    const response = await executeIntent(intent, clinicId, message);
+    const response = await executeIntent(intent, clinicId, message, senderId);
 
     return { response, intent: intent.action };
   } catch (error) {
