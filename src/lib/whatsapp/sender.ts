@@ -6,39 +6,46 @@ export interface WhatsAppMessage {
 export async function sendWhatsAppMessage(
   phone: string,
   message: string
-): Promise<{ success: boolean; message: string; sid?: string }> {
-  const accountSid = process.env.TWILIO_ACCOUNT_SID;
-  const authToken = process.env.TWILIO_AUTH_TOKEN;
-  const fromNumber = process.env.TWILIO_WHATSAPP_NUMBER;
+): Promise<{ success: boolean; message: string; messageId?: string }> {
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
 
-  // If Twilio credentials are configured, use Twilio API
-  if (accountSid && authToken && fromNumber && accountSid !== "your-twilio-account-sid") {
+  // Meta Cloud API
+  if (phoneNumberId && accessToken && accessToken.length > 20) {
     try {
-      const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
-      const toNumber = phone.startsWith("whatsapp:") ? phone : `whatsapp:${phone}`;
+      // Normalize phone: remove +, spaces, dashes
+      const cleanPhone = phone.replace(/[\s\-\+()]/g, "");
 
-      const body = new URLSearchParams({
-        To: toNumber,
-        From: fromNumber,
-        Body: message,
-      });
-
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          Authorization: "Basic " + Buffer.from(`${accountSid}:${authToken}`).toString("base64"),
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: body.toString(),
-      });
+      const response = await fetch(
+        `https://graph.facebook.com/v19.0/${phoneNumberId}/messages`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            messaging_product: "whatsapp",
+            to: cleanPhone,
+            type: "text",
+            text: { body: message },
+          }),
+        }
+      );
 
       const data = await response.json();
 
-      if (response.ok) {
-        return { success: true, message: "WhatsApp mesajı gönderildi", sid: data.sid };
+      if (response.ok && data.messages?.[0]?.id) {
+        return {
+          success: true,
+          message: "WhatsApp mesajı gönderildi",
+          messageId: data.messages[0].id,
+        };
       } else {
-        console.error("[WhatsApp] Twilio error:", data);
-        return { success: false, message: `Twilio hatası: ${data.message || "Bilinmeyen hata"}` };
+        console.error("[WhatsApp] Meta API error:", data);
+        const errorMsg =
+          data.error?.message || data.error?.error_data?.details || "Bilinmeyen hata";
+        return { success: false, message: `WhatsApp hatası: ${errorMsg}` };
       }
     } catch (error) {
       console.error("[WhatsApp] Send error:", error);

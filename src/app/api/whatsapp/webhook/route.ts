@@ -4,88 +4,163 @@ import { handleCommand } from "@/lib/commands/command-handler";
 import { sendWhatsAppMessage } from "@/lib/whatsapp/sender";
 import { prisma } from "@/lib/prisma";
 
-// GET: Webhook verification (for Twilio/Meta)
+const WELCOME_MESSAGE = `👋 inPobi WhatsApp Asistan'a hoşgeldiniz!
+
+Kullanabileceğiniz komutlar:
+📅 /randevu — Bugünkü randevular
+💰 /gelir — Bu ayki gelir özeti
+💸 /gider — Bu ayki giderler
+📦 /stok — Düşük stok uyarıları
+👤 /musteri [isim] — Müşteri ara
+📊 /ozet — Genel özet
+❓ /yardim — Komut listesi
+
+Veya doğal dilde mesaj yazın:
+"Ahmet Yılmaz yarın 15:00 dolgu" (randevu)
+"Ayşe botoks 5000tl" (gelir)
+"Kira 25000tl ödendi" (gider)`;
+
+// GET: Meta WhatsApp webhook verification
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
   const mode = searchParams.get("hub.mode");
   const token = searchParams.get("hub.verify_token");
   const challenge = searchParams.get("hub.challenge");
 
-  // Meta WhatsApp verification
   if (mode === "subscribe" && token === process.env.WHATSAPP_VERIFY_TOKEN) {
+    console.log("[WhatsApp Webhook] Verified successfully");
     return new Response(challenge, { status: 200 });
   }
 
-  // Twilio verification - just return 200
   return Response.json({ status: "ok" });
 }
 
-// POST: Handle incoming WhatsApp message
+// POST: Handle incoming WhatsApp messages
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    // Extract message and sender info
-    // Support both direct format (from our test UI) and Twilio format
-    let messageText: string;
-    let senderPhone: string;
-    let clinicId: string;
-
+    // ── Test UI format (internal) ──
     if (body.message && body.clinicId) {
-      // Direct format from test UI
-      messageText = body.message;
-      senderPhone = body.senderPhone || "test-user";
-      clinicId = body.clinicId;
-    } else if (body.Body && body.From) {
-      // Twilio format
-      messageText = body.Body;
-      senderPhone = body.From;
-      // Find clinic by doctor's phone number or use first clinic
-      const clinic = await prisma.clinic.findFirst();
-      if (!clinic) {
-        return Response.json({ error: "No clinic found" }, { status: 400 });
-      }
-      clinicId = clinic.id;
-    } else {
-      return Response.json({ error: "Invalid message format" }, { status: 400 });
+      return handleInternalMessage(body.message, body.clinicId, body.senderPhone || "test-user");
     }
 
-    // Check if message is a command
+    // ── Meta Cloud API webhook format ──
+    const entry = body.entry?.[0];
+    const changes = entry?.changes?.[0];
+    const value = changes?.value;
+
+    if (!value) {
+      return Response.json({ ok: true });
+    }
+
+    // Status updates (delivered, read, etc.) — acknowledge but don't process
+    if (value.statuses) {
+      return Response.json({ ok: true });
+    }
+
+    const message = value.messages?.[0];
+    if (!message) {
+      return Response.json({ ok: true });
+    }
+
+    const senderPhone = message.from; // e.g. "905551234567"
+    const messageText = message.text?.body?.trim();
+
+    if (!messageText) {
+      await sendWhatsAppMessage(
+        senderPhone,
+        "Sadece metin mesajları desteklenmektedir."
+      );
+      return Response.json({ ok: true });
+    }
+
+    console.log(`[WhatsApp Webhook] From: ${senderPhone}, Message: "${messageText}"`);
+
+    // ── Klinik eşleştirme — whatsappPhone ile ──
+    const clinic = await prisma.clinic.findFirst({
+      where: { whatsappConnected: true },
+    });
+
+    if (!clinic) {
+      await sendWhatsAppMessage(
+        senderPhone,
+        "⚠️ Henüz bir işletme WhatsApp'a bağlı değil.\n\ninPobi panelinden Ayarlar → WhatsApp bölümünden bağlantı kurun."
+      );
+      return Response.json({ ok: true });
+    }
+
+    const clinicId = clinic.id;
+
+    // ── Karşılama komutları ──
+    const lowerText = messageText.toLowerCase();
+    if (lowerText === "merhaba" || lowerText === "selam" || lowerText === "hi" || lowerText === "başla") {
+      await sendWhatsAppMessage(senderPhone, WELCOME_MESSAGE);
+      return Response.json({ ok: true });
+    }
+
+    if (lowerText === "yardım" || lowerText === "yardim" || messageText === "/yardim") {
+      await sendWhatsAppMessage(senderPhone, WELCOME_MESSAGE);
+      return Response.json({ ok: true });
+    }
+
+    // ── Komut sistemi ──
     const commandResult = await handleCommand(messageText, clinicId);
 
     if (commandResult.type === "command") {
-      // Send command response back
-      if (senderPhone !== "test-user") {
-        await sendWhatsAppMessage(senderPhone, commandResult.response);
-      }
-      return Response.json({
-        success: true,
-        isCommand: true,
-        confirmationMessage: commandResult.response,
-      });
+      await sendWhatsAppMessage(senderPhone, commandResult.response);
+      return Response.json({ ok: true });
     }
 
-    // Not a command - process through AI parser (existing logic)
+    // ── Doğal dil — AI parser ──
+    await sendWhatsAppMessage(senderPhone, "⏳ Mesajınız işleniyor...");
+
     const result = await processWhatsAppMessage(messageText, clinicId);
 
-    // Send confirmation back via WhatsApp (mock)
-    if (senderPhone !== "test-user") {
-      await sendWhatsAppMessage(senderPhone, result.confirmationMessage);
+    let responseText = result.confirmationMessage;
+    if (result.patientIsNew) {
+      responseText += "\n\n⚠️ Yeni müşteri kaydı oluşturuldu.";
     }
 
-    // Return the full result for the test UI
-    return Response.json({
-      success: result.success,
-      parsed: result.parsed,
-      confirmationMessage: result.confirmationMessage,
-      patientIsNew: result.patientIsNew,
-      recordId: result.recordId,
-    });
+    await sendWhatsAppMessage(senderPhone, responseText);
+
+    return Response.json({ ok: true });
   } catch (error) {
-    console.error("[Webhook] Error:", error);
-    return Response.json(
-      { error: "Webhook processing failed" },
-      { status: 500 }
-    );
+    console.error("[WhatsApp Webhook] Error:", error);
+    return Response.json({ ok: true });
   }
+}
+
+// ── Internal test UI handler ──
+async function handleInternalMessage(
+  messageText: string,
+  clinicId: string,
+  senderPhone: string
+) {
+  const commandResult = await handleCommand(messageText, clinicId);
+
+  if (commandResult.type === "command") {
+    if (senderPhone !== "test-user") {
+      await sendWhatsAppMessage(senderPhone, commandResult.response);
+    }
+    return Response.json({
+      success: true,
+      isCommand: true,
+      confirmationMessage: commandResult.response,
+    });
+  }
+
+  const result = await processWhatsAppMessage(messageText, clinicId);
+
+  if (senderPhone !== "test-user") {
+    await sendWhatsAppMessage(senderPhone, result.confirmationMessage);
+  }
+
+  return Response.json({
+    success: result.success,
+    parsed: result.parsed,
+    confirmationMessage: result.confirmationMessage,
+    patientIsNew: result.patientIsNew,
+    recordId: result.recordId,
+  });
 }
