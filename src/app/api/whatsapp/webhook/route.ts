@@ -1,24 +1,23 @@
 import { NextRequest } from "next/server";
-import { processWhatsAppMessage } from "@/lib/whatsapp/message-parser";
-import { handleCommand } from "@/lib/commands/command-handler";
+import { handleBotMessage } from "@/lib/bot-ai-handler";
 import { sendWhatsAppMessage } from "@/lib/whatsapp/sender";
 import { prisma } from "@/lib/prisma";
 
-const WELCOME_MESSAGE = `👋 inPobi WhatsApp Asistan'a hoşgeldiniz!
+const WELCOME_MESSAGE = `🤖 inPobi AI Asistan'a hoşgeldiniz!
 
-Kullanabileceğiniz komutlar:
-📅 /randevu — Bugünkü randevular
-💰 /gelir — Bu ayki gelir özeti
-💸 /gider — Bu ayki giderler
-📦 /stok — Düşük stok uyarıları
-👤 /musteri [isim] — Müşteri ara
-📊 /ozet — Genel özet
-❓ /yardim — Komut listesi
+Doğal dilde mesaj yazabilirsiniz:
 
-Veya doğal dilde mesaj yazın:
-"Ahmet Yılmaz yarın 15:00 dolgu" (randevu)
-"Ayşe botoks 5000tl" (gelir)
-"Kira 25000tl ödendi" (gider)`;
+📋 Sorgular:
+• "Bugün randevum var mı?"
+• "Bu ay ne kadar kazandık?"
+• "Stok durumu nedir?"
+
+📝 Kayıt:
+• "Ahmet yarın 15:00 dolgu" (randevu)
+• "Ayşe botoks 5000tl" (gelir)
+• "Kira 25000tl ödendi" (gider)
+
+Daha fazlası için "yardım" yazın.`;
 
 // GET: Meta WhatsApp webhook verification
 export async function GET(req: NextRequest) {
@@ -90,39 +89,10 @@ export async function POST(req: NextRequest) {
       return Response.json({ ok: true });
     }
 
-    const clinicId = clinic.id;
+    // ── AI destekli doğal dil işleme (selamlama dahil) ──
+    const result = await handleBotMessage(clinic.id, messageText);
 
-    // ── Karşılama komutları ──
-    const lowerText = messageText.toLowerCase();
-    if (lowerText === "merhaba" || lowerText === "selam" || lowerText === "hi" || lowerText === "başla") {
-      await sendWhatsAppMessage(senderPhone, WELCOME_MESSAGE);
-      return Response.json({ ok: true });
-    }
-
-    if (lowerText === "yardım" || lowerText === "yardim" || messageText === "/yardim") {
-      await sendWhatsAppMessage(senderPhone, WELCOME_MESSAGE);
-      return Response.json({ ok: true });
-    }
-
-    // ── Komut sistemi ──
-    const commandResult = await handleCommand(messageText, clinicId);
-
-    if (commandResult.type === "command") {
-      await sendWhatsAppMessage(senderPhone, commandResult.response);
-      return Response.json({ ok: true });
-    }
-
-    // ── Doğal dil — AI parser ──
-    await sendWhatsAppMessage(senderPhone, "⏳ Mesajınız işleniyor...");
-
-    const result = await processWhatsAppMessage(messageText, clinicId);
-
-    let responseText = result.confirmationMessage;
-    if (result.patientIsNew) {
-      responseText += "\n\n⚠️ Yeni müşteri kaydı oluşturuldu.";
-    }
-
-    await sendWhatsAppMessage(senderPhone, responseText);
+    await sendWhatsAppMessage(senderPhone, result.response);
 
     return Response.json({ ok: true });
   } catch (error) {
@@ -137,30 +107,15 @@ async function handleInternalMessage(
   clinicId: string,
   senderPhone: string
 ) {
-  const commandResult = await handleCommand(messageText, clinicId);
-
-  if (commandResult.type === "command") {
-    if (senderPhone !== "test-user") {
-      await sendWhatsAppMessage(senderPhone, commandResult.response);
-    }
-    return Response.json({
-      success: true,
-      isCommand: true,
-      confirmationMessage: commandResult.response,
-    });
-  }
-
-  const result = await processWhatsAppMessage(messageText, clinicId);
+  const result = await handleBotMessage(clinicId, messageText);
 
   if (senderPhone !== "test-user") {
-    await sendWhatsAppMessage(senderPhone, result.confirmationMessage);
+    await sendWhatsAppMessage(senderPhone, result.response);
   }
 
   return Response.json({
-    success: result.success,
-    parsed: result.parsed,
-    confirmationMessage: result.confirmationMessage,
-    patientIsNew: result.patientIsNew,
-    recordId: result.recordId,
+    success: true,
+    intent: result.intent,
+    confirmationMessage: result.response,
   });
 }

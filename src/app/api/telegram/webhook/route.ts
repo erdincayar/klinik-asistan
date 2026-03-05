@@ -1,22 +1,23 @@
 import { NextRequest } from "next/server";
 import { parseTelegramUpdate, sendTelegramMessage } from "@/lib/telegram/bot";
-import { handleCommand } from "@/lib/commands/command-handler";
-import { processWhatsAppMessage } from "@/lib/whatsapp/message-parser";
+import { handleBotMessage } from "@/lib/bot-ai-handler";
 import { prisma } from "@/lib/prisma";
 
-const WELCOME_MESSAGE = `Merhaba! inPobi Telegram botuna hoş geldiniz.
+const WELCOME_MESSAGE = `🤖 inPobi AI Asistan'a hoş geldiniz!
 
-Kullanılabilir komutlar:
-/start - Hoş geldin mesajı
-/randevu - Randevuları görüntüle
-/gelir - Gelir özetini görüntüle
-/gider - Gider özetini görüntüle
-/yardim - Yardım mesajı
+Doğal dilde mesaj yazabilirsiniz:
 
-Veya doğal dilde mesaj yazabilirsiniz:
-- "Ahmet Yılmaz yarın 15:00 dolgu" (randevu)
-- "Ayşe botoks 5000tl" (gelir)
-- "Kira 25000tl ödendi" (gider)`;
+📋 Sorgular:
+• "Bugün randevum var mı?"
+• "Bu ay ne kadar kazandık?"
+• "Stok durumu nedir?"
+
+📝 Kayıt:
+• "Ahmet yarın 15:00 dolgu" (randevu)
+• "Ayşe botoks 5000tl" (gelir)
+• "Kira 25000tl ödendi" (gider)
+
+Daha fazlası için "yardım" yazın.`;
 
 // GET: Simple status endpoint
 export async function GET() {
@@ -43,7 +44,7 @@ export async function POST(req: NextRequest) {
     if (!text) {
       await sendTelegramMessage({
         chat_id: chatId,
-        text: "Sadece metin mesajları desteklenmektedir. Lütfen bir komut veya metin gönderin.",
+        text: "Sadece metin mesajları desteklenmektedir.",
       });
       return Response.json({ ok: true });
     }
@@ -98,7 +99,7 @@ export async function POST(req: NextRequest) {
 
         await sendTelegramMessage({
           chat_id: chatId,
-          text: `✅ Başarıyla bağlandınız!\n\n🏥 ${link.clinic.name} işletmesi Telegram bildirimleri aktif.\n\nArtık randevu hatırlatmaları, yeni müşteri bildirimleri ve önemli güncellemeleri buradan alacaksınız.\n\nKomutlar için /yardim yazın.`,
+          text: `✅ Başarıyla bağlandınız!\n\n🏥 ${link.clinic.name} işletmesi Telegram bildirimleri aktif.\n\nArtık doğal dilde mesaj yazarak işletmenizi yönetebilirsiniz.\n\nÖrnek: "Bugün randevum var mı?"`,
         });
         return Response.json({ ok: true });
       }
@@ -124,59 +125,15 @@ export async function POST(req: NextRequest) {
       return Response.json({ ok: true });
     }
 
-    const clinicId = clinic.id;
-
-    // Handle /yardim command
-    if (text === "/yardim") {
-      await sendTelegramMessage({
-        chat_id: chatId,
-        text: WELCOME_MESSAGE,
-      });
-      return Response.json({ ok: true });
-    }
-
-    // Route command messages (starting with /)
-    if (text.startsWith("/")) {
-      const commandResult = await handleCommand(text, clinicId);
-
-      if (commandResult.type === "command") {
-        await sendTelegramMessage({
-          chat_id: chatId,
-          text: commandResult.response,
-        });
-      } else {
-        // Not a recognized command - treat as natural language
-        const result = await processWhatsAppMessage(
-          commandResult.originalMessage,
-          clinicId
-        );
-        await sendTelegramMessage({
-          chat_id: chatId,
-          text: result.confirmationMessage,
-        });
-      }
-
-      return Response.json({ ok: true });
-    }
-
-    // Natural language message - reuse WhatsApp AI parser
-    const result = await processWhatsAppMessage(text, clinicId);
-
-    let responseText = result.confirmationMessage;
-    if (result.patientIsNew) {
-      responseText += "\n\nYeni müşteri kaydı oluşturuldu.";
-    }
+    // ── AI destekli doğal dil işleme ──
+    const result = await handleBotMessage(clinic.id, text);
 
     await sendTelegramMessage({
       chat_id: chatId,
-      text: responseText,
+      text: result.response,
     });
 
-    return Response.json({
-      ok: true,
-      processed: true,
-      success: result.success,
-    });
+    return Response.json({ ok: true });
   } catch (error) {
     console.error("[Telegram Webhook] Error:", error);
     return Response.json({ ok: true });
