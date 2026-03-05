@@ -14,12 +14,11 @@ interface SessionUser {
 }
 
 const SECTORS = [
-  { value: "klinik", label: "Klinik / Sağlık" },
-  { value: "guzellik", label: "Güzellik / Estetik" },
-  { value: "kuafor", label: "Kuaför / Berber" },
-  { value: "restoran", label: "Restoran / Kafe" },
-  { value: "spor", label: "Spor / Fitness" },
-  { value: "egitim", label: "Eğitim / Kurs" },
+  { value: "klinik", label: "Klinik" },
+  { value: "restoran", label: "Restoran" },
+  { value: "kuafor", label: "Kuaför" },
+  { value: "guzellik", label: "Güzellik Merkezi" },
+  { value: "eczane", label: "Eczane" },
   { value: "diger", label: "Diğer" },
 ];
 
@@ -110,21 +109,6 @@ export default function RegisterCompletePage() {
         </p>
       </div>
 
-      {/* Google profile info */}
-      <div className="mb-6 flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
-        {user?.image && (
-          <img
-            src={user.image}
-            alt=""
-            className="h-10 w-10 rounded-full"
-          />
-        )}
-        <div>
-          <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-          <p className="text-xs text-gray-500">{user?.email}</p>
-        </div>
-      </div>
-
       <form onSubmit={onSubmit} className="space-y-4">
         {error && (
           <motion.div
@@ -135,6 +119,40 @@ export default function RegisterCompletePage() {
             {error}
           </motion.div>
         )}
+
+        {/* Ad Soyad — read-only, prefilled from Google */}
+        <div className="space-y-1.5">
+          <label
+            htmlFor="name"
+            className="text-sm font-medium text-gray-700"
+          >
+            Ad Soyad
+          </label>
+          <input
+            id="name"
+            type="text"
+            value={user?.name || ""}
+            readOnly
+            className="block w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-500 cursor-not-allowed"
+          />
+        </div>
+
+        {/* Email — read-only, prefilled from Google */}
+        <div className="space-y-1.5">
+          <label
+            htmlFor="email"
+            className="text-sm font-medium text-gray-700"
+          >
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            value={user?.email || ""}
+            readOnly
+            className="block w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-500 cursor-not-allowed"
+          />
+        </div>
 
         {/* Clinic Name */}
         <div className="space-y-1.5">
@@ -208,7 +226,7 @@ export default function RegisterCompletePage() {
             </>
           ) : (
             <>
-              Kaydı Tamamla
+              Kayıt Ol
               <ArrowRight className="h-4 w-4" />
             </>
           )}
