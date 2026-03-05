@@ -16,6 +16,7 @@ model User {
   image               String?
   role                String               @default("USER") // USER, ADMIN, DEMO
   isActive            Boolean              @default(true)
+  isDemo              Boolean              @default(false)
   lastLoginAt         DateTime?
   clinicId            String?
   clinic              Clinic?              @relation(fields: [clinicId], references: [id])

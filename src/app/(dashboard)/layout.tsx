@@ -285,6 +285,17 @@ function Sidebar({
   const { toast } = useToast();
 
   const clinicPlan = ((session?.user as any)?.clinicPlan || "PRO") as PlanTier;
+  const userRole = (session?.user as any)?.role || "";
+  const userEmail = session?.user?.email || "";
+  const isDemo = (session?.user as any)?.isDemo || false;
+
+  // Admin, demo, veya özel hesaplarda tüm modüller açık
+  const unlockAll =
+    userRole === "ADMIN" ||
+    userRole === "SUPERADMIN" ||
+    userRole === "DEMO" ||
+    isDemo ||
+    userEmail === "admin@inpobi.com";
 
   // Sortable order
   const [orderedItems, setOrderedItems] = useState<NavItem[]>(navItems);
@@ -405,7 +416,7 @@ function Sidebar({
                   const isActive =
                     pathname === item.href ||
                     pathname.startsWith(item.href + "/");
-                  const isLocked = !hasAccess(clinicPlan, item.minPlan);
+                  const isLocked = !unlockAll && !hasAccess(clinicPlan, item.minPlan);
                   return (
                     <SortableNavItem
                       key={item.href}
