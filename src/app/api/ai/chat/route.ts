@@ -3,6 +3,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { processWhatsAppMessage } from "@/lib/whatsapp/message-parser";
+import { TOKEN_COSTS } from "@/lib/token-costs";
+import { checkBalance, deductTokens } from "@/lib/token-service";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -683,6 +685,19 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "No clinic" }, { status: 400 });
   }
 
+  const user = session.user as any;
+  const isDemo = user.isDemo || user.role === "ADMIN";
+
+  if (!isDemo) {
+    const hasBalance = await checkBalance(clinicId, TOKEN_COSTS.AI_CHAT);
+    if (!hasBalance) {
+      return Response.json(
+        { error: "Token bakiyeniz yetersiz. Ayarlar sayfasından token satın alabilirsiniz." },
+        { status: 402 }
+      );
+    }
+  }
+
   const { messages } = await req.json();
 
   const systemPrompt = `Sen inPobi AI asistanısın. Bir işletme yönetim platformu için akıllı bir yardımcısın.
@@ -759,6 +774,10 @@ Kurallar:
     const textBlock = response.content.find(
       (block): block is Anthropic.TextBlock => block.type === "text"
     );
+
+    if (!isDemo) {
+      await deductTokens(clinicId, "AI_CHAT", TOKEN_COSTS.AI_CHAT);
+    }
 
     return Response.json({
       message: textBlock?.text || "Yanıt oluşturulamadı.",

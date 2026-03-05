@@ -21,14 +21,19 @@ export async function POST(request: Request) {
       data: { name: clinicName },
     });
 
-    await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        clinicId: clinic.id,
-      },
-    });
+    await Promise.all([
+      prisma.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword,
+          clinicId: clinic.id,
+        },
+      }),
+      prisma.tokenBalance.create({
+        data: { clinicId: clinic.id, balance: 50000 },
+      }),
+    ]);
 
     return Response.json({ success: true, message: "Kayıt başarılı" });
   } catch (error: any) {

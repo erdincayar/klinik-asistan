@@ -14,6 +14,7 @@ import {
   ArrowRight,
   Bell,
   Clock,
+  Coins,
 } from "lucide-react";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import { APPOINTMENT_STATUSES, TREATMENT_CATEGORIES } from "@/lib/types";
@@ -166,6 +167,7 @@ export default function DashboardPage() {
   const [chartData, setChartData] = useState<MonthlySummary[]>([]);
   const [lowStockCount, setLowStockCount] = useState(0);
   const [upcomingPayments, setUpcomingPayments] = useState<UpcomingPayment[]>([]);
+  const [tokenBalance, setTokenBalance] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -175,13 +177,14 @@ export default function DashboardPage() {
         const today = new Date();
         const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
-        const [dashRes, chartRes, lowStockRes, upcomingRes] = await Promise.all([
+        const [dashRes, chartRes, lowStockRes, upcomingRes, tokenRes] = await Promise.all([
           fetch("/api/dashboard"),
           fetch(
             `/api/finance?type=monthly-summary&year=${today.getFullYear()}`
           ),
           fetch("/api/products/low-stock"),
           fetch("/api/finance/recurring/upcoming"),
+          fetch("/api/settings/tokens"),
         ]);
 
         if (!dashRes.ok) throw new Error("Dashboard verisi alınamadı");
@@ -202,6 +205,11 @@ export default function DashboardPage() {
         if (upcomingRes.ok) {
           const upcomingData = await upcomingRes.json();
           setUpcomingPayments(Array.isArray(upcomingData) ? upcomingData : []);
+        }
+
+        if (tokenRes.ok) {
+          const tokenData = await tokenRes.json();
+          setTokenBalance(tokenData.balance?.balance ?? null);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Bir hata oluştu");
@@ -281,6 +289,27 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {/* ── TOKEN BADGE ── */}
+      {tokenBalance !== null && (
+        <Link href="/settings">
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={cn(
+              "inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-colors cursor-pointer hover:opacity-80",
+              tokenBalance < 5000
+                ? "bg-red-50 text-red-700 border border-red-200"
+                : tokenBalance < 20000
+                ? "bg-amber-50 text-amber-700 border border-amber-200"
+                : "bg-gray-50 text-gray-700 border border-gray-200"
+            )}
+          >
+            <Coins className="h-4 w-4" />
+            {tokenBalance.toLocaleString("tr-TR")} token
+          </motion.div>
+        </Link>
+      )}
+
       {/* ── STAT CARDS ── */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
         {statCards.map((stat, i) => {

@@ -23,6 +23,9 @@ import {
   RefreshCw,
   MessageCircle,
   Phone,
+  Coins,
+  HardDrive,
+  Zap,
 } from "lucide-react";
 import { TREATMENT_CATEGORIES } from "@/lib/types";
 import QRCode from "qrcode";
@@ -32,6 +35,25 @@ interface ClinicSettings {
   phone: string;
   address: string;
   vatRate: number;
+  storageLimitMB?: number;
+  storageUsedMB?: number;
+  storagePlan?: string;
+}
+
+interface TokenBalanceData {
+  balance: number;
+  totalUsed: number;
+  totalBought: number;
+}
+
+interface TokenTransactionData {
+  id: string;
+  type: string;
+  amount: number;
+  action: string;
+  description: string;
+  balanceAfter: number;
+  createdAt: string;
 }
 
 interface Reminder {
@@ -93,6 +115,10 @@ export default function SettingsPage() {
   const [whatsappTesting, setWhatsappTesting] = useState(false);
   const [whatsappError, setWhatsappError] = useState("");
 
+  // Token & Storage
+  const [tokenBalance, setTokenBalance] = useState<TokenBalanceData | null>(null);
+  const [tokenHistory, setTokenHistory] = useState<TokenTransactionData[]>([]);
+
   // Telegram
   const [telegramConnected, setTelegramConnected] = useState(false);
   const [telegramLoading, setTelegramLoading] = useState(true);
@@ -105,9 +131,10 @@ export default function SettingsPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [settingsRes, remindersRes] = await Promise.all([
+        const [settingsRes, remindersRes, tokensRes] = await Promise.all([
           fetch("/api/settings"),
           fetch("/api/settings/reminders"),
+          fetch("/api/settings/tokens"),
         ]);
 
         if (settingsRes.ok) {
@@ -132,6 +159,12 @@ export default function SettingsPage() {
         if (remindersRes.ok) {
           const data = await remindersRes.json();
           setReminders(data);
+        }
+
+        if (tokensRes.ok) {
+          const tokenData = await tokensRes.json();
+          setTokenBalance(tokenData.balance);
+          setTokenHistory(tokenData.history || []);
         }
       } catch {
         setError("Ayarlar yüklenemedi");
@@ -904,11 +937,198 @@ export default function SettingsPage() {
         </div>
       </motion.div>
 
-      {/* Reminder Rules */}
+      {/* Token Management */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
+        className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
+      >
+        <div className="flex items-center gap-2 border-b border-gray-100 px-6 py-4">
+          <Coins className="h-4 w-4 text-amber-500" />
+          <h2 className="text-sm font-semibold text-gray-900">Token Yönetimi</h2>
+        </div>
+        <div className="p-6 space-y-6">
+          {tokenBalance && (
+            <>
+              {/* Balance Card */}
+              <div className="rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-medium text-gray-700">Token Bakiyesi</span>
+                  <span className="text-xs text-gray-500">
+                    Toplam: {(tokenBalance.totalBought + 50000).toLocaleString("tr-TR")}
+                  </span>
+                </div>
+                <p className="text-2xl font-bold text-gray-900 mb-3">
+                  {tokenBalance.balance.toLocaleString("tr-TR")} token
+                </p>
+                <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${
+                      tokenBalance.balance < 5000
+                        ? "bg-red-500"
+                        : tokenBalance.balance < 20000
+                        ? "bg-amber-500"
+                        : "bg-emerald-500"
+                    }`}
+                    style={{
+                      width: `${Math.min(100, (tokenBalance.balance / (tokenBalance.totalBought + 50000)) * 100)}%`,
+                    }}
+                  />
+                </div>
+                {tokenBalance.totalUsed > 0 && (
+                  <p className="mt-2 text-xs text-gray-500">
+                    Toplam kullanılan: {tokenBalance.totalUsed.toLocaleString("tr-TR")} token
+                  </p>
+                )}
+              </div>
+
+              {/* Token Packages */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-800 mb-3">Token Paketleri</h3>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {[
+                    { name: "Başlangıç", tokens: 100000, price: 79 },
+                    { name: "Popüler", tokens: 500000, price: 349, popular: true },
+                    { name: "İşletme", tokens: 1500000, price: 899 },
+                  ].map((pkg) => (
+                    <div
+                      key={pkg.name}
+                      className={`rounded-xl border p-4 text-center ${
+                        pkg.popular
+                          ? "border-blue-200 bg-blue-50/50 ring-1 ring-blue-100"
+                          : "border-gray-100"
+                      }`}
+                    >
+                      {pkg.popular && (
+                        <span className="mb-2 inline-block rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-semibold text-blue-700">
+                          Popüler
+                        </span>
+                      )}
+                      <p className="text-sm font-semibold text-gray-900">{pkg.name}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {pkg.tokens.toLocaleString("tr-TR")} token
+                      </p>
+                      <p className="mt-2 text-lg font-bold text-gray-900">
+                        ₺{pkg.price}
+                      </p>
+                      <button
+                        disabled
+                        className="mt-3 w-full rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-400 cursor-not-allowed"
+                      >
+                        Yakında
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Usage History */}
+              {tokenHistory.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-800 mb-3">Kullanım Geçmişi</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead>
+                        <tr className="border-b border-gray-100">
+                          <th className="pb-2 font-medium text-gray-500">Tarih</th>
+                          <th className="pb-2 font-medium text-gray-500">İşlem</th>
+                          <th className="pb-2 font-medium text-gray-500 text-right">Miktar</th>
+                          <th className="pb-2 font-medium text-gray-500 text-right">Bakiye</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {tokenHistory.slice(0, 20).map((tx) => (
+                          <tr key={tx.id} className="border-b border-gray-50">
+                            <td className="py-2 text-gray-600">
+                              {new Date(tx.createdAt).toLocaleDateString("tr-TR", {
+                                day: "2-digit",
+                                month: "2-digit",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </td>
+                            <td className="py-2 text-gray-700">{tx.description || tx.action}</td>
+                            <td className={`py-2 text-right font-medium ${tx.type === "USE" ? "text-red-600" : "text-green-600"}`}>
+                              {tx.type === "USE" ? "-" : "+"}{tx.amount.toLocaleString("tr-TR")}
+                            </td>
+                            <td className="py-2 text-right text-gray-600">
+                              {tx.balanceAfter.toLocaleString("tr-TR")}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </motion.div>
+
+      {/* Storage */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.12 }}
+        className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
+      >
+        <div className="flex items-center gap-2 border-b border-gray-100 px-6 py-4">
+          <HardDrive className="h-4 w-4 text-blue-600" />
+          <h2 className="text-sm font-semibold text-gray-900">Depolama</h2>
+        </div>
+        <div className="p-6 space-y-6">
+          {(() => {
+            const used = settings.storageUsedMB || 0;
+            const limit = settings.storageLimitMB || 1024;
+            const pct = Math.min(100, (used / limit) * 100);
+            const barColor = pct >= 100 ? "bg-red-500" : pct >= 80 ? "bg-amber-500" : "bg-blue-500";
+            return (
+              <div className="rounded-xl bg-gray-50 p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-medium text-gray-700">Kullanılan Alan</span>
+                  <span className="text-xs text-gray-500">{used} MB / {limit} MB</span>
+                </div>
+                <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
+                  <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${pct}%` }} />
+                </div>
+                <p className="mt-2 text-xs text-gray-400">
+                  Plan: {settings.storagePlan === "free" ? "Ücretsiz" : settings.storagePlan}
+                </p>
+              </div>
+            );
+          })()}
+
+          <div>
+            <h3 className="text-sm font-medium text-gray-800 mb-3">Ek Depolama Paketleri</h3>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {[
+                { name: "+5 GB", price: 14 },
+                { name: "+20 GB", price: 54 },
+                { name: "+50 GB", price: 135 },
+              ].map((pkg) => (
+                <div key={pkg.name} className="rounded-xl border border-gray-100 p-4 text-center">
+                  <p className="text-sm font-semibold text-gray-900">{pkg.name}</p>
+                  <p className="mt-2 text-lg font-bold text-gray-900">₺{pkg.price}<span className="text-xs font-normal text-gray-400">/ay</span></p>
+                  <button
+                    disabled
+                    className="mt-3 w-full rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-400 cursor-not-allowed"
+                  >
+                    Yakında
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Reminder Rules */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.14 }}
         className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
       >
         <div className="border-b border-gray-100 px-6 py-4">

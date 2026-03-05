@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import Anthropic from "@anthropic-ai/sdk";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import { TOKEN_COSTS } from "@/lib/token-costs";
+import { checkBalance, deductTokens } from "@/lib/token-service";
 
 const OCR_PROMPT = `Bu bir faturadır. Lütfen şu bilgileri JSON formatında çıkar:
 {
@@ -34,9 +36,21 @@ export async function POST(req: NextRequest) {
     if (!session?.user) {
       return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
     }
-    const clinicId = (session.user as any).clinicId;
+    const user = session.user as any;
+    const clinicId = user.clinicId;
     if (!clinicId) {
       return NextResponse.json({ error: "Klinik bulunamadı" }, { status: 400 });
+    }
+
+    const isDemo = user.isDemo || user.role === "ADMIN";
+    if (!isDemo) {
+      const hasBalance = await checkBalance(clinicId, TOKEN_COSTS.INVOICE_OCR);
+      if (!hasBalance) {
+        return NextResponse.json(
+          { error: "Token bakiyeniz yetersiz. Ayarlar sayfasından token satın alabilirsiniz." },
+          { status: 402 }
+        );
+      }
     }
 
     const formData = await req.formData();
@@ -157,6 +171,10 @@ export async function POST(req: NextRequest) {
           category: (ocrData.category as string) || "DIGER",
         },
       });
+
+      if (!isDemo) {
+        await deductTokens(clinicId, "INVOICE_OCR", TOKEN_COSTS.INVOICE_OCR);
+      }
 
       return NextResponse.json({ ...invoice, ocrData, status: "COMPLETED", invoiceType });
     } else {

@@ -29,6 +29,8 @@ import {
   type ConversationState,
   type PendingAppointmentData,
 } from "./bot-conversation-state";
+import { TOKEN_COSTS } from "./token-costs";
+import { checkBalance, deductTokens } from "./token-service";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -713,6 +715,58 @@ Doğal dilde yazabilirsiniz, komut ezberlemenize gerek yok!
 • "Kira 25000tl ödendi" (gider)`;
 }
 
+// ── Slash Command Handler (Token-free) ───────────────────────────────────────
+
+async function handleSlashCommand(clinicId: string, command: string): Promise<string | null> {
+  const cmd = command.toLowerCase().trim();
+
+  if (cmd === "/randevu") {
+    return getAppointments(clinicId, startOfDayUTC(new Date()));
+  }
+  if (cmd === "/yarın" || cmd === "/yarin") {
+    const tomorrow = new Date();
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+    return getAppointments(clinicId, startOfDayUTC(tomorrow));
+  }
+  if (cmd === "/gelir") {
+    const range = getCurrentMonthRange();
+    return getIncome(clinicId, range.start, range.end, range.label);
+  }
+  if (cmd === "/gider") {
+    const range = getCurrentMonthRange();
+    return getExpenses(clinicId, range.start, range.end, range.label);
+  }
+  if (cmd === "/stok") {
+    return getStockOverview(clinicId);
+  }
+  if (cmd === "/müşteri" || cmd === "/musteri") {
+    return getPatientsList(clinicId);
+  }
+  if (cmd === "/rapor") {
+    return getDailySummary(clinicId);
+  }
+  if (cmd === "/yardım" || cmd === "/yardim") {
+    return getSlashHelpMessage();
+  }
+
+  return null;
+}
+
+function getSlashHelpMessage(): string {
+  return `📋 Komutlar (token harcamaz):
+
+/randevu — Bugünkü randevular
+/yarın — Yarınki randevular
+/gelir — Bu ayki gelir
+/gider — Bu ayki giderler
+/stok — Stok durumu
+/müşteri — Müşteri listesi
+/rapor — Günlük özet
+/yardım — Bu mesaj
+
+💬 Serbest metin yazarak AI asistanla da konuşabilirsiniz (1000 token harcar).`;
+}
+
 // ── Main Export ──────────────────────────────────────────────────────────────
 
 export interface BotResponse {
@@ -750,12 +804,35 @@ export async function handleBotMessage(
       }
     }
 
+    // Slash commands — no token cost
+    if (message.trim().startsWith("/")) {
+      const slashResponse = await handleSlashCommand(clinicId, message.trim());
+      if (slashResponse !== null) {
+        return { response: slashResponse, intent: "YARDIM" };
+      }
+    }
+
+    // Free-text AI — check token balance
+    const tokenAction = senderId.startsWith("telegram:") ? "TELEGRAM_BOT_AI" : "WHATSAPP_BOT_AI";
+    const tokenCost = TOKEN_COSTS[tokenAction];
+
+    const hasBalance = await checkBalance(clinicId, tokenCost);
+    if (!hasBalance) {
+      return {
+        response: "⚠️ Token bakiyeniz yetersiz. Komutları kullanmak için / ile başlayın.\n\nÖrnek: /randevu, /gelir, /stok, /yardım",
+        intent: "SERBEST_SORU",
+      };
+    }
+
     // Normal intent classification
     const intent = await classifyIntent(message);
 
     console.log(`[BotAI] Message: "${message}" → Intent: ${intent.action}${intent.param ? ` (${intent.param})` : ""}`);
 
     const response = await executeIntent(intent, clinicId, message, senderId);
+
+    // Deduct tokens after successful AI response
+    await deductTokens(clinicId, tokenAction, tokenCost);
 
     return { response, intent: intent.action };
   } catch (error) {
