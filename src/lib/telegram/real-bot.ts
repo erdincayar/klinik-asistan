@@ -99,50 +99,53 @@ async function processMessage(msg: TgMessage): Promise<void> {
 
   console.log(`[Bot] ${msg.from?.first_name}: "${text}"`);
 
-  if (!isAuthorized(chatId)) {
-    await tgSend(chatId, "⛔ Yetkiniz yok. Chat ID'nizi yöneticiye bildirin: " + chatId);
-    return;
-  }
-
-  const clinicId = await getClinicIdForChat(chatId);
-  if (!clinicId) {
-    await tgSend(chatId, "❌ Klinik bulunamadı. Önce sisteme bir klinik ekleyin.");
-    return;
-  }
-
   try {
-    // /start with optional linking code
+    // /start command — handle BEFORE authorization check so QR linking works for new chats
     if (text.startsWith("/start")) {
       const parts = text.split(" ");
       if (parts.length > 1) {
-        // Handle QR link code
+        // Handle QR link code — no auth required
         const code = parts[1].trim();
         try {
           const link = await prisma.telegramLink.findUnique({
             where: { code },
           });
-          if (link && !link.used && link.expiresAt > new Date()) {
-            // Link the clinic
-            await prisma.clinic.update({
-              where: { id: link.clinicId },
-              data: { telegramChatId: String(chatId) },
-            });
-            await prisma.telegramLink.update({
-              where: { id: link.id },
-              data: { used: true },
-            });
-            await tgSend(chatId, "✅ Telegram bağlantısı başarılı! Artık bu chat üzerinden işletmenizi yönetebilirsiniz.");
-            return;
-          } else {
-            await tgSend(chatId, "❌ Bu bağlantı kodu geçersiz veya süresi dolmuş. Lütfen yeni bir kod oluşturun.");
+          if (!link) {
+            await tgSend(chatId, "❌ Bağlantı kodu geçersiz. Lütfen yeni QR kod oluşturun.");
             return;
           }
-        } catch {
-          await tgSend(chatId, "❌ Bağlantı kodu işlenirken bir hata oluştu.");
+          if (link.used) {
+            await tgSend(chatId, "❌ Bu bağlantı kodu zaten kullanılmış. Lütfen yeni QR kod oluşturun.");
+            return;
+          }
+          if (link.expiresAt <= new Date()) {
+            await tgSend(chatId, "❌ Bağlantı kodunun süresi dolmuş. Lütfen yeni QR kod oluşturun.");
+            return;
+          }
+          // Link the clinic
+          await prisma.clinic.update({
+            where: { id: link.clinicId },
+            data: { telegramChatId: String(chatId) },
+          });
+          await prisma.telegramLink.update({
+            where: { id: link.id },
+            data: { used: true },
+          });
+          // Add to runtime auth map so subsequent messages work without restart
+          CHAT_CLINIC_MAP.set(chatId, link.clinicId);
+          if (!AUTHORIZED_CHAT_IDS.includes(chatId)) {
+            AUTHORIZED_CHAT_IDS.push(chatId);
+          }
+          await tgSend(chatId, "✅ Telegram bağlantısı başarılı! Artık bu chat üzerinden işletmenizi yönetebilirsiniz.");
+          return;
+        } catch (err) {
+          console.error("[Bot] QR link error:", err);
+          await tgSend(chatId, "❌ Bağlantı kodu işlenirken bir hata oluştu. Lütfen tekrar deneyin.");
           return;
         }
       }
 
+      // Plain /start without code — show welcome
       await tgSend(chatId, [
         "👋 Merhaba! inPobi Bot'a hoş geldiniz.",
         "",
@@ -155,6 +158,27 @@ async function processMessage(msg: TgMessage): Promise<void> {
       ].join("\n"));
       return;
     }
+
+  if (!isAuthorized(chatId)) {
+    // Check DB for linked clinic (QR linked but bot restarted)
+    const linkedClinic = await prisma.clinic.findFirst({
+      where: { telegramChatId: String(chatId) },
+      select: { id: true },
+    });
+    if (linkedClinic) {
+      CHAT_CLINIC_MAP.set(chatId, linkedClinic.id);
+      AUTHORIZED_CHAT_IDS.push(chatId);
+    } else {
+      await tgSend(chatId, "⛔ Bu chat henüz bir işletmeye bağlı değil. Ayarlar sayfasından QR kod ile bağlantı kurun.");
+      return;
+    }
+  }
+
+  const clinicId = await getClinicIdForChat(chatId);
+  if (!clinicId) {
+    await tgSend(chatId, "❌ Klinik bulunamadı. Ayarlar sayfasından Telegram bağlantısını kurun.");
+    return;
+  }
 
     // Commands
     if (text.startsWith("/")) {

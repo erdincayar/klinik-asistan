@@ -68,6 +68,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           image: user.image,
           clinicId: user.clinicId,
           role: user.role,
+          clinicPlan: user.clinic?.plan || "PRO",
           rememberMe: credentials.rememberMe === "true",
         };
       },
@@ -78,6 +79,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.clinicId = (user as any).clinicId;
         token.role = (user as any).role;
+        token.clinicPlan = (user as any).clinicPlan ?? "PRO";
         token.rememberMe = (user as any).rememberMe ?? false;
         token.loginAt = Math.floor(Date.now() / 1000);
       }
@@ -90,15 +92,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
       }
 
-      // On sign-in via OAuth, fetch role/clinicId from DB
+      // On sign-in via OAuth, fetch role/clinicId/plan from DB
       if (trigger === "signIn" && token.sub && !token.role) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.sub },
-          select: { role: true, clinicId: true },
+          select: { role: true, clinicId: true, clinic: { select: { plan: true } } },
         });
         if (dbUser) {
           token.role = dbUser.role;
           token.clinicId = dbUser.clinicId;
+          token.clinicPlan = dbUser.clinic?.plan || "PRO";
         }
       }
 
@@ -109,6 +112,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         (session.user as any).id = token.sub;
         (session.user as any).clinicId = token.clinicId;
         (session.user as any).role = token.role;
+        (session.user as any).clinicPlan = token.clinicPlan ?? "PRO";
       }
       return session;
     },

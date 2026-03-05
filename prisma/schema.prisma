@@ -55,7 +55,7 @@ model PasswordResetToken {
   createdAt DateTime  @default(now())
 }
 
-// Plan values: BASIC, PRO
+// Plan values: BASIC, PRO, BUSINESS
 // Sector values: SAGLIK, RESTORAN, OTEL, KUAFOR, GUZELLIK, DIGER
 // MessagingPreference values: WHATSAPP, TELEGRAM, BOTH
 model Clinic {
@@ -65,7 +65,7 @@ model Clinic {
   address               String?
   taxRate               Int                    @default(20)
   sector                String?
-  plan                  String?                // BASIC, PRO
+  plan                  String?                @default("PRO") // BASIC, PRO, BUSINESS
   selectedModules       String?                // JSON array string
   messagingPreference   String?                // WHATSAPP, TELEGRAM, BOTH
   workStartTime         String                 @default("09:00")

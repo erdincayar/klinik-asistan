@@ -3,8 +3,25 @@
 import { SessionProvider, useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import {
   LayoutDashboard,
   Users,
@@ -31,28 +48,58 @@ import {
   Shield,
   Activity,
   CreditCard,
+  Lock,
+  type LucideIcon,
 } from "lucide-react";
+import { ToastProvider, Toaster, useToast } from "@/components/ui/toast";
+
+/* ──────────────────────── PLAN CONFIG ──────────────────────── */
+
+type PlanTier = "BASIC" | "PRO" | "BUSINESS";
+
+interface NavItem {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  minPlan: PlanTier;
+}
+
+const PLAN_LEVELS: Record<PlanTier, number> = {
+  BASIC: 0,
+  PRO: 1,
+  BUSINESS: 2,
+};
+
+const PLAN_LABELS: Record<PlanTier, string> = {
+  BASIC: "Başlangıç",
+  PRO: "Pro",
+  BUSINESS: "İşletme",
+};
+
+function hasAccess(userPlan: PlanTier, requiredPlan: PlanTier): boolean {
+  return PLAN_LEVELS[userPlan] >= PLAN_LEVELS[requiredPlan];
+}
 
 /* ──────────────────────── DATA ──────────────────────── */
 
-const navItems = [
-  { href: "/dashboard", label: "Genel Bakış", icon: LayoutDashboard },
-  { href: "/patients", label: "Müşteriler", icon: Users },
-  { href: "/appointments", label: "Randevular", icon: Calendar },
-  { href: "/finance", label: "Finans", icon: DollarSign },
-  { href: "/invoice-upload", label: "Fatura Yükleme", icon: FileUp },
-  { href: "/financial-reports", label: "Mali Tablo", icon: TrendingUp },
-  { href: "/inventory", label: "Stok/Envanter", icon: Package },
-  { href: "/ads", label: "Reklam Yönetimi", icon: Target },
-  { href: "/marketing", label: "Pazarlama", icon: Megaphone },
-  { href: "/social-media", label: "Sosyal Medya", icon: Share2 },
-  { href: "/ai-assistant", label: "AI Asistan", icon: Bot },
-  { href: "/reports", label: "Raporlar", icon: BarChart3 },
-  { href: "/whatsapp", label: "WhatsApp", icon: MessageCircle },
-  { href: "/employees", label: "Çalışanlar", icon: UserCog },
-  { href: "/reminders", label: "Hatırlatmalar", icon: Bell },
-  { href: "/billing", label: "Abonelik", icon: CreditCard },
-  { href: "/settings", label: "Ayarlar", icon: Settings },
+const navItems: NavItem[] = [
+  { href: "/dashboard", label: "Genel Bakış", icon: LayoutDashboard, minPlan: "BASIC" },
+  { href: "/patients", label: "Müşteriler", icon: Users, minPlan: "BASIC" },
+  { href: "/appointments", label: "Randevular", icon: Calendar, minPlan: "BASIC" },
+  { href: "/finance", label: "Finans", icon: DollarSign, minPlan: "BASIC" },
+  { href: "/invoice-upload", label: "Fatura Yükleme", icon: FileUp, minPlan: "BUSINESS" },
+  { href: "/financial-reports", label: "Mali Tablo", icon: TrendingUp, minPlan: "BUSINESS" },
+  { href: "/inventory", label: "Stok/Envanter", icon: Package, minPlan: "PRO" },
+  { href: "/ads", label: "Reklam Yönetimi", icon: Target, minPlan: "BUSINESS" },
+  { href: "/marketing", label: "Pazarlama", icon: Megaphone, minPlan: "BUSINESS" },
+  { href: "/social-media", label: "Sosyal Medya", icon: Share2, minPlan: "BUSINESS" },
+  { href: "/ai-assistant", label: "AI Asistan", icon: Bot, minPlan: "PRO" },
+  { href: "/reports", label: "Raporlar", icon: BarChart3, minPlan: "BUSINESS" },
+  { href: "/whatsapp", label: "WhatsApp", icon: MessageCircle, minPlan: "PRO" },
+  { href: "/employees", label: "Çalışanlar", icon: UserCog, minPlan: "PRO" },
+  { href: "/reminders", label: "Hatırlatmalar", icon: Bell, minPlan: "PRO" },
+  { href: "/billing", label: "Abonelik", icon: CreditCard, minPlan: "BASIC" },
+  { href: "/settings", label: "Ayarlar", icon: Settings, minPlan: "BASIC" },
 ];
 
 const adminNavItems = [
@@ -95,6 +142,131 @@ function getPageTitle(pathname: string): string {
   return "inPobi";
 }
 
+/* ──────────────────────── LOCAL STORAGE ORDER ──────────────────────── */
+
+const SIDEBAR_ORDER_KEY = "inpobi-sidebar-order";
+
+function getSavedOrder(): string[] | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const saved = localStorage.getItem(SIDEBAR_ORDER_KEY);
+    return saved ? JSON.parse(saved) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveOrder(hrefs: string[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(SIDEBAR_ORDER_KEY, JSON.stringify(hrefs));
+  } catch {
+    // ignore
+  }
+}
+
+/* ──────────────────────── SORTABLE NAV ITEM ──────────────────────── */
+
+function SortableNavItem({
+  item,
+  isActive,
+  isLocked,
+  collapsed,
+  onClose,
+  onLockedClick,
+}: {
+  item: NavItem;
+  isActive: boolean;
+  isLocked: boolean;
+  collapsed: boolean;
+  onClose: () => void;
+  onLockedClick: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.href });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+    opacity: isDragging ? 0.8 : undefined,
+  };
+
+  const Icon = item.icon;
+
+  if (isLocked) {
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        {...attributes}
+        {...listeners}
+      >
+        <button
+          type="button"
+          onClick={onLockedClick}
+          title={collapsed ? `${item.label} (Kilitli)` : undefined}
+          className={`group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium opacity-40 cursor-not-allowed ${
+            collapsed ? "lg:justify-center lg:px-0" : ""
+          }`}
+        >
+          <div className="relative shrink-0">
+            <Icon className="h-[18px] w-[18px] text-gray-400" />
+            <Lock className="absolute -right-1 -top-1 h-2.5 w-2.5 text-gray-500" />
+          </div>
+          <span className={collapsed ? "lg:hidden" : "text-gray-400"}>
+            {item.label}
+          </span>
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+    >
+      <Link
+        href={item.href}
+        onClick={onClose}
+        title={collapsed ? item.label : undefined}
+        className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-200 ${
+          isActive
+            ? "bg-blue-50 text-blue-700"
+            : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+        } ${collapsed ? "lg:justify-center lg:px-0" : ""}`}
+      >
+        <Icon
+          className={`h-[18px] w-[18px] shrink-0 ${
+            isActive ? "text-blue-600" : "text-gray-400 group-hover:text-gray-600"
+          }`}
+        />
+        <span className={collapsed ? "lg:hidden" : ""}>
+          {item.label}
+        </span>
+
+        {/* Active indicator */}
+        {isActive && (
+          <motion.div
+            layoutId="sidebar-active"
+            className="absolute -left-3 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-blue-600"
+            transition={{ type: "spring", stiffness: 350, damping: 30 }}
+          />
+        )}
+      </Link>
+    </div>
+  );
+}
+
 /* ──────────────────────── SIDEBAR ──────────────────────── */
 
 function Sidebar({
@@ -110,6 +282,60 @@ function Sidebar({
 }) {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const { toast } = useToast();
+
+  const clinicPlan = ((session?.user as any)?.clinicPlan || "PRO") as PlanTier;
+
+  // Sortable order
+  const [orderedItems, setOrderedItems] = useState<NavItem[]>(navItems);
+
+  useEffect(() => {
+    const saved = getSavedOrder();
+    if (saved) {
+      const itemMap = new Map(navItems.map((item) => [item.href, item]));
+      const sorted: NavItem[] = [];
+      for (const href of saved) {
+        const item = itemMap.get(href);
+        if (item) {
+          sorted.push(item);
+          itemMap.delete(href);
+        }
+      }
+      // Append any new items not in saved order
+      Array.from(itemMap.values()).forEach((item) => {
+        sorted.push(item);
+      });
+      setOrderedItems(sorted);
+    }
+  }, []);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setOrderedItems((items) => {
+        const oldIndex = items.findIndex((i) => i.href === active.id);
+        const newIndex = items.findIndex((i) => i.href === over.id);
+        const newItems = arrayMove(items, oldIndex, newIndex);
+        saveOrder(newItems.map((i) => i.href));
+        return newItems;
+      });
+    }
+  }, []);
+
+  const handleLockedClick = useCallback(() => {
+    toast({
+      title: "Erişim kısıtlı",
+      description: "Bu özellik planınıza dahil değil. Yükseltmek için iletişime geçin.",
+      variant: "destructive",
+    });
+  }, [toast]);
+
+  const itemIds = useMemo(() => orderedItems.map((i) => i.href), [orderedItems]);
 
   return (
     <>
@@ -168,45 +394,33 @@ function Sidebar({
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto px-3 py-3">
-          <div className="space-y-0.5">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive =
-                pathname === item.href ||
-                pathname.startsWith(item.href + "/");
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={onClose}
-                  title={collapsed ? item.label : undefined}
-                  className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-200 ${
-                    isActive
-                      ? "bg-blue-50 text-blue-700"
-                      : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
-                  } ${collapsed ? "lg:justify-center lg:px-0" : ""}`}
-                >
-                  <Icon
-                    className={`h-[18px] w-[18px] shrink-0 ${
-                      isActive ? "text-blue-600" : "text-gray-400 group-hover:text-gray-600"
-                    }`}
-                  />
-                  <span className={collapsed ? "lg:hidden" : ""}>
-                    {item.label}
-                  </span>
-
-                  {/* Active indicator */}
-                  {isActive && (
-                    <motion.div
-                      layoutId="sidebar-active"
-                      className="absolute -left-3 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-blue-600"
-                      transition={{ type: "spring", stiffness: 350, damping: 30 }}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
+              <div className="space-y-0.5">
+                {orderedItems.map((item) => {
+                  const isActive =
+                    pathname === item.href ||
+                    pathname.startsWith(item.href + "/");
+                  const isLocked = !hasAccess(clinicPlan, item.minPlan);
+                  return (
+                    <SortableNavItem
+                      key={item.href}
+                      item={item}
+                      isActive={isActive}
+                      isLocked={isLocked}
+                      collapsed={collapsed}
+                      onClose={onClose}
+                      onLockedClick={handleLockedClick}
                     />
-                  )}
-                </Link>
-              );
-            })}
-          </div>
+                  );
+                })}
+              </div>
+            </SortableContext>
+          </DndContext>
 
           {/* Admin Section - only visible to ADMIN role */}
           {(session?.user as any)?.role === "ADMIN" && (
@@ -266,17 +480,21 @@ function Sidebar({
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-blue-600" />
                 <span className="text-xs font-semibold text-blue-700">
-                  Pro Plan
+                  {PLAN_LABELS[clinicPlan] || "Pro"} Plan
                 </span>
               </div>
               <p className="mt-0.5 text-[11px] text-blue-500">
-                Tüm özellikler aktif
+                {clinicPlan === "BUSINESS"
+                  ? "Tüm özellikler aktif"
+                  : clinicPlan === "PRO"
+                    ? "Pro özellikler aktif"
+                    : "Temel özellikler aktif"}
               </p>
             </div>
           )}
           {collapsed && (
             <div className="mb-3 flex justify-center">
-              <div className="rounded-lg bg-blue-50 p-2" title="Pro Plan">
+              <div className="rounded-lg bg-blue-50 p-2" title={`${PLAN_LABELS[clinicPlan] || "Pro"} Plan`}>
                 <Sparkles className="h-4 w-4 text-blue-600" />
               </div>
             </div>
@@ -415,7 +633,10 @@ export default function DashboardLayout({
 }) {
   return (
     <SessionProvider>
-      <DashboardContent>{children}</DashboardContent>
+      <ToastProvider>
+        <DashboardContent>{children}</DashboardContent>
+        <Toaster />
+      </ToastProvider>
     </SessionProvider>
   );
 }
