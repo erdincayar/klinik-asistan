@@ -73,6 +73,7 @@ export default function RegisterPage() {
         return;
       }
 
+      sessionStorage.setItem("verify-pw", data.password);
       router.push(`/verify-email?email=${encodeURIComponent(data.email)}`);
     } catch {
       setError("Bir hata oluştu. Lütfen tekrar deneyin.");

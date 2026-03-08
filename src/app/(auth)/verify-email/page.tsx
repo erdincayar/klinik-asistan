@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { motion } from "framer-motion";
 import { CheckCircle2, Loader2, MailOpen, RefreshCw } from "lucide-react";
 
@@ -107,9 +108,24 @@ function VerifyEmailContent() {
       }
 
       setSuccess(true);
-      setTimeout(() => {
-        router.push("/login?verified=1");
-      }, 2000);
+
+      // Auto-login if password is available from registration
+      const pw = sessionStorage.getItem("verify-pw");
+      sessionStorage.removeItem("verify-pw");
+
+      if (pw) {
+        const loginResult = await signIn("credentials", {
+          email,
+          password: pw,
+          redirect: false,
+        });
+        if (loginResult?.ok) {
+          setTimeout(() => router.push("/dashboard"), 1500);
+          return;
+        }
+      }
+
+      setTimeout(() => router.push("/login?verified=1"), 2000);
     } catch {
       setError("Bir hata oluştu. Lütfen tekrar deneyin.");
     } finally {
@@ -161,7 +177,7 @@ function VerifyEmailContent() {
           Email Doğrulandı
         </h1>
         <p className="mt-2 text-sm text-gray-500">
-          Giriş sayfasına yönlendiriliyorsunuz...
+          Yönlendiriliyorsunuz...
         </p>
       </motion.div>
     );
