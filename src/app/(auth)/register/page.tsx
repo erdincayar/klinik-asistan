@@ -73,7 +73,7 @@ export default function RegisterPage() {
         return;
       }
 
-      router.push("/login?registered=1");
+      router.push(`/verify-email?email=${encodeURIComponent(data.email)}`);
     } catch {
       setError("Bir hata oluştu. Lütfen tekrar deneyin.");
     } finally {
@@ -88,7 +88,7 @@ export default function RegisterPage() {
           Kayıt Ol
         </h1>
         <p className="mt-2 text-sm text-gray-500">
-          inPobi hesabınızı oluşturun
+          Poby hesabınızı oluşturun
         </p>
       </div>
 

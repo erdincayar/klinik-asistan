@@ -91,7 +91,6 @@ const navItems: NavItem[] = [
   { href: "/reports", label: "Raporlar", icon: BarChart3, minPlan: "BUSINESS" },
   { href: "/reminders", label: "Hatırlatmalar", icon: Bell, minPlan: "PRO" },
   { href: "/billing", label: "Abonelik", icon: CreditCard, minPlan: "BASIC" },
-  { href: "/settings", label: "Ayarlar", icon: Settings, minPlan: "BASIC" },
 ];
 
 const adminNavItems = [
@@ -131,7 +130,7 @@ const pageTitles: Record<string, string> = {
 function getPageTitle(pathname: string): string {
   if (pageTitles[pathname]) return pageTitles[pathname];
   if (pathname.startsWith("/patients/")) return "Müşteri Detayı";
-  return "inPobi";
+  return "Poby";
 }
 
 /* ──────────────────────── LOCAL STORAGE ORDER ──────────────────────── */
@@ -273,7 +272,7 @@ function Sidebar({
   onToggleCollapse: () => void;
 }) {
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const { toast } = useToast();
 
   const clinicPlan = ((session?.user as any)?.clinicPlan || "PRO") as PlanTier;
@@ -283,6 +282,7 @@ function Sidebar({
 
   // Admin, demo, veya özel hesaplarda tüm modüller açık
   const unlockAll =
+    status === "loading" ||
     userRole === "ADMIN" ||
     userRole === "SUPERADMIN" ||
     userRole === "DEMO" ||
@@ -365,11 +365,11 @@ function Sidebar({
         <div className="flex h-16 shrink-0 items-center justify-between border-b border-gray-100 px-5">
           <Link href="/dashboard" className="flex items-center gap-2">
             {collapsed ? (
-              <span className="text-lg font-extrabold text-blue-600">iP</span>
+              <span className="text-lg font-extrabold text-blue-600">Po</span>
             ) : (
               <span className="text-xl font-extrabold tracking-tight">
-                <span className="text-blue-600">in</span>
-                <span className="text-gray-800">Pobi</span>
+                <span className="text-blue-600">Po</span>
+                <span className="text-gray-800">by</span>
               </span>
             )}
           </Link>
@@ -475,8 +475,38 @@ function Sidebar({
           )}
         </nav>
 
-        {/* Plan badge + User section */}
+        {/* Settings + Plan badge + User section */}
         <div className="shrink-0 border-t border-gray-100 px-3 py-3">
+          {/* Fixed Settings link */}
+          <div className="mb-2">
+            <Link
+              href="/settings"
+              onClick={onClose}
+              title={collapsed ? "Ayarlar" : undefined}
+              className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-200 ${
+                pathname === "/settings" || pathname.startsWith("/settings/")
+                  ? "bg-blue-50 text-blue-700"
+                  : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+              } ${collapsed ? "lg:justify-center lg:px-0" : ""}`}
+            >
+              <Settings
+                className={`h-[18px] w-[18px] shrink-0 ${
+                  pathname === "/settings" || pathname.startsWith("/settings/")
+                    ? "text-blue-600"
+                    : "text-gray-400 group-hover:text-gray-600"
+                }`}
+              />
+              <span className={collapsed ? "lg:hidden" : ""}>Ayarlar</span>
+              {(pathname === "/settings" || pathname.startsWith("/settings/")) && (
+                <motion.div
+                  layoutId="sidebar-settings-active"
+                  className="absolute -left-3 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-blue-600"
+                  transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                />
+              )}
+            </Link>
+          </div>
+
           {/* Plan badge */}
           {!collapsed && (
             <div className="mb-3 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 px-3 py-2.5">

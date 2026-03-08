@@ -3,7 +3,7 @@ import { parseTelegramUpdate, sendTelegramMessage } from "@/lib/telegram/bot";
 import { handleBotMessage } from "@/lib/bot-ai-handler";
 import { prisma } from "@/lib/prisma";
 
-const WELCOME_MESSAGE = `🤖 inPobi AI Asistan'a hoş geldiniz!
+const WELCOME_MESSAGE = `🤖 Poby AI Asistan'a hoş geldiniz!
 
 Doğal dilde mesaj yazabilirsiniz:
 
@@ -23,7 +23,7 @@ Daha fazlası için "yardım" yazın.`;
 export async function GET() {
   return Response.json({
     status: "ok",
-    bot: "inPobi Telegram Bot",
+    bot: "Poby Telegram Bot",
     timestamp: new Date().toISOString(),
   });
 }
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
         if (!link) {
           await sendTelegramMessage({
             chat_id: chatId,
-            text: "❌ Bağlantı kodu geçersiz.\n\nLütfen inPobi panelinden yeni QR kod oluşturun.",
+            text: "❌ Bağlantı kodu geçersiz.\n\nLütfen Poby panelinden yeni QR kod oluşturun.",
           });
           return Response.json({ ok: true });
         }
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
         if (link.used) {
           await sendTelegramMessage({
             chat_id: chatId,
-            text: "❌ Bu bağlantı kodu zaten kullanılmış.\n\nLütfen inPobi panelinden yeni QR kod oluşturun.",
+            text: "❌ Bu bağlantı kodu zaten kullanılmış.\n\nLütfen Poby panelinden yeni QR kod oluşturun.",
           });
           return Response.json({ ok: true });
         }
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
         if (link.expiresAt <= new Date()) {
           await sendTelegramMessage({
             chat_id: chatId,
-            text: "❌ Bağlantı kodunun süresi dolmuş.\n\nLütfen inPobi panelinden yeni QR kod oluşturun.",
+            text: "❌ Bağlantı kodunun süresi dolmuş.\n\nLütfen Poby panelinden yeni QR kod oluşturun.",
           });
           return Response.json({ ok: true });
         }
@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
     if (!clinic) {
       await sendTelegramMessage({
         chat_id: chatId,
-        text: "⚠️ Bu chat henüz bir işletmeye bağlı değil.\n\ninPobi panelinden Ayarlar → Telegram bölümünden QR kod ile bağlantı kurun.",
+        text: "⚠️ Bu chat henüz bir işletmeye bağlı değil.\n\nPoby panelinden Ayarlar → Telegram bölümünden QR kod ile bağlantı kurun.",
       });
       return Response.json({ ok: true });
     }

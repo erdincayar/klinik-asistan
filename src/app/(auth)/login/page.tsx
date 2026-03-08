@@ -48,6 +48,10 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
+        if (result.error.includes("EMAIL_NOT_VERIFIED")) {
+          router.push(`/verify-email?email=${encodeURIComponent(data.email)}`);
+          return;
+        }
         setError("Email veya şifre hatalı");
       } else {
         router.push("/dashboard");
@@ -66,7 +70,7 @@ export default function LoginPage() {
           Giriş Yap
         </h1>
         <p className="mt-2 text-sm text-gray-500">
-          inPobi hesabınıza giriş yapın
+          Poby hesabınıza giriş yapın
         </p>
       </div>
 

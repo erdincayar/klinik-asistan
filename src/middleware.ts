@@ -98,7 +98,7 @@ export function middleware(req: NextRequest) {
 
   // Rate limiting for auth
   if (pathname.startsWith("/api/auth")) {
-    if (!checkRateLimit(ip, 10, 60000, "auth")) {
+    if (!checkRateLimit(ip, 200, 60000, "auth")) {
       return addSecurityHeaders(
         NextResponse.json(
           { error: "Cok fazla istek. Lutfen bekleyin." },
@@ -136,22 +136,10 @@ export function middleware(req: NextRequest) {
 
   // Rate limiting for general API endpoints
   if (pathname.startsWith("/api/") && !pathname.startsWith("/api/auth") && !pathname.startsWith("/api/ads")) {
-    if (!checkRateLimit(ip, 60, 60000, "api")) {
+    if (!checkRateLimit(ip, 120, 60000, "api")) {
       return addSecurityHeaders(
         NextResponse.json(
           { error: "Istek limiti asildi" },
-          { status: 429 }
-        )
-      );
-    }
-  }
-
-  // General page rate limiting
-  if (!pathname.startsWith("/api/") && !pathname.startsWith("/_next/")) {
-    if (!checkRateLimit(ip + "-page", 200, 60000)) {
-      return addSecurityHeaders(
-        NextResponse.json(
-          { error: "Sayfa istek limiti asildi" },
           { status: 429 }
         )
       );

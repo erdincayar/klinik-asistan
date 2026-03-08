@@ -59,6 +59,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!isValid) return null;
 
+        // Block unverified email users (only for credentials, not Google)
+        if (!user.emailVerified) {
+          throw new Error("EMAIL_NOT_VERIFIED");
+        }
+
         return {
           id: user.id,
           email: user.email,
@@ -95,6 +100,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               email: profile.email,
               image: user.image || null,
               isActive: true,
+              emailVerified: true,
             },
           });
           return true;

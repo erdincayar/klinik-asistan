@@ -5,7 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "inPobi - İşletme Yönetim Platformu",
+  title: "Poby - İşletme Yönetim Platformu",
   description: "İşletmeler için AI destekli yönetim platformu",
 };
 

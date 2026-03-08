@@ -700,7 +700,7 @@ export async function POST(req: NextRequest) {
 
   const { messages } = await req.json();
 
-  const systemPrompt = `Sen inPobi AI asistanısın. Bir işletme yönetim platformu için akıllı bir yardımcısın.
+  const systemPrompt = `Sen Poby AI asistanısın. Bir işletme yönetim platformu için akıllı bir yardımcısın.
 Görevlerin:
 - Klinik gelir-gider analizleri yapma
 - Müşteri bilgilerini sorgulama

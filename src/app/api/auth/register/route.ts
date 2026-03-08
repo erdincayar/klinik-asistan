@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { registerSchema } from "@/lib/validations";
 import { hash } from "bcryptjs";
+import { generateVerificationCode, sendVerificationEmail } from "@/lib/email";
 
 export async function POST(request: Request) {
   try {
@@ -17,6 +18,9 @@ export async function POST(request: Request) {
     const { name, email, password, clinicName } = parsed.data;
     const hashedPassword = await hash(password, 12);
 
+    const verifyCode = generateVerificationCode();
+    const verifyExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
     const clinic = await prisma.clinic.create({
       data: { name: clinicName },
     });
@@ -28,6 +32,9 @@ export async function POST(request: Request) {
           email,
           password: hashedPassword,
           clinicId: clinic.id,
+          emailVerified: false,
+          emailVerifyToken: verifyCode,
+          emailVerifyExpires: verifyExpires,
         },
       }),
       prisma.tokenBalance.create({
@@ -35,7 +42,14 @@ export async function POST(request: Request) {
       }),
     ]);
 
-    return Response.json({ success: true, message: "Kayıt başarılı" });
+    // Send verification email (non-blocking — don't fail registration if email fails)
+    try {
+      await sendVerificationEmail(email, verifyCode, name);
+    } catch (emailError) {
+      console.error("[Register] Verification email failed:", emailError);
+    }
+
+    return Response.json({ success: true, email, message: "Kayıt başarılı" });
   } catch (error: any) {
     if (
       error?.code === "P2002" ||

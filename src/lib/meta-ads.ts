@@ -226,7 +226,7 @@ export async function createAd(clinicId: string, adSetId: string, data: {
       link_data: {
         message: data.description || "",
         name: data.headline || "",
-        link: data.websiteUrl || "https://inpobi.com",
+        link: data.websiteUrl || "https://poby.ai",
         call_to_action: { type: data.ctaType || "LEARN_MORE" },
         ...(data.imageHash && { image_hash: data.imageHash }),
       },

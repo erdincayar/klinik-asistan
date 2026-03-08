@@ -1,5 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async redirects() {
+    return [
+      { source: "/dashboard/patients", destination: "/patients", permanent: true },
+      { source: "/dashboard/appointments", destination: "/appointments", permanent: true },
+      { source: "/dashboard/finance", destination: "/finance", permanent: true },
+      { source: "/dashboard/inventory", destination: "/inventory", permanent: true },
+      { source: "/dashboard/employees", destination: "/employees", permanent: true },
+      { source: "/dashboard/marketing", destination: "/marketing", permanent: true },
+      { source: "/dashboard/messaging", destination: "/messaging", permanent: true },
+      { source: "/dashboard/settings", destination: "/settings", permanent: true },
+    ];
+  },
   async headers() {
     return [
       {

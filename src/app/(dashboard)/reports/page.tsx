@@ -220,7 +220,7 @@ function buildPdfHtml(data: ProfitLossData, year: number): string {
     <thead><tr><th>Ay</th><th style="text-align:right">Gelir</th><th style="text-align:right">Gider</th><th style="text-align:right">Net Kâr</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>
-  <p style="font-size:12px;color:#9ca3af;margin-top:40px">Bu rapor inPobi tarafından oluşturulmuştur.</p>
+  <p style="font-size:12px;color:#9ca3af;margin-top:40px">Bu rapor Poby tarafından oluşturulmuştur.</p>
 </body>
 </html>`;
 }

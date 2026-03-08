@@ -1,0 +1,68 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - link "inPobi" [ref=e5] [cursor=pointer]:
+          - /url: /
+        - heading "İşletmeni yönetmenin en kolay yolu." [level=2] [ref=e6]:
+          - text: İşletmeni yönetmenin
+          - text: en kolay yolu.
+        - paragraph [ref=e7]: Tek platform üzerinden müşteri, randevu, finans ve stok yönetimini AI destekli araçlarla kolayca yapın.
+        - list [ref=e8]:
+          - listitem [ref=e9]:
+            - img [ref=e11]
+            - generic [ref=e16]: Müşteri yönetimi
+          - listitem [ref=e17]:
+            - img [ref=e19]
+            - generic [ref=e21]: Akıllı randevu sistemi
+          - listitem [ref=e22]:
+            - img [ref=e24]
+            - generic [ref=e26]: Gelir-gider takibi
+          - listitem [ref=e27]:
+            - img [ref=e29]
+            - generic [ref=e32]: AI destekli asistan
+          - listitem [ref=e33]:
+            - img [ref=e35]
+            - generic [ref=e37]: Güvenli veri saklama
+      - paragraph [ref=e39]: © 2026 inPobi. Tüm hakları saklıdır.
+    - generic [ref=e41]:
+      - generic [ref=e42]:
+        - heading "Giriş Yap" [level=1] [ref=e43]
+        - paragraph [ref=e44]: inPobi hesabınıza giriş yapın
+      - generic [ref=e45]:
+        - generic [ref=e46]: Bir hata oluştu. Lütfen tekrar deneyin.
+        - generic [ref=e47]:
+          - text: Email
+          - textbox "Email" [ref=e48]:
+            - /placeholder: ornek@email.com
+            - text: admin@inpobi.com
+        - generic [ref=e49]:
+          - generic [ref=e50]:
+            - generic [ref=e51]: Şifre
+            - link "Şifremi Unuttum" [ref=e52] [cursor=pointer]:
+              - /url: /forgot-password
+          - generic [ref=e53]:
+            - textbox "Şifre" [ref=e54]:
+              - /placeholder: ••••••••
+              - text: InPobi2026Admin!
+            - button [ref=e55] [cursor=pointer]:
+              - img [ref=e56]
+        - generic [ref=e59]:
+          - checkbox "Beni Hatırla" [ref=e60]
+          - generic [ref=e61] [cursor=pointer]: Beni Hatırla
+        - button "Giriş Yap" [ref=e62] [cursor=pointer]:
+          - text: Giriş Yap
+          - img [ref=e63]
+        - generic [ref=e69]: veya
+        - button "Google ile giriş yap" [ref=e70] [cursor=pointer]:
+          - img [ref=e71]
+          - text: Google ile giriş yap
+      - paragraph [ref=e76]:
+        - text: Hesabınız yok mu?
+        - link "Kayıt Ol" [ref=e77] [cursor=pointer]:
+          - /url: /register
+  - alert [ref=e78]
+```

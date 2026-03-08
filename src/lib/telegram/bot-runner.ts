@@ -5,7 +5,7 @@ dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
 import { startBot, stopBot } from "@/lib/telegram/real-bot";
 
-console.log("🤖 inPobi Telegram Bot başlatılıyor...");
+console.log("🤖 Poby Telegram Bot başlatılıyor...");
 
 const shutdown = () => {
   console.log("\n🛑 Bot kapatılıyor...");

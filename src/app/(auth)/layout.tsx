@@ -39,8 +39,8 @@ export default function AuthLayout({
         {/* Content */}
         <div className="relative z-10 flex flex-1 flex-col justify-center px-12">
           <Link href="/" className="mb-10 text-2xl font-extrabold tracking-tight">
-            <span className="text-white">in</span>
-            <span className="text-blue-200">Pobi</span>
+            <span className="text-white">Po</span>
+            <span className="text-blue-200">by</span>
           </Link>
 
           <h2 className="mb-3 text-2xl font-bold leading-snug text-white">
@@ -79,7 +79,7 @@ export default function AuthLayout({
         {/* Bottom */}
         <div className="relative z-10 px-12 pb-8">
           <p className="text-xs text-blue-300/60">
-            &copy; 2026 inPobi. Tüm hakları saklıdır.
+            &copy; 2026 Poby. Tüm hakları saklıdır.
           </p>
         </div>
       </div>
@@ -95,8 +95,8 @@ export default function AuthLayout({
           {/* Mobile-only logo */}
           <div className="mb-8 lg:hidden">
             <Link href="/" className="text-2xl font-extrabold tracking-tight">
-              <span className="text-blue-600">in</span>
-              <span className="text-gray-800">Pobi</span>
+              <span className="text-blue-600">Po</span>
+              <span className="text-gray-800">by</span>
             </Link>
           </div>
 

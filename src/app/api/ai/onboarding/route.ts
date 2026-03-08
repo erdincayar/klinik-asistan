@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/prisma";
 
-const SYSTEM_PROMPT = `Sen inPobi işletme danışmanısın. Kullanıcının işletme türünü, çalışan sayısını ve ihtiyaçlarını öğren. 3-4 soru sor, her mesajda tek soru sor. Samimi ve profesyonel ol. Türkçe konuş.
+const SYSTEM_PROMPT = `Sen Poby işletme danışmanısın. Kullanıcının işletme türünü, çalışan sayısını ve ihtiyaçlarını öğren. 3-4 soru sor, her mesajda tek soru sor. Samimi ve profesyonel ol. Türkçe konuş.
 
 Yeterli bilgi topladığında, son mesajında işletmeye uygun modülleri öner ve mutlaka şu JSON formatında ver (mesajın sonunda, --- ayracından sonra):
 

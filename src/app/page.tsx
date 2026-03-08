@@ -200,7 +200,7 @@ function OnboardingChat() {
       setMessages([
         {
           role: "assistant",
-          content: "Merhaba! Ben inPobi asistanı. İşletmenizi anlatır mısınız? Hangi sektörde faaliyet gösteriyorsunuz?",
+          content: "Merhaba! Ben Poby asistanı. İşletmenizi anlatır mısınız? Hangi sektörde faaliyet gösteriyorsunuz?",
         },
       ]);
     }
@@ -295,7 +295,7 @@ function OnboardingChat() {
                 <Bot className="h-5 w-5 text-white" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-white">inPobi Asistan</p>
+                <p className="text-sm font-semibold text-white">Poby Asistan</p>
                 <p className="text-[11px] text-blue-200">İşletmeniz için en uygun planı bulalım</p>
               </div>
             </div>
@@ -475,8 +475,8 @@ export default function Home() {
       >
         <div className="mx-auto flex max-w-[1200px] items-center justify-between px-6 py-4">
           <Link href="/" className="text-2xl font-extrabold tracking-tight">
-            <span className="text-blue-600">in</span>
-            <span className="text-gray-800">Pobi</span>
+            <span className="text-blue-600">Po</span>
+            <span className="text-gray-800">by</span>
           </Link>
 
           {/* Desktop links */}
@@ -642,7 +642,7 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.6 }}
             className="mx-auto mb-10 max-w-[560px] text-lg leading-relaxed text-gray-500"
           >
-            inPobi ile klinik, restoran, kuaför veya eczane farketmez — tüm
+            Poby ile klinik, restoran, kuaför veya eczane farketmez — tüm
             işletme operasyonlarını tek panelden yönetin.
           </motion.p>
 
@@ -685,7 +685,7 @@ export default function Home() {
               <div className="h-3 w-3 rounded-full bg-yellow-500" />
               <div className="h-3 w-3 rounded-full bg-green-500" />
               <div className="ml-2 flex-1 rounded-md bg-white/5 px-3 py-1.5 text-center text-xs text-gray-400">
-                inpobi.com/dashboard
+                poby.ai/dashboard
               </div>
             </div>
 
@@ -694,7 +694,7 @@ export default function Home() {
               {/* Sidebar */}
               <div className="hidden w-[220px] shrink-0 border-r border-gray-200 bg-gray-50 p-5 md:block">
                 <div className="mb-6 px-1 text-base font-bold text-blue-600">
-                  inPobi
+                  Poby
                 </div>
                 {sidebarItems.map((item) => {
                   const Icon = item.icon;
@@ -868,7 +868,7 @@ export default function Home() {
             transition={{ delay: 0.1 }}
             className="mx-auto mb-14 max-w-[500px] text-base leading-relaxed text-gray-500"
           >
-            Sektörünüz ne olursa olsun, inPobi işletmenize uyum sağlar.
+            Sektörünüz ne olursa olsun, Poby işletmenize uyum sağlar.
           </motion.p>
 
           <motion.div
@@ -993,7 +993,7 @@ export default function Home() {
 
           <div className="mt-10 border-t border-gray-200 pt-6 text-center">
             <p className="text-xs text-gray-400">
-              &copy; 2026 inPobi. Tüm hakları saklıdır.
+              &copy; 2026 Poby. Tüm hakları saklıdır.
             </p>
           </div>
         </div>

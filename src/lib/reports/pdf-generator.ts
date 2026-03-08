@@ -64,7 +64,7 @@ export function generateReportHtml(data: PdfReportData): string {
   </div>
   ${sectionsHtml}
   <div class="footer">
-    ${data.footer || `inPobi - ${new Date().toLocaleDateString("tr-TR")} tarihinde olusturuldu`}
+    ${data.footer || `Poby - ${new Date().toLocaleDateString("tr-TR")} tarihinde olusturuldu`}
   </div>
 </body>
 </html>`;

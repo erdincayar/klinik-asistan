@@ -841,7 +841,7 @@ export default function SettingsPage() {
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({
                         to: whatsappPhone,
-                        message: "✅ inPobi WhatsApp bağlantı testi başarılı!",
+                        message: "✅ Poby WhatsApp bağlantı testi başarılı!",
                       }),
                     });
                     const data = await res.json();

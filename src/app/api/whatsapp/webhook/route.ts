@@ -3,7 +3,7 @@ import { handleBotMessage } from "@/lib/bot-ai-handler";
 import { sendWhatsAppMessage } from "@/lib/whatsapp/sender";
 import { prisma } from "@/lib/prisma";
 
-const WELCOME_MESSAGE = `🤖 inPobi AI Asistan'a hoşgeldiniz!
+const WELCOME_MESSAGE = `🤖 Poby AI Asistan'a hoşgeldiniz!
 
 Doğal dilde mesaj yazabilirsiniz:
 
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
     if (!clinic) {
       await sendWhatsAppMessage(
         senderPhone,
-        "⚠️ Henüz bir işletme WhatsApp'a bağlı değil.\n\ninPobi panelinden Ayarlar → WhatsApp bölümünden bağlantı kurun."
+        "⚠️ Henüz bir işletme WhatsApp'a bağlı değil.\n\nPoby panelinden Ayarlar → WhatsApp bölümünden bağlantı kurun."
       );
       return Response.json({ ok: true });
     }

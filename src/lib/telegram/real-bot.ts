@@ -147,7 +147,7 @@ async function processMessage(msg: TgMessage): Promise<void> {
 
       // Plain /start without code — show welcome
       await tgSend(chatId, [
-        "👋 Merhaba! inPobi Bot'a hoş geldiniz.",
+        "👋 Merhaba! Poby Bot'a hoş geldiniz.",
         "",
         "Doğal dilde mesaj yazarak kayıt oluşturabilirsiniz:",
         '📅 Randevu: "Erdinç Ayar pazartesi 15:00 botoks"',

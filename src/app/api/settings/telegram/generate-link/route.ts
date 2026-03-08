@@ -33,7 +33,7 @@ export async function POST() {
       },
     });
 
-    const botUsername = process.env.TELEGRAM_BOT_USERNAME || "inPobiBot";
+    const botUsername = process.env.TELEGRAM_BOT_USERNAME || "PobyBot";
     const link = `https://t.me/${botUsername}?start=${code}`;
 
     return NextResponse.json({ code, link, expiresAt: expiresAt.toISOString() });

@@ -683,7 +683,7 @@ async function executeIntent(
 // ── Help Message ────────────────────────────────────────────────────────────
 
 function getHelpMessage(): string {
-  return `🤖 inPobi AI Asistan
+  return `🤖 Poby AI Asistan
 
 Doğal dilde yazabilirsiniz, komut ezberlemenize gerek yok!
 

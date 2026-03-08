@@ -1,0 +1,1776 @@
+{
+  "config": {
+    "configFile": "/Users/erdincayar/klinik-asistan/playwright.config.ts",
+    "rootDir": "/Users/erdincayar/klinik-asistan/tests",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/erdincayar/klinik-asistan/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/erdincayar/klinik-asistan/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results/results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "runAgents": "none",
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.58.2",
+    "workers": 5,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "bug-test.spec.ts",
+      "file": "bug-test.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "LOGIN",
+          "file": "bug-test.spec.ts",
+          "line": 21,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should login with admin credentials and redirect to dashboard",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3718,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-08T09:51:46.460Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-LOGIN-should-logi-374b9-s-and-redirect-to-dashboard/test-finished-1.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "bc4d541f27c433a0e381-46cdedea87bafaab818e",
+              "file": "bug-test.spec.ts",
+              "line": 22,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "DASHBOARD",
+          "file": "bug-test.spec.ts",
+          "line": 49,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should load dashboard cards without errors",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4486,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-08T09:51:53.130Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-DASHBOARD-should--8e910-hboard-cards-without-errors/test-finished-1.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "bc4d541f27c433a0e381-ad6802ed3c984a43220c",
+              "file": "bug-test.spec.ts",
+              "line": 54,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "SIDEBAR",
+          "file": "bug-test.spec.ts",
+          "line": 82,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should navigate to Genel Bakış",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16559,
+                      "error": {
+                        "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================",
+                        "stack": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================\n    at login (/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:381:14)\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:84:5",
+                        "location": {
+                          "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                          "column": 14,
+                          "line": 381
+                        },
+                        "snippet": "  379 |   await loginBtn.click();\n  380 |\n> 381 |   await page.waitForURL('**/dashboard**', { timeout: 15000 });\n      |              ^\n  382 | }\n  383 |\n  384 | function escapeRegex(str: string) {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                            "column": 14,
+                            "line": 381
+                          },
+                          "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================\n\n  379 |   await loginBtn.click();\n  380 |\n> 381 |   await page.waitForURL('**/dashboard**', { timeout: 15000 });\n      |              ^\n  382 | }\n  383 |\n  384 | function escapeRegex(str: string) {\n    at login (/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:381:14)\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:84:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-08T09:51:57.630Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-SIDEBAR-should-navigate-to-Genel-Bakış/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-SIDEBAR-should-navigate-to-Genel-Bakış/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                        "column": 14,
+                        "line": 381
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "bc4d541f27c433a0e381-233e3b1462bb8736ee62",
+              "file": "bug-test.spec.ts",
+              "line": 104,
+              "column": 9
+            },
+            {
+              "title": "should navigate to Müşteriler",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16972,
+                      "error": {
+                        "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================",
+                        "stack": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================\n    at login (/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:381:14)\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:84:5",
+                        "location": {
+                          "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                          "column": 14,
+                          "line": 381
+                        },
+                        "snippet": "  379 |   await loginBtn.click();\n  380 |\n> 381 |   await page.waitForURL('**/dashboard**', { timeout: 15000 });\n      |              ^\n  382 | }\n  383 |\n  384 | function escapeRegex(str: string) {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                            "column": 14,
+                            "line": 381
+                          },
+                          "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================\n\n  379 |   await loginBtn.click();\n  380 |\n> 381 |   await page.waitForURL('**/dashboard**', { timeout: 15000 });\n      |              ^\n  382 | }\n  383 |\n  384 | function escapeRegex(str: string) {\n    at login (/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:381:14)\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:84:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-08T09:52:15.534Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-SIDEBAR-should-navigate-to-Müşteriler/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-SIDEBAR-should-navigate-to-Müşteriler/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                        "column": 14,
+                        "line": 381
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "bc4d541f27c433a0e381-8facda035e794123e798",
+              "file": "bug-test.spec.ts",
+              "line": 104,
+              "column": 9
+            },
+            {
+              "title": "should navigate to Randevular",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16709,
+                      "error": {
+                        "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================",
+                        "stack": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================\n    at login (/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:381:14)\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:84:5",
+                        "location": {
+                          "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                          "column": 14,
+                          "line": 381
+                        },
+                        "snippet": "  379 |   await loginBtn.click();\n  380 |\n> 381 |   await page.waitForURL('**/dashboard**', { timeout: 15000 });\n      |              ^\n  382 | }\n  383 |\n  384 | function escapeRegex(str: string) {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                            "column": 14,
+                            "line": 381
+                          },
+                          "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================\n\n  379 |   await loginBtn.click();\n  380 |\n> 381 |   await page.waitForURL('**/dashboard**', { timeout: 15000 });\n      |              ^\n  382 | }\n  383 |\n  384 | function escapeRegex(str: string) {\n    at login (/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:381:14)\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:84:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-08T09:52:34.697Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-SIDEBAR-should-navigate-to-Randevular/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-SIDEBAR-should-navigate-to-Randevular/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                        "column": 14,
+                        "line": 381
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "bc4d541f27c433a0e381-3851727a478e9eab6e62",
+              "file": "bug-test.spec.ts",
+              "line": 104,
+              "column": 9
+            },
+            {
+              "title": "should navigate to Finans",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4567,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-08T09:52:53.407Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-SIDEBAR-should-navigate-to-Finans/test-finished-1.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "bc4d541f27c433a0e381-ed58d8b5941b7f38ea21",
+              "file": "bug-test.spec.ts",
+              "line": 104,
+              "column": 9
+            },
+            {
+              "title": "should navigate to Stok",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [
+                    {
+                      "type": "warning",
+                      "description": "Menu item \"Stok\" not found"
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4038,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "Menu item \"Stok\" not found in sidebar\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-08T09:52:58.766Z",
+                      "annotations": [
+                        {
+                          "type": "warning",
+                          "description": "Menu item \"Stok\" not found"
+                        }
+                      ],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-SIDEBAR-should-navigate-to-Stok/test-finished-1.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "bc4d541f27c433a0e381-74e7aeb8fa219818ec8b",
+              "file": "bug-test.spec.ts",
+              "line": 104,
+              "column": 9
+            },
+            {
+              "title": "should navigate to Çalışanlar",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 17148,
+                      "error": {
+                        "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================",
+                        "stack": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================\n    at login (/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:381:14)\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:84:5",
+                        "location": {
+                          "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                          "column": 14,
+                          "line": 381
+                        },
+                        "snippet": "  379 |   await loginBtn.click();\n  380 |\n> 381 |   await page.waitForURL('**/dashboard**', { timeout: 15000 });\n      |              ^\n  382 | }\n  383 |\n  384 | function escapeRegex(str: string) {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                            "column": 14,
+                            "line": 381
+                          },
+                          "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================\n\n  379 |   await loginBtn.click();\n  380 |\n> 381 |   await page.waitForURL('**/dashboard**', { timeout: 15000 });\n      |              ^\n  382 | }\n  383 |\n  384 | function escapeRegex(str: string) {\n    at login (/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:381:14)\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:84:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-08T09:53:02.821Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-SIDEBAR-should-navigate-to-Çalışanlar/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-SIDEBAR-should-navigate-to-Çalışanlar/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                        "column": 14,
+                        "line": 381
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "bc4d541f27c433a0e381-959aee959a11202bfa66",
+              "file": "bug-test.spec.ts",
+              "line": 104,
+              "column": 9
+            },
+            {
+              "title": "should navigate to Pazarlama",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16801,
+                      "error": {
+                        "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================",
+                        "stack": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================\n    at login (/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:381:14)\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:84:5",
+                        "location": {
+                          "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                          "column": 14,
+                          "line": 381
+                        },
+                        "snippet": "  379 |   await loginBtn.click();\n  380 |\n> 381 |   await page.waitForURL('**/dashboard**', { timeout: 15000 });\n      |              ^\n  382 | }\n  383 |\n  384 | function escapeRegex(str: string) {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                            "column": 14,
+                            "line": 381
+                          },
+                          "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================\n\n  379 |   await loginBtn.click();\n  380 |\n> 381 |   await page.waitForURL('**/dashboard**', { timeout: 15000 });\n      |              ^\n  382 | }\n  383 |\n  384 | function escapeRegex(str: string) {\n    at login (/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:381:14)\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:84:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-08T09:53:21.298Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-SIDEBAR-should-navigate-to-Pazarlama/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-SIDEBAR-should-navigate-to-Pazarlama/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                        "column": 14,
+                        "line": 381
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "bc4d541f27c433a0e381-784a751e17802489efba",
+              "file": "bug-test.spec.ts",
+              "line": 104,
+              "column": 9
+            },
+            {
+              "title": "should navigate to Mesajlaşma",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 17143,
+                      "error": {
+                        "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================",
+                        "stack": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================\n    at login (/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:381:14)\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:84:5",
+                        "location": {
+                          "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                          "column": 14,
+                          "line": 381
+                        },
+                        "snippet": "  379 |   await loginBtn.click();\n  380 |\n> 381 |   await page.waitForURL('**/dashboard**', { timeout: 15000 });\n      |              ^\n  382 | }\n  383 |\n  384 | function escapeRegex(str: string) {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                            "column": 14,
+                            "line": 381
+                          },
+                          "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================\n\n  379 |   await loginBtn.click();\n  380 |\n> 381 |   await page.waitForURL('**/dashboard**', { timeout: 15000 });\n      |              ^\n  382 | }\n  383 |\n  384 | function escapeRegex(str: string) {\n    at login (/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:381:14)\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:84:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-08T09:53:40.132Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-SIDEBAR-should-navigate-to-Mesajlaşma/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-SIDEBAR-should-navigate-to-Mesajlaşma/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                        "column": 14,
+                        "line": 381
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "bc4d541f27c433a0e381-d41c1d4d586a035c88e1",
+              "file": "bug-test.spec.ts",
+              "line": 104,
+              "column": 9
+            },
+            {
+              "title": "should navigate to AI Asistan",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8368,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-08T09:53:59.251Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-SIDEBAR-should-navigate-to-AI-Asistan/test-finished-1.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "bc4d541f27c433a0e381-ef73aa6e3e067009aaaa",
+              "file": "bug-test.spec.ts",
+              "line": 104,
+              "column": 9
+            },
+            {
+              "title": "should navigate to Raporlar",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4684,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-08T09:54:08.295Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-SIDEBAR-should-navigate-to-Raporlar/test-finished-1.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "bc4d541f27c433a0e381-50f2f00ec475aa702824",
+              "file": "bug-test.spec.ts",
+              "line": 104,
+              "column": 9
+            },
+            {
+              "title": "should navigate to Hatırlatmalar",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16656,
+                      "error": {
+                        "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================",
+                        "stack": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================\n    at login (/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:381:14)\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:84:5",
+                        "location": {
+                          "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                          "column": 14,
+                          "line": 381
+                        },
+                        "snippet": "  379 |   await loginBtn.click();\n  380 |\n> 381 |   await page.waitForURL('**/dashboard**', { timeout: 15000 });\n      |              ^\n  382 | }\n  383 |\n  384 | function escapeRegex(str: string) {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                            "column": 14,
+                            "line": 381
+                          },
+                          "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================\n\n  379 |   await loginBtn.click();\n  380 |\n> 381 |   await page.waitForURL('**/dashboard**', { timeout: 15000 });\n      |              ^\n  382 | }\n  383 |\n  384 | function escapeRegex(str: string) {\n    at login (/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:381:14)\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:84:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-08T09:54:12.994Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-SIDEBAR-should-navigate-to-Hatırlatmalar/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-SIDEBAR-should-navigate-to-Hatırlatmalar/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                        "column": 14,
+                        "line": 381
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "bc4d541f27c433a0e381-00a5c40a58dc36a87b0f",
+              "file": "bug-test.spec.ts",
+              "line": 104,
+              "column": 9
+            },
+            {
+              "title": "should navigate to Abonelik",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16678,
+                      "error": {
+                        "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================",
+                        "stack": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================\n    at login (/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:381:14)\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:84:5",
+                        "location": {
+                          "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                          "column": 14,
+                          "line": 381
+                        },
+                        "snippet": "  379 |   await loginBtn.click();\n  380 |\n> 381 |   await page.waitForURL('**/dashboard**', { timeout: 15000 });\n      |              ^\n  382 | }\n  383 |\n  384 | function escapeRegex(str: string) {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                            "column": 14,
+                            "line": 381
+                          },
+                          "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================\n\n  379 |   await loginBtn.click();\n  380 |\n> 381 |   await page.waitForURL('**/dashboard**', { timeout: 15000 });\n      |              ^\n  382 | }\n  383 |\n  384 | function escapeRegex(str: string) {\n    at login (/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:381:14)\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:84:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-08T09:54:31.084Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-SIDEBAR-should-navigate-to-Abonelik/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-SIDEBAR-should-navigate-to-Abonelik/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                        "column": 14,
+                        "line": 381
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "bc4d541f27c433a0e381-2b76a22efec6d5b89a41",
+              "file": "bug-test.spec.ts",
+              "line": 104,
+              "column": 9
+            },
+            {
+              "title": "should navigate to Ayarlar",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16736,
+                      "error": {
+                        "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================",
+                        "stack": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================\n    at login (/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:381:14)\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:84:5",
+                        "location": {
+                          "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                          "column": 14,
+                          "line": 381
+                        },
+                        "snippet": "  379 |   await loginBtn.click();\n  380 |\n> 381 |   await page.waitForURL('**/dashboard**', { timeout: 15000 });\n      |              ^\n  382 | }\n  383 |\n  384 | function escapeRegex(str: string) {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                            "column": 14,
+                            "line": 381
+                          },
+                          "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================\n\n  379 |   await loginBtn.click();\n  380 |\n> 381 |   await page.waitForURL('**/dashboard**', { timeout: 15000 });\n      |              ^\n  382 | }\n  383 |\n  384 | function escapeRegex(str: string) {\n    at login (/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:381:14)\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:84:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-08T09:54:49.961Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-SIDEBAR-should-navigate-to-Ayarlar/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-SIDEBAR-should-navigate-to-Ayarlar/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                        "column": 14,
+                        "line": 381
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "bc4d541f27c433a0e381-ff2971d690fe00f5a229",
+              "file": "bug-test.spec.ts",
+              "line": 104,
+              "column": 9
+            }
+          ]
+        },
+        {
+          "title": "MÜŞTERİLER",
+          "file": "bug-test.spec.ts",
+          "line": 143,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should load customer list and show add button",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 3721,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:162:40",
+                        "location": {
+                          "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                          "column": 40,
+                          "line": 162
+                        },
+                        "snippet": "  160 |     const addBtnExists = await addBtn.count();\n  161 |\n> 162 |     expect(tableExists + addBtnExists).toBeGreaterThan(0);\n      |                                        ^\n  163 |   });\n  164 | });\n  165 |"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                            "column": 40,
+                            "line": 162
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m\n\n  160 |     const addBtnExists = await addBtn.count();\n  161 |\n> 162 |     expect(tableExists + addBtnExists).toBeGreaterThan(0);\n      |                                        ^\n  163 |   });\n  164 | });\n  165 |\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:162:40"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-08T09:55:08.921Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-MÜŞTERİLER-should-72d7b-er-list-and-show-add-button/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-MÜŞTERİLER-should-72d7b-er-list-and-show-add-button/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                        "column": 40,
+                        "line": 162
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "bc4d541f27c433a0e381-45c22895970bb0f840dd",
+              "file": "bug-test.spec.ts",
+              "line": 148,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "RANDEVULAR",
+          "file": "bug-test.spec.ts",
+          "line": 169,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should render calendar",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 4676,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:183:28",
+                        "location": {
+                          "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                          "column": 28,
+                          "line": 183
+                        },
+                        "snippet": "  181 |     const calendar = page.locator('[class*=\"calendar\"], [class*=\"Calendar\"], [class*=\"fc-\"], table, [class*=\"schedule\"], [class*=\"Schedule\"]');\n  182 |     const calendarExists = await calendar.count();\n> 183 |     expect(calendarExists).toBeGreaterThan(0);\n      |                            ^\n  184 |   });\n  185 | });\n  186 |"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                            "column": 28,
+                            "line": 183
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m\n\n  181 |     const calendar = page.locator('[class*=\"calendar\"], [class*=\"Calendar\"], [class*=\"fc-\"], table, [class*=\"schedule\"], [class*=\"Schedule\"]');\n  182 |     const calendarExists = await calendar.count();\n> 183 |     expect(calendarExists).toBeGreaterThan(0);\n      |                            ^\n  184 |   });\n  185 | });\n  186 |\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:183:28"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-08T09:55:14.705Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-RANDEVULAR-should-render-calendar/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-RANDEVULAR-should-render-calendar/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                        "column": 28,
+                        "line": 183
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "bc4d541f27c433a0e381-f68ed2199f0a6b156761",
+              "file": "bug-test.spec.ts",
+              "line": 174,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "FİNANS",
+          "file": "bug-test.spec.ts",
+          "line": 190,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should have tabs and load content",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16973,
+                      "error": {
+                        "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n============================================================",
+                        "stack": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n============================================================\n    at login (/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:381:14)\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:192:5",
+                        "location": {
+                          "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                          "column": 14,
+                          "line": 381
+                        },
+                        "snippet": "  379 |   await loginBtn.click();\n  380 |\n> 381 |   await page.waitForURL('**/dashboard**', { timeout: 15000 });\n      |              ^\n  382 | }\n  383 |\n  384 | function escapeRegex(str: string) {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                            "column": 14,
+                            "line": 381
+                          },
+                          "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n============================================================\n\n  379 |   await loginBtn.click();\n  380 |\n> 381 |   await page.waitForURL('**/dashboard**', { timeout: 15000 });\n      |              ^\n  382 | }\n  383 |\n  384 | function escapeRegex(str: string) {\n    at login (/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:381:14)\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:192:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-08T09:55:21.408Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-FİNANS-should-have-tabs-and-load-content/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-FİNANS-should-have-tabs-and-load-content/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                        "column": 14,
+                        "line": 381
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "bc4d541f27c433a0e381-5c7f40d6a17ec28dafc9",
+              "file": "bug-test.spec.ts",
+              "line": 195,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "STOK",
+          "file": "bug-test.spec.ts",
+          "line": 214,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should load product list",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 12,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 18425,
+                      "error": {
+                        "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================",
+                        "stack": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================\n    at login (/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:381:14)\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:216:5",
+                        "location": {
+                          "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                          "column": 14,
+                          "line": 381
+                        },
+                        "snippet": "  379 |   await loginBtn.click();\n  380 |\n> 381 |   await page.waitForURL('**/dashboard**', { timeout: 15000 });\n      |              ^\n  382 | }\n  383 |\n  384 | function escapeRegex(str: string) {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                            "column": 14,
+                            "line": 381
+                          },
+                          "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================\n\n  379 |   await loginBtn.click();\n  380 |\n> 381 |   await page.waitForURL('**/dashboard**', { timeout: 15000 });\n      |              ^\n  382 | }\n  383 |\n  384 | function escapeRegex(str: string) {\n    at login (/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:381:14)\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:216:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-08T09:55:40.377Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-STOK-should-load-product-list/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-STOK-should-load-product-list/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                        "column": 14,
+                        "line": 381
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "bc4d541f27c433a0e381-8e38b35b9285fbbd43ca",
+              "file": "bug-test.spec.ts",
+              "line": 219,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "AYARLAR",
+          "file": "bug-test.spec.ts",
+          "line": 243,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should have Telegram, WhatsApp, Meta Ads sections",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 13,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 18366,
+                      "error": {
+                        "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================",
+                        "stack": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================\n    at login (/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:381:14)\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:245:5",
+                        "location": {
+                          "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                          "column": 14,
+                          "line": 381
+                        },
+                        "snippet": "  379 |   await loginBtn.click();\n  380 |\n> 381 |   await page.waitForURL('**/dashboard**', { timeout: 15000 });\n      |              ^\n  382 | }\n  383 |\n  384 | function escapeRegex(str: string) {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                            "column": 14,
+                            "line": 381
+                          },
+                          "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================\n\n  379 |   await loginBtn.click();\n  380 |\n> 381 |   await page.waitForURL('**/dashboard**', { timeout: 15000 });\n      |              ^\n  382 | }\n  383 |\n  384 | function escapeRegex(str: string) {\n    at login (/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:381:14)\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:245:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-08T09:56:00.818Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-AYARLAR-should-ha-f4bdf--WhatsApp-Meta-Ads-sections/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-AYARLAR-should-ha-f4bdf--WhatsApp-Meta-Ads-sections/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                        "column": 14,
+                        "line": 381
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "bc4d541f27c433a0e381-0705f66a44a40e62a170",
+              "file": "bug-test.spec.ts",
+              "line": 248,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "CONSOLE ERRORS",
+          "file": "bug-test.spec.ts",
+          "line": 270,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should check console errors on Dashboard",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [
+                    {
+                      "type": "console-errors",
+                      "description": "Failed to fetch RSC payload for https://poby.ai/employees. Falling back to browser navigation. TypeError: Failed to fetch\n    at f (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:45577)\n    at https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:59128\n    at Object.u [as task] (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:31932)\n    at c.s (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:32637)\n    at c.enqueue (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:32062)\n    at s (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:59091)\n    at i (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:58631)\n    at a (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:65457)\n    at f (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:75371)\n    at Object.action (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:2:7102) | Failed to fetch RSC payload for https://poby.ai/patients. Falling back to browser navigation. TypeError: Failed to fetch\n    at f (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:45577)\n    at https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:59128\n    at Object.u [as task] (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:31932)\n    at c.s (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:32637)\n    at c.enqueue (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:32062)\n    at s (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:59091)\n    at i (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:58631)\n    at a (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:65457)\n    at f (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:75371)\n    at Object.action (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:2:7102) | F: Failed to fetch. Read more at https://errors.authjs.dev#autherror\n    at J (https://poby.ai/_next/static/chunks/2294-61777b010c979ead.js:1:3111)\n    at async er (https://poby.ai/_next/static/chunks/2294-61777b010c979ead.js:1:4904)\n    at async Y._getSession (https://poby.ai/_next/static/chunks/2294-61777b010c979ead.js:1:7579) | Failed to fetch RSC payload for https://poby.ai/inventory. Falling back to browser navigation. TypeError: Failed to fetch\n    at f (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:45577)\n    at https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:59128\n    at Object.u [as task] (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:31932)\n    at c.s (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:32637)\n    at c.enqueue (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:32062)\n    at s (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:59091)\n    at i (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:58631)\n    at a (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:65457)\n    at f (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:75371)\n    at Object.action (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:2:7102) | Failed to fetch RSC payload for https://poby.ai/finance. Falling back to browser navigation. TypeError: Failed to fetch\n    at f (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:45577)\n    at https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:59128\n    at Object.u [as task] (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:31932)\n    at c.s (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:32637)\n    at c.enqueue (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:32062)\n    at s (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:59091)\n    at i (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:58631)\n    at a (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:65457)\n    at f (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:75371)\n    at Object.action (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:2:7102) | Failed to fetch RSC payload for https://poby.ai/appointments. Falling back to browser navigation. TypeError: Failed to fetch\n    at f (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:45577)\n    at https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:59128\n    at Object.u [as task] (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:31932)\n    at c.s (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:32637)\n    at c.enqueue (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:32062)\n    at s (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:59091)\n    at i (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:58631)\n    at a (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:65457)\n    at f (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:75371)\n    at Object.action (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:2:7102) | Loading the script 'https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516' violates the following Content Security Policy directive: \"script-src 'self' 'unsafe-eval' 'unsafe-inline'\". Note that 'script-src-elem' was not explicitly set, so 'script-src' is used as a fallback. The action has been blocked."
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 14,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7558,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "Console errors on Dashboard: [\n  \"Failed to fetch RSC payload for https://poby.ai/employees. Falling back to browser navigation. TypeError: Failed to fetch\\n    at f (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:45577)\\n    at https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:59128\\n    at Object.u [as task] (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:31932)\\n    at c.s (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:32637)\\n    at c.enqueue (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:32062)\\n    at s (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:59091)\\n    at i (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:58631)\\n    at a (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:65457)\\n    at f (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:75371)\\n    at Object.action (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:2:7102)\",\n  \"Failed to fetch RSC payload for https://poby.ai/patients. Falling back to browser navigation. TypeError: Failed to fetch\\n    at f (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:45577)\\n    at https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:59128\\n    at Object.u [as task] (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:31932)\\n    at c.s (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:32637)\\n    at c.enqueue (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:32062)\\n    at s (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:59091)\\n    at i (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:58631)\\n    at a (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:65457)\\n    at f (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:75371)\\n    at Object.action (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:2:7102)\",\n  \"F: Failed to fetch. Read more at https://errors.authjs.dev#autherror\\n    at J (https://poby.ai/_next/static/chunks/2294-61777b010c979ead.js:1:3111)\\n    at async er (https://poby.ai/_next/static/chunks/2294-61777b010c979ead.js:1:4904)\\n    at async Y._getSession (https://poby.ai/_next/static/chunks/2294-61777b010c979ead.js:1:7579)\",\n  \"Failed to fetch RSC payload for https://poby.ai/inventory. Falling back to browser navigation. TypeError: Failed to fetch\\n    at f (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:45577)\\n    at https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:59128\\n    at Object.u [as task] (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:31932)\\n    at c.s (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:32637)\\n    at c.enqueue (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:32062)\\n    at s (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:59091)\\n    at i (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:58631)\\n    at a (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:65457)\\n    at f (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:75371)\\n    at Object.action (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:2:7102)\",\n  \"Failed to fetch RSC payload for https://poby.ai/finance. Falling back to browser navigation. TypeError: Failed to fetch\\n    at f (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:45577)\\n    at https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:59128\\n    at Object.u [as task] (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:31932)\\n    at c.s (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:32637)\\n    at c.enqueue (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:32062)\\n    at s (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:59091)\\n    at i (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:58631)\\n    at a (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:65457)\\n    at f (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:75371)\\n    at Object.action (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:2:7102)\",\n  \"Failed to fetch RSC payload for https://poby.ai/appointments. Falling back to browser navigation. TypeError: Failed to fetch\\n    at f (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:45577)\\n    at https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:59128\\n    at Object.u [as task] (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:31932)\\n    at c.s (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:32637)\\n    at c.enqueue (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:32062)\\n    at s (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:59091)\\n    at i (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:58631)\\n    at a (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:65457)\\n    at f (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:75371)\\n    at Object.action (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:2:7102)\",\n  \"Loading the script 'https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516' violates the following Content Security Policy directive: \\\"script-src 'self' 'unsafe-eval' 'unsafe-inline'\\\". Note that 'script-src-elem' was not explicitly set, so 'script-src' is used as a fallback. The action has been blocked.\"\n]\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-08T09:56:21.205Z",
+                      "annotations": [
+                        {
+                          "type": "console-errors",
+                          "description": "Failed to fetch RSC payload for https://poby.ai/employees. Falling back to browser navigation. TypeError: Failed to fetch\n    at f (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:45577)\n    at https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:59128\n    at Object.u [as task] (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:31932)\n    at c.s (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:32637)\n    at c.enqueue (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:32062)\n    at s (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:59091)\n    at i (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:58631)\n    at a (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:65457)\n    at f (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:75371)\n    at Object.action (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:2:7102) | Failed to fetch RSC payload for https://poby.ai/patients. Falling back to browser navigation. TypeError: Failed to fetch\n    at f (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:45577)\n    at https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:59128\n    at Object.u [as task] (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:31932)\n    at c.s (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:32637)\n    at c.enqueue (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:32062)\n    at s (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:59091)\n    at i (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:58631)\n    at a (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:65457)\n    at f (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:75371)\n    at Object.action (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:2:7102) | F: Failed to fetch. Read more at https://errors.authjs.dev#autherror\n    at J (https://poby.ai/_next/static/chunks/2294-61777b010c979ead.js:1:3111)\n    at async er (https://poby.ai/_next/static/chunks/2294-61777b010c979ead.js:1:4904)\n    at async Y._getSession (https://poby.ai/_next/static/chunks/2294-61777b010c979ead.js:1:7579) | Failed to fetch RSC payload for https://poby.ai/inventory. Falling back to browser navigation. TypeError: Failed to fetch\n    at f (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:45577)\n    at https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:59128\n    at Object.u [as task] (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:31932)\n    at c.s (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:32637)\n    at c.enqueue (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:32062)\n    at s (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:59091)\n    at i (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:58631)\n    at a (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:65457)\n    at f (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:75371)\n    at Object.action (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:2:7102) | Failed to fetch RSC payload for https://poby.ai/finance. Falling back to browser navigation. TypeError: Failed to fetch\n    at f (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:45577)\n    at https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:59128\n    at Object.u [as task] (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:31932)\n    at c.s (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:32637)\n    at c.enqueue (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:32062)\n    at s (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:59091)\n    at i (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:58631)\n    at a (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:65457)\n    at f (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:75371)\n    at Object.action (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:2:7102) | Failed to fetch RSC payload for https://poby.ai/appointments. Falling back to browser navigation. TypeError: Failed to fetch\n    at f (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:45577)\n    at https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:59128\n    at Object.u [as task] (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:31932)\n    at c.s (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:32637)\n    at c.enqueue (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:32062)\n    at s (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:59091)\n    at i (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:58631)\n    at a (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:65457)\n    at f (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:1:75371)\n    at Object.action (https://poby.ai/_next/static/chunks/2117-d5d14d06c28d7b1d.js:2:7102) | Loading the script 'https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516' violates the following Content Security Policy directive: \"script-src 'self' 'unsafe-eval' 'unsafe-inline'\". Note that 'script-src-elem' was not explicitly set, so 'script-src' is used as a fallback. The action has been blocked."
+                        }
+                      ],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-CONSOLE-ERRORS-sh-9307e-console-errors-on-Dashboard/test-finished-1.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "bc4d541f27c433a0e381-41b3f51dd95d38ca31b3",
+              "file": "bug-test.spec.ts",
+              "line": 284,
+              "column": 9
+            },
+            {
+              "title": "should check console errors on Patients",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [
+                    {
+                      "type": "console-errors",
+                      "description": "F: Failed to fetch. Read more at https://errors.authjs.dev#autherror\n    at J (https://poby.ai/_next/static/chunks/2294-61777b010c979ead.js:1:3111)\n    at async er (https://poby.ai/_next/static/chunks/2294-61777b010c979ead.js:1:4904)\n    at async Y._getSession (https://poby.ai/_next/static/chunks/2294-61777b010c979ead.js:1:7579) | Failed to load resource: the server responded with a status of 404 () | Loading the script 'https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516' violates the following Content Security Policy directive: \"script-src 'self' 'unsafe-eval' 'unsafe-inline'\". Note that 'script-src-elem' was not explicitly set, so 'script-src' is used as a fallback. The action has been blocked."
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 14,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6400,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "Console errors on Patients: [\n  \"F: Failed to fetch. Read more at https://errors.authjs.dev#autherror\\n    at J (https://poby.ai/_next/static/chunks/2294-61777b010c979ead.js:1:3111)\\n    at async er (https://poby.ai/_next/static/chunks/2294-61777b010c979ead.js:1:4904)\\n    at async Y._getSession (https://poby.ai/_next/static/chunks/2294-61777b010c979ead.js:1:7579)\",\n  \"Failed to load resource: the server responded with a status of 404 ()\",\n  \"Loading the script 'https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516' violates the following Content Security Policy directive: \\\"script-src 'self' 'unsafe-eval' 'unsafe-inline'\\\". Note that 'script-src-elem' was not explicitly set, so 'script-src' is used as a fallback. The action has been blocked.\"\n]\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-08T09:56:29.411Z",
+                      "annotations": [
+                        {
+                          "type": "console-errors",
+                          "description": "F: Failed to fetch. Read more at https://errors.authjs.dev#autherror\n    at J (https://poby.ai/_next/static/chunks/2294-61777b010c979ead.js:1:3111)\n    at async er (https://poby.ai/_next/static/chunks/2294-61777b010c979ead.js:1:4904)\n    at async Y._getSession (https://poby.ai/_next/static/chunks/2294-61777b010c979ead.js:1:7579) | Failed to load resource: the server responded with a status of 404 () | Loading the script 'https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516' violates the following Content Security Policy directive: \"script-src 'self' 'unsafe-eval' 'unsafe-inline'\". Note that 'script-src-elem' was not explicitly set, so 'script-src' is used as a fallback. The action has been blocked."
+                        }
+                      ],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-CONSOLE-ERRORS-sh-31fef--console-errors-on-Patients/test-finished-1.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "bc4d541f27c433a0e381-09aa5416d98b36eae594",
+              "file": "bug-test.spec.ts",
+              "line": 284,
+              "column": 9
+            },
+            {
+              "title": "should check console errors on Appointments",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 14,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 18471,
+                      "error": {
+                        "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================",
+                        "stack": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================\n    at login (/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:381:14)\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:272:5",
+                        "location": {
+                          "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                          "column": 14,
+                          "line": 381
+                        },
+                        "snippet": "  379 |   await loginBtn.click();\n  380 |\n> 381 |   await page.waitForURL('**/dashboard**', { timeout: 15000 });\n      |              ^\n  382 | }\n  383 |\n  384 | function escapeRegex(str: string) {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                            "column": 14,
+                            "line": 381
+                          },
+                          "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================\n\n  379 |   await loginBtn.click();\n  380 |\n> 381 |   await page.waitForURL('**/dashboard**', { timeout: 15000 });\n      |              ^\n  382 | }\n  383 |\n  384 | function escapeRegex(str: string) {\n    at login (/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:381:14)\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:272:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-08T09:56:35.825Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-CONSOLE-ERRORS-sh-31d99-sole-errors-on-Appointments/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-CONSOLE-ERRORS-sh-31d99-sole-errors-on-Appointments/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                        "column": 14,
+                        "line": 381
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "bc4d541f27c433a0e381-68513c92ce384b503246",
+              "file": "bug-test.spec.ts",
+              "line": 284,
+              "column": 9
+            },
+            {
+              "title": "should check console errors on Finance",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 15,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16753,
+                      "error": {
+                        "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================",
+                        "stack": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================\n    at login (/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:381:14)\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:272:5",
+                        "location": {
+                          "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                          "column": 14,
+                          "line": 381
+                        },
+                        "snippet": "  379 |   await loginBtn.click();\n  380 |\n> 381 |   await page.waitForURL('**/dashboard**', { timeout: 15000 });\n      |              ^\n  382 | }\n  383 |\n  384 | function escapeRegex(str: string) {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                            "column": 14,
+                            "line": 381
+                          },
+                          "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================\n\n  379 |   await loginBtn.click();\n  380 |\n> 381 |   await page.waitForURL('**/dashboard**', { timeout: 15000 });\n      |              ^\n  382 | }\n  383 |\n  384 | function escapeRegex(str: string) {\n    at login (/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:381:14)\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:272:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-08T09:56:55.630Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-CONSOLE-ERRORS-sh-7e544-k-console-errors-on-Finance/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-CONSOLE-ERRORS-sh-7e544-k-console-errors-on-Finance/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                        "column": 14,
+                        "line": 381
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "bc4d541f27c433a0e381-e63734495f2c1f03a775",
+              "file": "bug-test.spec.ts",
+              "line": 284,
+              "column": 9
+            },
+            {
+              "title": "should check console errors on Settings",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 16,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16606,
+                      "error": {
+                        "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================",
+                        "stack": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================\n    at login (/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:381:14)\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:272:5",
+                        "location": {
+                          "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                          "column": 14,
+                          "line": 381
+                        },
+                        "snippet": "  379 |   await loginBtn.click();\n  380 |\n> 381 |   await page.waitForURL('**/dashboard**', { timeout: 15000 });\n      |              ^\n  382 | }\n  383 |\n  384 | function escapeRegex(str: string) {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                            "column": 14,
+                            "line": 381
+                          },
+                          "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/dashboard**\" until \"load\"\n  navigated to \"https://poby.ai/api/auth/error\"\n============================================================\n\n  379 |   await loginBtn.click();\n  380 |\n> 381 |   await page.waitForURL('**/dashboard**', { timeout: 15000 });\n      |              ^\n  382 | }\n  383 |\n  384 | function escapeRegex(str: string) {\n    at login (/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:381:14)\n    at /Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts:272:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-08T09:57:14.447Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-CONSOLE-ERRORS-sh-3e9df--console-errors-on-Settings/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-CONSOLE-ERRORS-sh-3e9df--console-errors-on-Settings/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/erdincayar/klinik-asistan/tests/bug-test.spec.ts",
+                        "column": 14,
+                        "line": 381
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "bc4d541f27c433a0e381-03eab6c82b891de9cad0",
+              "file": "bug-test.spec.ts",
+              "line": 284,
+              "column": 9
+            }
+          ]
+        },
+        {
+          "title": "RESPONSIVE",
+          "file": "bug-test.spec.ts",
+          "line": 315,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should render correctly on mobile (375px)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 17,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6310,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-08T09:57:33.005Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-RESPONSIVE-should-render-correctly-on-mobile-375px-/test-finished-1.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "bc4d541f27c433a0e381-56ac14937be1bdd946f6",
+              "file": "bug-test.spec.ts",
+              "line": 320,
+              "column": 7
+            },
+            {
+              "title": "should render correctly on tablet (768px)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 17,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4820,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-08T09:57:39.948Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/erdincayar/klinik-asistan/test-results/bug-test-RESPONSIVE-should-render-correctly-on-tablet-768px-/test-finished-1.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "bc4d541f27c433a0e381-6a6d718b1a2f0d59aa52",
+              "file": "bug-test.spec.ts",
+              "line": 342,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-03-08T09:51:44.823Z",
+    "duration": 360029.29600000003,
+    "expected": 10,
+    "skipped": 0,
+    "unexpected": 17,
+    "flaky": 0
+  }
+}

@@ -17,6 +17,9 @@ model User {
   role                String               @default("USER") // USER, ADMIN, DEMO
   isActive            Boolean              @default(true)
   isDemo              Boolean              @default(false)
+  emailVerified       Boolean              @default(false)
+  emailVerifyToken    String?              @unique
+  emailVerifyExpires  DateTime?
   lastLoginAt         DateTime?
   clinicId            String?
   clinic              Clinic?              @relation(fields: [clinicId], references: [id])

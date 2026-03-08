@@ -51,7 +51,7 @@ export async function GET(_req: NextRequest) {
     return new NextResponse(buf, {
       headers: {
         "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "Content-Disposition": `attachment; filename="inpobi-stok-${dateStr}.xlsx"`,
+        "Content-Disposition": `attachment; filename="poby-stok-${dateStr}.xlsx"`,
       },
     });
   } catch (error) {
