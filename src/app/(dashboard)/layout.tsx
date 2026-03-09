@@ -45,6 +45,7 @@ import {
   Activity,
   CreditCard,
   Lock,
+  ClipboardList,
   type LucideIcon,
 } from "lucide-react";
 import { ToastProvider, Toaster, useToast } from "@/components/ui/toast";
@@ -85,6 +86,7 @@ const navItems: NavItem[] = [
   { href: "/finance", label: "Finans", icon: DollarSign, minPlan: "BASIC" },
   { href: "/inventory", label: "Stok/Envanter", icon: Package, minPlan: "PRO" },
   { href: "/employees", label: "Çalışanlar", icon: UserCog, minPlan: "PRO" },
+  { href: "/hr", label: "İnsan Kaynakları", icon: ClipboardList, minPlan: "PRO" },
   { href: "/marketing", label: "Pazarlama", icon: Megaphone, minPlan: "BUSINESS" },
   { href: "/messaging", label: "Mesajlaşma", icon: MessageCircle, minPlan: "PRO" },
   { href: "/ai-assistant", label: "AI Asistan", icon: Bot, minPlan: "PRO" },
@@ -119,6 +121,7 @@ const pageTitles: Record<string, string> = {
   "/whatsapp": "WhatsApp",
   "/reports": "Raporlar",
   "/employees": "Çalışanlar",
+  "/hr": "İnsan Kaynakları",
   "/reminders": "Hatırlatmalar",
   "/billing": "Abonelik",
   "/settings": "Ayarlar",

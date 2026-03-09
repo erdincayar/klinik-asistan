@@ -5,10 +5,18 @@ export const loginSchema = z.object({
   password: z.string().min(6, "Şifre en az 6 karakter olmalı"),
 });
 
+export const strongPasswordSchema = z
+  .string()
+  .min(8, "Şifre en az 8 karakter olmalı")
+  .regex(/[A-Z]/, "En az 1 büyük harf içermeli")
+  .regex(/[a-z]/, "En az 1 küçük harf içermeli")
+  .regex(/[0-9]/, "En az 1 rakam içermeli")
+  .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, "En az 1 özel karakter içermeli");
+
 export const registerSchema = z.object({
   name: z.string().min(2, "İsim en az 2 karakter olmalı"),
   email: z.string().email("Geçerli bir email adresi girin"),
-  password: z.string().min(6, "Şifre en az 6 karakter olmalı"),
+  password: strongPasswordSchema,
   clinicName: z.string().min(2, "Klinik adı en az 2 karakter olmalı"),
 });
 

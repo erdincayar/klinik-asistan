@@ -7,15 +7,24 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, Loader2, Eye, EyeOff } from "lucide-react";
+import { ArrowRight, Loader2, Eye, EyeOff, Check, X } from "lucide-react";
 import { z } from "zod";
+import { strongPasswordSchema } from "@/lib/validations";
+
+const PASSWORD_RULES = [
+  { label: "En az 8 karakter", test: (v: string) => v.length >= 8 },
+  { label: "Büyük harf (A-Z)", test: (v: string) => /[A-Z]/.test(v) },
+  { label: "Küçük harf (a-z)", test: (v: string) => /[a-z]/.test(v) },
+  { label: "Rakam (0-9)", test: (v: string) => /[0-9]/.test(v) },
+  { label: "Özel karakter (!@#$...)", test: (v: string) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(v) },
+];
 
 const registerFormSchema = z
   .object({
     name: z.string().min(2, "Ad soyad en az 2 karakter olmalı"),
     email: z.string().email("Geçerli bir email adresi girin"),
-    password: z.string().min(6, "Şifre en az 6 karakter olmalı"),
-    confirmPassword: z.string().min(6, "Şifre tekrarı gerekli"),
+    password: strongPasswordSchema,
+    confirmPassword: z.string().min(1, "Şifre tekrarı gerekli"),
     clinicName: z.string().min(2, "İşletme adı en az 2 karakter olmalı"),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -45,10 +54,13 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<RegisterFormInput>({
     resolver: zodResolver(registerFormSchema),
   });
+
+  const passwordValue = watch("password", "");
 
   async function onSubmit(data: RegisterFormInput) {
     setLoading(true);
@@ -203,6 +215,25 @@ export default function RegisterPage() {
           </div>
           {errors.password && (
             <p className="text-xs text-red-500">{errors.password.message}</p>
+          )}
+          {passwordValue && (
+            <div className="mt-2 space-y-1">
+              {PASSWORD_RULES.map((rule) => {
+                const passed = rule.test(passwordValue);
+                return (
+                  <div key={rule.label} className="flex items-center gap-1.5">
+                    {passed ? (
+                      <Check className="h-3 w-3 text-emerald-500" />
+                    ) : (
+                      <X className="h-3 w-3 text-red-400" />
+                    )}
+                    <span className={`text-xs ${passed ? "text-emerald-600" : "text-gray-400"}`}>
+                      {rule.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
 
