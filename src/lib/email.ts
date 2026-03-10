@@ -90,6 +90,94 @@ export async function sendVerificationEmail(
   }
 }
 
+export async function sendPasswordResetEmail(
+  email: string,
+  resetUrl: string,
+  name: string
+) {
+  const html = `
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background-color:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f3f4f6;padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.05);">
+          <!-- Header -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#2563eb,#1d4ed8);padding:32px 40px;text-align:center;">
+              <h1 style="margin:0;font-size:24px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">
+                <span style="color:#ffffff;">Po</span><span style="color:#bfdbfe;">by</span>
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding:40px;">
+              <h2 style="margin:0 0 8px;font-size:20px;font-weight:700;color:#111827;">
+                Şifre Sıfırlama
+              </h2>
+              <p style="margin:0 0 28px;font-size:14px;line-height:1.6;color:#6b7280;">
+                Merhaba <strong style="color:#111827;">${name}</strong>, hesabınız için şifre sıfırlama talebinde bulundunuz. Aşağıdaki butona tıklayarak yeni şifrenizi belirleyebilirsiniz.
+              </p>
+
+              <!-- Button -->
+              <div style="text-align:center;margin-bottom:28px;">
+                <a href="${resetUrl}" style="display:inline-block;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;padding:14px 36px;border-radius:10px;">
+                  Şifremi Sıfırla
+                </a>
+              </div>
+
+              <p style="margin:0 0 12px;font-size:13px;color:#9ca3af;">
+                Buton çalışmazsa aşağıdaki bağlantıyı tarayıcınıza yapıştırın:
+              </p>
+              <p style="margin:0 0 20px;font-size:12px;color:#6b7280;word-break:break-all;">
+                ${resetUrl}
+              </p>
+
+              <p style="margin:0 0 4px;font-size:13px;color:#9ca3af;">
+                Bu bağlantı <strong style="color:#6b7280;">1 saat</strong> içinde geçerliliğini yitirecektir.
+              </p>
+              <p style="margin:0;font-size:13px;color:#9ca3af;">
+                Bu işlemi siz yapmadıysanız bu emaili görmezden gelebilirsiniz, şifreniz değişmeyecektir.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:20px 40px 28px;border-top:1px solid #f3f4f6;text-align:center;">
+              <p style="margin:0;font-size:11px;color:#d1d5db;">
+                &copy; 2026 Poby. Tüm hakları saklıdır.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  const resend = getResendClient();
+  const { error } = await resend.emails.send({
+    from: FROM_EMAIL,
+    to: email,
+    subject: "Şifre Sıfırlama - Poby",
+    html,
+  });
+
+  if (error) {
+    console.error("[Email] Password reset email error:", error);
+    throw new Error("Email gönderilemedi");
+  }
+}
+
 export function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }

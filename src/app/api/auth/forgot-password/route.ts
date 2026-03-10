@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { forgotPasswordSchema } from "@/lib/validations";
+import { sendPasswordResetEmail } from "@/lib/email";
 import { randomBytes, createHash } from "crypto";
+
+const RESET_BASE_URL = "https://poby.ai";
 
 export async function POST(request: Request) {
   try {
@@ -45,9 +48,14 @@ export async function POST(request: Request) {
       },
     });
 
-    // TODO: Replace with actual email sending service
-    const _resetUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/reset-password?token=${rawToken}`;
-    // Token intentionally NOT logged — send via email service
+    const resetUrl = `${RESET_BASE_URL}/reset-password?token=${rawToken}`;
+
+    try {
+      await sendPasswordResetEmail(email, resetUrl, user.name);
+    } catch (emailError) {
+      console.error("Password reset email send failed:", emailError);
+      // Still return success to not leak info, but log the error
+    }
 
     return successResponse;
   } catch (error) {
