@@ -122,6 +122,27 @@ export const productSchema = z.object({
   currency: z.enum(["TRY", "USD", "EUR"]).optional(),
   minProfitMargin: z.number().int().min(0).max(100).optional(),
   salePrice: z.number().int().min(0, "Fiyat negatif olamaz"),
+  salePriceUSD: z.number().min(0, "Fiyat negatif olamaz").nullable().optional(),
+  saleCurrency: z.enum(["TRY", "USD", "EUR"]).optional(),
+});
+
+export const stockAlarmSchema = z.object({
+  name: z.string().min(2, "Alarm adı en az 2 karakter olmalı"),
+  type: z.enum(["STOCK", "PROFIT_MARGIN", "CURRENCY"]),
+  productId: z.string().nullable().optional(),
+  threshold: z.number().min(0, "Eşik değeri negatif olamaz"),
+  currency: z.string().nullable().optional(),
+  isActive: z.boolean().optional(),
+});
+
+export const fixedAssetSchema = z.object({
+  name: z.string().min(2, "Demirbaş adı en az 2 karakter olmalı"),
+  category: z.enum(["ELEKTRONIK", "MOBILYA", "CIHAZ", "ARAC", "DIGER"]),
+  purchaseDate: z.string().nullable().optional(),
+  purchasePrice: z.number().int().min(0, "Fiyat negatif olamaz"),
+  serialNumber: z.string().nullable().optional(),
+  status: z.enum(["ACTIVE", "MAINTENANCE", "BROKEN", "SCRAPPED"]).optional(),
+  notes: z.string().nullable().optional(),
 });
 
 export const stockMovementSchema = z.object({
@@ -136,6 +157,8 @@ export const stockMovementSchema = z.object({
 
 export type ProductInput = z.infer<typeof productSchema>;
 export type StockMovementInput = z.infer<typeof stockMovementSchema>;
+export type StockAlarmInput = z.infer<typeof stockAlarmSchema>;
+export type FixedAssetInput = z.infer<typeof fixedAssetSchema>;
 
 export const invoiceItemSchema = z.object({
   description: z.string().min(1, "Açıklama gerekli"),

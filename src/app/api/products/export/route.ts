@@ -22,13 +22,17 @@ export async function GET(_req: NextRequest) {
     const rows = products.map((p) => ({
       "Ürün Adı": p.name,
       "SKU": p.sku,
+      "Marka": p.brand ?? "",
       "Kategori": p.category,
       "Birim": p.unit,
       "Mevcut Stok": p.currentStock,
       "Minimum Stok": p.minStock,
       "Alış Fiyatı TL": p.purchasePrice / 100,
       "Alış Fiyatı USD": p.purchasePriceUSD ?? "",
+      "Para Birimi": p.currency,
       "Satış Fiyatı TL": p.salePrice / 100,
+      "Satış Fiyatı Döviz": p.salePriceUSD ?? "",
+      "Satış Para Birimi": p.saleCurrency,
       "Son Güncelleme": p.updatedAt.toISOString().split("T")[0],
     }));
 

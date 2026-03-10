@@ -113,6 +113,8 @@ model Clinic {
   storagePlan           String                 @default("free")
   tokenBalance          TokenBalance?
   tokenTransactions     TokenTransaction[]
+  stockAlarms           StockAlarm[]
+  fixedAssets           FixedAsset[]
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
 }
@@ -293,12 +295,15 @@ model Product {
   currency         String          @default("TRY") // TRY, USD, EUR
   minProfitMargin  Int             @default(20) // minimum kar oranı %
   salePrice        Int             @default(0) // kuruş
+  salePriceUSD     Float?          // Satış fiyatı döviz karşılığı
+  saleCurrency     String          @default("TRY") // Satış para birimi
   clinicId         String
   clinic           Clinic          @relation(fields: [clinicId], references: [id])
   isActive         Boolean         @default(true)
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
   movements        StockMovement[]
+  stockAlarms      StockAlarm[]
 }
 
 // StockMovementType values: IN, OUT, ADJUSTMENT
@@ -652,4 +657,40 @@ model ActivityLog {
   details   Json?
   ipAddress String?
   createdAt DateTime @default(now())
+}
+
+// ═══════════════════════════════════════════════════════════
+// Stok Alarm & Demirbaş
+// ═══════════════════════════════════════════════════════════
+
+// StockAlarm type values: STOCK, PROFIT_MARGIN, CURRENCY
+model StockAlarm {
+  id            String    @id @default(cuid())
+  clinicId      String
+  clinic        Clinic    @relation(fields: [clinicId], references: [id])
+  productId     String?
+  product       Product?  @relation(fields: [productId], references: [id])
+  name          String
+  type          String    // STOCK, PROFIT_MARGIN, CURRENCY
+  threshold     Float
+  currency      String?
+  isActive      Boolean   @default(true)
+  lastTriggered DateTime?
+  createdAt     DateTime  @default(now())
+}
+
+// FixedAsset status values: ACTIVE, MAINTENANCE, BROKEN, SCRAPPED
+model FixedAsset {
+  id            String    @id @default(cuid())
+  clinicId      String
+  clinic        Clinic    @relation(fields: [clinicId], references: [id])
+  name          String
+  category      String    // ELEKTRONIK, MOBILYA, CIHAZ, ARAC, DIGER
+  purchaseDate  DateTime?
+  purchasePrice Int       @default(0) // kuruş
+  serialNumber  String?
+  status        String    @default("ACTIVE") // ACTIVE, MAINTENANCE, BROKEN, SCRAPPED
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }

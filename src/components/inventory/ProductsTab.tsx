@@ -1,0 +1,1223 @@
+"use client";
+
+import { useEffect, useState, useCallback, useRef } from "react";
+import {
+  Plus, Search, AlertTriangle, CheckCircle, Upload, Download,
+  Loader2, FileSpreadsheet, ArrowRight, Trash2, Pencil, Tag, Camera, ChevronDown,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
+import { formatCurrency, formatDate, toKurus } from "@/lib/utils";
+import {
+  Product, TYPE_BADGE, CATEGORIES, UNITS, CURRENCIES,
+  CATEGORY_BADGE_COLORS, getCategoryLabel, getUnitLabel, getCurrencySymbol, calcProfitMargin,
+} from "./constants";
+
+// ─── Main ProductsTab ───
+
+export default function ProductsTab({ onDataChange }: { onDataChange?: () => void }) {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [showNewProduct, setShowNewProduct] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [showAIExtract, setShowAIExtract] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [showBulkBrand, setShowBulkBrand] = useState(false);
+  const [bulkBrandValue, setBulkBrandValue] = useState("");
+  const [bulkBrandSaving, setBulkBrandSaving] = useState(false);
+  const [brandEditTarget, setBrandEditTarget] = useState<Product | null>(null);
+  const [brandEditValue, setBrandEditValue] = useState("");
+  const [brandEditSaving, setBrandEditSaving] = useState(false);
+  const [importNoBrandNotice, setImportNoBrandNotice] = useState(0);
+  const [showAddMenu, setShowAddMenu] = useState(false);
+  const addMenuRef = useRef<HTMLDivElement>(null);
+
+  const existingBrands = Array.from(new Set(products.map((p) => p.brand).filter(Boolean) as string[])).sort();
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (addMenuRef.current && !addMenuRef.current.contains(e.target as Node)) {
+        setShowAddMenu(false);
+      }
+    }
+    if (showAddMenu) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showAddMenu]);
+
+  const fetchProducts = useCallback(async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (search) params.set("search", search);
+      if (categoryFilter) params.set("category", categoryFilter);
+      const qs = params.toString();
+      const res = await fetch(`/api/products${qs ? `?${qs}` : ""}`);
+      if (!res.ok) throw new Error("Ürünler alınamadı");
+      const data = await res.json();
+      setProducts(data);
+      setSelectedIds(new Set());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
+    } finally {
+      setLoading(false);
+    }
+  }, [search, categoryFilter]);
+
+  useEffect(() => {
+    const timer = setTimeout(fetchProducts, 300);
+    return () => clearTimeout(timer);
+  }, [fetchProducts]);
+
+  const handleProductClick = async (product: Product) => {
+    setDetailLoading(true);
+    try {
+      const res = await fetch(`/api/products/${product.id}`);
+      if (!res.ok) throw new Error("Ürün detayı alınamadı");
+      const data = await res.json();
+      setSelectedProduct(data);
+    } catch {
+      setSelectedProduct(product);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      const res = await fetch(`/api/products/${deleteTarget.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Silme hatası");
+      }
+      setProducts((prev) => prev.filter((p) => p.id !== deleteTarget.id));
+      setSelectedIds((prev) => { const next = new Set(prev); next.delete(deleteTarget.id); return next; });
+      setDeleteTarget(null);
+      onDataChange?.();
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "Silme hatası");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    setBulkDeleting(true);
+    try {
+      const res = await fetch("/api/products/bulk-delete", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedIds) }),
+      });
+      if (!res.ok) throw new Error("Toplu silme hatası");
+      setProducts((prev) => prev.filter((p) => !selectedIds.has(p.id)));
+      setSelectedIds(new Set());
+      setShowBulkDeleteConfirm(false);
+      onDataChange?.();
+    } catch {
+      // silent
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
+  const toggleSelect = (id: string, e: React.MouseEvent | React.ChangeEvent) => {
+    e.stopPropagation();
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === products.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(products.map((p) => p.id)));
+    }
+  };
+
+  const handleBulkBrandAssign = async () => {
+    if (!bulkBrandValue.trim() || selectedIds.size === 0) return;
+    setBulkBrandSaving(true);
+    try {
+      const res = await fetch("/api/products/bulk-update", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedIds), data: { brand: bulkBrandValue.trim() } }),
+      });
+      if (!res.ok) throw new Error("Toplu güncelleme hatası");
+      setProducts((prev) =>
+        prev.map((p) => selectedIds.has(p.id) ? { ...p, brand: bulkBrandValue.trim() } : p)
+      );
+      setShowBulkBrand(false);
+      setBulkBrandValue("");
+      setSelectedIds(new Set());
+    } catch {
+      // silent
+    } finally {
+      setBulkBrandSaving(false);
+    }
+  };
+
+  const handleInlineBrandSave = async () => {
+    if (!brandEditTarget) return;
+    setBrandEditSaving(true);
+    try {
+      const res = await fetch(`/api/products/${brandEditTarget.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ brand: brandEditValue.trim() || null }),
+      });
+      if (!res.ok) throw new Error("Marka güncelleme hatası");
+      setProducts((prev) =>
+        prev.map((p) => p.id === brandEditTarget.id ? { ...p, brand: brandEditValue.trim() || null } : p)
+      );
+      setBrandEditTarget(null);
+      setBrandEditValue("");
+    } catch {
+      // silent
+    } finally {
+      setBrandEditSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Filters and actions */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-1 gap-2">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Input
+              placeholder="Ürün ara..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
+          >
+            <option value="">Tümü</option>
+            {CATEGORIES.map((c) => (
+              <option key={c.value} value={c.value}>{c.label}</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex gap-2">
+          <a href="/api/products/export" download>
+            <Button variant="outline">
+              <Download className="mr-2 h-4 w-4" />
+              Dışa Aktar
+            </Button>
+          </a>
+          <div className="relative" ref={addMenuRef}>
+            <Button onClick={() => setShowAddMenu(!showAddMenu)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Ürün Ekle
+              <ChevronDown className="ml-1 h-3.5 w-3.5" />
+            </Button>
+            {showAddMenu && (
+              <div className="absolute right-0 top-full z-50 mt-1 w-48 rounded-md border bg-white py-1 shadow-lg">
+                <button
+                  onClick={() => { setShowNewProduct(true); setShowAddMenu(false); }}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-gray-100"
+                >
+                  <Pencil className="h-4 w-4" /> Manuel
+                </button>
+                <button
+                  onClick={() => { setShowImport(true); setShowAddMenu(false); }}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-gray-100"
+                >
+                  <FileSpreadsheet className="h-4 w-4" /> Excel / CSV
+                </button>
+                <button
+                  onClick={() => { setShowAIExtract(true); setShowAddMenu(false); }}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-gray-100"
+                >
+                  <Camera className="h-4 w-4" /> Fotoğraf AI
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Import no-brand notice */}
+      {importNoBrandNotice > 0 && (
+        <div className="flex items-center justify-between rounded-lg bg-yellow-50 border border-yellow-200 px-4 py-2">
+          <span className="text-sm text-yellow-800">
+            <strong>{importNoBrandNotice}</strong> ürünün markası boş. Şimdi atamak ister misiniz?
+          </span>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => {
+              const noBrandIds = new Set(products.filter((p) => !p.brand).map((p) => p.id));
+              setSelectedIds(noBrandIds);
+              setShowBulkBrand(true);
+              setImportNoBrandNotice(0);
+            }}>
+              <Tag className="mr-1 h-3.5 w-3.5" /> Marka Ata
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setImportNoBrandNotice(0)}>Kapat</Button>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk selection bar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 rounded-lg bg-blue-50 border border-blue-200 px-4 py-2">
+          <span className="text-sm font-medium text-blue-800">{selectedIds.size} ürün seçildi</span>
+          <Button size="sm" variant="outline" onClick={() => setShowBulkBrand(true)}>
+            <Tag className="mr-1 h-3.5 w-3.5" /> Marka Ata
+          </Button>
+          <Button size="sm" variant="destructive" onClick={() => setShowBulkDeleteConfirm(true)}>
+            <Trash2 className="mr-1 h-3.5 w-3.5" /> Sil
+          </Button>
+        </div>
+      )}
+
+      {/* Products table */}
+      <Card>
+        <CardContent className="p-0">
+          {loading ? (
+            <p className="p-6 text-gray-500">Yükleniyor...</p>
+          ) : error ? (
+            <p className="p-6 text-red-500">{error}</p>
+          ) : products.length === 0 ? (
+            <p className="p-6 text-gray-500">Ürün bulunamadı</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-10">
+                      <input
+                        type="checkbox"
+                        checked={products.length > 0 && selectedIds.size === products.length}
+                        onChange={toggleSelectAll}
+                        className="h-4 w-4 rounded border-gray-300"
+                      />
+                    </TableHead>
+                    <TableHead>Marka</TableHead>
+                    <TableHead>Ürün Adı</TableHead>
+                    <TableHead>SKU</TableHead>
+                    <TableHead className="text-right">Stok</TableHead>
+                    <TableHead className="text-right">Alış TL</TableHead>
+                    <TableHead className="text-right">Alış Döviz</TableHead>
+                    <TableHead className="text-right">Satış TL</TableHead>
+                    <TableHead className="text-right">Satış Döviz</TableHead>
+                    <TableHead className="text-right">Kâr %</TableHead>
+                    <TableHead className="text-center">İşlemler</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {products.map((product) => {
+                    const margin = calcProfitMargin(product.purchasePrice, product.salePrice);
+                    const marginLow = margin !== null && margin < product.minProfitMargin;
+                    return (
+                      <TableRow
+                        key={product.id}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => handleProductClick(product)}
+                      >
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(product.id)}
+                            onChange={(e) => toggleSelect(product.id, e)}
+                            className="h-4 w-4 rounded border-gray-300"
+                          />
+                        </TableCell>
+                        <TableCell className="text-muted-foreground" onClick={(e) => e.stopPropagation()}>
+                          {product.brand ? (
+                            product.brand
+                          ) : (
+                            <button
+                              onClick={() => { setBrandEditTarget(product); setBrandEditValue(""); }}
+                              className="text-xs text-blue-500 hover:text-blue-700 hover:underline"
+                            >
+                              + Marka Ekle
+                            </button>
+                          )}
+                        </TableCell>
+                        <TableCell className="font-medium">{product.name}</TableCell>
+                        <TableCell className="text-muted-foreground text-xs">{product.sku}</TableCell>
+                        <TableCell className="text-right">
+                          {product.currentStock > 0 ? (
+                            <>{product.currentStock} {getUnitLabel(product.unit)}</>
+                          ) : (
+                            <span className="text-gray-400">Stok Yok</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">{formatCurrency(product.purchasePrice)}</TableCell>
+                        <TableCell className="text-right">
+                          {product.currency !== "TRY" && product.purchasePriceUSD ? (
+                            <span className="text-muted-foreground text-xs">
+                              {getCurrencySymbol(product.currency)}{product.purchasePriceUSD.toFixed(2)}
+                            </span>
+                          ) : (
+                            <span className="text-gray-300">&mdash;</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">{formatCurrency(product.salePrice)}</TableCell>
+                        <TableCell className="text-right">
+                          {product.saleCurrency !== "TRY" && product.salePriceUSD ? (
+                            <span className="text-muted-foreground text-xs">
+                              {getCurrencySymbol(product.saleCurrency)}{product.salePriceUSD.toFixed(2)}
+                            </span>
+                          ) : (
+                            <span className="text-gray-300">&mdash;</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {margin !== null ? (
+                            <span className="flex items-center justify-end gap-1">
+                              {marginLow && (
+                                <span title={`Kâr marjı %${product.minProfitMargin} altında`}>
+                                  <AlertTriangle className="h-3.5 w-3.5 text-yellow-500" />
+                                </span>
+                              )}
+                              <span className={margin >= 0 ? (marginLow ? "text-yellow-600 font-medium" : "text-green-600 font-medium") : "text-red-600 font-medium"}>
+                                %{margin}
+                              </span>
+                            </span>
+                          ) : (
+                            <span className="text-gray-300">&mdash;</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              onClick={() => handleProductClick(product)}
+                              className="inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                              title="Düzenle"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => setDeleteTarget(product)}
+                              className="inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                              title="Sil"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Single delete confirmation */}
+      <Dialog open={deleteTarget !== null} onOpenChange={(open) => { if (!open) { setDeleteTarget(null); setDeleteError(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ürünü Sil</DialogTitle>
+            <DialogDescription>
+              <strong>{deleteTarget?.name}</strong> ürününü silmek istediğinize emin misiniz?
+            </DialogDescription>
+          </DialogHeader>
+          {deleteError && <p className="text-sm text-red-500">{deleteError}</p>}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setDeleteTarget(null); setDeleteError(""); }}>İptal</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+              {deleting ? "Siliniyor..." : "Sil"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk delete confirmation */}
+      <Dialog open={showBulkDeleteConfirm} onOpenChange={setShowBulkDeleteConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Toplu Silme</DialogTitle>
+            <DialogDescription>
+              <strong>{selectedIds.size}</strong> ürünü silmek istediğinize emin misiniz?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBulkDeleteConfirm(false)}>İptal</Button>
+            <Button variant="destructive" onClick={handleBulkDelete} disabled={bulkDeleting}>
+              {bulkDeleting ? "Siliniyor..." : `${selectedIds.size} Ürünü Sil`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* New product modal */}
+      <NewProductDialog open={showNewProduct} onOpenChange={setShowNewProduct} onSuccess={fetchProducts} />
+
+      {/* Import dialog */}
+      <ImportDialog
+        open={showImport}
+        onOpenChange={setShowImport}
+        onSuccess={fetchProducts}
+        onComplete={(n) => { if (n > 0) setImportNoBrandNotice(n); }}
+      />
+
+      {/* AI Extract dialog */}
+      <AIExtractDialog open={showAIExtract} onOpenChange={setShowAIExtract} onSuccess={fetchProducts} />
+
+      {/* Product detail modal */}
+      <Dialog open={selectedProduct !== null} onOpenChange={(open) => { if (!open) setSelectedProduct(null); }}>
+        <DialogContent className="max-h-[80vh] overflow-y-auto">
+          {detailLoading ? (
+            <p className="text-gray-500">Yükleniyor...</p>
+          ) : selectedProduct ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>{selectedProduct.name}</DialogTitle>
+                <DialogDescription>
+                  SKU: {selectedProduct.sku}
+                  {selectedProduct.brand && ` | Marka: ${selectedProduct.brand}`}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                {selectedProduct.brand && (
+                  <div><span className="text-muted-foreground">Marka:</span> {selectedProduct.brand}</div>
+                )}
+                <div><span className="text-muted-foreground">Kategori:</span> {getCategoryLabel(selectedProduct.category)}</div>
+                <div><span className="text-muted-foreground">Birim:</span> {getUnitLabel(selectedProduct.unit)}</div>
+                <div><span className="text-muted-foreground">Para Birimi:</span> {selectedProduct.currency}</div>
+                <div><span className="text-muted-foreground">Mevcut Stok:</span> {selectedProduct.currentStock > 0 ? selectedProduct.currentStock : "Stok Yok"}</div>
+                <div><span className="text-muted-foreground">Min Stok:</span> {selectedProduct.minStock}</div>
+                <div><span className="text-muted-foreground">Alış Fiyatı (TRY):</span> {formatCurrency(selectedProduct.purchasePrice)}</div>
+                {selectedProduct.currency !== "TRY" && selectedProduct.purchasePriceUSD != null && selectedProduct.purchasePriceUSD > 0 && (
+                  <div><span className="text-muted-foreground">Orijinal Alış ({selectedProduct.currency}):</span> {getCurrencySymbol(selectedProduct.currency)}{selectedProduct.purchasePriceUSD.toFixed(2)}</div>
+                )}
+                <div><span className="text-muted-foreground">Satış Fiyatı:</span> {formatCurrency(selectedProduct.salePrice)}</div>
+                {selectedProduct.saleCurrency !== "TRY" && selectedProduct.salePriceUSD != null && selectedProduct.salePriceUSD > 0 && (
+                  <div><span className="text-muted-foreground">Orijinal Satış ({selectedProduct.saleCurrency}):</span> {getCurrencySymbol(selectedProduct.saleCurrency)}{selectedProduct.salePriceUSD.toFixed(2)}</div>
+                )}
+                <div><span className="text-muted-foreground">Min Kâr Marjı:</span> %{selectedProduct.minProfitMargin}</div>
+                {(() => {
+                  const margin = calcProfitMargin(selectedProduct.purchasePrice, selectedProduct.salePrice);
+                  if (margin === null) return null;
+                  const marginLow = margin < selectedProduct.minProfitMargin;
+                  return (
+                    <div>
+                      <span className="text-muted-foreground">Kâr Marjı:</span>{" "}
+                      <span className={marginLow ? "text-yellow-600 font-semibold" : margin >= 0 ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
+                        %{margin}{marginLow && " (Düşük!)"}
+                      </span>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {selectedProduct.movements && selectedProduct.movements.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="mb-2 font-semibold">Hareket Geçmişi</h4>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Tarih</TableHead>
+                        <TableHead>Tür</TableHead>
+                        <TableHead className="text-right">Miktar</TableHead>
+                        <TableHead className="text-right">Fiyat</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {selectedProduct.movements.map((m) => {
+                        const typeBadge = TYPE_BADGE[m.type] || TYPE_BADGE.ADJUSTMENT;
+                        return (
+                          <TableRow key={m.id}>
+                            <TableCell>{formatDate(m.date)}</TableCell>
+                            <TableCell><Badge className={typeBadge.className}>{typeBadge.label}</Badge></TableCell>
+                            <TableCell className="text-right">{m.quantity}</TableCell>
+                            <TableCell className="text-right">{formatCurrency(m.totalPrice)}</TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk brand assignment modal */}
+      <Dialog open={showBulkBrand} onOpenChange={(open) => { if (!open) { setShowBulkBrand(false); setBulkBrandValue(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Marka Ata</DialogTitle>
+            <DialogDescription><strong>{selectedIds.size}</strong> ürüne marka atayın</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {existingBrands.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Mevcut markalardan seç</Label>
+                <div className="flex flex-wrap gap-2">
+                  {existingBrands.map((b) => (
+                    <button key={b} onClick={() => setBulkBrandValue(b)}
+                      className={`rounded-full border px-3 py-1 text-xs transition-colors ${bulkBrandValue === b ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 bg-white text-gray-600 hover:border-blue-300"}`}
+                    >{b}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="bulkBrand">{existingBrands.length > 0 ? "veya yeni marka yaz" : "Marka adı"}</Label>
+              <Input id="bulkBrand" value={bulkBrandValue} onChange={(e) => setBulkBrandValue(e.target.value)} placeholder="Marka adı girin..." />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setShowBulkBrand(false); setBulkBrandValue(""); }}>İptal</Button>
+            <Button onClick={handleBulkBrandAssign} disabled={bulkBrandSaving || !bulkBrandValue.trim()}>
+              {bulkBrandSaving ? "Kaydediliyor..." : "Kaydet"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Inline brand edit modal */}
+      <Dialog open={brandEditTarget !== null} onOpenChange={(open) => { if (!open) { setBrandEditTarget(null); setBrandEditValue(""); } }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Marka Ekle</DialogTitle>
+            <DialogDescription>{brandEditTarget?.name}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {existingBrands.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Mevcut markalar</Label>
+                <div className="flex flex-wrap gap-2">
+                  {existingBrands.map((b) => (
+                    <button key={b} onClick={() => setBrandEditValue(b)}
+                      className={`rounded-full border px-3 py-1 text-xs transition-colors ${brandEditValue === b ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 bg-white text-gray-600 hover:border-blue-300"}`}
+                    >{b}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="inlineBrand">Marka</Label>
+              <Input id="inlineBrand" value={brandEditValue} onChange={(e) => setBrandEditValue(e.target.value)} placeholder="Marka adı..." autoFocus
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleInlineBrandSave(); } }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setBrandEditTarget(null); setBrandEditValue(""); }}>İptal</Button>
+            <Button onClick={handleInlineBrandSave} disabled={brandEditSaving || !brandEditValue.trim()}>
+              {brandEditSaving ? "Kaydediliyor..." : "Kaydet"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// ─── New Product Dialog ───
+
+function NewProductDialog({
+  open, onOpenChange, onSuccess,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
+}) {
+  const [form, setForm] = useState({
+    name: "", sku: "", brand: "", category: "DIGER", unit: "ADET",
+    currentStock: 0, minStock: 0, orderAlert: false,
+    purchasePrice: 0, purchasePriceUSD: "", currency: "TRY",
+    minProfitMargin: 20, salePrice: 0, salePriceUSD: "", saleCurrency: "TRY",
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const resetForm = () => setForm({
+    name: "", sku: "", brand: "", category: "DIGER", unit: "ADET",
+    currentStock: 0, minStock: 0, orderAlert: false,
+    purchasePrice: 0, purchasePriceUSD: "", currency: "TRY",
+    minProfitMargin: 20, salePrice: 0, salePriceUSD: "", saleCurrency: "TRY",
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setError("");
+    try {
+      const res = await fetch("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...form,
+          brand: form.brand || null,
+          purchasePrice: toKurus(form.purchasePrice),
+          purchasePriceUSD: form.purchasePriceUSD ? parseFloat(form.purchasePriceUSD) : null,
+          salePrice: toKurus(form.salePrice),
+          salePriceUSD: form.salePriceUSD ? parseFloat(form.salePriceUSD) : null,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Ürün oluşturulamadı");
+      }
+      onOpenChange(false);
+      resetForm();
+      onSuccess();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Yeni Ürün</DialogTitle>
+          <DialogDescription>Yeni bir ürün ekleyin</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Ürün Adı</Label>
+              <Input id="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sku">SKU Kodu</Label>
+              <Input id="sku" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} required />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="brand">Marka</Label>
+              <Input id="brand" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} placeholder="Opsiyonel" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="category">Kategori</Label>
+              <select id="category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                {CATEGORIES.map((c) => (<option key={c.value} value={c.value}>{c.label}</option>))}
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="unit">Birim</Label>
+              <select id="unit" value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                {UNITS.map((u) => (<option key={u.value} value={u.value}>{u.label}</option>))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="currency">Alış Para Birimi</Label>
+              <select id="currency" value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                {CURRENCIES.map((c) => (<option key={c.value} value={c.value}>{c.label}</option>))}
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="currentStock">Mevcut Stok</Label>
+              <Input id="currentStock" type="number" min={0} value={form.currentStock} onChange={(e) => setForm({ ...form, currentStock: Number(e.target.value) })} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="minStock">Minimum Stok</Label>
+              <Input id="minStock" type="number" min={0} value={form.minStock} onChange={(e) => setForm({ ...form, minStock: Number(e.target.value) })} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="purchasePrice">Alış Fiyatı ({getCurrencySymbol(form.currency)})</Label>
+              <Input id="purchasePrice" type="number" min={0} step="0.01" value={form.purchasePrice} onChange={(e) => setForm({ ...form, purchasePrice: Number(e.target.value) })} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="salePrice">Satış Fiyatı (₺)</Label>
+              <Input id="salePrice" type="number" min={0} step="0.01" value={form.salePrice} onChange={(e) => setForm({ ...form, salePrice: Number(e.target.value) })} />
+            </div>
+          </div>
+          {form.currency !== "TRY" && (
+            <div className="space-y-2">
+              <Label htmlFor="purchasePriceUSD">Alış Fiyatı Orijinal ({form.currency})</Label>
+              <Input id="purchasePriceUSD" type="number" min={0} step="0.01" placeholder="Opsiyonel" value={form.purchasePriceUSD} onChange={(e) => setForm({ ...form, purchasePriceUSD: e.target.value })} />
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="saleCurrency">Satış Para Birimi</Label>
+              <select id="saleCurrency" value={form.saleCurrency} onChange={(e) => setForm({ ...form, saleCurrency: e.target.value })}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                {CURRENCIES.map((c) => (<option key={c.value} value={c.value}>{c.label}</option>))}
+              </select>
+            </div>
+            {form.saleCurrency !== "TRY" && (
+              <div className="space-y-2">
+                <Label htmlFor="salePriceUSD">Satış Fiyatı Orijinal ({form.saleCurrency})</Label>
+                <Input id="salePriceUSD" type="number" min={0} step="0.01" placeholder="Opsiyonel" value={form.salePriceUSD} onChange={(e) => setForm({ ...form, salePriceUSD: e.target.value })} />
+              </div>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="minProfitMargin">Min Kâr Marjı (%)</Label>
+            <Input id="minProfitMargin" type="number" min={0} max={100} value={form.minProfitMargin} onChange={(e) => setForm({ ...form, minProfitMargin: Number(e.target.value) })} />
+          </div>
+          <div className="flex items-center gap-2">
+            <input type="checkbox" id="orderAlert" checked={form.orderAlert} onChange={(e) => setForm({ ...form, orderAlert: e.target.checked })} className="h-4 w-4 rounded border-gray-300" />
+            <Label htmlFor="orderAlert" className="text-sm font-normal cursor-pointer">Sipariş hatırlatması aktif</Label>
+          </div>
+          {error && <p className="text-sm text-red-500">{error}</p>}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>İptal</Button>
+            <Button type="submit" disabled={saving}>{saving ? "Kaydediliyor..." : "Kaydet"}</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Import Dialog ───
+
+interface ImportPreview {
+  columns: string[];
+  preview: Record<string, any>[];
+  totalRows: number;
+}
+
+interface ImportResult {
+  added: number;
+  updated: number;
+  errors: number;
+  total: number;
+  noBrandCount: number;
+}
+
+const MAPPING_FIELDS = [
+  { key: "name", label: "Ürün Adı", required: true },
+  { key: "brand", label: "Marka", required: false },
+  { key: "category", label: "Kategori", required: false },
+  { key: "quantity", label: "Miktar / Stok", required: false },
+  { key: "unit", label: "Birim", required: false },
+  { key: "purchasePrice", label: "Alış Fiyatı TL", required: false },
+  { key: "purchasePriceUSD", label: "Alış Fiyatı USD", required: false },
+  { key: "salePrice", label: "Satış Fiyatı", required: false },
+  { key: "minStock", label: "Minimum Stok", required: false },
+  { key: "currency", label: "Para Birimi", required: false },
+];
+
+function ImportDialog({
+  open, onOpenChange, onSuccess, onComplete,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
+  onComplete?: (noBrandCount: number) => void;
+}) {
+  const [step, setStep] = useState<"upload" | "mapping" | "importing" | "result">("upload");
+  const [preview, setPreview] = useState<ImportPreview | null>(null);
+  const [mapping, setMapping] = useState<Record<string, string>>({});
+  const [result, setResult] = useState<ImportResult | null>(null);
+  const [error, setError] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+
+  function reset() {
+    setStep("upload"); setPreview(null); setMapping({}); setResult(null); setError(""); setUploading(false); setImportFile(null);
+  }
+
+  function handleClose(isOpen: boolean) {
+    if (!isOpen) reset();
+    onOpenChange(isOpen);
+  }
+
+  async function handleFileSelect(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    const validExts = [".xlsx", ".xls", ".csv"];
+    if (!validExts.some((ext) => file.name.toLowerCase().endsWith(ext))) {
+      setError("Desteklenmeyen format. Excel (.xlsx) veya CSV (.csv) yükleyin.");
+      return;
+    }
+    setUploading(true);
+    setError("");
+    setImportFile(file);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/products/import", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || "Dosya okunamadı"); return; }
+      setPreview(data);
+      // Auto-map columns
+      const autoMapping: Record<string, string> = {};
+      const cols = data.columns as string[];
+      for (const field of MAPPING_FIELDS) {
+        const match = cols.find((c) => {
+          const cl = c.toLowerCase();
+          if (field.key === "name") return cl.includes("ürün") || cl.includes("urun") || cl.includes("ad") || cl === "name" || cl === "product";
+          if (field.key === "brand") return cl.includes("marka") || cl.includes("brand");
+          if (field.key === "category") return cl.includes("kategori") || cl.includes("category");
+          if (field.key === "quantity") return cl.includes("miktar") || cl.includes("stok") || cl.includes("quantity") || cl.includes("stock");
+          if (field.key === "unit") return cl.includes("birim") || cl.includes("unit");
+          if (field.key === "purchasePrice") return (cl.includes("alış") || cl.includes("alis") || cl.includes("purchase")) && cl.includes("tl");
+          if (field.key === "purchasePriceUSD") return (cl.includes("alış") || cl.includes("alis") || cl.includes("purchase")) && cl.includes("usd");
+          if (field.key === "salePrice") return cl.includes("satış") || cl.includes("satis") || cl.includes("sale");
+          if (field.key === "minStock") return cl.includes("min") || cl.includes("minimum");
+          if (field.key === "currency") return cl.includes("para") || cl.includes("döviz") || cl.includes("currency");
+          return false;
+        });
+        if (match) autoMapping[field.key] = match;
+      }
+      setMapping(autoMapping);
+      setStep("mapping");
+    } catch {
+      setError("Dosya yüklenirken hata oluştu");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleImport() {
+    if (!importFile || !mapping.name) return;
+    setStep("importing"); setError("");
+    try {
+      const formData = new FormData();
+      formData.append("file", importFile);
+      formData.append("mapping", JSON.stringify(mapping));
+      const res = await fetch("/api/products/import", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || "İçe aktarma hatası"); setStep("mapping"); return; }
+      setResult(data); setStep("result"); onSuccess();
+      if (data.noBrandCount > 0) onComplete?.(data.noBrandCount);
+    } catch {
+      setError("İçe aktarma sırasında hata oluştu"); setStep("mapping");
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <FileSpreadsheet className="h-5 w-5 text-blue-600" />
+            Stok Verisi İçe Aktar
+          </DialogTitle>
+          <DialogDescription>
+            {step === "upload" && "Excel (.xlsx) veya CSV (.csv) dosyası yükleyin"}
+            {step === "mapping" && "Sütunları eşleştirin ve verileri kontrol edin"}
+            {step === "importing" && "Veriler içe aktarılıyor..."}
+            {step === "result" && "İçe aktarma tamamlandı"}
+          </DialogDescription>
+        </DialogHeader>
+
+        {step === "upload" && (
+          <div className="space-y-4">
+            <div className="rounded-xl border-2 border-dashed border-gray-200 p-8 text-center">
+              {uploading ? (
+                <div className="flex flex-col items-center gap-3">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                  <p className="text-sm text-gray-600">Dosya okunuyor...</p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-3">
+                  <Upload className="h-8 w-8 text-gray-400" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Dosya seçin veya sürükleyin</p>
+                    <p className="text-xs text-gray-400">Excel (.xlsx) veya CSV (.csv)</p>
+                  </div>
+                  <label className="cursor-pointer rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                    Dosya Seç
+                    <input type="file" accept=".xlsx,.xls,.csv" onChange={(e) => handleFileSelect(e.target.files)} className="hidden" />
+                  </label>
+                </div>
+              )}
+            </div>
+            {error && <p className="text-sm text-red-500">{error}</p>}
+          </div>
+        )}
+
+        {step === "mapping" && preview && (
+          <div className="space-y-4">
+            <div className="rounded-lg bg-blue-50 p-3">
+              <p className="text-sm text-blue-700"><strong>{preview.totalRows}</strong> satır bulundu. Sütunları eşleştirin:</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {MAPPING_FIELDS.map((field) => (
+                <div key={field.key} className="space-y-1">
+                  <Label className="text-xs">{field.label}{field.required && <span className="text-red-500"> *</span>}</Label>
+                  <select value={mapping[field.key] || ""} onChange={(e) => setMapping((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                    className="flex h-9 w-full rounded-md border border-input bg-background px-2 py-1 text-sm">
+                    <option value="">— Seçin —</option>
+                    {preview.columns.map((col) => (<option key={col} value={col}>{col}</option>))}
+                  </select>
+                </div>
+              ))}
+            </div>
+            <div>
+              <p className="mb-2 text-xs font-semibold text-gray-500 uppercase">Önizleme (ilk 5 satır)</p>
+              <div className="overflow-x-auto rounded-lg border">
+                <table className="w-full text-xs">
+                  <thead className="bg-gray-50">
+                    <tr>{preview.columns.map((col) => (<th key={col} className="px-3 py-2 text-left font-medium text-gray-600 whitespace-nowrap">{col}</th>))}</tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {preview.preview.map((row, i) => (
+                      <tr key={i}>{preview.columns.map((col) => (<td key={col} className="px-3 py-1.5 text-gray-700 whitespace-nowrap max-w-[200px] truncate">{String(row[col] ?? "")}</td>))}</tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            {error && <p className="text-sm text-red-500">{error}</p>}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => reset()}>Geri</Button>
+              <Button onClick={handleImport} disabled={!mapping.name}><ArrowRight className="mr-2 h-4 w-4" />İçe Aktar ({preview.totalRows} satır)</Button>
+            </DialogFooter>
+          </div>
+        )}
+
+        {step === "importing" && (
+          <div className="flex flex-col items-center gap-4 py-8">
+            <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
+            <p className="text-sm font-medium text-gray-600">Veriler içe aktarılıyor...</p>
+          </div>
+        )}
+
+        {step === "result" && result && (
+          <div className="space-y-4">
+            <div className="rounded-xl bg-green-50 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                <p className="font-semibold text-green-800">İçe aktarma tamamlandı</p>
+              </div>
+              <div className="grid grid-cols-3 gap-3 text-sm">
+                <div className="rounded-lg bg-white p-3 text-center">
+                  <p className="text-2xl font-bold text-green-600">{result.added}</p>
+                  <p className="text-xs text-gray-500">Yeni eklendi</p>
+                </div>
+                <div className="rounded-lg bg-white p-3 text-center">
+                  <p className="text-2xl font-bold text-blue-600">{result.updated}</p>
+                  <p className="text-xs text-gray-500">Güncellendi</p>
+                </div>
+                <div className="rounded-lg bg-white p-3 text-center">
+                  <p className={`text-2xl font-bold ${result.errors > 0 ? "text-red-600" : "text-gray-400"}`}>{result.errors}</p>
+                  <p className="text-xs text-gray-500">Hatalı</p>
+                </div>
+              </div>
+              {result.noBrandCount > 0 && (
+                <div className="mt-3 rounded-lg bg-yellow-50 border border-yellow-200 p-3 text-sm text-yellow-800">
+                  <strong>{result.noBrandCount}</strong> ürünün markası boş. Kapatınca marka atayabilirsiniz.
+                </div>
+              )}
+            </div>
+            <DialogFooter><Button onClick={() => handleClose(false)}>Kapat</Button></DialogFooter>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── AI Extract Dialog ───
+
+interface AIProduct {
+  name: string;
+  brand: string | null;
+  category: string;
+  sku: string | null;
+  purchasePrice: number | null;
+  currency: string;
+}
+
+function AIExtractDialog({
+  open, onOpenChange, onSuccess,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
+}) {
+  const [step, setStep] = useState<"upload" | "processing" | "review" | "saving">("upload");
+  const [extractedProducts, setExtractedProducts] = useState<AIProduct[]>([]);
+  const [error, setError] = useState("");
+
+  function reset() {
+    setStep("upload"); setExtractedProducts([]); setError("");
+  }
+
+  function handleClose(isOpen: boolean) {
+    if (!isOpen) reset();
+    onOpenChange(isOpen);
+  }
+
+  async function handleFileUpload(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    setStep("processing"); setError("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/products/ai-extract", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || "AI tanıma hatası"); setStep("upload"); return; }
+      if (data.products && data.products.length > 0) {
+        setExtractedProducts(data.products);
+        setStep("review");
+      } else {
+        setError("Fotoğrafta ürün bulunamadı."); setStep("upload");
+      }
+    } catch {
+      setError("AI tanıma sırasında hata oluştu"); setStep("upload");
+    }
+  }
+
+  async function handleSaveAll() {
+    setStep("saving");
+    let saved = 0;
+    for (const p of extractedProducts) {
+      try {
+        const sku = p.sku || `AI-${Date.now().toString(36).slice(-4).toUpperCase()}${saved}`;
+        const purchasePrice = p.purchasePrice ? Math.round(p.purchasePrice * 100) : 0;
+        const res = await fetch("/api/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: p.name,
+            sku,
+            brand: p.brand || null,
+            category: p.category || "DIGER",
+            unit: "ADET",
+            purchasePrice,
+            currency: p.currency || "TRY",
+            salePrice: 0,
+          }),
+        });
+        if (res.ok) saved++;
+      } catch {
+        // skip individual errors
+      }
+    }
+    onSuccess();
+    handleClose(false);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Camera className="h-5 w-5 text-purple-600" />
+            AI ile Ürün Tanıma
+          </DialogTitle>
+          <DialogDescription>
+            {step === "upload" && "Ürün fotoğrafı veya fatura görseli yükleyin"}
+            {step === "processing" && "AI görüntüyü analiz ediyor..."}
+            {step === "review" && "Tanınan ürünleri kontrol edin"}
+            {step === "saving" && "Ürünler kaydediliyor..."}
+          </DialogDescription>
+        </DialogHeader>
+
+        {step === "upload" && (
+          <div className="space-y-4">
+            <div className="rounded-xl border-2 border-dashed border-purple-200 p-8 text-center">
+              <div className="flex flex-col items-center gap-3">
+                <Camera className="h-8 w-8 text-purple-400" />
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Fotoğraf yükleyin</p>
+                  <p className="text-xs text-gray-400">JPG, PNG veya WebP</p>
+                </div>
+                <label className="cursor-pointer rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700">
+                  Fotoğraf Seç
+                  <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => handleFileUpload(e.target.files)} className="hidden" />
+                </label>
+              </div>
+            </div>
+            <p className="text-xs text-gray-400 text-center">3.000 token harcanır</p>
+            {error && <p className="text-sm text-red-500">{error}</p>}
+          </div>
+        )}
+
+        {step === "processing" && (
+          <div className="flex flex-col items-center gap-4 py-8">
+            <Loader2 className="h-10 w-10 animate-spin text-purple-600" />
+            <p className="text-sm font-medium text-gray-600">AI görüntüyü analiz ediyor...</p>
+          </div>
+        )}
+
+        {step === "review" && (
+          <div className="space-y-4">
+            <div className="rounded-lg bg-purple-50 p-3">
+              <p className="text-sm text-purple-700"><strong>{extractedProducts.length}</strong> ürün tanındı</p>
+            </div>
+            <div className="overflow-x-auto rounded-lg border">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-3 py-2 text-left font-medium text-gray-600">Ürün Adı</th>
+                    <th className="px-3 py-2 text-left font-medium text-gray-600">Marka</th>
+                    <th className="px-3 py-2 text-left font-medium text-gray-600">Kategori</th>
+                    <th className="px-3 py-2 text-right font-medium text-gray-600">Fiyat</th>
+                    <th className="px-3 py-2 text-center font-medium text-gray-600">Döviz</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {extractedProducts.map((p, i) => (
+                    <tr key={i}>
+                      <td className="px-3 py-2">{p.name}</td>
+                      <td className="px-3 py-2 text-muted-foreground">{p.brand || "—"}</td>
+                      <td className="px-3 py-2">{getCategoryLabel(p.category)}</td>
+                      <td className="px-3 py-2 text-right">{p.purchasePrice != null ? p.purchasePrice.toFixed(2) : "—"}</td>
+                      <td className="px-3 py-2 text-center">{p.currency}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => reset()}>Geri</Button>
+              <Button onClick={handleSaveAll}><CheckCircle className="mr-2 h-4 w-4" />Tümünü Kaydet</Button>
+            </DialogFooter>
+          </div>
+        )}
+
+        {step === "saving" && (
+          <div className="flex flex-col items-center gap-4 py-8">
+            <Loader2 className="h-10 w-10 animate-spin text-purple-600" />
+            <p className="text-sm font-medium text-gray-600">Ürünler kaydediliyor...</p>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
