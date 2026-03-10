@@ -178,6 +178,29 @@ const staggerContainer = {
   visible: { transition: { staggerChildren: 0.08 } },
 };
 
+function AnimatedNumber({ target, prefix = "", duration = 1500 }: { target: number; prefix?: string; duration?: number }) {
+  const [value, setValue] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: false });
+
+  useEffect(() => {
+    if (!inView) { setValue(0); return; }
+    const startTime = performance.now();
+    let raf: number;
+    function update(currentTime: number) {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(Math.round(eased * target));
+      if (progress < 1) raf = requestAnimationFrame(update);
+    }
+    raf = requestAnimationFrame(update);
+    return () => cancelAnimationFrame(raf);
+  }, [inView, target, duration]);
+
+  return <span ref={ref}>{prefix}{value.toLocaleString("tr-TR")}</span>;
+}
+
 /* ══════════════════════════ ONBOARDING CHAT ══════════════════════════ */
 
 interface SuggestedModule {
@@ -456,10 +479,10 @@ function DashboardOverview() {
     <div>
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
-          { label: "Toplam Müşteri", value: "247", icon: Users, change: "+18", up: true, color: "text-blue-600", bg: "bg-blue-50" },
-          { label: "Bugünün Randevuları", value: "12", icon: Calendar, change: "+3", up: true, color: "text-emerald-600", bg: "bg-emerald-50" },
-          { label: "Aylık Gelir", value: "₺48.500", icon: TrendingUp, change: "+22%", up: true, color: "text-amber-600", bg: "bg-amber-50" },
-          { label: "Stok Uyarısı", value: "3", icon: AlertTriangle, change: "Kritik", up: false, color: "text-red-600", bg: "bg-red-50" },
+          { label: "Toplam Müşteri", target: 247, prefix: "", icon: Users, change: "+18", up: true, color: "text-blue-600", bg: "bg-blue-50" },
+          { label: "Bugünün Randevuları", target: 12, prefix: "", icon: Calendar, change: "+3", up: true, color: "text-emerald-600", bg: "bg-emerald-50" },
+          { label: "Aylık Gelir", target: 48500, prefix: "₺", icon: TrendingUp, change: "+22%", up: true, color: "text-amber-600", bg: "bg-amber-50" },
+          { label: "Stok Uyarısı", target: 3, prefix: "", icon: AlertTriangle, change: "Kritik", up: false, color: "text-red-600", bg: "bg-red-50" },
         ].map((s) => {
           const Icon = s.icon;
           return (
@@ -470,7 +493,9 @@ function DashboardOverview() {
                   <Icon className={`h-3.5 w-3.5 ${s.color}`} />
                 </div>
               </div>
-              <p className="text-xl font-bold text-gray-900">{s.value}</p>
+              <p className="text-xl font-bold text-gray-900">
+                <AnimatedNumber target={s.target} prefix={s.prefix} />
+              </p>
               <p className={`mt-1 text-[11px] font-semibold ${s.up ? "text-emerald-500" : "text-red-500"}`}>
                 {s.change}
               </p>
@@ -537,9 +562,9 @@ function DashboardFinance() {
     <div>
       <div className="mb-5 grid grid-cols-3 gap-3">
         {[
-          { label: "Gelir", value: "₺48.500", color: "text-emerald-600", bg: "bg-emerald-50", icon: TrendingUp },
-          { label: "Gider", value: "₺12.300", color: "text-red-600", bg: "bg-red-50", icon: TrendingDown },
-          { label: "Net Kâr", value: "₺36.200", color: "text-blue-600", bg: "bg-blue-50", icon: DollarSign },
+          { label: "Gelir", target: 48500, color: "text-emerald-600", bg: "bg-emerald-50", icon: TrendingUp },
+          { label: "Gider", target: 12300, color: "text-red-600", bg: "bg-red-50", icon: TrendingDown },
+          { label: "Net Kâr", target: 36200, color: "text-blue-600", bg: "bg-blue-50", icon: DollarSign },
         ].map((s) => {
           const Icon = s.icon;
           return (
@@ -547,7 +572,9 @@ function DashboardFinance() {
               <div className={`mx-auto mb-2 inline-flex rounded-lg p-2 ${s.bg}`}>
                 <Icon className={`h-4 w-4 ${s.color}`} />
               </div>
-              <p className="text-lg font-bold text-gray-900">{s.value}</p>
+              <p className="text-lg font-bold text-gray-900">
+                <AnimatedNumber target={s.target} prefix="₺" />
+              </p>
               <p className="text-[11px] text-gray-400">{s.label}</p>
             </div>
           );
@@ -686,6 +713,7 @@ export default function Home() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
+  const [tabHovered, setTabHovered] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -693,8 +721,14 @@ export default function Home() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const tweetsRow1 = tweets.slice(0, 25);
-  const tweetsRow2 = tweets.slice(25, 50);
+  // Auto-rotate dashboard tabs every 3s, pause on hover
+  useEffect(() => {
+    if (tabHovered) return;
+    const id = setInterval(() => {
+      setActiveTab((prev) => (prev + 1) % dashboardTabs.length);
+    }, 3000);
+    return () => clearInterval(id);
+  }, [tabHovered, activeTab]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -883,14 +917,18 @@ export default function Home() {
             transition={{ duration: 0.8 }}
             style={{ perspective: "1200px" }}
           >
-            <div className="rounded-2xl bg-gradient-to-br from-gray-900 to-gray-800 p-3 shadow-2xl shadow-black/20 transition-transform duration-700 hover:[transform:rotateX(0deg)] [transform:rotateX(3deg)]">
+            <div
+              className="rounded-2xl bg-gradient-to-br from-gray-900 to-gray-800 p-3 shadow-2xl shadow-black/20 transition-transform duration-700 hover:[transform:rotateX(0deg)] [transform:rotateX(3deg)]"
+              onMouseEnter={() => setTabHovered(true)}
+              onMouseLeave={() => setTabHovered(false)}
+            >
               {/* Browser bar */}
               <div className="mb-2 flex items-center gap-2 px-3 py-2">
                 <div className="h-3 w-3 rounded-full bg-red-500" />
                 <div className="h-3 w-3 rounded-full bg-yellow-500" />
                 <div className="h-3 w-3 rounded-full bg-green-500" />
                 <div className="ml-3 flex-1 rounded-md bg-white/5 px-3 py-1.5 text-center text-xs text-gray-400">
-                  inpobi.com/dashboard
+                  poby.ai/dashboard
                 </div>
               </div>
 
@@ -964,20 +1002,10 @@ export default function Home() {
           </p>
         </motion.div>
 
-        {/* Row 1 — scrolls left */}
-        <div className="mb-6 overflow-hidden">
-          <div className="animate-scroll-left pause-on-hover flex w-max">
-            {[...tweetsRow1, ...tweetsRow1].map((tweet, i) => (
-              <TweetCard key={`r1-${i}`} tweet={tweet} />
-            ))}
-          </div>
-        </div>
-
-        {/* Row 2 — scrolls right */}
         <div className="overflow-hidden">
-          <div className="animate-scroll-right pause-on-hover flex w-max">
-            {[...tweetsRow2, ...tweetsRow2].map((tweet, i) => (
-              <TweetCard key={`r2-${i}`} tweet={tweet} />
+          <div className="animate-scroll-left pause-on-hover flex w-max">
+            {[...tweets, ...tweets].map((tweet, i) => (
+              <TweetCard key={`t-${i}`} tweet={tweet} />
             ))}
           </div>
         </div>
