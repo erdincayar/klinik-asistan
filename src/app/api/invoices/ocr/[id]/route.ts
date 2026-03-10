@@ -26,14 +26,12 @@ export async function DELETE(
       return NextResponse.json({ error: "Fatura bulunamadı" }, { status: 404 });
     }
 
-    if (invoice.approved) {
-      return NextResponse.json(
-        { error: "Onaylanmış fatura silinemez" },
-        { status: 400 }
-      );
-    }
-
-    await prisma.uploadedInvoice.delete({ where: { id } });
+    await prisma.$transaction(async (tx) => {
+      if (invoice.linkedExpenseId) {
+        await tx.expense.delete({ where: { id: invoice.linkedExpenseId } }).catch(() => {});
+      }
+      await tx.uploadedInvoice.delete({ where: { id } });
+    });
 
     return NextResponse.json({ success: true, message: "Fatura silindi" });
   } catch (error) {
