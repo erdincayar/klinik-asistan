@@ -97,6 +97,7 @@ export default function InvoiceUploadContent() {
   const [confirmReject, setConfirmReject] = useState(false);
   const [inlineApproving, setInlineApproving] = useState<string | null>(null);
   const [inlineRejecting, setInlineRejecting] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState("");
 
   useEffect(() => {
     fetchInvoices();
@@ -255,14 +256,21 @@ export default function InvoiceUploadContent() {
 
   async function handleDelete(invoice: UploadedInvoice) {
     setDeleting(invoice.id);
+    setDeleteError("");
     try {
       const res = await fetch(`/api/invoices/ocr/${invoice.id}`, { method: "DELETE" });
-      if (res.ok) {
-        await fetchInvoices();
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setInvoices((prev) => prev.filter((inv) => inv.id !== invoice.id));
         setConfirmDelete(null);
+        if (selectedInvoice?.id === invoice.id) {
+          setSelectedInvoice(null);
+        }
+      } else {
+        setDeleteError(data.error || "Silme işlemi başarısız oldu");
       }
     } catch {
-      // silent fail
+      setDeleteError("Bir hata oluştu. Lütfen tekrar deneyin.");
     } finally {
       setDeleting(null);
     }
@@ -906,7 +914,7 @@ export default function InvoiceUploadContent() {
         {confirmDelete && (
           <div
             className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm"
-            onClick={() => setConfirmDelete(null)}
+            onClick={() => { setConfirmDelete(null); setDeleteError(""); }}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
@@ -927,9 +935,15 @@ export default function InvoiceUploadContent() {
               <p className="text-sm text-gray-600 mb-4">
                 <span className="font-medium">{confirmDelete.fileName}</span> faturasını silmek istediğinize emin misiniz?
               </p>
+              {deleteError && (
+                <div className="mb-3 flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">
+                  <XCircle className="h-3.5 w-3.5 shrink-0" />
+                  {deleteError}
+                </div>
+              )}
               <div className="flex gap-3">
                 <button
-                  onClick={() => setConfirmDelete(null)}
+                  onClick={() => { setConfirmDelete(null); setDeleteError(""); }}
                   className="flex-1 rounded-xl bg-gray-100 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-200"
                 >
                   İptal
