@@ -55,6 +55,7 @@ export async function POST(
               description: `Fatura - ${invoice.vendor || invoice.fileName}`,
               amount: parsedAmount,
               category: invoice.category || "DIGER",
+              type: "EXPENSE",
               date: invoice.invoiceDate || new Date(),
             },
           });

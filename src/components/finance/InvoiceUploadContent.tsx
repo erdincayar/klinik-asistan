@@ -95,6 +95,8 @@ export default function InvoiceUploadContent() {
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<UploadedInvoice | null>(null);
   const [confirmReject, setConfirmReject] = useState(false);
+  const [inlineApproving, setInlineApproving] = useState<string | null>(null);
+  const [inlineRejecting, setInlineRejecting] = useState<string | null>(null);
 
   useEffect(() => {
     fetchInvoices();
@@ -287,6 +289,36 @@ export default function InvoiceUploadContent() {
     } finally {
       setRejecting(false);
       setConfirmReject(false);
+    }
+  }
+
+  async function handleInlineApprove(inv: UploadedInvoice) {
+    try {
+      const res = await fetch(`/api/invoices/ocr/${inv.id}/approve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stockMappings: [] }),
+      });
+      if (res.ok) {
+        await fetchInvoices();
+      }
+    } catch {
+      // silent fail
+    } finally {
+      setInlineApproving(null);
+    }
+  }
+
+  async function handleInlineReject(inv: UploadedInvoice) {
+    try {
+      const res = await fetch(`/api/invoices/ocr/${inv.id}`, { method: "PATCH" });
+      if (res.ok) {
+        await fetchInvoices();
+      }
+    } catch {
+      // silent fail
+    } finally {
+      setInlineRejecting(null);
     }
   }
 
@@ -495,38 +527,71 @@ export default function InvoiceUploadContent() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    {inv.approved && (
+                  <div className="flex items-center gap-2">
+                    {/* Approve/Reject or Approved badge */}
+                    {inv.approved ? (
                       <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
                         <Check className="h-3 w-3" />
                         Onaylı
                       </span>
+                    ) : inv.status === "COMPLETED" ? (
+                      <>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setInlineApproving(inv.id); handleInlineApprove(inv); }}
+                          disabled={inlineApproving === inv.id}
+                          className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[11px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 disabled:opacity-50"
+                        >
+                          {inlineApproving === inv.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <CheckCircle className="h-3 w-3" />
+                          )}
+                          Onayla
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setInlineRejecting(inv.id); handleInlineReject(inv); }}
+                          disabled={inlineRejecting === inv.id}
+                          className="inline-flex items-center gap-1 rounded-lg bg-red-50 px-2.5 py-1.5 text-[11px] font-semibold text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
+                        >
+                          {inlineRejecting === inv.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <XCircle className="h-3 w-3" />
+                          )}
+                          Reddet
+                        </button>
+                      </>
+                    ) : (
+                      <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${status.color}`}>
+                        <StatusIcon className={`h-3 w-3 ${inv.status === "PROCESSING" ? "animate-spin" : ""}`} />
+                        {status.label}
+                      </span>
                     )}
-                    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${status.color}`}>
-                      <StatusIcon className={`h-3 w-3 ${inv.status === "PROCESSING" ? "animate-spin" : ""}`} />
-                      {status.label}
-                    </span>
+
+                    {/* Eye icon — detail modal */}
                     {inv.status === "COMPLETED" && (
                       <button
-                        onClick={() => openDetail(inv)}
+                        onClick={(e) => { e.stopPropagation(); openDetail(inv); }}
                         className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                        title="Detay"
                       >
                         <Eye className="h-4 w-4" />
                       </button>
                     )}
-                    {!inv.approved && inv.status !== "REJECTED" && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setConfirmDelete(inv); }}
-                        disabled={deleting === inv.id}
-                        className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 disabled:opacity-50"
-                      >
-                        {deleting === inv.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
-                        )}
-                      </button>
-                    )}
+
+                    {/* Delete icon */}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setConfirmDelete(inv); }}
+                      disabled={deleting === inv.id}
+                      className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 disabled:opacity-50"
+                      title="Sil"
+                    >
+                      {deleting === inv.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                    </button>
                   </div>
                 </motion.div>
               );
@@ -569,7 +634,7 @@ export default function InvoiceUploadContent() {
                 <div className="rounded-xl bg-gray-50 p-4">
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <p className="text-xs text-gray-400">Satıcı</p>
+                      <p className="text-xs text-gray-400">Tedarikçi / Satıcı</p>
                       <p className="font-medium text-gray-800">{selectedInvoice.vendor || "—"}</p>
                     </div>
                     <div>
@@ -592,8 +657,35 @@ export default function InvoiceUploadContent() {
                       <p className="text-xs text-gray-400">Kategori</p>
                       <p className="font-medium text-gray-800">{selectedInvoice.category || "—"}</p>
                     </div>
+                    {(selectedInvoice.ocrData as any)?.invoiceNumber && (
+                      <div>
+                        <p className="text-xs text-gray-400">Fatura No</p>
+                        <p className="font-medium text-gray-800">{(selectedInvoice.ocrData as any).invoiceNumber}</p>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-xs text-gray-400">Dosya</p>
+                      <p className="font-medium text-gray-800 truncate">{selectedInvoice.fileName}</p>
+                    </div>
                   </div>
                 </div>
+
+                {/* OCR Items (if available, no stock matching needed) */}
+                {selectedInvoice.ocrData && (selectedInvoice.ocrData as any).items && (selectedInvoice.ocrData as any).items.length > 0 && stockMappings.length === 0 && selectedInvoice.approved && (
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Kalemler</p>
+                    <div className="space-y-1.5">
+                      {((selectedInvoice.ocrData as any).items as Array<{ description?: string; quantity?: number; unitPrice?: number; total?: number }>).map((item, idx) => (
+                        <div key={idx} className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-xs">
+                          <span className="text-gray-700 truncate flex-1">{item.description || "—"}</span>
+                          <span className="text-gray-500 ml-2 shrink-0">
+                            {item.quantity ?? 1} x {item.unitPrice ? `${item.unitPrice.toLocaleString("tr-TR")} TL` : "—"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Stock Matching Section */}
                 {selectedInvoice.ocrData && (selectedInvoice.ocrData as any).items && (

@@ -16,36 +16,39 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const year = parseInt(searchParams.get("year") || new Date().getFullYear().toString());
 
-    // Get monthly income (treatments)
+    const dateFilter = {
+      gte: new Date(`${year}-01-01`),
+      lt: new Date(`${year + 1}-01-01`),
+    };
+
+    // Get treatments (income source 1)
     const treatments = await prisma.treatment.findMany({
-      where: {
-        clinicId,
-        date: {
-          gte: new Date(`${year}-01-01`),
-          lt: new Date(`${year + 1}-01-01`),
-        },
-      },
+      where: { clinicId, date: dateFilter },
       select: { amount: true, date: true },
     });
 
-    // Get monthly expenses
+    // Get income records from expense table (type: INCOME)
+    const incomeRecords = await prisma.expense.findMany({
+      where: { clinicId, type: "INCOME", date: dateFilter },
+      select: { amount: true, date: true },
+    });
+
+    // Get actual expenses (type: EXPENSE)
     const expenses = await prisma.expense.findMany({
-      where: {
-        clinicId,
-        date: {
-          gte: new Date(`${year}-01-01`),
-          lt: new Date(`${year + 1}-01-01`),
-        },
-      },
+      where: { clinicId, type: "EXPENSE", date: dateFilter },
       select: { amount: true, date: true, category: true },
     });
 
     // Aggregate by month
     const monthlyData = Array.from({ length: 12 }, (_, i) => {
       const month = i + 1;
-      const monthIncome = treatments
+      const treatmentIncome = treatments
         .filter((t) => new Date(t.date).getMonth() === i)
         .reduce((sum, t) => sum + t.amount, 0);
+      const otherIncome = incomeRecords
+        .filter((r) => new Date(r.date).getMonth() === i)
+        .reduce((sum, r) => sum + r.amount, 0);
+      const monthIncome = treatmentIncome + otherIncome;
       const monthExpense = expenses
         .filter((e) => new Date(e.date).getMonth() === i)
         .reduce((sum, e) => sum + e.amount, 0);
@@ -61,13 +64,14 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    // Expense categories
+    // Expense categories (only actual expenses)
     const categoryMap: Record<string, number> = {};
     expenses.forEach((e) => {
       categoryMap[e.category] = (categoryMap[e.category] || 0) + e.amount;
     });
 
-    const totalIncome = treatments.reduce((sum, t) => sum + t.amount, 0);
+    const totalIncome = treatments.reduce((sum, t) => sum + t.amount, 0)
+      + incomeRecords.reduce((sum, r) => sum + r.amount, 0);
     const totalExpense = expenses.reduce((sum, e) => sum + e.amount, 0);
 
     return NextResponse.json({
