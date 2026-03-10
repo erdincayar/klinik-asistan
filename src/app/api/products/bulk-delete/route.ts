@@ -20,14 +20,18 @@ export async function DELETE(req: NextRequest) {
       return Response.json({ error: "Silinecek ürün seçilmedi" }, { status: 400 });
     }
 
-    // Soft delete — only products belonging to this clinic
-    const result = await prisma.product.updateMany({
+    // Hard delete — remove related stock movements first, then products
+    await prisma.stockMovement.deleteMany({
+      where: { productId: { in: ids }, clinicId },
+    });
+
+    const result = await prisma.product.deleteMany({
       where: { id: { in: ids }, clinicId },
-      data: { isActive: false },
     });
 
     return Response.json({ success: true, deleted: result.count });
-  } catch {
+  } catch (err) {
+    console.error("Bulk product delete error:", err);
     return Response.json({ error: "Bir hata oluştu" }, { status: 500 });
   }
 }

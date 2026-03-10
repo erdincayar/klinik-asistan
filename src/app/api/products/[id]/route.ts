@@ -112,14 +112,18 @@ export async function DELETE(
       return Response.json({ error: "Ürün bulunamadı" }, { status: 404 });
     }
 
-    // Soft delete
-    await prisma.product.update({
+    // Hard delete — remove related stock movements first, then the product
+    await prisma.stockMovement.deleteMany({
+      where: { productId: params.id, clinicId },
+    });
+
+    await prisma.product.delete({
       where: { id: params.id },
-      data: { isActive: false },
     });
 
     return Response.json({ success: true });
-  } catch {
+  } catch (err) {
+    console.error("Product delete error:", err);
     return Response.json({ error: "Bir hata oluştu" }, { status: 500 });
   }
 }
