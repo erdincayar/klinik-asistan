@@ -14,6 +14,7 @@ import {
   CalendarDays,
   Upload,
   Download,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -59,6 +60,23 @@ import {
 } from "recharts";
 
 /* ──────────────────────── TYPES ──────────────────────── */
+
+interface InvoiceProfitInvoice {
+  id: string;
+  vendor: string | null;
+  amount: number;
+  date: string | null;
+  grossProfit: number;
+  unmatchedCount: number;
+}
+
+interface InvoiceProfitSummary {
+  totalInvoiceRevenue: number;
+  totalInvoiceCost: number;
+  invoiceGrossProfit: number;
+  unmatchedItemCount: number;
+  invoices: InvoiceProfitInvoice[];
+}
 
 interface IncomeStatement {
   ciro: number;
@@ -170,6 +188,8 @@ export default function FinanceOverview() {
   const [monthlySummary, setMonthlySummary] = useState<MonthlySummary[]>([]);
   const [treatments, setTreatments] = useState<TreatmentDetail[]>([]);
   const [expenses, setExpenses] = useState<ExpenseDetail[]>([]);
+  const [invoiceProfitSummary, setInvoiceProfitSummary] = useState<InvoiceProfitSummary | null>(null);
+  const [showProfitBreakdown, setShowProfitBreakdown] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -207,6 +227,7 @@ export default function FinanceOverview() {
         setIncomeStatement(isData);
         setTreatments(isData.treatments || []);
         setExpenses(isData.expenses || []);
+        setInvoiceProfitSummary(isData.invoiceProfitSummary || null);
 
         if (msRes.ok) {
           const msData = await msRes.json();
@@ -500,6 +521,51 @@ export default function FinanceOverview() {
                 );
               })}
             </div>
+
+            {/* Invoice Profit Summary */}
+            {invoiceProfitSummary && invoiceProfitSummary.invoices.length > 0 && (
+              <motion.div
+                variants={fadeUp}
+                initial="hidden"
+                animate="visible"
+                custom={2.5}
+                className="rounded-2xl border border-gray-100 bg-white p-5"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50">
+                      <FileText className="h-5 w-5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Fatura Kar Analizi</p>
+                      <p className="text-xs text-gray-400">{invoiceProfitSummary.invoices.length} onaylı gelir faturası</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <p className="text-xs text-gray-400">Tahmini Kar</p>
+                      <p className={cn("text-lg font-bold", invoiceProfitSummary.invoiceGrossProfit >= 0 ? "text-emerald-600" : "text-red-600")}>
+                        {formatCurrency(invoiceProfitSummary.invoiceGrossProfit)}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setShowProfitBreakdown(true)}
+                      className="rounded-lg bg-gray-50 px-3 py-2 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100"
+                    >
+                      Detay
+                    </button>
+                  </div>
+                </div>
+                {invoiceProfitSummary.unmatchedItemCount > 0 && (
+                  <div className="mt-3 flex items-center gap-2 rounded-lg bg-yellow-50 px-3 py-2">
+                    <AlertTriangle className="h-4 w-4 text-yellow-500 shrink-0" />
+                    <span className="text-xs text-yellow-700">
+                      {invoiceProfitSummary.unmatchedItemCount} kalem eşleştirilmedi. Kar hesaplaması eksik olabilir.
+                    </span>
+                  </div>
+                )}
+              </motion.div>
+            )}
 
             {/* Chart */}
             <motion.div
@@ -825,6 +891,61 @@ export default function FinanceOverview() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Invoice Profit Breakdown Dialog */}
+      <Dialog open={showProfitBreakdown} onOpenChange={setShowProfitBreakdown}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Fatura Kar Detayı</DialogTitle>
+          </DialogHeader>
+          {invoiceProfitSummary && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-xl bg-gray-50 p-3 text-center">
+                  <p className="text-[11px] text-gray-400">Toplam Gelir</p>
+                  <p className="mt-1 text-sm font-bold text-gray-800">{formatCurrency(invoiceProfitSummary.totalInvoiceRevenue)}</p>
+                </div>
+                <div className="rounded-xl bg-gray-50 p-3 text-center">
+                  <p className="text-[11px] text-gray-400">Toplam Maliyet</p>
+                  <p className="mt-1 text-sm font-bold text-gray-800">{formatCurrency(invoiceProfitSummary.totalInvoiceCost)}</p>
+                </div>
+                <div className="rounded-xl bg-gray-50 p-3 text-center">
+                  <p className="text-[11px] text-gray-400">Brüt Kar</p>
+                  <p className={cn("mt-1 text-sm font-bold", invoiceProfitSummary.invoiceGrossProfit >= 0 ? "text-emerald-600" : "text-red-600")}>
+                    {formatCurrency(invoiceProfitSummary.invoiceGrossProfit)}
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                {invoiceProfitSummary.invoices.map((inv) => (
+                  <div key={inv.id} className="flex items-center justify-between rounded-lg border border-gray-100 px-4 py-3">
+                    <div>
+                      <p className="text-sm font-medium text-gray-800">{inv.vendor || "Bilinmeyen"}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-xs text-gray-400">
+                          {inv.date ? new Date(inv.date).toLocaleDateString("tr-TR") : "—"}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          Tutar: {formatCurrency(inv.amount)}
+                        </span>
+                        {inv.unmatchedCount > 0 && (
+                          <span className="flex items-center gap-1 text-[11px] text-yellow-600">
+                            <AlertTriangle className="h-3 w-3" />
+                            {inv.unmatchedCount} eşleşmemiş
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <span className={cn("text-sm font-semibold", inv.grossProfit >= 0 ? "text-emerald-600" : "text-red-600")}>
+                      {formatCurrency(inv.grossProfit)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Add Recurring Transaction Dialog */}
       <Dialog open={showAddRecurring} onOpenChange={setShowAddRecurring}>

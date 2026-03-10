@@ -74,7 +74,52 @@ export async function GET(request: Request) {
         amount: e.amount,
       }));
 
-      return Response.json({ ciro, cogs, gelir, totalExpense, totalProfit, vatAmount, taxRate, treatments, expenses });
+      // Fetch approved income invoices with profitData for this month
+      const approvedIncomeInvoices = await prisma.uploadedInvoice.findMany({
+        where: {
+          clinicId,
+          approved: true,
+          invoiceType: "INCOME",
+          invoiceDate: { gte: startDate, lt: endDate },
+        },
+        select: { id: true, vendor: true, amount: true, profitData: true, invoiceDate: true },
+      });
+
+      const invoiceProfitSummary = {
+        totalInvoiceRevenue: 0,
+        totalInvoiceCost: 0,
+        invoiceGrossProfit: 0,
+        unmatchedItemCount: 0,
+        invoices: [] as Array<{
+          id: string;
+          vendor: string | null;
+          amount: number;
+          date: string | null;
+          grossProfit: number;
+          unmatchedCount: number;
+        }>,
+      };
+
+      for (const inv of approvedIncomeInvoices) {
+        const pd = inv.profitData as any;
+        if (pd) {
+          invoiceProfitSummary.totalInvoiceRevenue += pd.totalRevenue || 0;
+          invoiceProfitSummary.totalInvoiceCost += pd.totalCost || 0;
+          invoiceProfitSummary.invoiceGrossProfit += pd.grossProfit || 0;
+          const unmatchedCount = pd.unmatchedItems?.length || 0;
+          invoiceProfitSummary.unmatchedItemCount += unmatchedCount;
+          invoiceProfitSummary.invoices.push({
+            id: inv.id,
+            vendor: inv.vendor,
+            amount: inv.amount ? Math.round(inv.amount * 100) : 0,
+            date: inv.invoiceDate?.toISOString() || null,
+            grossProfit: pd.grossProfit || 0,
+            unmatchedCount,
+          });
+        }
+      }
+
+      return Response.json({ ciro, cogs, gelir, totalExpense, totalProfit, vatAmount, taxRate, treatments, expenses, invoiceProfitSummary });
     }
 
     if (type === "vat-summary") {

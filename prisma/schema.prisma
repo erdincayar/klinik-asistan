@@ -115,6 +115,7 @@ model Clinic {
   tokenTransactions     TokenTransaction[]
   stockAlarms           StockAlarm[]
   fixedAssets           FixedAsset[]
+  inventoryColumnConfig InventoryColumnConfig?
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
 }
@@ -297,6 +298,7 @@ model Product {
   salePrice        Int             @default(0) // kuruş
   salePriceUSD     Float?          // Satış fiyatı döviz karşılığı
   saleCurrency     String          @default("TRY") // Satış para birimi
+  customFields     Json?
   clinicId         String
   clinic           Clinic          @relation(fields: [clinicId], references: [id])
   isActive         Boolean         @default(true)
@@ -485,6 +487,7 @@ model UploadedInvoice {
   vendor          String?
   linkedExpenseId String?
   approved        Boolean   @default(false)
+  profitData      Json?
   createdAt       DateTime  @default(now())
 }
 
@@ -683,6 +686,15 @@ model StockAlarm {
   isActive      Boolean   @default(true)
   lastTriggered DateTime?
   createdAt     DateTime  @default(now())
+}
+
+model InventoryColumnConfig {
+  id        String   @id @default(cuid())
+  clinicId  String   @unique
+  clinic    Clinic   @relation(fields: [clinicId], references: [id])
+  columns   Json     // { order: string[], hidden: string[], customColumns: CustomColumn[] }
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // FixedAsset status values: ACTIVE, MAINTENANCE, BROKEN, SCRAPPED

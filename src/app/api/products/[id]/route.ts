@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { productSchema } from "@/lib/validations";
 
@@ -80,9 +81,17 @@ export async function PUT(
       }
     }
 
+    const { customFields, ...rest } = parsed.data;
     const product = await prisma.product.update({
       where: { id: params.id },
-      data: parsed.data,
+      data: {
+        ...rest,
+        ...(customFields !== undefined && {
+          customFields: customFields === null
+            ? Prisma.JsonNull
+            : (customFields as Prisma.InputJsonValue),
+        }),
+      },
     });
 
     return Response.json(product);

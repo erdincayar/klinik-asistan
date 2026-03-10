@@ -42,6 +42,7 @@ interface MatchedProduct {
   sku: string;
   unit: string;
   currentStock: number;
+  purchasePrice: number;
   score: number;
 }
 
@@ -59,6 +60,7 @@ interface ProductOption {
   sku: string;
   unit: string;
   currentStock: number;
+  purchasePrice: number;
 }
 
 const statusConfig: Record<string, { label: string; color: string; icon: typeof Clock }> = {
@@ -98,6 +100,7 @@ export default function InvoiceUploadContent() {
   const [inlineApproving, setInlineApproving] = useState<string | null>(null);
   const [inlineRejecting, setInlineRejecting] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState("");
+  const [invoiceTypeOverride, setInvoiceTypeOverride] = useState<string | null>(null);
 
   useEffect(() => {
     fetchInvoices();
@@ -194,6 +197,7 @@ export default function InvoiceUploadContent() {
     setStockMappings([]);
     setAllProducts([]);
     setOpenDropdown(null);
+    setInvoiceTypeOverride(inv.invoiceType);
 
     if (inv.ocrData && (inv.ocrData as any).items && !inv.approved) {
       setMatchLoading(true);
@@ -234,7 +238,10 @@ export default function InvoiceUploadContent() {
       const res = await fetch(`/api/invoices/ocr/${selectedInvoice.id}/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stockMappings }),
+        body: JSON.stringify({
+          stockMappings,
+          invoiceType: invoiceTypeOverride || selectedInvoice.invoiceType,
+        }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -625,11 +632,11 @@ export default function InvoiceUploadContent() {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Fatura Detayı</h3>
                 <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-                  selectedInvoice.invoiceType === "EXPENSE"
+                  (invoiceTypeOverride || selectedInvoice.invoiceType) === "EXPENSE"
                     ? "bg-red-50 text-red-700"
                     : "bg-green-50 text-green-700"
                 }`}>
-                  {selectedInvoice.invoiceType === "EXPENSE" ? (
+                  {(invoiceTypeOverride || selectedInvoice.invoiceType) === "EXPENSE" ? (
                     <><ArrowDownCircle className="h-3 w-3" /> Gider</>
                   ) : (
                     <><ArrowUpCircle className="h-3 w-3" /> Gelir</>
@@ -677,6 +684,37 @@ export default function InvoiceUploadContent() {
                     </div>
                   </div>
                 </div>
+
+                {/* Invoice type selector */}
+                {!selectedInvoice.approved && selectedInvoice.status === "COMPLETED" && (
+                  <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Fatura Türü</p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setInvoiceTypeOverride("EXPENSE")}
+                        className={`flex-1 flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${
+                          (invoiceTypeOverride || selectedInvoice.invoiceType) === "EXPENSE"
+                            ? "bg-red-600 text-white shadow-sm"
+                            : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
+                        }`}
+                      >
+                        <ArrowDownCircle className="h-4 w-4" />
+                        Gider
+                      </button>
+                      <button
+                        onClick={() => setInvoiceTypeOverride("INCOME")}
+                        className={`flex-1 flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${
+                          (invoiceTypeOverride || selectedInvoice.invoiceType) === "INCOME"
+                            ? "bg-green-600 text-white shadow-sm"
+                            : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
+                        }`}
+                      >
+                        <ArrowUpCircle className="h-4 w-4" />
+                        Gelir
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* OCR Items (if available, no stock matching needed) */}
                 {selectedInvoice.ocrData && (selectedInvoice.ocrData as any).items && (selectedInvoice.ocrData as any).items.length > 0 && stockMappings.length === 0 && selectedInvoice.approved && (
@@ -823,6 +861,125 @@ export default function InvoiceUploadContent() {
                   </div>
                 )}
 
+                {/* Income Preview - Profit Analysis */}
+                {!selectedInvoice.approved && selectedInvoice.status === "COMPLETED" && (invoiceTypeOverride || selectedInvoice.invoiceType) === "INCOME" && stockMappings.length > 0 && (
+                  <div className="rounded-xl border border-green-100 bg-green-50/30 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Kar Önizleme</p>
+                    <div className="space-y-2">
+                      {stockMappings.map((mapping, idx) => {
+                        const product = mapping.productId ? allProducts.find(p => p.id === mapping.productId) : null;
+                        const salePriceKurus = Math.round(mapping.unitPrice * 100);
+                        const costPriceKurus = product?.purchasePrice || 0;
+                        const itemProfit = (salePriceKurus - costPriceKurus) * mapping.quantity;
+                        return (
+                          <div key={idx} className="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-xs">
+                            <div className="flex-1 min-w-0">
+                              <span className="text-gray-700 truncate block">{mapping.description}</span>
+                              {mapping.productId && product ? (
+                                <div className="flex items-center gap-2 mt-0.5 text-[11px] text-gray-400">
+                                  <span>Alış: {formatCurrency(costPriceKurus)}</span>
+                                  <span>Satış: {formatCurrency(salePriceKurus)}</span>
+                                  <span>x{mapping.quantity}</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1 mt-0.5">
+                                  <AlertTriangle className="h-3 w-3 text-yellow-500" />
+                                  <span className="text-[11px] text-yellow-600">Eşleştirilmedi</span>
+                                </div>
+                              )}
+                            </div>
+                            <div className="ml-2 shrink-0">
+                              {mapping.productId && product ? (
+                                <span className={`font-semibold ${itemProfit >= 0 ? "text-green-600" : "text-red-600"}`}>
+                                  {formatCurrency(itemProfit)}
+                                </span>
+                              ) : (
+                                <span className="text-gray-400">—</span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {(() => {
+                      const matched = stockMappings.filter(m => m.productId);
+                      const unmatched = stockMappings.filter(m => !m.productId);
+                      const totalRevenue = selectedInvoice.amount ? Math.round(selectedInvoice.amount * 100) : 0;
+                      const totalCost = matched.reduce((sum, m) => {
+                        const p = allProducts.find(pr => pr.id === m.productId);
+                        return sum + (p?.purchasePrice || 0) * m.quantity;
+                      }, 0);
+                      const estimatedProfit = totalRevenue - totalCost;
+                      return (
+                        <div className="mt-3 border-t border-green-100 pt-3 space-y-1">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-gray-500">Toplam Gelir</span>
+                            <span className="font-semibold text-gray-700">{formatCurrency(totalRevenue)}</span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-gray-500">Toplam Maliyet</span>
+                            <span className="font-semibold text-gray-700">{formatCurrency(totalCost)}</span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-gray-500">Tahmini Brüt Kar</span>
+                            <span className={`font-bold ${estimatedProfit >= 0 ? "text-green-600" : "text-red-600"}`}>
+                              {formatCurrency(estimatedProfit)}
+                            </span>
+                          </div>
+                          {unmatched.length > 0 && (
+                            <div className="flex items-center gap-1.5 mt-2 rounded-lg bg-yellow-50 px-3 py-2">
+                              <AlertTriangle className="h-3.5 w-3.5 text-yellow-500 shrink-0" />
+                              <span className="text-[11px] text-yellow-700">
+                                {unmatched.length} kalem eşleştirilmedi. Kar hesaplaması eksik olabilir.
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+
+                {/* Expense Preview - Stock Impact */}
+                {!selectedInvoice.approved && selectedInvoice.status === "COMPLETED" && (invoiceTypeOverride || selectedInvoice.invoiceType) === "EXPENSE" && stockMappings.length > 0 && (
+                  <div className="rounded-xl border border-blue-100 bg-blue-50/30 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Stok Etkisi</p>
+                    <div className="space-y-2">
+                      {stockMappings.map((mapping, idx) => {
+                        const product = mapping.productId ? allProducts.find(p => p.id === mapping.productId) : null;
+                        return (
+                          <div key={idx} className="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-xs">
+                            <div className="flex-1 min-w-0">
+                              <span className="text-gray-700 truncate block">{mapping.description}</span>
+                              {mapping.productId && product ? (
+                                <div className="text-[11px] text-gray-400 mt-0.5">
+                                  Stok: {product.currentStock} → {product.currentStock + mapping.quantity} (+{mapping.quantity})
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1 mt-0.5">
+                                  <Package className="h-3 w-3 text-blue-500" />
+                                  <span className="text-[11px] text-blue-600">Yeni ürün oluşturulacak (+{mapping.quantity})</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {(() => {
+                      const matched = stockMappings.filter(m => m.productId);
+                      const unmatched = stockMappings.filter(m => !m.productId);
+                      return (matched.length > 0 || unmatched.length > 0) ? (
+                        <div className="mt-3 border-t border-blue-100 pt-3 text-xs text-gray-500">
+                          {matched.length > 0 && <span>{matched.length} ürün güncellenecek</span>}
+                          {matched.length > 0 && unmatched.length > 0 && <span> · </span>}
+                          {unmatched.length > 0 && <span>{unmatched.length} yeni ürün oluşturulacak</span>}
+                        </div>
+                      ) : null;
+                    })()}
+                  </div>
+                )}
+
                 {/* Approve section */}
                 {!selectedInvoice.approved && selectedInvoice.status === "COMPLETED" && (
                   <div className="border-t border-gray-100 pt-4">
@@ -833,9 +990,9 @@ export default function InvoiceUploadContent() {
                       </p>
                     </div>
                     <p className="text-xs text-gray-500 mb-3">
-                      {selectedInvoice.invoiceType === "EXPENSE"
+                      {(invoiceTypeOverride || selectedInvoice.invoiceType) === "EXPENSE"
                         ? "Onaylandığında gider kaydı oluşturulacak ve eşleştirilen ürünlerin stoku artırılacaktır."
-                        : "Onaylandığında eşleştirilen ürünlerin stoku düşürülecektir."}
+                        : "Onaylandığında gelir kaydı oluşturulacak, eşleştirilen ürünlerin stoku düşürülecek ve kar hesaplanacaktır."}
                     </p>
 
                     {approveError && (

@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
 
     const products = await prisma.product.findMany({
       where: { clinicId, isActive: true },
-      select: { id: true, name: true, sku: true, unit: true, currentStock: true },
+      select: { id: true, name: true, sku: true, unit: true, currentStock: true, purchasePrice: true },
     });
 
     const matches = items.map((item: { description: string; quantity?: number; unitPrice?: number; total?: number }) => {
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
         unitPrice: item.unitPrice || 0,
         total: item.total || 0,
         matchedProduct: bestMatch
-          ? { id: bestMatch.id, name: bestMatch.name, sku: bestMatch.sku, unit: bestMatch.unit, currentStock: bestMatch.currentStock, score: bestScore }
+          ? { id: bestMatch.id, name: bestMatch.name, sku: bestMatch.sku, unit: bestMatch.unit, currentStock: bestMatch.currentStock, purchasePrice: bestMatch.purchasePrice, score: bestScore }
           : null,
       };
     });

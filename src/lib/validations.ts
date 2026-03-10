@@ -124,6 +124,7 @@ export const productSchema = z.object({
   salePrice: z.number().int().min(0, "Fiyat negatif olamaz"),
   salePriceUSD: z.number().min(0, "Fiyat negatif olamaz").nullable().optional(),
   saleCurrency: z.enum(["TRY", "USD", "EUR"]).optional(),
+  customFields: z.record(z.string(), z.any()).nullable().optional(),
 });
 
 export const stockAlarmSchema = z.object({

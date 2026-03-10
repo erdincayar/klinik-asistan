@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import {
   Plus, Search, AlertTriangle, CheckCircle, Upload, Download,
   Loader2, FileSpreadsheet, ArrowRight, Trash2, Pencil, Tag, Camera, ChevronDown, Eye,
+  Settings, GripVertical, X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +21,15 @@ import { formatCurrency, formatDate, toKurus, fromKurus } from "@/lib/utils";
 import {
   Product, TYPE_BADGE, CATEGORIES, UNITS, CURRENCIES,
   CATEGORY_BADGE_COLORS, getCategoryLabel, getUnitLabel, getCurrencySymbol, calcProfitMargin,
+  DEFAULT_COLUMNS, ColumnConfig, CustomColumn,
 } from "./constants";
+import {
+  DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors,
+} from "@dnd-kit/core";
+import type { DragEndEvent } from "@dnd-kit/core";
+import {
+  SortableContext, useSortable, verticalListSortingStrategy, arrayMove,
+} from "@dnd-kit/sortable";
 
 // ─── Main ProductsTab ───
 
@@ -51,6 +60,12 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
   const [importNoBrandNotice, setImportNoBrandNotice] = useState(0);
   const [showAddMenu, setShowAddMenu] = useState(false);
   const addMenuRef = useRef<HTMLDivElement>(null);
+  const [columnConfig, setColumnConfig] = useState<ColumnConfig>({
+    order: DEFAULT_COLUMNS.map((c) => c.key),
+    hidden: [],
+    customColumns: [],
+  });
+  const [showColumnManager, setShowColumnManager] = useState(false);
 
   const existingBrands = Array.from(new Set(products.map((p) => p.brand).filter(Boolean) as string[])).sort();
 
@@ -64,6 +79,33 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
     if (showAddMenu) document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showAddMenu]);
+
+  // Fetch column config
+  useEffect(() => {
+    async function fetchColumnConfig() {
+      try {
+        const res = await fetch("/api/inventory/column-config");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.columns) setColumnConfig(data.columns);
+        }
+      } catch {
+        // use default config
+      }
+    }
+    fetchColumnConfig();
+  }, []);
+
+  // Compute visible columns
+  const visibleColumns = columnConfig.order
+    .filter((key) => !columnConfig.hidden.includes(key))
+    .filter((key) => {
+      // Keep if it's a default column or a custom column
+      return DEFAULT_COLUMNS.some((d) => d.key === key) || columnConfig.customColumns.some((c) => c.id === key);
+    });
+  // Ensure "actions" is always last
+  const orderedColumns = visibleColumns.filter((k) => k !== "actions");
+  if (visibleColumns.includes("actions")) orderedColumns.push("actions");
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -234,6 +276,9 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
           </select>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" size="icon" onClick={() => setShowColumnManager(true)} title="Kolonları Düzenle">
+            <Settings className="h-4 w-4" />
+          </Button>
           <a href="/api/products/export" download>
             <Button variant="outline">
               <Download className="mr-2 h-4 w-4" />
@@ -327,16 +372,18 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
                         className="h-4 w-4 rounded border-gray-300"
                       />
                     </TableHead>
-                    <TableHead>Marka</TableHead>
-                    <TableHead>Ürün Adı</TableHead>
-                    <TableHead>SKU</TableHead>
-                    <TableHead className="text-right">Stok</TableHead>
-                    <TableHead className="text-right">Alış TL</TableHead>
-                    <TableHead className="text-right">Alış Döviz</TableHead>
-                    <TableHead className="text-right">Satış TL</TableHead>
-                    <TableHead className="text-right">Satış Döviz</TableHead>
-                    <TableHead className="text-right">Kâr %</TableHead>
-                    <TableHead className="text-center">İşlemler</TableHead>
+                    {orderedColumns.map((key) => {
+                      const def = DEFAULT_COLUMNS.find((d) => d.key === key);
+                      const custom = columnConfig.customColumns.find((c) => c.id === key);
+                      const label = def?.label || custom?.name || key;
+                      const isRight = ["stock", "purchasePriceTRY", "purchasePriceFX", "salePriceTRY", "salePriceFX", "profitMargin"].includes(key);
+                      const isCenter = key === "actions";
+                      return (
+                        <TableHead key={key} className={isCenter ? "text-center" : isRight ? "text-right" : ""}>
+                          {label}
+                        </TableHead>
+                      );
+                    })}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -357,88 +404,82 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
                             className="h-4 w-4 rounded border-gray-300"
                           />
                         </TableCell>
-                        <TableCell className="text-muted-foreground" onClick={(e) => e.stopPropagation()}>
-                          {product.brand ? (
-                            product.brand
-                          ) : (
-                            <button
-                              onClick={() => { setBrandEditTarget(product); setBrandEditValue(""); }}
-                              className="text-xs text-blue-500 hover:text-blue-700 hover:underline"
-                            >
-                              + Marka Ekle
-                            </button>
-                          )}
-                        </TableCell>
-                        <TableCell className="font-medium">{product.name}</TableCell>
-                        <TableCell className="text-muted-foreground text-xs">{product.sku}</TableCell>
-                        <TableCell className="text-right">
-                          {product.currentStock > 0 ? (
-                            <>{product.currentStock} {getUnitLabel(product.unit)}</>
-                          ) : (
-                            <span className="text-gray-400">Stok Yok</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">{formatCurrency(product.purchasePrice)}</TableCell>
-                        <TableCell className="text-right">
-                          {product.currency !== "TRY" && product.purchasePriceUSD ? (
-                            <span className="text-muted-foreground text-xs">
-                              {getCurrencySymbol(product.currency)}{product.purchasePriceUSD.toFixed(2)}
-                            </span>
-                          ) : (
-                            <span className="text-gray-300">&mdash;</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">{formatCurrency(product.salePrice)}</TableCell>
-                        <TableCell className="text-right">
-                          {product.saleCurrency !== "TRY" && product.salePriceUSD ? (
-                            <span className="text-muted-foreground text-xs">
-                              {getCurrencySymbol(product.saleCurrency)}{product.salePriceUSD.toFixed(2)}
-                            </span>
-                          ) : (
-                            <span className="text-gray-300">&mdash;</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {margin !== null ? (
-                            <span className="flex items-center justify-end gap-1">
-                              {marginLow && (
-                                <span title={`Kâr marjı %${product.minProfitMargin} altında`}>
-                                  <AlertTriangle className="h-3.5 w-3.5 text-yellow-500" />
-                                </span>
+                        {orderedColumns.map((key) => {
+                          // Default columns
+                          if (key === "brand") return (
+                            <TableCell key={key} className="text-muted-foreground" onClick={(e) => e.stopPropagation()}>
+                              {product.brand ? product.brand : (
+                                <button onClick={() => { setBrandEditTarget(product); setBrandEditValue(""); }} className="text-xs text-blue-500 hover:text-blue-700 hover:underline">+ Marka Ekle</button>
                               )}
-                              <span className={margin >= 0 ? (marginLow ? "text-yellow-600 font-medium" : "text-green-600 font-medium") : "text-red-600 font-medium"}>
-                                %{margin}
-                              </span>
-                            </span>
-                          ) : (
-                            <span className="text-gray-300">&mdash;</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center justify-center gap-1">
-                            <button
-                              onClick={() => handleProductClick(product)}
-                              className="inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
-                              title="Detay"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => setEditProduct(product)}
-                              className="inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                              title="Düzenle"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => setDeleteTarget(product)}
-                              className="inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                              title="Sil"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </TableCell>
+                            </TableCell>
+                          );
+                          if (key === "name") return <TableCell key={key} className="font-medium">{product.name}</TableCell>;
+                          if (key === "sku") return <TableCell key={key} className="text-muted-foreground text-xs">{product.sku}</TableCell>;
+                          if (key === "category") return (
+                            <TableCell key={key}>
+                              <Badge className={CATEGORY_BADGE_COLORS[product.category] || "bg-gray-100 text-gray-800"}>{getCategoryLabel(product.category)}</Badge>
+                            </TableCell>
+                          );
+                          if (key === "stock") return (
+                            <TableCell key={key} className="text-right">
+                              {product.currentStock > 0 ? <>{product.currentStock} {getUnitLabel(product.unit)}</> : <span className="text-gray-400">Stok Yok</span>}
+                            </TableCell>
+                          );
+                          if (key === "purchasePriceTRY") return <TableCell key={key} className="text-right">{formatCurrency(product.purchasePrice)}</TableCell>;
+                          if (key === "purchasePriceFX") return (
+                            <TableCell key={key} className="text-right">
+                              {product.currency !== "TRY" && product.purchasePriceUSD ? (
+                                <span className="text-muted-foreground text-xs">{getCurrencySymbol(product.currency)}{product.purchasePriceUSD.toFixed(2)}</span>
+                              ) : <span className="text-gray-300">&mdash;</span>}
+                            </TableCell>
+                          );
+                          if (key === "salePriceTRY") return <TableCell key={key} className="text-right">{formatCurrency(product.salePrice)}</TableCell>;
+                          if (key === "salePriceFX") return (
+                            <TableCell key={key} className="text-right">
+                              {product.saleCurrency !== "TRY" && product.salePriceUSD ? (
+                                <span className="text-muted-foreground text-xs">{getCurrencySymbol(product.saleCurrency)}{product.salePriceUSD.toFixed(2)}</span>
+                              ) : <span className="text-gray-300">&mdash;</span>}
+                            </TableCell>
+                          );
+                          if (key === "profitMargin") return (
+                            <TableCell key={key} className="text-right">
+                              {margin !== null ? (
+                                <span className="flex items-center justify-end gap-1">
+                                  {marginLow && <span title={`Kâr marjı %${product.minProfitMargin} altında`}><AlertTriangle className="h-3.5 w-3.5 text-yellow-500" /></span>}
+                                  <span className={margin >= 0 ? (marginLow ? "text-yellow-600 font-medium" : "text-green-600 font-medium") : "text-red-600 font-medium"}>%{margin}</span>
+                                </span>
+                              ) : <span className="text-gray-300">&mdash;</span>}
+                            </TableCell>
+                          );
+                          if (key === "currency") return <TableCell key={key}>{product.currency}</TableCell>;
+                          if (key === "orderAlert") return (
+                            <TableCell key={key}>
+                              {product.orderAlert ? <Badge className="bg-green-100 text-green-800">Aktif</Badge> : <span className="text-gray-300">&mdash;</span>}
+                            </TableCell>
+                          );
+                          if (key === "actions") return (
+                            <TableCell key={key} className="text-center" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex items-center justify-center gap-1">
+                                <button onClick={() => handleProductClick(product)} className="inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors" title="Detay"><Eye className="h-4 w-4" /></button>
+                                <button onClick={() => setEditProduct(product)} className="inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors" title="Düzenle"><Pencil className="h-4 w-4" /></button>
+                                <button onClick={() => setDeleteTarget(product)} className="inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors" title="Sil"><Trash2 className="h-4 w-4" /></button>
+                              </div>
+                            </TableCell>
+                          );
+                          // Custom columns
+                          const customCol = columnConfig.customColumns.find((c) => c.id === key);
+                          if (customCol) {
+                            const val = product.customFields?.[key];
+                            return (
+                              <TableCell key={key}>
+                                {customCol.type === "boolean" ? (val ? "Evet" : "Hayır") :
+                                  customCol.type === "date" && val ? formatDate(val) :
+                                  val != null ? String(val) : <span className="text-gray-300">&mdash;</span>}
+                              </TableCell>
+                            );
+                          }
+                          return <TableCell key={key}>&mdash;</TableCell>;
+                        })}
                       </TableRow>
                     );
                   })}
@@ -494,6 +535,7 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
         product={editProduct}
         onOpenChange={(open) => { if (!open) setEditProduct(null); }}
         onSuccess={fetchProducts}
+        customColumns={columnConfig.customColumns}
       />
 
       {/* Import dialog */}
@@ -656,6 +698,14 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Column manager dialog */}
+      <ColumnManagerDialog
+        open={showColumnManager}
+        onOpenChange={setShowColumnManager}
+        columnConfig={columnConfig}
+        onSave={(config) => { setColumnConfig(config); setShowColumnManager(false); }}
+      />
     </div>
   );
 }
@@ -826,11 +876,12 @@ function NewProductDialog({
 // ─── Edit Product Dialog ───
 
 function EditProductDialog({
-  product, onOpenChange, onSuccess,
+  product, onOpenChange, onSuccess, customColumns = [],
 }: {
   product: Product | null;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  customColumns?: CustomColumn[];
 }) {
   const [form, setForm] = useState({
     name: "", sku: "", brand: "", category: "DIGER", unit: "ADET",
@@ -838,6 +889,7 @@ function EditProductDialog({
     purchasePrice: 0, purchasePriceUSD: "", currency: "TRY",
     minProfitMargin: 20, salePrice: 0, salePriceUSD: "", saleCurrency: "TRY",
   });
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -860,6 +912,7 @@ function EditProductDialog({
         salePriceUSD: product.salePriceUSD != null ? String(product.salePriceUSD) : "",
         saleCurrency: product.saleCurrency || "TRY",
       });
+      setCustomFieldValues(product.customFields || {});
       setError("");
     }
   }, [product]);
@@ -889,6 +942,7 @@ function EditProductDialog({
           salePrice: toKurus(form.salePrice),
           salePriceUSD: form.salePriceUSD ? parseFloat(form.salePriceUSD) : null,
           saleCurrency: form.saleCurrency,
+          customFields: Object.keys(customFieldValues).length > 0 ? customFieldValues : null,
         }),
       });
       if (!res.ok) {
@@ -1000,6 +1054,39 @@ function EditProductDialog({
             <input type="checkbox" id="editOrderAlert" checked={form.orderAlert} onChange={(e) => setForm({ ...form, orderAlert: e.target.checked })} className="h-4 w-4 rounded border-gray-300" />
             <Label htmlFor="editOrderAlert" className="text-sm font-normal cursor-pointer">Sipariş hatırlatması aktif</Label>
           </div>
+          {customColumns.length > 0 && (
+            <div className="space-y-3 border-t pt-4">
+              <p className="text-sm font-semibold text-gray-700">Özel Alanlar</p>
+              <div className="grid grid-cols-2 gap-4">
+                {customColumns.map((col) => (
+                  <div key={col.id} className="space-y-2">
+                    <Label htmlFor={`custom-${col.id}`}>{col.name}</Label>
+                    {col.type === "boolean" ? (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id={`custom-${col.id}`}
+                          checked={!!customFieldValues[col.id]}
+                          onChange={(e) => setCustomFieldValues({ ...customFieldValues, [col.id]: e.target.checked })}
+                          className="h-4 w-4 rounded border-gray-300"
+                        />
+                      </div>
+                    ) : (
+                      <Input
+                        id={`custom-${col.id}`}
+                        type={col.type === "number" ? "number" : col.type === "date" ? "date" : "text"}
+                        value={customFieldValues[col.id] ?? ""}
+                        onChange={(e) => setCustomFieldValues({
+                          ...customFieldValues,
+                          [col.id]: col.type === "number" ? (e.target.value ? Number(e.target.value) : "") : e.target.value,
+                        })}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           {error && <p className="text-sm text-red-500">{error}</p>}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>İptal</Button>
@@ -1519,6 +1606,216 @@ function AIExtractDialog({
             <p className="text-sm font-medium text-gray-600">Ürünler kaydediliyor...</p>
           </div>
         )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Column Manager Dialog ───
+
+function SortableColumnItem({
+  id, label, isHidden, isLocked, isCustom, onToggle, onRemove,
+}: {
+  id: string; label: string; isHidden: boolean; isLocked: boolean; isCustom: boolean;
+  onToggle: () => void; onRemove?: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style: React.CSSProperties = {
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-center gap-3 rounded-lg border bg-white px-3 py-2">
+      <button {...attributes} {...listeners} className="cursor-grab text-gray-400 hover:text-gray-600 touch-none" tabIndex={-1}>
+        <GripVertical className="h-4 w-4" />
+      </button>
+      <span className={`flex-1 text-sm ${isHidden ? "text-gray-400" : "text-gray-700"}`}>{label}</span>
+      {isCustom && onRemove && (
+        <button onClick={onRemove} className="text-gray-400 hover:text-red-500 transition-colors" title="Sil">
+          <X className="h-3.5 w-3.5" />
+        </button>
+      )}
+      <button
+        onClick={onToggle}
+        disabled={isLocked}
+        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${isLocked ? "cursor-not-allowed opacity-50" : "cursor-pointer"} ${isHidden ? "bg-gray-200" : "bg-blue-600"}`}
+      >
+        <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform ${isHidden ? "translate-x-1" : "translate-x-[18px]"}`} />
+      </button>
+    </div>
+  );
+}
+
+const CUSTOM_COL_TYPES = [
+  { value: "text", label: "Metin" },
+  { value: "number", label: "Sayı" },
+  { value: "date", label: "Tarih" },
+  { value: "boolean", label: "Evet/Hayır" },
+] as const;
+
+function ColumnManagerDialog({
+  open, onOpenChange, columnConfig, onSave,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  columnConfig: ColumnConfig;
+  onSave: (config: ColumnConfig) => void;
+}) {
+  const [localOrder, setLocalOrder] = useState<string[]>([]);
+  const [localHidden, setLocalHidden] = useState<string[]>([]);
+  const [localCustom, setLocalCustom] = useState<CustomColumn[]>([]);
+  const [newColName, setNewColName] = useState("");
+  const [newColType, setNewColType] = useState<CustomColumn["type"]>("text");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setLocalOrder(columnConfig.order.filter((k) => k !== "actions"));
+      setLocalHidden([...columnConfig.hidden]);
+      setLocalCustom([...columnConfig.customColumns]);
+    }
+  }, [open, columnConfig]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor),
+  );
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setLocalOrder((items) => {
+        const oldIndex = items.indexOf(String(active.id));
+        const newIndex = items.indexOf(String(over.id));
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  }
+
+  function toggleColumn(key: string) {
+    setLocalHidden((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    );
+  }
+
+  function addCustomColumn() {
+    if (!newColName.trim()) return;
+    const id = `custom_${Date.now().toString(36)}`;
+    setLocalCustom((prev) => [...prev, { id, name: newColName.trim(), type: newColType }]);
+    setLocalOrder((prev) => [...prev, id]);
+    setNewColName("");
+    setNewColType("text");
+  }
+
+  function removeCustomColumn(id: string) {
+    setLocalCustom((prev) => prev.filter((c) => c.id !== id));
+    setLocalOrder((prev) => prev.filter((k) => k !== id));
+    setLocalHidden((prev) => prev.filter((k) => k !== id));
+  }
+
+  function getLabel(key: string): string {
+    const def = DEFAULT_COLUMNS.find((d) => d.key === key);
+    if (def) return def.label;
+    const custom = localCustom.find((c) => c.id === key);
+    return custom?.name || key;
+  }
+
+  function isLocked(key: string): boolean {
+    const def = DEFAULT_COLUMNS.find((d) => d.key === key);
+    return !!(def && "locked" in def && def.locked);
+  }
+
+  async function handleSave() {
+    const finalOrder = [...localOrder, "actions"];
+    const config: ColumnConfig = {
+      order: finalOrder,
+      hidden: localHidden,
+      customColumns: localCustom,
+    };
+    setSaving(true);
+    try {
+      await fetch("/api/inventory/column-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ columns: config }),
+      });
+      onSave(config);
+    } catch {
+      // silent
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // Sortable items excluding "actions" (always last)
+  const sortableItems = localOrder;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Settings className="h-5 w-5 text-gray-600" />
+            Kolonları Düzenle
+          </DialogTitle>
+          <DialogDescription>
+            Kolonları sürükleyerek sıralayın, toggle ile gizleyin/gösterin
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-2">
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={sortableItems} strategy={verticalListSortingStrategy}>
+              {sortableItems.map((key) => (
+                <SortableColumnItem
+                  key={key}
+                  id={key}
+                  label={getLabel(key)}
+                  isHidden={localHidden.includes(key)}
+                  isLocked={isLocked(key)}
+                  isCustom={localCustom.some((c) => c.id === key)}
+                  onToggle={() => toggleColumn(key)}
+                  onRemove={localCustom.some((c) => c.id === key) ? () => removeCustomColumn(key) : undefined}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
+        </div>
+
+        {/* Add custom column */}
+        <div className="space-y-3 border-t pt-4">
+          <p className="text-sm font-semibold text-gray-700">Yeni Kolon Ekle</p>
+          <div className="flex gap-2">
+            <Input
+              placeholder="Kolon adı"
+              value={newColName}
+              onChange={(e) => setNewColName(e.target.value)}
+              className="flex-1"
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomColumn(); } }}
+            />
+            <select
+              value={newColType}
+              onChange={(e) => setNewColType(e.target.value as CustomColumn["type"])}
+              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
+            >
+              {CUSTOM_COL_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>{t.label}</option>
+              ))}
+            </select>
+            <Button type="button" variant="outline" onClick={addCustomColumn} disabled={!newColName.trim()}>
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>İptal</Button>
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? "Kaydediliyor..." : "Kaydet"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

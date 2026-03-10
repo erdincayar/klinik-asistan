@@ -39,6 +39,18 @@ export async function GET(req: NextRequest) {
       select: { amount: true, date: true, category: true },
     });
 
+    // Get stock OUT movements for COGS calculation
+    const outMovements = await prisma.stockMovement.findMany({
+      where: { clinicId, type: "OUT", date: dateFilter },
+      include: { product: { select: { purchasePrice: true } } },
+    });
+
+    // Get approved income invoices for unmatched item warnings
+    const approvedIncomeInvoices = await prisma.uploadedInvoice.findMany({
+      where: { clinicId, approved: true, invoiceType: "INCOME", invoiceDate: dateFilter },
+      select: { profitData: true },
+    });
+
     // Aggregate by month
     const monthlyData = Array.from({ length: 12 }, (_, i) => {
       const month = i + 1;
@@ -73,13 +85,28 @@ export async function GET(req: NextRequest) {
     const totalIncome = treatments.reduce((sum, t) => sum + t.amount, 0)
       + incomeRecords.reduce((sum, r) => sum + r.amount, 0);
     const totalExpense = expenses.reduce((sum, e) => sum + e.amount, 0);
+    const totalCogs = outMovements.reduce((sum, m) => sum + (m.quantity * (m.product.purchasePrice ?? 0)), 0);
+    const grossProfit = totalIncome - totalCogs;
+    const netProfit = grossProfit - totalExpense;
+
+    // Count unmatched items across all approved income invoices
+    let unmatchedItemCount = 0;
+    for (const inv of approvedIncomeInvoices) {
+      const pd = inv.profitData as any;
+      if (pd?.unmatchedItems?.length) {
+        unmatchedItemCount += pd.unmatchedItems.length;
+      }
+    }
 
     return NextResponse.json({
       year,
       monthlyData,
       totalIncome,
       totalExpense,
-      totalProfit: totalIncome - totalExpense,
+      totalProfit: netProfit,
+      totalCogs,
+      grossProfit,
+      unmatchedItemCount,
       expenseCategories: categoryMap,
     });
   } catch (error) {

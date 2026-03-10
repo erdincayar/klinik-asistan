@@ -20,6 +20,19 @@ export interface Product {
   isActive: boolean;
   createdAt: string;
   movements?: StockMovement[];
+  customFields?: Record<string, any> | null;
+}
+
+export interface CustomColumn {
+  id: string;
+  name: string;
+  type: "text" | "number" | "date" | "boolean";
+}
+
+export interface ColumnConfig {
+  order: string[];
+  hidden: string[];
+  customColumns: CustomColumn[];
 }
 
 export interface StockMovement {
@@ -143,6 +156,22 @@ export const ASSET_STATUS_BADGE: Record<string, string> = {
   BROKEN: "bg-red-100 text-red-800",
   SCRAPPED: "bg-gray-100 text-gray-800",
 };
+
+export const DEFAULT_COLUMNS = [
+  { key: "brand", label: "Marka" },
+  { key: "name", label: "Ürün Adı", locked: true },
+  { key: "sku", label: "SKU" },
+  { key: "category", label: "Kategori" },
+  { key: "stock", label: "Stok" },
+  { key: "purchasePriceTRY", label: "Alış TL" },
+  { key: "purchasePriceFX", label: "Alış Döviz" },
+  { key: "salePriceTRY", label: "Satış TL" },
+  { key: "salePriceFX", label: "Satış Döviz" },
+  { key: "profitMargin", label: "Kâr %" },
+  { key: "currency", label: "Para Birimi" },
+  { key: "orderAlert", label: "Sipariş" },
+  { key: "actions", label: "İşlemler", locked: true },
+] as const;
 
 // ─── Helpers ───
 

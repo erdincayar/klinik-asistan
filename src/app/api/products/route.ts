@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { productSchema } from "@/lib/validations";
 
@@ -83,10 +84,16 @@ export async function POST(request: Request) {
       );
     }
 
+    const { customFields, ...rest } = parsed.data;
     const product = await prisma.product.create({
       data: {
-        ...parsed.data,
+        ...rest,
         clinicId,
+        ...(customFields !== undefined && {
+          customFields: customFields === null
+            ? Prisma.JsonNull
+            : (customFields as Prisma.InputJsonValue),
+        }),
       },
     });
 

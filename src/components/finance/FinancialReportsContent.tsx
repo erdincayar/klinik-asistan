@@ -7,6 +7,8 @@ import {
   TrendingDown,
   DollarSign,
   BarChart3,
+  ShoppingCart,
+  AlertTriangle,
 } from "lucide-react";
 import {
   BarChart,
@@ -36,6 +38,9 @@ interface ReportData {
   totalIncome: number;
   totalExpense: number;
   totalProfit: number;
+  totalCogs: number;
+  grossProfit: number;
+  unmatchedItemCount: number;
   expenseCategories: Record<string, number>;
 }
 
@@ -107,8 +112,8 @@ export default function FinancialReportsContent() {
 
       {/* Summary cards */}
       {loading ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {[...Array(3)].map((_, i) => (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          {[...Array(5)].map((_, i) => (
             <Skeleton key={i} className="h-28" />
           ))}
         </div>
@@ -117,41 +122,73 @@ export default function FinancialReportsContent() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.05 }}
-          className="grid grid-cols-1 gap-4 sm:grid-cols-3"
+          className="space-y-4"
         >
-          <div className="rounded-2xl border border-gray-100 bg-white p-5">
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50">
-                <TrendingUp className="h-4 w-4 text-emerald-600" />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="rounded-2xl border border-gray-100 bg-white p-5">
+              <div className="flex items-center gap-2">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50">
+                  <TrendingUp className="h-4 w-4 text-blue-600" />
+                </div>
+                <span className="text-sm text-gray-500">Ciro</span>
               </div>
-              <span className="text-sm text-gray-500">Toplam Gelir</span>
+              <p className="mt-3 text-xl font-bold text-blue-600">
+                {formatCurrency(data.totalIncome)}
+              </p>
             </div>
-            <p className="mt-3 text-2xl font-bold text-emerald-600">
-              {formatCurrency(data.totalIncome)}
-            </p>
-          </div>
-          <div className="rounded-2xl border border-gray-100 bg-white p-5">
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-50">
-                <TrendingDown className="h-4 w-4 text-red-600" />
+            <div className="rounded-2xl border border-gray-100 bg-white p-5">
+              <div className="flex items-center gap-2">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-50">
+                  <ShoppingCart className="h-4 w-4 text-orange-600" />
+                </div>
+                <span className="text-sm text-gray-500">Maliyet</span>
               </div>
-              <span className="text-sm text-gray-500">Toplam Gider</span>
+              <p className="mt-3 text-xl font-bold text-orange-600">
+                {formatCurrency(data.totalCogs || 0)}
+              </p>
             </div>
-            <p className="mt-3 text-2xl font-bold text-red-600">
-              {formatCurrency(data.totalExpense)}
-            </p>
-          </div>
-          <div className="rounded-2xl border border-gray-100 bg-white p-5">
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50">
-                <DollarSign className="h-4 w-4 text-blue-600" />
+            <div className="rounded-2xl border border-gray-100 bg-white p-5">
+              <div className="flex items-center gap-2">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50">
+                  <TrendingUp className="h-4 w-4 text-emerald-600" />
+                </div>
+                <span className="text-sm text-gray-500">Brüt Kar</span>
               </div>
-              <span className="text-sm text-gray-500">Net Kar</span>
+              <p className={`mt-3 text-xl font-bold ${(data.grossProfit || 0) >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                {formatCurrency(data.grossProfit || 0)}
+              </p>
             </div>
-            <p className={`mt-3 text-2xl font-bold ${data.totalProfit >= 0 ? "text-blue-600" : "text-red-600"}`}>
-              {formatCurrency(data.totalProfit)}
-            </p>
+            <div className="rounded-2xl border border-gray-100 bg-white p-5">
+              <div className="flex items-center gap-2">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-50">
+                  <TrendingDown className="h-4 w-4 text-red-600" />
+                </div>
+                <span className="text-sm text-gray-500">Giderler</span>
+              </div>
+              <p className="mt-3 text-xl font-bold text-red-600">
+                {formatCurrency(data.totalExpense)}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-gray-100 bg-white p-5">
+              <div className="flex items-center gap-2">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-50">
+                  <DollarSign className="h-4 w-4 text-purple-600" />
+                </div>
+                <span className="text-sm text-gray-500">Net Kar</span>
+              </div>
+              <p className={`mt-3 text-xl font-bold ${data.totalProfit >= 0 ? "text-purple-600" : "text-red-600"}`}>
+                {formatCurrency(data.totalProfit)}
+              </p>
+            </div>
           </div>
+          {(data.unmatchedItemCount || 0) > 0 && (
+            <div className="flex items-center gap-2 rounded-xl bg-yellow-50 border border-yellow-100 px-4 py-3">
+              <AlertTriangle className="h-4 w-4 text-yellow-500 shrink-0" />
+              <span className="text-sm text-yellow-700">
+                {data.unmatchedItemCount} fatura kalemi eşleştirilmedi. Brüt kar hesaplaması eksik olabilir.
+              </span>
+            </div>
+          )}
         </motion.div>
       ) : null}
 
