@@ -1031,14 +1031,21 @@ const MAPPING_FIELDS = [
   { key: "name", label: "Ürün Adı", required: true },
   { key: "brand", label: "Marka", required: false },
   { key: "category", label: "Kategori", required: false },
-  { key: "quantity", label: "Miktar / Stok", required: false },
-  { key: "unit", label: "Birim", required: false },
-  { key: "purchasePrice", label: "Alış Fiyatı TL", required: false },
-  { key: "purchasePriceUSD", label: "Alış Fiyatı USD", required: false },
+  { key: "sku", label: "SKU", required: false },
+  { key: "quantity", label: "Stok Miktarı", required: false },
+  { key: "minStock", label: "Min Stok", required: false },
+  { key: "purchasePrice", label: "Alış Fiyatı", required: false },
   { key: "salePrice", label: "Satış Fiyatı", required: false },
-  { key: "minStock", label: "Minimum Stok", required: false },
-  { key: "currency", label: "Para Birimi", required: false },
 ];
+
+const IMPORT_CURRENCIES = [
+  { value: "TRY", label: "₺ TRY" },
+  { value: "USD", label: "$ USD" },
+  { value: "EUR", label: "€ EUR" },
+  { value: "GBP", label: "£ GBP" },
+];
+
+const CURRENCY_SYMBOLS: Record<string, string> = { TRY: "₺", USD: "$", EUR: "€", GBP: "£" };
 
 function ImportDialog({
   open, onOpenChange, onSuccess, onComplete,
@@ -1051,19 +1058,47 @@ function ImportDialog({
   const [step, setStep] = useState<"upload" | "mapping" | "importing" | "result">("upload");
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [mapping, setMapping] = useState<Record<string, string>>({});
+  const [selectedCurrency, setSelectedCurrency] = useState("TRY");
+  const [exchangeRate, setExchangeRate] = useState<number | null>(null);
+  const [rateLoading, setRateLoading] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
 
   function reset() {
-    setStep("upload"); setPreview(null); setMapping({}); setResult(null); setError(""); setUploading(false); setImportFile(null);
+    setStep("upload"); setPreview(null); setMapping({}); setResult(null); setError("");
+    setUploading(false); setImportFile(null); setSelectedCurrency("TRY"); setExchangeRate(null);
   }
 
   function handleClose(isOpen: boolean) {
     if (!isOpen) reset();
     onOpenChange(isOpen);
   }
+
+  // Fetch exchange rate when currency changes
+  useEffect(() => {
+    if (selectedCurrency === "TRY") {
+      setExchangeRate(null);
+      return;
+    }
+    let cancelled = false;
+    async function fetchRate() {
+      setRateLoading(true);
+      try {
+        const res = await fetch(`https://api.exchangerate-api.com/v4/latest/${selectedCurrency}`);
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        if (!cancelled) setExchangeRate(data.rates?.TRY || null);
+      } catch {
+        if (!cancelled) setExchangeRate(null);
+      } finally {
+        if (!cancelled) setRateLoading(false);
+      }
+    }
+    fetchRate();
+    return () => { cancelled = true; };
+  }, [selectedCurrency]);
 
   async function handleFileSelect(files: FileList | null) {
     if (!files || files.length === 0) return;
@@ -1092,13 +1127,11 @@ function ImportDialog({
           if (field.key === "name") return cl.includes("ürün") || cl.includes("urun") || cl.includes("ad") || cl === "name" || cl === "product";
           if (field.key === "brand") return cl.includes("marka") || cl.includes("brand");
           if (field.key === "category") return cl.includes("kategori") || cl.includes("category");
+          if (field.key === "sku") return cl.includes("sku") || cl.includes("kod") || cl.includes("code");
           if (field.key === "quantity") return cl.includes("miktar") || cl.includes("stok") || cl.includes("quantity") || cl.includes("stock");
-          if (field.key === "unit") return cl.includes("birim") || cl.includes("unit");
-          if (field.key === "purchasePrice") return (cl.includes("alış") || cl.includes("alis") || cl.includes("purchase")) && cl.includes("tl");
-          if (field.key === "purchasePriceUSD") return (cl.includes("alış") || cl.includes("alis") || cl.includes("purchase")) && cl.includes("usd");
-          if (field.key === "salePrice") return cl.includes("satış") || cl.includes("satis") || cl.includes("sale");
           if (field.key === "minStock") return cl.includes("min") || cl.includes("minimum");
-          if (field.key === "currency") return cl.includes("para") || cl.includes("döviz") || cl.includes("currency");
+          if (field.key === "purchasePrice") return cl.includes("alış") || cl.includes("alis") || cl.includes("purchase") || cl.includes("cost") || cl.includes("fiyat");
+          if (field.key === "salePrice") return cl.includes("satış") || cl.includes("satis") || cl.includes("sale");
           return false;
         });
         if (match) autoMapping[field.key] = match;
@@ -1119,6 +1152,7 @@ function ImportDialog({
       const formData = new FormData();
       formData.append("file", importFile);
       formData.append("mapping", JSON.stringify(mapping));
+      formData.append("currency", selectedCurrency);
       const res = await fetch("/api/products/import", { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok) { setError(data.error || "İçe aktarma hatası"); setStep("mapping"); return; }
@@ -1127,6 +1161,11 @@ function ImportDialog({
     } catch {
       setError("İçe aktarma sırasında hata oluştu"); setStep("mapping");
     }
+  }
+
+  // Format number as Turkish locale
+  function formatTRY(value: number): string {
+    return value.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
   return (
@@ -1176,6 +1215,8 @@ function ImportDialog({
             <div className="rounded-lg bg-blue-50 p-3">
               <p className="text-sm text-blue-700"><strong>{preview.totalRows}</strong> satır bulundu. Sütunları eşleştirin:</p>
             </div>
+
+            {/* Column mapping */}
             <div className="grid grid-cols-2 gap-3">
               {MAPPING_FIELDS.map((field) => (
                 <div key={field.key} className="space-y-1">
@@ -1188,6 +1229,64 @@ function ImportDialog({
                 </div>
               ))}
             </div>
+
+            {/* Currency selection */}
+            <div className="rounded-lg border border-gray-200 p-4 space-y-3">
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold">Para Birimi</Label>
+                <p className="text-xs text-muted-foreground">Alış fiyatlarının para birimi</p>
+                <select
+                  value={selectedCurrency}
+                  onChange={(e) => setSelectedCurrency(e.target.value)}
+                  className="flex h-9 w-full max-w-[200px] rounded-md border border-input bg-background px-2 py-1 text-sm"
+                >
+                  {IMPORT_CURRENCIES.map((c) => (<option key={c.value} value={c.value}>{c.label}</option>))}
+                </select>
+              </div>
+
+              {selectedCurrency !== "TRY" && (
+                <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 space-y-2">
+                  <div className="flex items-center gap-2 text-sm text-amber-800">
+                    <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                    <span>
+                      Fiyatlar {selectedCurrency} olarak okunup güncel kurla TL&apos;ye çevrilecek.
+                      {rateLoading ? (
+                        <span className="ml-1 text-amber-600">Kur yükleniyor...</span>
+                      ) : exchangeRate ? (
+                        <span className="ml-1 font-semibold">1 {selectedCurrency} = ₺{formatTRY(exchangeRate)}</span>
+                      ) : (
+                        <span className="ml-1 text-red-600">Kur alınamadı (sunucu fallback kullanacak)</span>
+                      )}
+                    </span>
+                  </div>
+
+                  {/* Live conversion preview */}
+                  {exchangeRate && mapping.purchasePrice && (
+                    <div className="space-y-1">
+                      <p className="text-xs font-semibold text-amber-700 uppercase">Alış Fiyatı Önizleme</p>
+                      <div className="rounded bg-white border border-amber-100 divide-y divide-amber-50">
+                        {preview.preview.map((row, i) => {
+                          const rawVal = parseFloat(String(row[mapping.purchasePrice] || "0").replace(",", ".")) || 0;
+                          if (rawVal <= 0) return null;
+                          const tryVal = rawVal * exchangeRate;
+                          const sym = CURRENCY_SYMBOLS[selectedCurrency] || selectedCurrency;
+                          return (
+                            <div key={i} className="flex items-center justify-between px-3 py-1.5 text-xs">
+                              <span className="text-gray-600 truncate max-w-[200px]">{String(row[mapping.name] || `Satır ${i + 1}`)}</span>
+                              <span className="text-amber-800 font-medium whitespace-nowrap">
+                                {sym}{rawVal.toFixed(2)} {selectedCurrency} = ₺{formatTRY(tryVal)}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Raw preview table */}
             <div>
               <p className="mb-2 text-xs font-semibold text-gray-500 uppercase">Önizleme (ilk 5 satır)</p>
               <div className="overflow-x-auto rounded-lg border">

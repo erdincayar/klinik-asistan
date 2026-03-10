@@ -93,6 +93,7 @@ export const CURRENCIES = [
   { value: "TRY", label: "₺ TRY", symbol: "₺" },
   { value: "USD", label: "$ USD", symbol: "$" },
   { value: "EUR", label: "€ EUR", symbol: "€" },
+  { value: "GBP", label: "£ GBP", symbol: "£" },
 ];
 
 export const CATEGORY_BADGE_COLORS: Record<string, string> = {

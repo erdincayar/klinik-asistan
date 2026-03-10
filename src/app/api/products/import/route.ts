@@ -6,7 +6,7 @@ import { getExchangeRates, convertToTRYKurus } from "@/lib/exchange-rate";
 
 const VALID_CATEGORIES = ["KOZMETIK", "MEDIKAL", "SARF_MALZEME", "DIGER"];
 const VALID_UNITS = ["ADET", "KUTU", "PAKET", "ML", "GR"];
-const VALID_CURRENCIES = ["TRY", "USD", "EUR"];
+const VALID_CURRENCIES = ["TRY", "USD", "EUR", "GBP"];
 
 function normalizeCategory(value: string): string {
   if (!value) return "DIGER";
@@ -51,12 +51,14 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
     const mappingStr = formData.get("mapping") as string | null;
+    const bodyCurrency = formData.get("currency") as string | null;
 
     if (!file) {
       return NextResponse.json({ error: "Dosya gerekli" }, { status: 400 });
     }
 
     const mapping: Record<string, string> = mappingStr ? JSON.parse(mappingStr) : {};
+    const globalCurrency = bodyCurrency && VALID_CURRENCIES.includes(bodyCurrency.toUpperCase()) ? bodyCurrency.toUpperCase() : null;
 
     const bytes = await file.arrayBuffer();
     const wb = XLSX.read(bytes, { type: "array" });
@@ -105,8 +107,11 @@ export async function POST(req: NextRequest) {
         const unit = normalizeUnit(mapping.unit ? String(row[mapping.unit] || "") : "");
         const quantity = mapping.quantity ? Math.max(0, Math.round(Number(row[mapping.quantity]) || 0)) : undefined;
         const minStock = mapping.minStock ? Math.max(0, Math.round(Number(row[mapping.minStock]) || 0)) : 0;
-        const rawCurrency = mapping.currency ? String(row[mapping.currency] || "").toUpperCase().trim() : "TRY";
-        const currency = VALID_CURRENCIES.includes(rawCurrency) ? rawCurrency : "TRY";
+        // Use global currency from user selection, fallback to per-row mapping
+        const currency = globalCurrency || (() => {
+          const rawCurrency = mapping.currency ? String(row[mapping.currency] || "").toUpperCase().trim() : "TRY";
+          return VALID_CURRENCIES.includes(rawCurrency) ? rawCurrency : "TRY";
+        })();
 
         const rawPurchasePrice = mapping.purchasePrice ? parseFloat(String(row[mapping.purchasePrice]).replace(",", ".")) || 0 : 0;
         const rawPurchasePriceUSD = mapping.purchasePriceUSD ? parseFloat(String(row[mapping.purchasePriceUSD]).replace(",", ".")) || null : null;
