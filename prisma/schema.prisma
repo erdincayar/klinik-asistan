@@ -279,22 +279,25 @@ model Employee {
 // ProductCategory values: KOZMETIK, MEDIKAL, SARF_MALZEME, DIGER
 // ProductUnit values: ADET, KUTU, ML, GR
 model Product {
-  id            String          @id @default(cuid())
-  name          String
-  sku           String          @unique
-  category      String          @default("DIGER") // KOZMETIK, MEDIKAL, SARF_MALZEME, DIGER
-  unit          String          @default("ADET") // ADET, KUTU, ML, GR
-  currentStock  Int             @default(0)
-  minStock      Int             @default(0)
+  id               String          @id @default(cuid())
+  name             String
+  sku              String          @unique
+  brand            String?
+  category         String          @default("DIGER") // KOZMETIK, MEDIKAL, SARF_MALZEME, DIGER
+  unit             String          @default("ADET") // ADET, KUTU, ML, GR
+  currentStock     Int             @default(0)
+  minStock         Int             @default(0)
+  alarmEnabled     Boolean         @default(true)
   purchasePrice    Int             @default(0) // kuruş (TL)
   purchasePriceUSD Float?          // Alış fiyatı USD
+  currency         String          @default("TRY") // TRY, USD, EUR
   salePrice        Int             @default(0) // kuruş
-  clinicId      String
-  clinic        Clinic          @relation(fields: [clinicId], references: [id])
-  isActive      Boolean         @default(true)
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  movements     StockMovement[]
+  clinicId         String
+  clinic           Clinic          @relation(fields: [clinicId], references: [id])
+  isActive         Boolean         @default(true)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  movements        StockMovement[]
 }
 
 // StockMovementType values: IN, OUT, ADJUSTMENT

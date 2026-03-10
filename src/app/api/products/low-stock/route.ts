@@ -21,7 +21,7 @@ export async function GET() {
     });
 
     const lowStock = allActive
-      .filter((p) => p.currentStock <= p.minStock)
+      .filter((p) => p.alarmEnabled && p.currentStock <= p.minStock)
       .sort((a, b) => (a.currentStock - a.minStock) - (b.currentStock - b.minStock));
 
     return Response.json(lowStock);

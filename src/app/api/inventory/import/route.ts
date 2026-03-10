@@ -5,6 +5,7 @@ import * as XLSX from "xlsx";
 
 const VALID_CATEGORIES = ["KOZMETIK", "MEDIKAL", "SARF_MALZEME", "DIGER"];
 const VALID_UNITS = ["ADET", "KUTU", "PAKET", "ML", "GR"];
+const VALID_CURRENCIES = ["TRY", "USD", "EUR"];
 
 function normalizeCategory(value: string): string {
   if (!value) return "DIGER";
@@ -94,10 +95,13 @@ export async function POST(req: NextRequest) {
           continue;
         }
 
+        const brand = mapping.brand ? String(row[mapping.brand] || "").trim() || null : null;
         const category = normalizeCategory(mapping.category ? String(row[mapping.category] || "") : "");
         const unit = normalizeUnit(mapping.unit ? String(row[mapping.unit] || "") : "");
-        const quantity = mapping.quantity ? Math.max(0, Math.round(Number(row[mapping.quantity]) || 0)) : 0;
+        const quantity = mapping.quantity ? Math.max(0, Math.round(Number(row[mapping.quantity]) || 0)) : undefined;
         const minStock = mapping.minStock ? Math.max(0, Math.round(Number(row[mapping.minStock]) || 0)) : 0;
+        const rawCurrency = mapping.currency ? String(row[mapping.currency] || "").toUpperCase().trim() : "TRY";
+        const currency = VALID_CURRENCIES.includes(rawCurrency) ? rawCurrency : "TRY";
 
         const purchasePriceTL = mapping.purchasePrice ? parseFloat(String(row[mapping.purchasePrice]).replace(",", ".")) || 0 : 0;
         const purchasePriceUSD = mapping.purchasePriceUSD ? parseFloat(String(row[mapping.purchasePriceUSD]).replace(",", ".")) || null : null;
@@ -109,10 +113,12 @@ export async function POST(req: NextRequest) {
           await prisma.product.update({
             where: { id: existing.id },
             data: {
+              ...(brand !== null && { brand }),
               category,
               unit,
-              currentStock: quantity,
+              ...(quantity !== undefined && { currentStock: quantity }),
               minStock,
+              currency,
               purchasePrice: Math.round(purchasePriceTL * 100),
               purchasePriceUSD: purchasePriceUSD,
               salePrice: Math.round(salePriceTL * 100),
@@ -126,10 +132,12 @@ export async function POST(req: NextRequest) {
               clinicId,
               name,
               sku,
+              ...(brand !== null && { brand }),
               category,
               unit,
-              currentStock: quantity,
+              ...(quantity !== undefined && { currentStock: quantity }),
               minStock,
+              currency,
               purchasePrice: Math.round(purchasePriceTL * 100),
               purchasePriceUSD: purchasePriceUSD,
               salePrice: Math.round(salePriceTL * 100),

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Plus, Search, AlertTriangle, CheckCircle, Package, Upload, Download, Loader2, FileSpreadsheet, ArrowRight } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import { Plus, Search, AlertTriangle, CheckCircle, Package, Upload, Download, Loader2, FileSpreadsheet, ArrowRight, Trash2, Bell, BellOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -52,12 +52,15 @@ interface Product {
   id: string;
   name: string;
   sku: string;
+  brand: string | null;
   category: string;
   unit: string;
   currentStock: number;
   minStock: number;
+  alarmEnabled: boolean;
   purchasePrice: number;
   purchasePriceUSD: number | null;
+  currency: string;
   salePrice: number;
   isActive: boolean;
   createdAt: string;
@@ -103,6 +106,12 @@ const UNITS = [
   { value: "GR", label: "gr" },
 ];
 
+const CURRENCIES = [
+  { value: "TRY", label: "₺ TRY", symbol: "₺" },
+  { value: "USD", label: "$ USD", symbol: "$" },
+  { value: "EUR", label: "€ EUR", symbol: "€" },
+];
+
 const CATEGORY_BADGE_COLORS: Record<string, string> = {
   KOZMETIK: "bg-pink-100 text-pink-800",
   MEDIKAL: "bg-blue-100 text-blue-800",
@@ -129,6 +138,10 @@ function getCategoryLabel(value: string) {
 
 function getUnitLabel(value: string) {
   return UNITS.find((u) => u.value === value)?.label || value;
+}
+
+function getCurrencySymbol(value: string) {
+  return CURRENCIES.find((c) => c.value === value)?.symbol || "₺";
 }
 
 // --- Main Page ---
@@ -184,6 +197,9 @@ function ProductsTab() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   const fetchProducts = async () => {
     try {
@@ -219,6 +235,51 @@ function ProductsTab() {
       setSelectedProduct(product);
     } finally {
       setDetailLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      const res = await fetch(`/api/products/${deleteTarget.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Silme hatası");
+      }
+      setProducts((prev) => prev.filter((p) => p.id !== deleteTarget.id));
+      setDeleteTarget(null);
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "Silme hatası");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleToggleAlarm = async (product: Product, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newValue = !product.alarmEnabled;
+    // Optimistic update
+    setProducts((prev) =>
+      prev.map((p) => (p.id === product.id ? { ...p, alarmEnabled: newValue } : p))
+    );
+    try {
+      const res = await fetch(`/api/products/${product.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ alarmEnabled: newValue }),
+      });
+      if (!res.ok) {
+        // Revert on error
+        setProducts((prev) =>
+          prev.map((p) => (p.id === product.id ? { ...p, alarmEnabled: !newValue } : p))
+        );
+      }
+    } catch {
+      setProducts((prev) =>
+        prev.map((p) => (p.id === product.id ? { ...p, alarmEnabled: !newValue } : p))
+      );
     }
   };
 
@@ -282,6 +343,7 @@ function ProductsTab() {
                 <TableRow>
                   <TableHead>Ad</TableHead>
                   <TableHead className="hidden sm:table-cell">SKU</TableHead>
+                  <TableHead className="hidden lg:table-cell">Marka</TableHead>
                   <TableHead>Kategori</TableHead>
                   <TableHead className="text-right">Mevcut Stok</TableHead>
                   <TableHead className="hidden md:table-cell text-right">Min Stok</TableHead>
@@ -289,11 +351,14 @@ function ProductsTab() {
                   <TableHead className="hidden lg:table-cell text-right">Satış Fiyatı</TableHead>
                   <TableHead className="hidden xl:table-cell text-right">Kâr</TableHead>
                   <TableHead>Durum</TableHead>
+                  <TableHead className="text-center">Alarm</TableHead>
+                  <TableHead className="w-10"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {products.map((product) => {
-                  const isLow = product.currentStock <= product.minStock;
+                  const isLow = product.alarmEnabled && product.currentStock <= product.minStock;
+                  const currencySymbol = getCurrencySymbol(product.currency);
                   return (
                     <TableRow
                       key={product.id}
@@ -304,18 +369,28 @@ function ProductsTab() {
                       <TableCell className="hidden sm:table-cell text-muted-foreground">
                         {product.sku}
                       </TableCell>
+                      <TableCell className="hidden lg:table-cell text-muted-foreground">
+                        {product.brand || "—"}
+                      </TableCell>
                       <TableCell>
                         <Badge className={CATEGORY_BADGE_COLORS[product.category] || CATEGORY_BADGE_COLORS.DIGER}>
                           {getCategoryLabel(product.category)}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        {product.currentStock} {getUnitLabel(product.unit)}
+                        {product.currentStock > 0 ? (
+                          <>{product.currentStock} {getUnitLabel(product.unit)}</>
+                        ) : (
+                          <span className="text-gray-400">Stok Yok</span>
+                        )}
                       </TableCell>
                       <TableCell className="hidden md:table-cell text-right">
                         {product.minStock} {getUnitLabel(product.unit)}
                       </TableCell>
                       <TableCell className="hidden lg:table-cell text-right">
+                        {product.currency !== "TRY" && (
+                          <span className="text-xs text-muted-foreground mr-1">{currencySymbol}</span>
+                        )}
                         {formatCurrency(product.purchasePrice)}
                       </TableCell>
                       <TableCell className="hidden lg:table-cell text-right">
@@ -337,6 +412,35 @@ function ProductsTab() {
                           <Badge className="bg-green-100 text-green-800">Yeterli</Badge>
                         )}
                       </TableCell>
+                      <TableCell className="text-center">
+                        <button
+                          onClick={(e) => handleToggleAlarm(product, e)}
+                          className={`inline-flex items-center justify-center rounded-full p-1.5 transition-colors ${
+                            product.alarmEnabled
+                              ? "text-orange-600 hover:bg-orange-100"
+                              : "text-gray-300 hover:bg-gray-100"
+                          }`}
+                          title={product.alarmEnabled ? "Alarm açık" : "Alarm kapalı"}
+                        >
+                          {product.alarmEnabled ? (
+                            <Bell className="h-4 w-4" />
+                          ) : (
+                            <BellOff className="h-4 w-4" />
+                          )}
+                        </button>
+                      </TableCell>
+                      <TableCell>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteTarget(product);
+                          }}
+                          className="inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                          title="Sil"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </TableCell>
                     </TableRow>
                   );
                 })}
@@ -345,6 +449,27 @@ function ProductsTab() {
           )}
         </CardContent>
       </Card>
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={deleteTarget !== null} onOpenChange={(open) => { if (!open) { setDeleteTarget(null); setDeleteError(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ürünü Sil</DialogTitle>
+            <DialogDescription>
+              <strong>{deleteTarget?.name}</strong> ürününü silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
+            </DialogDescription>
+          </DialogHeader>
+          {deleteError && <p className="text-sm text-red-500">{deleteError}</p>}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setDeleteTarget(null); setDeleteError(""); }}>
+              İptal
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+              {deleting ? "Siliniyor..." : "Sil"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* New product modal */}
       <NewProductDialog
@@ -369,7 +494,10 @@ function ProductsTab() {
             <>
               <DialogHeader>
                 <DialogTitle>{selectedProduct.name}</DialogTitle>
-                <DialogDescription>SKU: {selectedProduct.sku}</DialogDescription>
+                <DialogDescription>
+                  SKU: {selectedProduct.sku}
+                  {selectedProduct.brand && ` | Marka: ${selectedProduct.brand}`}
+                </DialogDescription>
               </DialogHeader>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
@@ -380,16 +508,30 @@ function ProductsTab() {
                   <span className="text-muted-foreground">Birim:</span>{" "}
                   {getUnitLabel(selectedProduct.unit)}
                 </div>
+                {selectedProduct.brand && (
+                  <div>
+                    <span className="text-muted-foreground">Marka:</span>{" "}
+                    {selectedProduct.brand}
+                  </div>
+                )}
+                <div>
+                  <span className="text-muted-foreground">Para Birimi:</span>{" "}
+                  {selectedProduct.currency}
+                </div>
                 <div>
                   <span className="text-muted-foreground">Mevcut Stok:</span>{" "}
-                  {selectedProduct.currentStock}
+                  {selectedProduct.currentStock > 0 ? selectedProduct.currentStock : "Stok Yok"}
                 </div>
                 <div>
                   <span className="text-muted-foreground">Min Stok:</span>{" "}
                   {selectedProduct.minStock}
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Alış Fiyatı (TL):</span>{" "}
+                  <span className="text-muted-foreground">Stok Alarmı:</span>{" "}
+                  {selectedProduct.alarmEnabled ? "Açık" : "Kapalı"}
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Alış Fiyatı ({selectedProduct.currency}):</span>{" "}
                   {formatCurrency(selectedProduct.purchasePrice)}
                 </div>
                 {selectedProduct.purchasePriceUSD != null && selectedProduct.purchasePriceUSD > 0 && (
@@ -467,12 +609,15 @@ function NewProductDialog({
   const [form, setForm] = useState({
     name: "",
     sku: "",
+    brand: "",
     category: "DIGER",
     unit: "ADET",
     currentStock: 0,
     minStock: 0,
+    alarmEnabled: true,
     purchasePrice: 0,
     purchasePriceUSD: "",
+    currency: "TRY",
     salePrice: 0,
   });
   const [saving, setSaving] = useState(false);
@@ -489,6 +634,7 @@ function NewProductDialog({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
+          brand: form.brand || null,
           purchasePrice: toKurus(form.purchasePrice),
           purchasePriceUSD: form.purchasePriceUSD ? parseFloat(form.purchasePriceUSD) : null,
           salePrice: toKurus(form.salePrice),
@@ -504,12 +650,15 @@ function NewProductDialog({
       setForm({
         name: "",
         sku: "",
+        brand: "",
         category: "DIGER",
         unit: "ADET",
         currentStock: 0,
         minStock: 0,
+        alarmEnabled: true,
         purchasePrice: 0,
         purchasePriceUSD: "",
+        currency: "TRY",
         salePrice: 0,
       });
       onSuccess();
@@ -546,6 +695,32 @@ function NewProductDialog({
                 onChange={(e) => setForm({ ...form, sku: e.target.value })}
                 required
               />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="brand">Marka</Label>
+              <Input
+                id="brand"
+                value={form.brand}
+                onChange={(e) => setForm({ ...form, brand: e.target.value })}
+                placeholder="Opsiyonel"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="currency">Para Birimi</Label>
+              <select
+                id="currency"
+                value={form.currency}
+                onChange={(e) => setForm({ ...form, currency: e.target.value })}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                {CURRENCIES.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -602,9 +777,21 @@ function NewProductDialog({
               />
             </div>
           </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="alarmEnabled"
+              checked={form.alarmEnabled}
+              onChange={(e) => setForm({ ...form, alarmEnabled: e.target.checked })}
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            <Label htmlFor="alarmEnabled" className="text-sm font-normal cursor-pointer">
+              Düşük stok alarmı aktif
+            </Label>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="purchasePrice">Alış Fiyatı (TL)</Label>
+              <Label htmlFor="purchasePrice">Alış Fiyatı ({getCurrencySymbol(form.currency)})</Label>
               <Input
                 id="purchasePrice"
                 type="number"
@@ -614,21 +801,37 @@ function NewProductDialog({
                 onChange={(e) => setForm({ ...form, purchasePrice: Number(e.target.value) })}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="purchasePriceUSD">Alış Fiyatı (USD)</Label>
-              <Input
-                id="purchasePriceUSD"
-                type="number"
-                min={0}
-                step="0.01"
-                placeholder="Opsiyonel"
-                value={form.purchasePriceUSD}
-                onChange={(e) => setForm({ ...form, purchasePriceUSD: e.target.value })}
-              />
-            </div>
+            {form.currency !== "TRY" && (
+              <div className="space-y-2">
+                <Label htmlFor="purchasePriceUSD">Alış Fiyatı (USD)</Label>
+                <Input
+                  id="purchasePriceUSD"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  placeholder="Opsiyonel"
+                  value={form.purchasePriceUSD}
+                  onChange={(e) => setForm({ ...form, purchasePriceUSD: e.target.value })}
+                />
+              </div>
+            )}
+            {form.currency === "TRY" && (
+              <div className="space-y-2">
+                <Label htmlFor="purchasePriceUSD">Alış Fiyatı (USD)</Label>
+                <Input
+                  id="purchasePriceUSD"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  placeholder="Opsiyonel"
+                  value={form.purchasePriceUSD}
+                  onChange={(e) => setForm({ ...form, purchasePriceUSD: e.target.value })}
+                />
+              </div>
+            )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="salePrice">Satış Fiyatı (TL)</Label>
+            <Label htmlFor="salePrice">Satış Fiyatı (₺)</Label>
             <Input
               id="salePrice"
               type="number"
@@ -670,6 +873,7 @@ interface ImportResult {
 
 const MAPPING_FIELDS = [
   { key: "name", label: "Ürün Adı", required: true },
+  { key: "brand", label: "Marka", required: false },
   { key: "category", label: "Kategori", required: false },
   { key: "quantity", label: "Miktar", required: false },
   { key: "unit", label: "Birim", required: false },
@@ -677,6 +881,7 @@ const MAPPING_FIELDS = [
   { key: "purchasePriceUSD", label: "Alış Fiyatı USD", required: false },
   { key: "salePrice", label: "Satış Fiyatı", required: false },
   { key: "minStock", label: "Minimum Stok", required: false },
+  { key: "currency", label: "Para Birimi", required: false },
 ];
 
 function ImportDialog({
@@ -749,6 +954,7 @@ function ImportDialog({
         const match = cols.find((c) => {
           const cl = c.toLowerCase();
           if (field.key === "name") return cl.includes("ürün") || cl.includes("urun") || cl.includes("ad") || cl === "name" || cl === "product";
+          if (field.key === "brand") return cl.includes("marka") || cl.includes("brand");
           if (field.key === "category") return cl.includes("kategori") || cl.includes("category");
           if (field.key === "quantity") return cl.includes("miktar") || cl.includes("stok") || cl.includes("quantity") || cl.includes("stock");
           if (field.key === "unit") return cl.includes("birim") || cl.includes("unit");
@@ -756,6 +962,7 @@ function ImportDialog({
           if (field.key === "purchasePriceUSD") return (cl.includes("alış") || cl.includes("alis") || cl.includes("purchase")) && cl.includes("usd");
           if (field.key === "salePrice") return cl.includes("satış") || cl.includes("satis") || cl.includes("sale");
           if (field.key === "minStock") return cl.includes("min") || cl.includes("minimum");
+          if (field.key === "currency") return cl.includes("para") || cl.includes("döviz") || cl.includes("currency");
           return false;
         });
         if (match) autoMapping[field.key] = match;
