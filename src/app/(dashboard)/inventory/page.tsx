@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Plus, Search, AlertTriangle, CheckCircle, Package, Upload, Download, Loader2, FileSpreadsheet, ArrowRight, Trash2, ShoppingCart, Pencil } from "lucide-react";
+import { Plus, Search, AlertTriangle, CheckCircle, Upload, Download, Loader2, FileSpreadsheet, ArrowRight, Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -197,7 +197,7 @@ export default function InventoryPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Stok Takibi</h1>
         <p className="text-muted-foreground">
-          Ürün, stok hareketi ve alarm yönetimi
+          Ürün, stok hareketi ve rapor yönetimi
         </p>
       </div>
 
@@ -205,7 +205,6 @@ export default function InventoryPage() {
         <TabsList>
           <TabsTrigger value="products">Ürünler</TabsTrigger>
           <TabsTrigger value="movements">Stok Hareketleri</TabsTrigger>
-          <TabsTrigger value="alerts">Stok Alarmları</TabsTrigger>
           <TabsTrigger value="report">Stok Raporu</TabsTrigger>
         </TabsList>
 
@@ -214,9 +213,6 @@ export default function InventoryPage() {
         </TabsContent>
         <TabsContent value="movements">
           <MovementsTab key={`movements-${refreshKey}`} />
-        </TabsContent>
-        <TabsContent value="alerts">
-          <AlertsTab key={`alerts-${refreshKey}`} />
         </TabsContent>
         <TabsContent value="report">
           <ReportTab key={`report-${refreshKey}`} />
@@ -1538,123 +1534,7 @@ function StockMovementDialog({
 }
 
 // ============================================================
-// TAB 3: Stock Alerts
-// ============================================================
-
-function AlertsTab() {
-  const [lowStockProducts, setLowStockProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [orderNote, setOrderNote] = useState<{ productId: string; name: string } | null>(null);
-  const [note, setNote] = useState("");
-
-  useEffect(() => {
-    async function fetchLowStock() {
-      try {
-        setLoading(true);
-        const res = await fetch("/api/products/low-stock");
-        if (!res.ok) throw new Error("Düşük stok verileri alınamadı");
-        const data = await res.json();
-        setLowStockProducts(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Bir hata oluştu");
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchLowStock();
-  }, []);
-
-  if (loading) return <p className="text-gray-500">Yükleniyor...</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
-
-  if (lowStockProducts.length === 0) {
-    return (
-      <Card className="border-green-200 bg-green-50">
-        <CardContent className="flex items-center gap-3 p-6">
-          <CheckCircle className="h-6 w-6 text-green-600" />
-          <div>
-            <p className="font-medium text-green-800">Tüm ürünler yeterli stokta</p>
-            <p className="text-sm text-green-600">Sipariş hatırlatması açık ürünlerde düşük stok bulunmuyor.</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <AlertTriangle className="h-4 w-4 text-orange-500" />
-        <span>{lowStockProducts.length} ürün düşük stokta</span>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {lowStockProducts.map((product) => {
-          const deficit = product.minStock - product.currentStock;
-          return (
-            <Card key={product.id} className="border-red-200 bg-red-50">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <p className="font-semibold text-red-900">{product.name}</p>
-                    <p className="text-xs text-red-700">SKU: {product.sku}</p>
-                  </div>
-                  <Badge className={CATEGORY_BADGE_COLORS[product.category] || CATEGORY_BADGE_COLORS.DIGER}>
-                    {getCategoryLabel(product.category)}
-                  </Badge>
-                </div>
-                <div className="mt-3 space-y-1 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-red-700">Mevcut Stok:</span>
-                    <span className="font-medium text-red-900">{product.currentStock} {getUnitLabel(product.unit)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-red-700">Min Stok:</span>
-                    <span className="font-medium text-red-900">{product.minStock} {getUnitLabel(product.unit)}</span>
-                  </div>
-                  {deficit > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-red-700">Eksik:</span>
-                      <span className="font-bold text-red-900">{deficit} {getUnitLabel(product.unit)}</span>
-                    </div>
-                  )}
-                </div>
-                <Button size="sm" className="mt-3 w-full" variant="outline"
-                  onClick={() => setOrderNote({ productId: product.id, name: product.name })}>
-                  <Package className="mr-2 h-4 w-4" />
-                  Sipariş Ver
-                </Button>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      <Dialog open={orderNote !== null} onOpenChange={(open) => { if (!open) setOrderNote(null); }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Sipariş Notu</DialogTitle>
-            <DialogDescription>{orderNote?.name} için sipariş notu ekleyin</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="orderNote">Not</Label>
-              <Textarea id="orderNote" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Sipariş detayları, tedarikçi bilgileri vb." />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setOrderNote(null); setNote(""); }}>Kapat</Button>
-            <Button onClick={() => { setOrderNote(null); setNote(""); }}>Tamam</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
-
-// ============================================================
-// TAB 4: Stock Report
+// TAB 3: Stock Report
 // ============================================================
 
 function ReportTab() {

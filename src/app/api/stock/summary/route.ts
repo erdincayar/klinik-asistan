@@ -12,14 +12,16 @@ export async function GET() {
       return Response.json({ error: "No clinic" }, { status: 400 });
     }
 
-    const allProducts = await prisma.product.findMany({
-      where: { clinicId },
+    // Use count() for efficient DB-level counting
+    const [totalProducts, activeCount] = await Promise.all([
+      prisma.product.count({ where: { clinicId } }),
+      prisma.product.count({ where: { clinicId, isActive: true } }),
+    ]);
+
+    // Active products needed for value calculations and low stock filter
+    const activeProducts = await prisma.product.findMany({
+      where: { clinicId, isActive: true },
     });
-
-    const activeProducts = allProducts.filter((p) => p.isActive);
-
-    const totalProducts = allProducts.length;
-    const activeCount = activeProducts.length;
 
     // Low stock count (only products with orderAlert enabled and stock > 0)
     const lowStockCount = activeProducts.filter(
@@ -85,7 +87,7 @@ export async function GET() {
       .slice(0, 5);
 
     const topConsumed = sortedConsumed.map(([productId, totalOut]) => {
-      const product = allProducts.find((p) => p.id === productId);
+      const product = activeProducts.find((p) => p.id === productId);
       return {
         productId,
         name: product?.name || "",
