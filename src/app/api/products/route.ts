@@ -31,8 +31,13 @@ export async function GET(request: Request) {
       where.category = category;
     }
 
-    if (active !== null && active !== undefined && active !== "") {
-      where.isActive = active === "true";
+    // Default to active products; pass active=false to include inactive
+    if (active === "false") {
+      where.isActive = false;
+    } else if (active === "all") {
+      // no filter — show both active and inactive
+    } else {
+      where.isActive = true;
     }
 
     const products = await prisma.product.findMany({
