@@ -94,21 +94,22 @@ export async function POST(
           });
         }
       } else {
-        // INCOME type — create Income record + stock OUT (sales)
+        // INCOME type — create Expense record with type INCOME + stock OUT (sales)
         if (parsedAmount > 0) {
-          const income = await tx.income.create({
+          const incomeRecord = await tx.expense.create({
             data: {
               clinicId,
               description: `Fatura - ${invoice.vendor || invoice.fileName}`,
               amount: parsedAmount,
               category: invoice.category || "SATIS",
+              type: "INCOME",
               date: invoice.invoiceDate || new Date(),
             },
           });
 
           await tx.uploadedInvoice.update({
             where: { id },
-            data: { linkedIncomeId: income.id },
+            data: { linkedExpenseId: incomeRecord.id },
           });
         }
 

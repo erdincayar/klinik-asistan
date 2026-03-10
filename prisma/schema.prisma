@@ -96,7 +96,6 @@ model Clinic {
   whatsappConnected     Boolean                @default(false)
   clinicModules         ClinicModule[]
   onboardingChats       OnboardingChat[]
-  incomes               Income[]
   uploadedInvoices      UploadedInvoice[]
   financialReports      FinancialReport[]
   metaAppId             String?
@@ -158,6 +157,7 @@ model Treatment {
   updatedAt   DateTime  @updatedAt
 }
 
+// Expense type values: EXPENSE, INCOME
 model Expense {
   id          String   @id @default(cuid())
   clinicId    String
@@ -165,18 +165,7 @@ model Expense {
   description String
   amount      Int // kuruş cinsinden
   category    String
-  date        DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model Income {
-  id          String   @id @default(cuid())
-  clinicId    String
-  clinic      Clinic   @relation(fields: [clinicId], references: [id])
-  description String
-  amount      Int // kuruş cinsinden
-  category    String
+  type        String   @default("EXPENSE") // EXPENSE, INCOME
   date        DateTime @default(now())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -480,7 +469,6 @@ model UploadedInvoice {
   invoiceDate     DateTime?
   vendor          String?
   linkedExpenseId String?
-  linkedIncomeId  String?
   approved        Boolean   @default(false)
   createdAt       DateTime  @default(now())
 }
