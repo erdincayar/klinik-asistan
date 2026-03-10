@@ -287,10 +287,11 @@ model Product {
   unit             String          @default("ADET") // ADET, KUTU, ML, GR
   currentStock     Int             @default(0)
   minStock         Int             @default(0)
-  alarmEnabled     Boolean         @default(true)
+  orderAlert       Boolean         @default(false)
   purchasePrice    Int             @default(0) // kuruş (TL)
   purchasePriceUSD Float?          // Alış fiyatı USD
   currency         String          @default("TRY") // TRY, USD, EUR
+  minProfitMargin  Int             @default(20) // minimum kar oranı %
   salePrice        Int             @default(0) // kuruş
   clinicId         String
   clinic           Clinic          @relation(fields: [clinicId], references: [id])

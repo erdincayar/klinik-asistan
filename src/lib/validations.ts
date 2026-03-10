@@ -116,10 +116,11 @@ export const productSchema = z.object({
   unit: z.enum(["ADET", "KUTU", "ML", "GR"]),
   currentStock: z.number().int().min(0, "Stok negatif olamaz").optional(),
   minStock: z.number().int().min(0).optional(),
-  alarmEnabled: z.boolean().optional(),
+  orderAlert: z.boolean().optional(),
   purchasePrice: z.number().int().min(0, "Fiyat negatif olamaz"),
   purchasePriceUSD: z.number().min(0, "Fiyat negatif olamaz").nullable().optional(),
   currency: z.enum(["TRY", "USD", "EUR"]).optional(),
+  minProfitMargin: z.number().int().min(0).max(100).optional(),
   salePrice: z.number().int().min(0, "Fiyat negatif olamaz"),
 });
 

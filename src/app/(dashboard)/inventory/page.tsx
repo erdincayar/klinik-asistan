@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Plus, Search, AlertTriangle, CheckCircle, Package, Upload, Download, Loader2, FileSpreadsheet, ArrowRight, Trash2, Bell, BellOff } from "lucide-react";
+import { Plus, Search, AlertTriangle, CheckCircle, Package, Upload, Download, Loader2, FileSpreadsheet, ArrowRight, Trash2, ShoppingCart, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -57,10 +57,11 @@ interface Product {
   unit: string;
   currentStock: number;
   minStock: number;
-  alarmEnabled: boolean;
+  orderAlert: boolean;
   purchasePrice: number;
   purchasePriceUSD: number | null;
   currency: string;
+  minProfitMargin: number;
   salePrice: number;
   isActive: boolean;
   createdAt: string;
@@ -88,6 +89,11 @@ interface StockSummary {
   categoryDistribution: { category: string; count: number; value: number }[];
   recentMovements: { in: number; out: number };
   topConsumed: { productId: string; name: string; totalOut: number }[];
+}
+
+interface ExchangeRates {
+  rates: Record<string, number>;
+  fetchedAt: number;
 }
 
 // --- Constants ---
@@ -142,6 +148,38 @@ function getUnitLabel(value: string) {
 
 function getCurrencySymbol(value: string) {
   return CURRENCIES.find((c) => c.value === value)?.symbol || "₺";
+}
+
+// --- Exchange rate cache ---
+let cachedRates: ExchangeRates | null = null;
+
+async function getExchangeRates(): Promise<Record<string, number>> {
+  const now = Date.now();
+  // Cache for 1 hour
+  if (cachedRates && now - cachedRates.fetchedAt < 3600000) {
+    return cachedRates.rates;
+  }
+  try {
+    const res = await fetch("https://api.exchangerate-api.com/v4/latest/USD");
+    if (!res.ok) throw new Error("Kur alınamadı");
+    const data = await res.json();
+    cachedRates = { rates: data.rates, fetchedAt: now };
+    return data.rates;
+  } catch {
+    return cachedRates?.rates || { TRY: 38, EUR: 0.92, USD: 1 };
+  }
+}
+
+function convertToTRY(amountKurus: number, fromCurrency: string, rates: Record<string, number>): number {
+  if (fromCurrency === "TRY" || !rates.TRY) return amountKurus;
+  const fromRate = rates[fromCurrency] || 1;
+  const tryRate = rates.TRY;
+  return Math.round(amountKurus * (tryRate / fromRate));
+}
+
+function calcProfitMargin(costTRY: number, saleTRY: number): number | null {
+  if (saleTRY <= 0 || costTRY <= 0) return null;
+  return Math.round(((saleTRY - costTRY) / saleTRY) * 100);
 }
 
 // --- Main Page ---
@@ -200,6 +238,14 @@ function ProductsTab() {
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [rates, setRates] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    getExchangeRates().then(setRates);
+  }, []);
 
   const fetchProducts = async () => {
     try {
@@ -212,6 +258,7 @@ function ProductsTab() {
       if (!res.ok) throw new Error("Ürünler alınamadı");
       const data = await res.json();
       setProducts(data);
+      setSelectedIds(new Set());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Bir hata oluştu");
     } finally {
@@ -249,6 +296,7 @@ function ProductsTab() {
         throw new Error(data.error || "Silme hatası");
       }
       setProducts((prev) => prev.filter((p) => p.id !== deleteTarget.id));
+      setSelectedIds((prev) => { const next = new Set(prev); next.delete(deleteTarget.id); return next; });
       setDeleteTarget(null);
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : "Silme hatası");
@@ -257,29 +305,65 @@ function ProductsTab() {
     }
   };
 
-  const handleToggleAlarm = async (product: Product, e: React.MouseEvent) => {
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    setBulkDeleting(true);
+    try {
+      const res = await fetch("/api/products/bulk-delete", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedIds) }),
+      });
+      if (!res.ok) throw new Error("Toplu silme hatası");
+      setProducts((prev) => prev.filter((p) => !selectedIds.has(p.id)));
+      setSelectedIds(new Set());
+      setShowBulkDeleteConfirm(false);
+    } catch {
+      // silent
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
+  const handleToggleOrderAlert = async (product: Product, e: React.MouseEvent) => {
     e.stopPropagation();
-    const newValue = !product.alarmEnabled;
-    // Optimistic update
+    const newValue = !product.orderAlert;
     setProducts((prev) =>
-      prev.map((p) => (p.id === product.id ? { ...p, alarmEnabled: newValue } : p))
+      prev.map((p) => (p.id === product.id ? { ...p, orderAlert: newValue } : p))
     );
     try {
       const res = await fetch(`/api/products/${product.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ alarmEnabled: newValue }),
+        body: JSON.stringify({ orderAlert: newValue }),
       });
       if (!res.ok) {
-        // Revert on error
         setProducts((prev) =>
-          prev.map((p) => (p.id === product.id ? { ...p, alarmEnabled: !newValue } : p))
+          prev.map((p) => (p.id === product.id ? { ...p, orderAlert: !newValue } : p))
         );
       }
     } catch {
       setProducts((prev) =>
-        prev.map((p) => (p.id === product.id ? { ...p, alarmEnabled: !newValue } : p))
+        prev.map((p) => (p.id === product.id ? { ...p, orderAlert: !newValue } : p))
       );
+    }
+  };
+
+  const toggleSelect = (id: string, e: React.MouseEvent | React.ChangeEvent) => {
+    e.stopPropagation();
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === products.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(products.map((p) => p.id)));
     }
   };
 
@@ -328,6 +412,23 @@ function ProductsTab() {
         </div>
       </div>
 
+      {/* Bulk selection bar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 rounded-lg bg-red-50 border border-red-200 px-4 py-2">
+          <span className="text-sm font-medium text-red-800">
+            {selectedIds.size} ürün seçildi
+          </span>
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={() => setShowBulkDeleteConfirm(true)}
+          >
+            <Trash2 className="mr-1 h-3.5 w-3.5" />
+            Sil
+          </Button>
+        </div>
+      )}
+
       {/* Products table */}
       <Card>
         <CardContent className="p-0">
@@ -338,125 +439,147 @@ function ProductsTab() {
           ) : products.length === 0 ? (
             <p className="p-6 text-gray-500">Ürün bulunamadı</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Ad</TableHead>
-                  <TableHead className="hidden sm:table-cell">SKU</TableHead>
-                  <TableHead className="hidden lg:table-cell">Marka</TableHead>
-                  <TableHead>Kategori</TableHead>
-                  <TableHead className="text-right">Mevcut Stok</TableHead>
-                  <TableHead className="hidden md:table-cell text-right">Min Stok</TableHead>
-                  <TableHead className="hidden lg:table-cell text-right">Alış Fiyatı</TableHead>
-                  <TableHead className="hidden lg:table-cell text-right">Satış Fiyatı</TableHead>
-                  <TableHead className="hidden xl:table-cell text-right">Kâr</TableHead>
-                  <TableHead>Durum</TableHead>
-                  <TableHead className="text-center">Alarm</TableHead>
-                  <TableHead className="w-10"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {products.map((product) => {
-                  const isLow = product.alarmEnabled && product.currentStock <= product.minStock;
-                  const currencySymbol = getCurrencySymbol(product.currency);
-                  return (
-                    <TableRow
-                      key={product.id}
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleProductClick(product)}
-                    >
-                      <TableCell className="font-medium">{product.name}</TableCell>
-                      <TableCell className="hidden sm:table-cell text-muted-foreground">
-                        {product.sku}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell text-muted-foreground">
-                        {product.brand || "—"}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={CATEGORY_BADGE_COLORS[product.category] || CATEGORY_BADGE_COLORS.DIGER}>
-                          {getCategoryLabel(product.category)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {product.currentStock > 0 ? (
-                          <>{product.currentStock} {getUnitLabel(product.unit)}</>
-                        ) : (
-                          <span className="text-gray-400">Stok Yok</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell text-right">
-                        {product.minStock} {getUnitLabel(product.unit)}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell text-right">
-                        {product.currency !== "TRY" && (
-                          <span className="text-xs text-muted-foreground mr-1">{currencySymbol}</span>
-                        )}
-                        {formatCurrency(product.purchasePrice)}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell text-right">
-                        {formatCurrency(product.salePrice)}
-                      </TableCell>
-                      <TableCell className="hidden xl:table-cell text-right">
-                        {product.salePrice > 0 && product.purchasePrice > 0 ? (
-                          <span className={product.salePrice - product.purchasePrice >= 0 ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
-                            {formatCurrency(product.salePrice - product.purchasePrice)}
-                          </span>
-                        ) : (
-                          <span className="text-gray-300">&mdash;</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {isLow ? (
-                          <Badge className="bg-red-100 text-red-800">Düşük Stok</Badge>
-                        ) : (
-                          <Badge className="bg-green-100 text-green-800">Yeterli</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <button
-                          onClick={(e) => handleToggleAlarm(product, e)}
-                          className={`inline-flex items-center justify-center rounded-full p-1.5 transition-colors ${
-                            product.alarmEnabled
-                              ? "text-orange-600 hover:bg-orange-100"
-                              : "text-gray-300 hover:bg-gray-100"
-                          }`}
-                          title={product.alarmEnabled ? "Alarm açık" : "Alarm kapalı"}
-                        >
-                          {product.alarmEnabled ? (
-                            <Bell className="h-4 w-4" />
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-10">
+                      <input
+                        type="checkbox"
+                        checked={products.length > 0 && selectedIds.size === products.length}
+                        onChange={toggleSelectAll}
+                        className="h-4 w-4 rounded border-gray-300"
+                      />
+                    </TableHead>
+                    <TableHead>Marka</TableHead>
+                    <TableHead>Ürün Adı</TableHead>
+                    <TableHead>Kategori</TableHead>
+                    <TableHead className="text-right">Stok</TableHead>
+                    <TableHead className="text-right">Fiyat</TableHead>
+                    <TableHead className="text-right">Maliyet</TableHead>
+                    <TableHead className="text-right">Kâr Marjı</TableHead>
+                    <TableHead className="text-center">Para Birimi</TableHead>
+                    <TableHead className="text-center">Sipariş</TableHead>
+                    <TableHead className="text-center">İşlemler</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {products.map((product) => {
+                    const costInTRY = convertToTRY(product.purchasePrice, product.currency, rates);
+                    const margin = calcProfitMargin(costInTRY, product.salePrice);
+                    const marginLow = margin !== null && margin < product.minProfitMargin;
+                    return (
+                      <TableRow
+                        key={product.id}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => handleProductClick(product)}
+                      >
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(product.id)}
+                            onChange={(e) => toggleSelect(product.id, e)}
+                            className="h-4 w-4 rounded border-gray-300"
+                          />
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {product.brand || "—"}
+                        </TableCell>
+                        <TableCell className="font-medium">{product.name}</TableCell>
+                        <TableCell>
+                          <Badge className={CATEGORY_BADGE_COLORS[product.category] || CATEGORY_BADGE_COLORS.DIGER}>
+                            {getCategoryLabel(product.category)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {product.currentStock > 0 ? (
+                            <>{product.currentStock} {getUnitLabel(product.unit)}</>
                           ) : (
-                            <BellOff className="h-4 w-4" />
+                            <span className="text-gray-400">Stok Yok</span>
                           )}
-                        </button>
-                      </TableCell>
-                      <TableCell>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteTarget(product);
-                          }}
-                          className="inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                          title="Sil"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(product.salePrice)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {product.currency !== "TRY" ? (
+                            <span title={`${getCurrencySymbol(product.currency)} → ₺${(costInTRY / 100).toFixed(2)}`}>
+                              {getCurrencySymbol(product.currency)}{(product.purchasePrice / 100).toFixed(2)}
+                            </span>
+                          ) : (
+                            formatCurrency(product.purchasePrice)
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {margin !== null ? (
+                            <span className="flex items-center justify-end gap-1">
+                              {marginLow && (
+                                <span title={`Kâr marjı %${product.minProfitMargin} altında`}><AlertTriangle className="h-3.5 w-3.5 text-yellow-500" /></span>
+                              )}
+                              <span className={margin >= 0 ? (marginLow ? "text-yellow-600 font-medium" : "text-green-600 font-medium") : "text-red-600 font-medium"}>
+                                %{margin}
+                              </span>
+                            </span>
+                          ) : (
+                            <span className="text-gray-300">&mdash;</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="outline" className="text-xs">
+                            {product.currency}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={(e) => handleToggleOrderAlert(product, e)}
+                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                              product.orderAlert ? "bg-green-500" : "bg-gray-300"
+                            }`}
+                            title={product.orderAlert ? "Sipariş hatırlatması açık" : "Sipariş hatırlatması kapalı"}
+                          >
+                            <span
+                              className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                                product.orderAlert ? "translate-x-4.5" : "translate-x-0.5"
+                              }`}
+                              style={{ transform: product.orderAlert ? "translateX(18px)" : "translateX(2px)" }}
+                            />
+                          </button>
+                        </TableCell>
+                        <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              onClick={() => handleProductClick(product)}
+                              className="inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                              title="Düzenle"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => setDeleteTarget(product)}
+                              className="inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                              title="Sil"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Delete confirmation dialog */}
+      {/* Single delete confirmation */}
       <Dialog open={deleteTarget !== null} onOpenChange={(open) => { if (!open) { setDeleteTarget(null); setDeleteError(""); } }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Ürünü Sil</DialogTitle>
             <DialogDescription>
-              <strong>{deleteTarget?.name}</strong> ürününü silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
+              <strong>{deleteTarget?.name}</strong> ürününü silmek istediğinize emin misiniz?
             </DialogDescription>
           </DialogHeader>
           {deleteError && <p className="text-sm text-red-500">{deleteError}</p>}
@@ -466,6 +589,26 @@ function ProductsTab() {
             </Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
               {deleting ? "Siliniyor..." : "Sil"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk delete confirmation */}
+      <Dialog open={showBulkDeleteConfirm} onOpenChange={setShowBulkDeleteConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Toplu Silme</DialogTitle>
+            <DialogDescription>
+              <strong>{selectedIds.size}</strong> ürünü silmek istediğinize emin misiniz?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBulkDeleteConfirm(false)}>
+              İptal
+            </Button>
+            <Button variant="destructive" onClick={handleBulkDelete} disabled={bulkDeleting}>
+              {bulkDeleting ? "Siliniyor..." : `${selectedIds.size} Ürünü Sil`}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -500,6 +643,12 @@ function ProductsTab() {
                 </DialogDescription>
               </DialogHeader>
               <div className="grid grid-cols-2 gap-4 text-sm">
+                {selectedProduct.brand && (
+                  <div>
+                    <span className="text-muted-foreground">Marka:</span>{" "}
+                    {selectedProduct.brand}
+                  </div>
+                )}
                 <div>
                   <span className="text-muted-foreground">Kategori:</span>{" "}
                   {getCategoryLabel(selectedProduct.category)}
@@ -508,12 +657,6 @@ function ProductsTab() {
                   <span className="text-muted-foreground">Birim:</span>{" "}
                   {getUnitLabel(selectedProduct.unit)}
                 </div>
-                {selectedProduct.brand && (
-                  <div>
-                    <span className="text-muted-foreground">Marka:</span>{" "}
-                    {selectedProduct.brand}
-                  </div>
-                )}
                 <div>
                   <span className="text-muted-foreground">Para Birimi:</span>{" "}
                   {selectedProduct.currency}
@@ -527,12 +670,12 @@ function ProductsTab() {
                   {selectedProduct.minStock}
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Stok Alarmı:</span>{" "}
-                  {selectedProduct.alarmEnabled ? "Açık" : "Kapalı"}
+                  <span className="text-muted-foreground">Sipariş Hatırlatması:</span>{" "}
+                  {selectedProduct.orderAlert ? "Açık" : "Kapalı"}
                 </div>
                 <div>
                   <span className="text-muted-foreground">Alış Fiyatı ({selectedProduct.currency}):</span>{" "}
-                  {formatCurrency(selectedProduct.purchasePrice)}
+                  {getCurrencySymbol(selectedProduct.currency)}{(selectedProduct.purchasePrice / 100).toFixed(2)}
                 </div>
                 {selectedProduct.purchasePriceUSD != null && selectedProduct.purchasePriceUSD > 0 && (
                   <div>
@@ -544,14 +687,25 @@ function ProductsTab() {
                   <span className="text-muted-foreground">Satış Fiyatı:</span>{" "}
                   {formatCurrency(selectedProduct.salePrice)}
                 </div>
-                {selectedProduct.salePrice > 0 && selectedProduct.purchasePrice > 0 && (
-                  <div>
-                    <span className="text-muted-foreground">Kâr:</span>{" "}
-                    <span className={selectedProduct.salePrice - selectedProduct.purchasePrice >= 0 ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
-                      {formatCurrency(selectedProduct.salePrice - selectedProduct.purchasePrice)}
-                    </span>
-                  </div>
-                )}
+                <div>
+                  <span className="text-muted-foreground">Min Kâr Marjı:</span>{" "}
+                  %{selectedProduct.minProfitMargin}
+                </div>
+                {(() => {
+                  const costTRY = convertToTRY(selectedProduct.purchasePrice, selectedProduct.currency, rates);
+                  const margin = calcProfitMargin(costTRY, selectedProduct.salePrice);
+                  if (margin === null) return null;
+                  const marginLow = margin < selectedProduct.minProfitMargin;
+                  return (
+                    <div>
+                      <span className="text-muted-foreground">Kâr Marjı:</span>{" "}
+                      <span className={marginLow ? "text-yellow-600 font-semibold" : margin >= 0 ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
+                        %{margin}
+                        {marginLow && " (Düşük!)"}
+                      </span>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Movement history */}
@@ -614,14 +768,31 @@ function NewProductDialog({
     unit: "ADET",
     currentStock: 0,
     minStock: 0,
-    alarmEnabled: true,
+    orderAlert: false,
     purchasePrice: 0,
     purchasePriceUSD: "",
     currency: "TRY",
+    minProfitMargin: 20,
     salePrice: 0,
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  const resetForm = () => setForm({
+    name: "",
+    sku: "",
+    brand: "",
+    category: "DIGER",
+    unit: "ADET",
+    currentStock: 0,
+    minStock: 0,
+    orderAlert: false,
+    purchasePrice: 0,
+    purchasePriceUSD: "",
+    currency: "TRY",
+    minProfitMargin: 20,
+    salePrice: 0,
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -647,20 +818,7 @@ function NewProductDialog({
       }
 
       onOpenChange(false);
-      setForm({
-        name: "",
-        sku: "",
-        brand: "",
-        category: "DIGER",
-        unit: "ADET",
-        currentStock: 0,
-        minStock: 0,
-        alarmEnabled: true,
-        purchasePrice: 0,
-        purchasePriceUSD: "",
-        currency: "TRY",
-        salePrice: 0,
-      });
+      resetForm();
       onSuccess();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Bir hata oluştu");
@@ -671,7 +829,7 @@ function NewProductDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Yeni Ürün</DialogTitle>
           <DialogDescription>Yeni bir ürün ekleyin</DialogDescription>
@@ -777,18 +935,6 @@ function NewProductDialog({
               />
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="alarmEnabled"
-              checked={form.alarmEnabled}
-              onChange={(e) => setForm({ ...form, alarmEnabled: e.target.checked })}
-              className="h-4 w-4 rounded border-gray-300"
-            />
-            <Label htmlFor="alarmEnabled" className="text-sm font-normal cursor-pointer">
-              Düşük stok alarmı aktif
-            </Label>
-          </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="purchasePrice">Alış Fiyatı ({getCurrencySymbol(form.currency)})</Label>
@@ -801,45 +947,54 @@ function NewProductDialog({
                 onChange={(e) => setForm({ ...form, purchasePrice: Number(e.target.value) })}
               />
             </div>
-            {form.currency !== "TRY" && (
-              <div className="space-y-2">
-                <Label htmlFor="purchasePriceUSD">Alış Fiyatı (USD)</Label>
-                <Input
-                  id="purchasePriceUSD"
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  placeholder="Opsiyonel"
-                  value={form.purchasePriceUSD}
-                  onChange={(e) => setForm({ ...form, purchasePriceUSD: e.target.value })}
-                />
-              </div>
-            )}
-            {form.currency === "TRY" && (
-              <div className="space-y-2">
-                <Label htmlFor="purchasePriceUSD">Alış Fiyatı (USD)</Label>
-                <Input
-                  id="purchasePriceUSD"
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  placeholder="Opsiyonel"
-                  value={form.purchasePriceUSD}
-                  onChange={(e) => setForm({ ...form, purchasePriceUSD: e.target.value })}
-                />
-              </div>
-            )}
+            <div className="space-y-2">
+              <Label htmlFor="salePrice">Satış Fiyatı (₺)</Label>
+              <Input
+                id="salePrice"
+                type="number"
+                min={0}
+                step="0.01"
+                value={form.salePrice}
+                onChange={(e) => setForm({ ...form, salePrice: Number(e.target.value) })}
+              />
+            </div>
           </div>
+          {form.currency !== "TRY" && (
+            <div className="space-y-2">
+              <Label htmlFor="purchasePriceUSD">Alış Fiyatı (USD)</Label>
+              <Input
+                id="purchasePriceUSD"
+                type="number"
+                min={0}
+                step="0.01"
+                placeholder="Opsiyonel"
+                value={form.purchasePriceUSD}
+                onChange={(e) => setForm({ ...form, purchasePriceUSD: e.target.value })}
+              />
+            </div>
+          )}
           <div className="space-y-2">
-            <Label htmlFor="salePrice">Satış Fiyatı (₺)</Label>
+            <Label htmlFor="minProfitMargin">Min Kâr Marjı (%)</Label>
             <Input
-              id="salePrice"
+              id="minProfitMargin"
               type="number"
               min={0}
-              step="0.01"
-              value={form.salePrice}
-              onChange={(e) => setForm({ ...form, salePrice: Number(e.target.value) })}
+              max={100}
+              value={form.minProfitMargin}
+              onChange={(e) => setForm({ ...form, minProfitMargin: Number(e.target.value) })}
             />
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="orderAlert"
+              checked={form.orderAlert}
+              onChange={(e) => setForm({ ...form, orderAlert: e.target.checked })}
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            <Label htmlFor="orderAlert" className="text-sm font-normal cursor-pointer">
+              Sipariş hatırlatması aktif
+            </Label>
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}
           <DialogFooter>
@@ -875,7 +1030,7 @@ const MAPPING_FIELDS = [
   { key: "name", label: "Ürün Adı", required: true },
   { key: "brand", label: "Marka", required: false },
   { key: "category", label: "Kategori", required: false },
-  { key: "quantity", label: "Miktar", required: false },
+  { key: "quantity", label: "Miktar / Stok", required: false },
   { key: "unit", label: "Birim", required: false },
   { key: "purchasePrice", label: "Alış Fiyatı TL", required: false },
   { key: "purchasePriceUSD", label: "Alış Fiyatı USD", required: false },
@@ -947,7 +1102,7 @@ function ImportDialog({
 
       setPreview(data);
 
-      // Auto-map columns by guessing
+      // Auto-map columns
       const autoMapping: Record<string, string> = {};
       const cols = data.columns as string[];
       for (const field of MAPPING_FIELDS) {
@@ -1024,7 +1179,6 @@ function ImportDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Step 1: File upload */}
         {step === "upload" && (
           <div className="space-y-4">
             <div className="rounded-xl border-2 border-dashed border-gray-200 p-8 text-center">
@@ -1056,7 +1210,6 @@ function ImportDialog({
           </div>
         )}
 
-        {/* Step 2: Column mapping + preview */}
         {step === "mapping" && preview && (
           <div className="space-y-4">
             <div className="rounded-lg bg-blue-50 p-3">
@@ -1064,8 +1217,6 @@ function ImportDialog({
                 <strong>{preview.totalRows}</strong> satır bulundu. Sütunları eşleştirin:
               </p>
             </div>
-
-            {/* Mapping selects */}
             <div className="grid grid-cols-2 gap-3">
               {MAPPING_FIELDS.map((field) => (
                 <div key={field.key} className="space-y-1">
@@ -1076,25 +1227,18 @@ function ImportDialog({
                   <select
                     value={mapping[field.key] || ""}
                     onChange={(e) =>
-                      setMapping((prev) => ({
-                        ...prev,
-                        [field.key]: e.target.value,
-                      }))
+                      setMapping((prev) => ({ ...prev, [field.key]: e.target.value }))
                     }
                     className="flex h-9 w-full rounded-md border border-input bg-background px-2 py-1 text-sm"
                   >
                     <option value="">— Seçin —</option>
                     {preview.columns.map((col) => (
-                      <option key={col} value={col}>
-                        {col}
-                      </option>
+                      <option key={col} value={col}>{col}</option>
                     ))}
                   </select>
                 </div>
               ))}
             </div>
-
-            {/* Preview table */}
             <div>
               <p className="mb-2 text-xs font-semibold text-gray-500 uppercase">Önizleme (ilk 5 satır)</p>
               <div className="overflow-x-auto rounded-lg border">
@@ -1102,9 +1246,7 @@ function ImportDialog({
                   <thead className="bg-gray-50">
                     <tr>
                       {preview.columns.map((col) => (
-                        <th key={col} className="px-3 py-2 text-left font-medium text-gray-600 whitespace-nowrap">
-                          {col}
-                        </th>
+                        <th key={col} className="px-3 py-2 text-left font-medium text-gray-600 whitespace-nowrap">{col}</th>
                       ))}
                     </tr>
                   </thead>
@@ -1122,13 +1264,9 @@ function ImportDialog({
                 </table>
               </div>
             </div>
-
             {error && <p className="text-sm text-red-500">{error}</p>}
-
             <DialogFooter>
-              <Button variant="outline" onClick={() => { reset(); }}>
-                Geri
-              </Button>
+              <Button variant="outline" onClick={() => reset()}>Geri</Button>
               <Button onClick={handleImport} disabled={!mapping.name}>
                 <ArrowRight className="mr-2 h-4 w-4" />
                 İçe Aktar ({preview.totalRows} satır)
@@ -1137,7 +1275,6 @@ function ImportDialog({
           </div>
         )}
 
-        {/* Step 3: Importing */}
         {step === "importing" && (
           <div className="flex flex-col items-center gap-4 py-8">
             <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
@@ -1146,7 +1283,6 @@ function ImportDialog({
           </div>
         )}
 
-        {/* Step 4: Result */}
         {step === "result" && result && (
           <div className="space-y-4">
             <div className="rounded-xl bg-green-50 p-4">
@@ -1216,47 +1352,29 @@ function MovementsTab() {
 
   return (
     <div className="space-y-4">
-      {/* Filters and actions */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex gap-2">
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Başlangıç</Label>
-            <Input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-40"
-            />
+            <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-40" />
           </div>
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Bitiş</Label>
-            <Input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-40"
-            />
+            <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-40" />
           </div>
         </div>
         <div className="flex gap-2">
-          <Button
-            onClick={() => setShowStockIn(true)}
-            className="bg-green-600 hover:bg-green-700"
-          >
+          <Button onClick={() => setShowStockIn(true)} className="bg-green-600 hover:bg-green-700">
             <Plus className="mr-2 h-4 w-4" />
             Stok Girişi
           </Button>
-          <Button
-            onClick={() => setShowStockOut(true)}
-            variant="destructive"
-          >
+          <Button onClick={() => setShowStockOut(true)} variant="destructive">
             <Plus className="mr-2 h-4 w-4" />
             Stok Çıkışı
           </Button>
         </div>
       </div>
 
-      {/* Movements table */}
       <Card>
         <CardContent className="p-0">
           {loading ? (
@@ -1284,24 +1402,16 @@ function MovementsTab() {
                   return (
                     <TableRow key={m.id}>
                       <TableCell>{formatDate(m.date)}</TableCell>
-                      <TableCell className="font-medium">
-                        {m.product?.name || "-"}
-                      </TableCell>
+                      <TableCell className="font-medium">{m.product?.name || "-"}</TableCell>
                       <TableCell>
                         <Badge className={typeBadge.className}>{typeBadge.label}</Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         {m.quantity} {m.product?.unit ? getUnitLabel(m.product.unit) : ""}
                       </TableCell>
-                      <TableCell className="hidden sm:table-cell text-right">
-                        {formatCurrency(m.unitPrice)}
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell text-right">
-                        {formatCurrency(m.totalPrice)}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell text-muted-foreground">
-                        {m.description || "-"}
-                      </TableCell>
+                      <TableCell className="hidden sm:table-cell text-right">{formatCurrency(m.unitPrice)}</TableCell>
+                      <TableCell className="hidden sm:table-cell text-right">{formatCurrency(m.totalPrice)}</TableCell>
+                      <TableCell className="hidden md:table-cell text-muted-foreground">{m.description || "-"}</TableCell>
                     </TableRow>
                   );
                 })}
@@ -1311,21 +1421,8 @@ function MovementsTab() {
         </CardContent>
       </Card>
 
-      {/* Stock In modal */}
-      <StockMovementDialog
-        open={showStockIn}
-        onOpenChange={setShowStockIn}
-        type="IN"
-        onSuccess={fetchMovements}
-      />
-
-      {/* Stock Out modal */}
-      <StockMovementDialog
-        open={showStockOut}
-        onOpenChange={setShowStockOut}
-        type="OUT"
-        onSuccess={fetchMovements}
-      />
+      <StockMovementDialog open={showStockIn} onOpenChange={setShowStockIn} type="IN" onSuccess={fetchMovements} />
+      <StockMovementDialog open={showStockOut} onOpenChange={setShowStockOut} type="OUT" onSuccess={fetchMovements} />
     </div>
   );
 }
@@ -1333,10 +1430,7 @@ function MovementsTab() {
 // --- Stock Movement Dialog ---
 
 function StockMovementDialog({
-  open,
-  onOpenChange,
-  type,
-  onSuccess,
+  open, onOpenChange, type, onSuccess,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -1345,11 +1439,7 @@ function StockMovementDialog({
 }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [form, setForm] = useState({
-    productId: "",
-    quantity: 1,
-    unitPrice: 0,
-    description: "",
-    reference: "",
+    productId: "", quantity: 1, unitPrice: 0, description: "", reference: "",
     date: new Date().toISOString().split("T")[0],
   });
   const [saving, setSaving] = useState(false);
@@ -1359,9 +1449,7 @@ function StockMovementDialog({
     if (open) {
       fetch("/api/products?active=true")
         .then((res) => res.json())
-        .then((data) => {
-          if (Array.isArray(data)) setProducts(data);
-        })
+        .then((data) => { if (Array.isArray(data)) setProducts(data); })
         .catch(() => {});
     }
   }, [open]);
@@ -1370,32 +1458,18 @@ function StockMovementDialog({
     e.preventDefault();
     setSaving(true);
     setError("");
-
     try {
       const res = await fetch("/api/stock-movements", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...form,
-          type,
-          unitPrice: toKurus(form.unitPrice),
-        }),
+        body: JSON.stringify({ ...form, type, unitPrice: toKurus(form.unitPrice) }),
       });
-
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || "Hareket oluşturulamadı");
       }
-
       onOpenChange(false);
-      setForm({
-        productId: "",
-        quantity: 1,
-        unitPrice: 0,
-        description: "",
-        reference: "",
-        date: new Date().toISOString().split("T")[0],
-      });
+      setForm({ productId: "", quantity: 1, unitPrice: 0, description: "", reference: "", date: new Date().toISOString().split("T")[0] });
       onSuccess();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Bir hata oluştu");
@@ -1404,99 +1478,49 @@ function StockMovementDialog({
     }
   };
 
-  const title = type === "IN" ? "Stok Girişi" : "Stok Çıkışı";
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>
-            {type === "IN" ? "Stoğa ürün girişi yapın" : "Stoktan ürün çıkışı yapın"}
-          </DialogDescription>
+          <DialogTitle>{type === "IN" ? "Stok Girişi" : "Stok Çıkışı"}</DialogTitle>
+          <DialogDescription>{type === "IN" ? "Stoğa ürün girişi yapın" : "Stoktan ürün çıkışı yapın"}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="productId">Ürün</Label>
-            <select
-              id="productId"
-              value={form.productId}
-              onChange={(e) => setForm({ ...form, productId: e.target.value })}
-              required
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
+            <select id="productId" value={form.productId} onChange={(e) => setForm({ ...form, productId: e.target.value })} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
               <option value="">Ürün seçin...</option>
-              {products.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name} ({p.sku})
-                </option>
-              ))}
+              {products.map((p) => (<option key={p.id} value={p.id}>{p.name} ({p.sku})</option>))}
             </select>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="quantity">Miktar</Label>
-              <Input
-                id="quantity"
-                type="number"
-                min={1}
-                value={form.quantity}
-                onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })}
-                required
-              />
+              <Input id="quantity" type="number" min={1} value={form.quantity} onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })} required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="unitPrice">Birim Fiyat (TL)</Label>
-              <Input
-                id="unitPrice"
-                type="number"
-                min={0}
-                step="0.01"
-                value={form.unitPrice}
-                onChange={(e) => setForm({ ...form, unitPrice: Number(e.target.value) })}
-              />
+              <Input id="unitPrice" type="number" min={0} step="0.01" value={form.unitPrice} onChange={(e) => setForm({ ...form, unitPrice: Number(e.target.value) })} />
             </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="description">Açıklama</Label>
-            <Textarea
-              id="description"
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="Opsiyonel açıklama..."
-            />
+            <Textarea id="description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Opsiyonel açıklama..." />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="reference">Referans / Fatura No</Label>
-              <Input
-                id="reference"
-                value={form.reference}
-                onChange={(e) => setForm({ ...form, reference: e.target.value })}
-                placeholder="Opsiyonel"
-              />
+              <Input id="reference" value={form.reference} onChange={(e) => setForm({ ...form, reference: e.target.value })} placeholder="Opsiyonel" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="date">Tarih</Label>
-              <Input
-                id="date"
-                type="date"
-                value={form.date}
-                onChange={(e) => setForm({ ...form, date: e.target.value })}
-              />
+              <Input id="date" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
             </div>
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              İptal
-            </Button>
-            <Button
-              type="submit"
-              disabled={saving}
-              className={type === "IN" ? "bg-green-600 hover:bg-green-700" : ""}
-              variant={type === "OUT" ? "destructive" : "default"}
-            >
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>İptal</Button>
+            <Button type="submit" disabled={saving} className={type === "IN" ? "bg-green-600 hover:bg-green-700" : ""} variant={type === "OUT" ? "destructive" : "default"}>
               {saving ? "Kaydediliyor..." : "Kaydet"}
             </Button>
           </DialogFooter>
@@ -1544,9 +1568,7 @@ function AlertsTab() {
           <CheckCircle className="h-6 w-6 text-green-600" />
           <div>
             <p className="font-medium text-green-800">Tüm ürünler yeterli stokta</p>
-            <p className="text-sm text-green-600">
-              Stok seviyesi düşük ürün bulunmuyor.
-            </p>
+            <p className="text-sm text-green-600">Sipariş hatırlatması açık ürünlerde düşük stok bulunmuyor.</p>
           </div>
         </CardContent>
       </Card>
@@ -1578,33 +1600,21 @@ function AlertsTab() {
                 <div className="mt-3 space-y-1 text-sm">
                   <div className="flex justify-between">
                     <span className="text-red-700">Mevcut Stok:</span>
-                    <span className="font-medium text-red-900">
-                      {product.currentStock} {getUnitLabel(product.unit)}
-                    </span>
+                    <span className="font-medium text-red-900">{product.currentStock} {getUnitLabel(product.unit)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-red-700">Min Stok:</span>
-                    <span className="font-medium text-red-900">
-                      {product.minStock} {getUnitLabel(product.unit)}
-                    </span>
+                    <span className="font-medium text-red-900">{product.minStock} {getUnitLabel(product.unit)}</span>
                   </div>
                   {deficit > 0 && (
                     <div className="flex justify-between">
                       <span className="text-red-700">Eksik:</span>
-                      <span className="font-bold text-red-900">
-                        {deficit} {getUnitLabel(product.unit)}
-                      </span>
+                      <span className="font-bold text-red-900">{deficit} {getUnitLabel(product.unit)}</span>
                     </div>
                   )}
                 </div>
-                <Button
-                  size="sm"
-                  className="mt-3 w-full"
-                  variant="outline"
-                  onClick={() =>
-                    setOrderNote({ productId: product.id, name: product.name })
-                  }
-                >
+                <Button size="sm" className="mt-3 w-full" variant="outline"
+                  onClick={() => setOrderNote({ productId: product.id, name: product.name })}>
                   <Package className="mr-2 h-4 w-4" />
                   Sipariş Ver
                 </Button>
@@ -1614,33 +1624,21 @@ function AlertsTab() {
         })}
       </div>
 
-      {/* Order note dialog */}
       <Dialog open={orderNote !== null} onOpenChange={(open) => { if (!open) setOrderNote(null); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Sipariş Notu</DialogTitle>
-            <DialogDescription>
-              {orderNote?.name} için sipariş notu ekleyin
-            </DialogDescription>
+            <DialogDescription>{orderNote?.name} için sipariş notu ekleyin</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="orderNote">Not</Label>
-              <Textarea
-                id="orderNote"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="Sipariş detayları, tedarikçi bilgileri vb."
-              />
+              <Textarea id="orderNote" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Sipariş detayları, tedarikçi bilgileri vb." />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setOrderNote(null); setNote(""); }}>
-              Kapat
-            </Button>
-            <Button onClick={() => { setOrderNote(null); setNote(""); }}>
-              Tamam
-            </Button>
+            <Button variant="outline" onClick={() => { setOrderNote(null); setNote(""); }}>Kapat</Button>
+            <Button onClick={() => { setOrderNote(null); setNote(""); }}>Tamam</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1691,7 +1689,6 @@ function ReportTab() {
 
   return (
     <div className="space-y-6">
-      {/* Summary cards */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Card>
           <CardContent className="p-6">
@@ -1708,11 +1705,7 @@ function ReportTab() {
         <Card>
           <CardContent className="p-6">
             <p className="text-sm text-gray-500">Düşük Stok</p>
-            <p
-              className={`text-2xl font-bold ${
-                summary.lowStockCount > 0 ? "text-red-600" : "text-green-600"
-              }`}
-            >
+            <p className={`text-2xl font-bold ${summary.lowStockCount > 0 ? "text-red-600" : "text-green-600"}`}>
               {summary.lowStockCount}
             </p>
           </CardContent>
@@ -1720,16 +1713,12 @@ function ReportTab() {
         <Card>
           <CardContent className="p-6">
             <p className="text-sm text-gray-500">Toplam Stok Değeri</p>
-            <p className="text-2xl font-bold text-green-600">
-              {formatCurrency(summary.totalStockValue.purchase)}
-            </p>
+            <p className="text-2xl font-bold text-green-600">{formatCurrency(summary.totalStockValue.purchase)}</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Charts */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Category pie chart */}
         <Card>
           <CardHeader>
             <CardTitle>Kategori Dağılımı</CardTitle>
@@ -1741,19 +1730,8 @@ function ReportTab() {
             ) : (
               <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={5}
-                    dataKey="value"
-                    nameKey="name"
-                  >
-                    {pieData.map((entry, i) => (
-                      <Cell key={i} fill={entry.fill} />
-                    ))}
+                  <Pie data={pieData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value" nameKey="name">
+                    {pieData.map((entry, i) => (<Cell key={i} fill={entry.fill} />))}
                   </Pie>
                   <Tooltip />
                   <Legend />
@@ -1763,7 +1741,6 @@ function ReportTab() {
           </CardContent>
         </Card>
 
-        {/* Recent movements bar chart */}
         <Card>
           <CardHeader>
             <CardTitle>Son 30 Gün Hareketler</CardTitle>
@@ -1780,9 +1757,7 @@ function ReportTab() {
                   <YAxis fontSize={12} />
                   <Tooltip />
                   <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                    {barData.map((entry, i) => (
-                      <Cell key={i} fill={entry.fill} />
-                    ))}
+                    {barData.map((entry, i) => (<Cell key={i} fill={entry.fill} />))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -1791,7 +1766,6 @@ function ReportTab() {
         </Card>
       </div>
 
-      {/* Top consumed products */}
       <Card>
         <CardHeader>
           <CardTitle>En Çok Tüketilen Ürünler</CardTitle>
