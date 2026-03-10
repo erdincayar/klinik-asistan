@@ -60,6 +60,27 @@ export async function GET() {
       + monthlyIncomeRecords.reduce((sum, r) => sum + (r.amount ?? 0), 0);
     const monthlyExpense = monthlyExpenseRecords.reduce((sum, e) => sum + (e.amount ?? 0), 0);
 
+    // Estimated profit from approved income invoices
+    const approvedIncomeInvoices = await prisma.uploadedInvoice.findMany({
+      where: {
+        clinicId,
+        approved: true,
+        invoiceType: "INCOME",
+        invoiceDate: { gte: startOfMonth, lt: startOfNextMonth },
+      },
+      select: { profitData: true },
+    });
+
+    let estimatedProfit = 0;
+    let unmatchedItemCount = 0;
+    for (const inv of approvedIncomeInvoices) {
+      if (inv.profitData && typeof inv.profitData === "object") {
+        const pd = inv.profitData as any;
+        estimatedProfit += pd.grossProfit ?? 0;
+        unmatchedItemCount += Array.isArray(pd.unmatchedItems) ? pd.unmatchedItems.length : 0;
+      }
+    }
+
     return Response.json({
       totalPatients,
       monthlyIncome,
@@ -72,6 +93,8 @@ export async function GET() {
         amount: t.amount ?? 0,
         date: t.date,
       })),
+      estimatedProfit,
+      unmatchedItemCount,
       pendingReminders,
       todayAppointments: todayAppointments.map((a) => ({
         id: a.id,

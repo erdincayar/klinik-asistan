@@ -15,6 +15,7 @@ import {
   Bell,
   Clock,
   Coins,
+  AlertTriangle,
 } from "lucide-react";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import { APPOINTMENT_STATUSES, TREATMENT_CATEGORIES } from "@/lib/types";
@@ -34,6 +35,8 @@ interface DashboardData {
   monthlyIncome: number;
   monthlyExpense: number;
   netProfit: number;
+  estimatedProfit: number;
+  unmatchedItemCount: number;
   totalPatients: number;
   pendingReminders: number;
   recentTreatments: {
@@ -272,6 +275,8 @@ export default function DashboardPage() {
       icon: DollarSign,
       iconBg: "bg-amber-50",
       iconColor: "text-amber-600",
+      estimatedProfit: data.estimatedProfit,
+      unmatchedItemCount: data.unmatchedItemCount,
     },
     {
       title: "Stok Uyarıları",
@@ -352,6 +357,16 @@ export default function DashboardPage() {
                       >
                         {stat.change}
                       </span>
+                    </div>
+                  )}
+                  {"estimatedProfit" in stat && stat.estimatedProfit !== 0 && (
+                    <div className="mt-1 flex items-center gap-1">
+                      <span className={cn("text-xs font-medium", (stat.estimatedProfit as number) >= 0 ? "text-emerald-600" : "text-red-600")}>
+                        Tahmini Kâr: {formatCurrency(stat.estimatedProfit as number)}
+                      </span>
+                      {"unmatchedItemCount" in stat && (stat.unmatchedItemCount as number) > 0 && (
+                        <AlertTriangle className="h-3 w-3 text-yellow-500" />
+                      )}
                     </div>
                   )}
                 </div>

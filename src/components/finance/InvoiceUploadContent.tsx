@@ -18,6 +18,7 @@ import {
   ChevronDown,
   Trash2,
   AlertTriangle,
+  RefreshCw,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
@@ -33,6 +34,25 @@ interface UploadedInvoice {
   invoiceDate: string | null;
   ocrData: Record<string, unknown> | null;
   approved: boolean;
+  profitData: {
+    totalRevenue: number;
+    totalCost: number;
+    grossProfit: number;
+    matchedItems: Array<{
+      description: string;
+      productId: string;
+      productName: string;
+      quantity: number;
+      salePrice: number;
+      costPrice: number;
+      profit: number;
+    }>;
+    unmatchedItems: Array<{
+      description: string;
+      quantity: number;
+      salePrice: number;
+    }>;
+  } | null;
   createdAt: string;
 }
 
@@ -101,6 +121,7 @@ export default function InvoiceUploadContent() {
   const [inlineRejecting, setInlineRejecting] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState("");
   const [invoiceTypeOverride, setInvoiceTypeOverride] = useState<string | null>(null);
+  const [recalculating, setRecalculating] = useState<string | null>(null);
 
   useEffect(() => {
     fetchInvoices();
@@ -117,6 +138,22 @@ export default function InvoiceUploadContent() {
       // Silently fail
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleRecalculate(inv: UploadedInvoice) {
+    setRecalculating(inv.id);
+    try {
+      const res = await fetch(`/api/invoices/ocr/${inv.id}/recalculate`, {
+        method: "PATCH",
+      });
+      if (res.ok) {
+        await fetchInvoices();
+      }
+    } catch {
+      // silent fail
+    } finally {
+      setRecalculating(null);
     }
   }
 
@@ -539,16 +576,37 @@ export default function InvoiceUploadContent() {
                             {new Date(inv.invoiceDate).toLocaleDateString("tr-TR")}
                           </span>
                         )}
+                        {inv.invoiceType === "INCOME" && inv.approved && (
+                          inv.profitData ? (
+                            <span className={`text-xs font-semibold ${inv.profitData.grossProfit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                              Kâr: {formatCurrency(inv.profitData.grossProfit)}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-400">Kâr: Hesaplanmadı</span>
+                          )
+                        )}
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     {/* Approve/Reject or Approved badge */}
                     {inv.approved ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
-                        <Check className="h-3 w-3" />
-                        Onaylı
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+                          <Check className="h-3 w-3" />
+                          Onaylı
+                        </span>
+                        {inv.invoiceType === "INCOME" && inv.profitData && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleRecalculate(inv); }}
+                            disabled={recalculating === inv.id}
+                            className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-600 transition-colors hover:bg-emerald-100 disabled:opacity-50"
+                            title="Kârı Güncelle"
+                          >
+                            <RefreshCw className={`h-3 w-3 ${recalculating === inv.id ? "animate-spin" : ""}`} />
+                          </button>
+                        )}
+                      </div>
                     ) : inv.status === "COMPLETED" ? (
                       <>
                         <button

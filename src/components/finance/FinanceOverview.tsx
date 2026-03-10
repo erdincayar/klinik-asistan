@@ -624,41 +624,96 @@ export default function FinanceOverview() {
                   </div>
                 </div>
 
-                {treatments.length === 0 ? (
-                  <div className="flex h-[250px] items-center justify-center">
-                    <div className="text-center">
-                      <TrendingUp className="mx-auto mb-2 h-8 w-8 text-gray-300" />
-                      <p className="text-sm text-gray-400">Bu ay gelir kaydı yok</p>
+                {(() => {
+                  const incomeRows: Array<{
+                    id: string;
+                    type: "treatment" | "invoice";
+                    label: string;
+                    sublabel: string;
+                    amount: number;
+                    date: string;
+                    patientId?: string;
+                    grossProfit?: number;
+                    unmatchedCount?: number;
+                  }> = [
+                    ...treatments.map((t) => ({
+                      id: t.id,
+                      type: "treatment" as const,
+                      label: t.patientName,
+                      sublabel: (TREATMENT_CATEGORIES.find((c) => c.value === t.treatmentType)?.label || t.treatmentType) + " · " + formatTurkishDate(t.date),
+                      amount: t.amount,
+                      date: t.date,
+                      patientId: t.patientId,
+                    })),
+                    ...(invoiceProfitSummary?.invoices || []).map((inv) => ({
+                      id: inv.id,
+                      type: "invoice" as const,
+                      label: inv.vendor || "Fatura",
+                      sublabel: inv.date ? formatTurkishDate(inv.date) : "—",
+                      amount: inv.amount,
+                      date: inv.date || "",
+                      grossProfit: inv.grossProfit,
+                      unmatchedCount: inv.unmatchedCount,
+                    })),
+                  ];
+                  incomeRows.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                  const displayRows = incomeRows.slice(0, 10);
+
+                  return displayRows.length === 0 ? (
+                    <div className="flex h-[250px] items-center justify-center">
+                      <div className="text-center">
+                        <TrendingUp className="mx-auto mb-2 h-8 w-8 text-gray-300" />
+                        <p className="text-sm text-gray-400">Bu ay gelir kaydı yok</p>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-gray-50">
-                    {treatments.slice(0, 8).map((t) => {
-                      const catLabel = TREATMENT_CATEGORIES.find((c) => c.value === t.treatmentType)?.label || t.treatmentType;
-                      return (
-                        <div key={t.id} className="flex items-center justify-between px-6 py-3 transition-colors hover:bg-gray-50/70">
+                  ) : (
+                    <div className="divide-y divide-gray-50">
+                      {displayRows.map((row) => (
+                        <div key={row.id} className="flex items-center justify-between px-6 py-3 transition-colors hover:bg-gray-50/70">
                           <div className="flex items-center gap-3">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50">
-                              <DollarSign className="h-4 w-4 text-emerald-600" />
+                            <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg", row.type === "treatment" ? "bg-emerald-50" : "bg-blue-50")}>
+                              {row.type === "treatment" ? (
+                                <DollarSign className="h-4 w-4 text-emerald-600" />
+                              ) : (
+                                <FileText className="h-4 w-4 text-blue-600" />
+                              )}
                             </div>
                             <div>
-                              <Link href={`/patients/${t.patientId}`} className="text-sm font-medium text-gray-900 hover:text-blue-600">
-                                {t.patientName}
-                              </Link>
-                              <p className="text-[11px] text-gray-400">{catLabel} · {formatTurkishDate(t.date)}</p>
+                              {row.type === "treatment" && row.patientId ? (
+                                <Link href={`/patients/${row.patientId}`} className="text-sm font-medium text-gray-900 hover:text-blue-600">
+                                  {row.label}
+                                </Link>
+                              ) : (
+                                <p className="text-sm font-medium text-gray-900">{row.label}</p>
+                              )}
+                              <p className="text-[11px] text-gray-400">{row.sublabel}</p>
                             </div>
                           </div>
-                          <span className="text-sm font-semibold text-emerald-700">{formatCurrency(t.amount)}</span>
+                          <div className="text-right">
+                            <span className="text-sm font-semibold text-emerald-700">{formatCurrency(row.amount)}</span>
+                            {row.type === "invoice" ? (
+                              <div className="flex items-center justify-end gap-1 mt-0.5">
+                                <span className={cn("text-[11px] font-medium", (row.grossProfit ?? 0) >= 0 ? "text-emerald-600" : "text-red-600")}>
+                                  Kâr: {formatCurrency(row.grossProfit ?? 0)}
+                                </span>
+                                {(row.unmatchedCount ?? 0) > 0 && (
+                                  <AlertTriangle className="h-3 w-3 text-yellow-500" />
+                                )}
+                              </div>
+                            ) : (
+                              <p className="text-[11px] text-gray-400 mt-0.5">—</p>
+                            )}
+                          </div>
                         </div>
-                      );
-                    })}
-                    {/* Total */}
-                    <div className="flex items-center justify-between bg-emerald-50/30 px-6 py-3">
-                      <span className="text-sm font-semibold text-gray-700">Toplam Gelir</span>
-                      <span className="text-sm font-bold text-emerald-700">{formatCurrency(incomeStatement?.ciro ?? 0)}</span>
+                      ))}
+                      {/* Total */}
+                      <div className="flex items-center justify-between bg-emerald-50/30 px-6 py-3">
+                        <span className="text-sm font-semibold text-gray-700">Toplam Gelir</span>
+                        <span className="text-sm font-bold text-emerald-700">{formatCurrency(incomeStatement?.ciro ?? 0)}</span>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </motion.div>
 
               {/* Expense table */}
