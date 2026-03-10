@@ -596,16 +596,14 @@ export default function InvoiceUploadContent() {
                           <Check className="h-3 w-3" />
                           Onaylı
                         </span>
-                        {inv.invoiceType === "INCOME" && inv.profitData && (
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleRecalculate(inv); }}
-                            disabled={recalculating === inv.id}
-                            className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-600 transition-colors hover:bg-emerald-100 disabled:opacity-50"
-                            title="Kârı Güncelle"
-                          >
-                            <RefreshCw className={`h-3 w-3 ${recalculating === inv.id ? "animate-spin" : ""}`} />
-                          </button>
-                        )}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleRecalculate(inv); }}
+                          disabled={recalculating === inv.id}
+                          className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2 py-1 text-[11px] font-medium text-blue-600 transition-colors hover:bg-blue-100 disabled:opacity-50"
+                          title="Kârı Güncelle"
+                        >
+                          <RefreshCw className={`h-3 w-3 ${recalculating === inv.id ? "animate-spin" : ""}`} />
+                        </button>
                       </div>
                     ) : inv.status === "COMPLETED" ? (
                       <>
