@@ -16,6 +16,8 @@ import {
   Link2,
   Check,
   ChevronDown,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
@@ -64,6 +66,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: typeof 
   PROCESSING: { label: "İşleniyor", color: "bg-blue-100 text-blue-700", icon: Loader2 },
   COMPLETED: { label: "Tamamlandı", color: "bg-green-100 text-green-700", icon: CheckCircle },
   FAILED: { label: "Hata", color: "bg-red-100 text-red-700", icon: XCircle },
+  REJECTED: { label: "Reddedildi", color: "bg-orange-100 text-orange-700", icon: XCircle },
 };
 
 function Skeleton({ className }: { className?: string }) {
@@ -85,9 +88,13 @@ export default function InvoiceUploadContent() {
   const [allProducts, setAllProducts] = useState<ProductOption[]>([]);
   const [matchLoading, setMatchLoading] = useState(false);
   const [approving, setApproving] = useState(false);
+  const [rejecting, setRejecting] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const [approveError, setApproveError] = useState("");
   const [approveSuccess, setApproveSuccess] = useState("");
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<UploadedInvoice | null>(null);
+  const [confirmReject, setConfirmReject] = useState(false);
 
   useEffect(() => {
     fetchInvoices();
@@ -241,6 +248,45 @@ export default function InvoiceUploadContent() {
       setApproveError("Bir hata oluştu");
     } finally {
       setApproving(false);
+    }
+  }
+
+  async function handleDelete(invoice: UploadedInvoice) {
+    setDeleting(invoice.id);
+    try {
+      const res = await fetch(`/api/invoices/ocr/${invoice.id}`, { method: "DELETE" });
+      if (res.ok) {
+        await fetchInvoices();
+        setConfirmDelete(null);
+      }
+    } catch {
+      // silent fail
+    } finally {
+      setDeleting(null);
+    }
+  }
+
+  async function handleReject() {
+    if (!selectedInvoice) return;
+    setRejecting(true);
+    try {
+      const res = await fetch(`/api/invoices/ocr/${selectedInvoice.id}`, {
+        method: "PATCH",
+      });
+      if (res.ok) {
+        setApproveSuccess("Fatura reddedildi.");
+        await fetchInvoices();
+        setTimeout(() => {
+          setSelectedInvoice(null);
+          setApproveSuccess("");
+          setConfirmReject(false);
+        }, 1500);
+      }
+    } catch {
+      setApproveError("Reddetme hatası");
+    } finally {
+      setRejecting(false);
+      setConfirmReject(false);
     }
   }
 
@@ -468,6 +514,19 @@ export default function InvoiceUploadContent() {
                         <Eye className="h-4 w-4" />
                       </button>
                     )}
+                    {!inv.approved && inv.status !== "REJECTED" && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setConfirmDelete(inv); }}
+                        disabled={deleting === inv.id}
+                        className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 disabled:opacity-50"
+                      >
+                        {deleting === inv.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </button>
+                    )}
                   </div>
                 </motion.div>
               );
@@ -692,23 +751,42 @@ export default function InvoiceUploadContent() {
                       </div>
                     )}
 
-                    <button
-                      onClick={handleApprove}
-                      disabled={approving}
-                      className="w-full rounded-xl bg-blue-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
-                    >
-                      {approving ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Onaylanıyor...
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle className="h-4 w-4" />
-                          Onayla ve Kaydet
-                        </>
-                      )}
-                    </button>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={handleApprove}
+                        disabled={approving || rejecting}
+                        className="flex-1 rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {approving ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Onaylanıyor...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="h-4 w-4" />
+                            Onayla
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => setConfirmReject(true)}
+                        disabled={approving || rejecting}
+                        className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {rejecting ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Reddediliyor...
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="h-4 w-4" />
+                            Reddet
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
                 )}
 
@@ -726,6 +804,108 @@ export default function InvoiceUploadContent() {
               >
                 Kapat
               </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Confirmation Dialog */}
+      <AnimatePresence>
+        {confirmDelete && (
+          <div
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+            onClick={() => setConfirmDelete(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="mx-4 w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50">
+                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">Faturayı Sil</h3>
+                  <p className="text-xs text-gray-500">Bu işlem geri alınamaz</p>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 mb-4">
+                <span className="font-medium">{confirmDelete.fileName}</span> faturasını silmek istediğinize emin misiniz?
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmDelete(null)}
+                  className="flex-1 rounded-xl bg-gray-100 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-200"
+                >
+                  İptal
+                </button>
+                <button
+                  onClick={() => handleDelete(confirmDelete)}
+                  disabled={deleting === confirmDelete.id}
+                  className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {deleting === confirmDelete.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                  Sil
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Reject Confirmation Dialog */}
+      <AnimatePresence>
+        {confirmReject && (
+          <div
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+            onClick={() => setConfirmReject(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="mx-4 w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50">
+                  <AlertTriangle className="h-5 w-5 text-orange-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">Faturayı Reddet</h3>
+                  <p className="text-xs text-gray-500">Fatura reddedildi olarak işaretlenecek</p>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 mb-4">
+                Bu faturayı reddetmek istediğinize emin misiniz?
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmReject(false)}
+                  className="flex-1 rounded-xl bg-gray-100 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-200"
+                >
+                  İptal
+                </button>
+                <button
+                  onClick={handleReject}
+                  disabled={rejecting}
+                  className="flex-1 rounded-xl bg-orange-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {rejecting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <XCircle className="h-4 w-4" />
+                  )}
+                  Reddet
+                </button>
+              </div>
             </motion.div>
           </div>
         )}

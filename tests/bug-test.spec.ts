@@ -29,8 +29,8 @@ test.describe('LOGIN', () => {
     const emailInput = page.locator('input[name="email"], input[type="email"]');
     const passwordInput = page.locator('input[name="password"], input[type="password"]');
     await expect(emailInput).toBeVisible({ timeout: 10000 });
-    await emailInput.fill('admin@inpobi.com');
-    await passwordInput.fill('InPobi2026Admin!');
+    await emailInput.fill('admin@poby.ai');
+    await passwordInput.fill('Poby2026Admin!');
 
     // Click login button
     const loginBtn = page.locator('button[type="submit"]');
@@ -372,8 +372,8 @@ async function login(page: Page) {
   const passwordInput = page.locator('input[name="password"], input[type="password"]');
 
   await expect(emailInput).toBeVisible({ timeout: 10000 });
-  await emailInput.fill('admin@inpobi.com');
-  await passwordInput.fill('InPobi2026Admin!');
+  await emailInput.fill('admin@poby.ai');
+  await passwordInput.fill('Poby2026Admin!');
 
   const loginBtn = page.locator('button[type="submit"]');
   await loginBtn.click();

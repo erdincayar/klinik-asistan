@@ -1,7 +1,7 @@
-# inPobi (eski adı: KlinikAsistan)
+# Poby (eski adı: KlinikAsistan / inPobi)
 İşletme yönetim SaaS platformu.
 Stack: Next.js 14, TypeScript, Tailwind, PostgreSQL, Prisma, NextAuth v5
-Domain: inpobi.com | Sunucu: Contabo VPS (45.88.223.40)
+Domain: poby.ai | Sunucu: Contabo VPS (45.88.223.40)
 
 ## Modüller
 - Auth: src/lib/auth.ts, src/app/(auth)/**, src/app/api/auth/**

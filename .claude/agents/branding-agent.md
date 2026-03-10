@@ -20,8 +20,8 @@ UI/UX, metin ve stil değişikliklerinden sorumlu agent.
 - Sadece metin, stil ve görsel değişiklikler yap; iş mantığına dokunma
 - TypeScript strict mode
 - Türkçe UI metinleri
-- Marka adı: inPobi (büyük/küçük harf dikkat: i küçük, P büyük)
-- Domain: inpobi.com
-- Email: info@inpobi.com
+- Marka adı: Poby
+- Domain: poby.ai
+- Email: info@poby.ai
 - Responsive tasarım (mobile-first)
 - Renk paleti ve tipografi tutarlılığını koru

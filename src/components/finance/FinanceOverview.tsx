@@ -61,9 +61,11 @@ import {
 /* ──────────────────────── TYPES ──────────────────────── */
 
 interface IncomeStatement {
-  totalIncome: number;
+  ciro: number;
+  cogs: number;
+  gelir: number;
   totalExpense: number;
-  netProfit: number;
+  totalProfit: number;
   vatAmount: number;
 }
 
@@ -334,8 +336,8 @@ export default function FinanceOverview() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-          {[...Array(3)].map((_, i) => (
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
             <Skeleton key={i} className="h-[120px] rounded-2xl" />
           ))}
         </div>
@@ -363,15 +365,23 @@ export default function FinanceOverview() {
 
   const statCards = [
     {
-      title: "Toplam Gelir",
-      value: formatCurrency(incomeStatement?.totalIncome ?? 0),
+      title: "Ciro",
+      value: formatCurrency(incomeStatement?.ciro ?? 0),
       icon: TrendingUp,
+      iconBg: "bg-blue-50",
+      iconColor: "text-blue-600",
+      valueColor: "text-blue-700",
+    },
+    {
+      title: "Gelir",
+      value: formatCurrency(incomeStatement?.gelir ?? 0),
+      icon: DollarSign,
       iconBg: "bg-emerald-50",
       iconColor: "text-emerald-600",
       valueColor: "text-emerald-700",
     },
     {
-      title: "Toplam Gider",
+      title: "Gider",
       value: formatCurrency(incomeStatement?.totalExpense ?? 0),
       icon: TrendingDown,
       iconBg: "bg-red-50",
@@ -379,12 +389,12 @@ export default function FinanceOverview() {
       valueColor: "text-red-600",
     },
     {
-      title: "Net Kâr",
-      value: formatCurrency(incomeStatement?.netProfit ?? 0),
-      icon: DollarSign,
-      iconBg: "bg-blue-50",
-      iconColor: "text-blue-600",
-      valueColor: (incomeStatement?.netProfit ?? 0) >= 0 ? "text-blue-700" : "text-red-600",
+      title: "Toplam Kâr",
+      value: formatCurrency(incomeStatement?.totalProfit ?? 0),
+      icon: (incomeStatement?.totalProfit ?? 0) >= 0 ? TrendingUp : TrendingDown,
+      iconBg: (incomeStatement?.totalProfit ?? 0) >= 0 ? "bg-blue-50" : "bg-red-50",
+      iconColor: (incomeStatement?.totalProfit ?? 0) >= 0 ? "text-blue-600" : "text-red-500",
+      valueColor: (incomeStatement?.totalProfit ?? 0) >= 0 ? "text-blue-700" : "text-red-600",
     },
   ];
 
@@ -460,7 +470,7 @@ export default function FinanceOverview() {
             </motion.div>
 
             {/* Stat cards */}
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {statCards.map((stat, i) => {
                 const Icon = stat.icon;
                 return (
@@ -579,7 +589,7 @@ export default function FinanceOverview() {
                     {/* Total */}
                     <div className="flex items-center justify-between bg-emerald-50/30 px-6 py-3">
                       <span className="text-sm font-semibold text-gray-700">Toplam Gelir</span>
-                      <span className="text-sm font-bold text-emerald-700">{formatCurrency(incomeStatement?.totalIncome ?? 0)}</span>
+                      <span className="text-sm font-bold text-emerald-700">{formatCurrency(incomeStatement?.ciro ?? 0)}</span>
                     </div>
                   </div>
                 )}

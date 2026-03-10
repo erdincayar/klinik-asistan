@@ -138,7 +138,7 @@ function getPageTitle(pathname: string): string {
 
 /* ──────────────────────── LOCAL STORAGE ORDER ──────────────────────── */
 
-const SIDEBAR_ORDER_KEY = "inpobi-sidebar-order";
+const SIDEBAR_ORDER_KEY = "poby-sidebar-order";
 
 function getSavedOrder(): string[] | null {
   if (typeof window === "undefined") return null;
@@ -290,7 +290,7 @@ function Sidebar({
     userRole === "SUPERADMIN" ||
     userRole === "DEMO" ||
     isDemo ||
-    userEmail === "admin@inpobi.com";
+    userEmail === "admin@poby.ai";
 
   // Sortable order
   const [orderedItems, setOrderedItems] = useState<NavItem[]>(navItems);

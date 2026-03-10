@@ -94,7 +94,24 @@ export async function POST(
           });
         }
       } else {
-        // INCOME type — stock OUT (sales)
+        // INCOME type — create Income record + stock OUT (sales)
+        if (parsedAmount > 0) {
+          const income = await tx.income.create({
+            data: {
+              clinicId,
+              description: `Fatura - ${invoice.vendor || invoice.fileName}`,
+              amount: parsedAmount,
+              category: invoice.category || "SATIS",
+              date: invoice.invoiceDate || new Date(),
+            },
+          });
+
+          await tx.uploadedInvoice.update({
+            where: { id },
+            data: { linkedIncomeId: income.id },
+          });
+        }
+
         for (const mapping of stockMappings) {
           if (!mapping.productId) continue;
           const product = await tx.product.findFirst({

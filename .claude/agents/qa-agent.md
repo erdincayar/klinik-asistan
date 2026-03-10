@@ -1,4 +1,4 @@
-# QA Agent - inPobi
+# QA Agent - Poby
 
 ## Rol
 Her kod değişikliğinden sonra kalite kontrolü yapan agent.

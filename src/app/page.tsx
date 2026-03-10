@@ -742,8 +742,8 @@ export default function Home() {
       >
         <div className="mx-auto flex max-w-[1200px] items-center justify-between px-6 py-4">
           <Link href="/" className="text-2xl font-extrabold tracking-tight">
-            <span className="text-blue-600">in</span>
-            <span className="text-gray-800">Pobi</span>
+            <span className="text-blue-600">Po</span>
+            <span className="text-gray-800">by</span>
           </Link>
 
           <div className="hidden items-center gap-8 md:flex">
@@ -1138,7 +1138,7 @@ export default function Home() {
             ))}
           </div>
           <div className="mt-10 border-t border-gray-200 pt-6 text-center">
-            <p className="text-xs text-gray-400">&copy; 2026 inPobi. Tüm hakları saklıdır.</p>
+            <p className="text-xs text-gray-400">&copy; 2026 Poby. Tüm hakları saklıdır.</p>
           </div>
         </div>
       </footer>

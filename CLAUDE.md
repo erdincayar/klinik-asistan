@@ -1,4 +1,4 @@
-# inPobi — Proje Kılavuzu
+# Poby — Proje Kılavuzu
 
 ## Proje Açıklaması
 İşletmeler için AI destekli SaaS yönetim platformu.

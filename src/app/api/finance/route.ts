@@ -28,22 +28,34 @@ export async function GET(request: Request) {
       const startDate = new Date(Date.UTC(year, month - 1, 1));
       const endDate = new Date(Date.UTC(year, month, 1));
 
-      const [rawTreatments, rawExpenses] = await Promise.all([
+      const [rawTreatments, rawIncomes, rawExpenses, rawOutMovements] = await Promise.all([
         prisma.treatment.findMany({
           where: { clinicId, date: { gte: startDate, lt: endDate } },
           include: { patient: { select: { id: true, name: true } } },
+          orderBy: { date: "desc" },
+        }),
+        prisma.income.findMany({
+          where: { clinicId, date: { gte: startDate, lt: endDate } },
           orderBy: { date: "desc" },
         }),
         prisma.expense.findMany({
           where: { clinicId, date: { gte: startDate, lt: endDate } },
           orderBy: { date: "desc" },
         }),
+        prisma.stockMovement.findMany({
+          where: { clinicId, type: "OUT", date: { gte: startDate, lt: endDate } },
+          include: { product: { select: { purchasePrice: true } } },
+        }),
       ]);
 
-      const totalIncome = rawTreatments.reduce((sum, t) => sum + (t.amount ?? 0), 0);
+      const treatmentTotal = rawTreatments.reduce((sum, t) => sum + (t.amount ?? 0), 0);
+      const incomeTotal = rawIncomes.reduce((sum, i) => sum + (i.amount ?? 0), 0);
+      const ciro = treatmentTotal + incomeTotal;
+      const cogs = rawOutMovements.reduce((sum, m) => sum + (m.quantity * (m.product.purchasePrice ?? 0)), 0);
+      const gelir = ciro - cogs;
       const totalExpense = rawExpenses.reduce((sum, e) => sum + (e.amount ?? 0), 0);
-      const netProfit = totalIncome - totalExpense;
-      const vatAmount = Math.round(totalIncome * taxRate / (100 + taxRate));
+      const totalProfit = gelir - totalExpense;
+      const vatAmount = Math.round(ciro * taxRate / (100 + taxRate));
 
       const treatments = rawTreatments.map((t) => ({
         id: t.id,
@@ -62,7 +74,7 @@ export async function GET(request: Request) {
         amount: e.amount,
       }));
 
-      return Response.json({ totalIncome, totalExpense, netProfit, vatAmount, taxRate, treatments, expenses });
+      return Response.json({ ciro, cogs, gelir, totalExpense, totalProfit, vatAmount, taxRate, treatments, expenses });
     }
 
     if (type === "vat-summary") {
@@ -95,8 +107,12 @@ export async function GET(request: Request) {
 
       const months = await Promise.all(
         monthRanges.map(async ({ month, monthName, startDate, endDate }) => {
-          const [treatments, expenses] = await Promise.all([
+          const [treatments, incomes, expenses, outMovements] = await Promise.all([
             prisma.treatment.findMany({
+              where: { clinicId, date: { gte: startDate, lt: endDate } },
+              select: { amount: true },
+            }),
+            prisma.income.findMany({
               where: { clinicId, date: { gte: startDate, lt: endDate } },
               select: { amount: true },
             }),
@@ -104,12 +120,20 @@ export async function GET(request: Request) {
               where: { clinicId, date: { gte: startDate, lt: endDate } },
               select: { amount: true },
             }),
+            prisma.stockMovement.findMany({
+              where: { clinicId, type: "OUT", date: { gte: startDate, lt: endDate } },
+              include: { product: { select: { purchasePrice: true } } },
+            }),
           ]);
 
-          const income = treatments.reduce((sum, t) => sum + (t.amount ?? 0), 0);
+          const treatmentTotal = treatments.reduce((sum, t) => sum + (t.amount ?? 0), 0);
+          const incomeTotal = incomes.reduce((sum, i) => sum + (i.amount ?? 0), 0);
+          const ciro = treatmentTotal + incomeTotal;
+          const cogs = outMovements.reduce((sum, m) => sum + (m.quantity * (m.product.purchasePrice ?? 0)), 0);
+          const income = ciro - cogs;
           const expense = expenses.reduce((sum, e) => sum + (e.amount ?? 0), 0);
 
-          return { month, monthName, income, expense };
+          return { month, monthName, ciro, income, expense };
         })
       );
 

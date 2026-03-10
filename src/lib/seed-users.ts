@@ -20,16 +20,16 @@ interface UserSeed {
 
 const users: UserSeed[] = [
   {
-    email: "admin@inpobi.com",
-    password: "InPobi2026Admin!",
+    email: "admin@poby.ai",
+    password: "Poby2026Admin!",
     name: "Erdinç (Admin)",
     role: "ADMIN",
-    clinicName: "inPobi Demo Klinik",
+    clinicName: "Poby Demo Klinik",
     sector: "SAGLIK",
     modules: MODULES, // tüm modüller
   },
   {
-    email: "demo1@inpobi.com",
+    email: "demo1@poby.ai",
     password: "Demo2026Test1!",
     name: "Test Kullanıcı 1",
     role: "DEMO",
@@ -38,7 +38,7 @@ const users: UserSeed[] = [
     modules: ["PATIENTS", "APPOINTMENTS", "FINANCE"],
   },
   {
-    email: "demo2@inpobi.com",
+    email: "demo2@poby.ai",
     password: "Demo2026Test2!",
     name: "Test Kullanıcı 2",
     role: "DEMO",
@@ -47,7 +47,7 @@ const users: UserSeed[] = [
     modules: ["INVENTORY", "FINANCE", "REPORTS"],
   },
   {
-    email: "demo3@inpobi.com",
+    email: "demo3@poby.ai",
     password: "Demo2026Test3!",
     name: "Test Kullanıcı 3",
     role: "DEMO",
