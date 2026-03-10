@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import {
   Plus, Search, AlertTriangle, CheckCircle, Upload, Download,
-  Loader2, FileSpreadsheet, ArrowRight, Trash2, Pencil, Tag, Camera, ChevronDown,
+  Loader2, FileSpreadsheet, ArrowRight, Trash2, Pencil, Tag, Camera, ChevronDown, Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import { formatCurrency, formatDate, toKurus } from "@/lib/utils";
+import { formatCurrency, formatDate, toKurus, fromKurus } from "@/lib/utils";
 import {
   Product, TYPE_BADGE, CATEGORIES, UNITS, CURRENCIES,
   CATEGORY_BADGE_COLORS, getCategoryLabel, getUnitLabel, getCurrencySymbol, calcProfitMargin,
@@ -35,6 +35,7 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
   const [detailLoading, setDetailLoading] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [showAIExtract, setShowAIExtract] = useState(false);
+  const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
@@ -417,6 +418,13 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
                           <div className="flex items-center justify-center gap-1">
                             <button
                               onClick={() => handleProductClick(product)}
+                              className="inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
+                              title="Detay"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => setEditProduct(product)}
                               className="inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                               title="Düzenle"
                             >
@@ -480,6 +488,13 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
 
       {/* New product modal */}
       <NewProductDialog open={showNewProduct} onOpenChange={setShowNewProduct} onSuccess={fetchProducts} />
+
+      {/* Edit product modal */}
+      <EditProductDialog
+        product={editProduct}
+        onOpenChange={(open) => { if (!open) setEditProduct(null); }}
+        onSuccess={fetchProducts}
+      />
 
       {/* Import dialog */}
       <ImportDialog
@@ -796,6 +811,194 @@ function NewProductDialog({
           <div className="flex items-center gap-2">
             <input type="checkbox" id="orderAlert" checked={form.orderAlert} onChange={(e) => setForm({ ...form, orderAlert: e.target.checked })} className="h-4 w-4 rounded border-gray-300" />
             <Label htmlFor="orderAlert" className="text-sm font-normal cursor-pointer">Sipariş hatırlatması aktif</Label>
+          </div>
+          {error && <p className="text-sm text-red-500">{error}</p>}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>İptal</Button>
+            <Button type="submit" disabled={saving}>{saving ? "Kaydediliyor..." : "Kaydet"}</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Edit Product Dialog ───
+
+function EditProductDialog({
+  product, onOpenChange, onSuccess,
+}: {
+  product: Product | null;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
+}) {
+  const [form, setForm] = useState({
+    name: "", sku: "", brand: "", category: "DIGER", unit: "ADET",
+    currentStock: 0, minStock: 0, orderAlert: false,
+    purchasePrice: 0, purchasePriceUSD: "", currency: "TRY",
+    minProfitMargin: 20, salePrice: 0, salePriceUSD: "", saleCurrency: "TRY",
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (product) {
+      setForm({
+        name: product.name,
+        sku: product.sku,
+        brand: product.brand || "",
+        category: product.category,
+        unit: product.unit,
+        currentStock: product.currentStock,
+        minStock: product.minStock,
+        orderAlert: product.orderAlert,
+        purchasePrice: fromKurus(product.purchasePrice),
+        purchasePriceUSD: product.purchasePriceUSD != null ? String(product.purchasePriceUSD) : "",
+        currency: product.currency,
+        minProfitMargin: product.minProfitMargin,
+        salePrice: fromKurus(product.salePrice),
+        salePriceUSD: product.salePriceUSD != null ? String(product.salePriceUSD) : "",
+        saleCurrency: product.saleCurrency || "TRY",
+      });
+      setError("");
+    }
+  }, [product]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!product) return;
+    setSaving(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/products/${product.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name,
+          sku: form.sku,
+          brand: form.brand || null,
+          category: form.category,
+          unit: form.unit,
+          currentStock: form.currentStock,
+          minStock: form.minStock,
+          orderAlert: form.orderAlert,
+          purchasePrice: toKurus(form.purchasePrice),
+          purchasePriceUSD: form.purchasePriceUSD ? parseFloat(form.purchasePriceUSD) : null,
+          currency: form.currency,
+          minProfitMargin: form.minProfitMargin,
+          salePrice: toKurus(form.salePrice),
+          salePriceUSD: form.salePriceUSD ? parseFloat(form.salePriceUSD) : null,
+          saleCurrency: form.saleCurrency,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Güncelleme hatası");
+      }
+      onOpenChange(false);
+      onSuccess();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={product !== null} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Ürün Düzenle</DialogTitle>
+          <DialogDescription>{product?.name}</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="editName">Ürün Adı</Label>
+              <Input id="editName" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="editSku">SKU Kodu</Label>
+              <Input id="editSku" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} required />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="editBrand">Marka</Label>
+              <Input id="editBrand" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} placeholder="Opsiyonel" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="editCategory">Kategori</Label>
+              <select id="editCategory" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                {CATEGORIES.map((c) => (<option key={c.value} value={c.value}>{c.label}</option>))}
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="editUnit">Birim</Label>
+              <select id="editUnit" value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                {UNITS.map((u) => (<option key={u.value} value={u.value}>{u.label}</option>))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="editCurrency">Alış Para Birimi</Label>
+              <select id="editCurrency" value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                {CURRENCIES.map((c) => (<option key={c.value} value={c.value}>{c.label}</option>))}
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="editCurrentStock">Mevcut Stok</Label>
+              <Input id="editCurrentStock" type="number" min={0} value={form.currentStock} onChange={(e) => setForm({ ...form, currentStock: Number(e.target.value) })} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="editMinStock">Minimum Stok</Label>
+              <Input id="editMinStock" type="number" min={0} value={form.minStock} onChange={(e) => setForm({ ...form, minStock: Number(e.target.value) })} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="editPurchasePrice">Alış Fiyatı ({getCurrencySymbol(form.currency)})</Label>
+              <Input id="editPurchasePrice" type="number" min={0} step="0.01" value={form.purchasePrice} onChange={(e) => setForm({ ...form, purchasePrice: Number(e.target.value) })} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="editSalePrice">Satış Fiyatı (₺)</Label>
+              <Input id="editSalePrice" type="number" min={0} step="0.01" value={form.salePrice} onChange={(e) => setForm({ ...form, salePrice: Number(e.target.value) })} />
+            </div>
+          </div>
+          {form.currency !== "TRY" && (
+            <div className="space-y-2">
+              <Label htmlFor="editPurchasePriceUSD">Alış Fiyatı Orijinal ({form.currency})</Label>
+              <Input id="editPurchasePriceUSD" type="number" min={0} step="0.01" placeholder="Opsiyonel" value={form.purchasePriceUSD} onChange={(e) => setForm({ ...form, purchasePriceUSD: e.target.value })} />
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="editSaleCurrency">Satış Para Birimi</Label>
+              <select id="editSaleCurrency" value={form.saleCurrency} onChange={(e) => setForm({ ...form, saleCurrency: e.target.value })}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                {CURRENCIES.map((c) => (<option key={c.value} value={c.value}>{c.label}</option>))}
+              </select>
+            </div>
+            {form.saleCurrency !== "TRY" && (
+              <div className="space-y-2">
+                <Label htmlFor="editSalePriceUSD">Satış Fiyatı Orijinal ({form.saleCurrency})</Label>
+                <Input id="editSalePriceUSD" type="number" min={0} step="0.01" placeholder="Opsiyonel" value={form.salePriceUSD} onChange={(e) => setForm({ ...form, salePriceUSD: e.target.value })} />
+              </div>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="editMinProfitMargin">Min Kâr Marjı (%)</Label>
+            <Input id="editMinProfitMargin" type="number" min={0} max={100} value={form.minProfitMargin} onChange={(e) => setForm({ ...form, minProfitMargin: Number(e.target.value) })} />
+          </div>
+          <div className="flex items-center gap-2">
+            <input type="checkbox" id="editOrderAlert" checked={form.orderAlert} onChange={(e) => setForm({ ...form, orderAlert: e.target.checked })} className="h-4 w-4 rounded border-gray-300" />
+            <Label htmlFor="editOrderAlert" className="text-sm font-normal cursor-pointer">Sipariş hatırlatması aktif</Label>
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}
           <DialogFooter>
