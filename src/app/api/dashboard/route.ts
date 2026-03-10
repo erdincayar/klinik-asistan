@@ -23,6 +23,7 @@ export async function GET() {
     const [
       totalPatients,
       monthlyTreatments,
+      monthlyIncomeRecords,
       monthlyExpenseRecords,
       recentTreatments,
       pendingReminders,
@@ -34,7 +35,11 @@ export async function GET() {
         select: { amount: true },
       }),
       prisma.expense.findMany({
-        where: { clinicId, date: { gte: startOfMonth, lt: startOfNextMonth } },
+        where: { clinicId, type: "INCOME", date: { gte: startOfMonth, lt: startOfNextMonth } },
+        select: { amount: true },
+      }),
+      prisma.expense.findMany({
+        where: { clinicId, type: "EXPENSE", date: { gte: startOfMonth, lt: startOfNextMonth } },
         select: { amount: true },
       }),
       prisma.treatment.findMany({
@@ -51,7 +56,8 @@ export async function GET() {
       }),
     ]);
 
-    const monthlyIncome = monthlyTreatments.reduce((sum, t) => sum + (t.amount ?? 0), 0);
+    const monthlyIncome = monthlyTreatments.reduce((sum, t) => sum + (t.amount ?? 0), 0)
+      + monthlyIncomeRecords.reduce((sum, r) => sum + (r.amount ?? 0), 0);
     const monthlyExpense = monthlyExpenseRecords.reduce((sum, e) => sum + (e.amount ?? 0), 0);
 
     return Response.json({
