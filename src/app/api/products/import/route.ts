@@ -118,6 +118,7 @@ export async function POST(req: NextRequest) {
         if (currency !== "TRY" && rawPurchasePrice > 0) {
           originalForeignPrice = rawPurchasePrice;
           purchasePriceKurus = convertToTRYKurus(rawPurchasePrice, currency, rates);
+          console.log("Kur:", rates.TRY, `${currency} fiyat:`, rawPurchasePrice, "TRY kuruş:", purchasePriceKurus);
         } else {
           purchasePriceKurus = Math.round(rawPurchasePrice * 100);
         }
