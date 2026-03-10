@@ -397,6 +397,8 @@ model Subscription {
   currentPeriodEnd      DateTime
   iyzicoSubscriptionRef String?
   cardToken             String?
+  expiresAt             DateTime?
+  isActive              Boolean               @default(true)
   createdAt             DateTime              @default(now())
   updatedAt             DateTime              @updatedAt
   payments              SubscriptionPayment[]
@@ -409,6 +411,10 @@ model SubscriptionPayment {
   amount          Float
   status          String // SUCCESS, FAILED, PENDING
   iyzicoPaymentId String?
+  paytrOrderId    String?
+  paytrToken      String?
+  paymentType     String       @default("SUBSCRIPTION") // SUBSCRIPTION, TOKEN_PACKAGE, STORAGE_PACKAGE
+  packageId       String?
   paidAt          DateTime?
   createdAt       DateTime     @default(now())
 }

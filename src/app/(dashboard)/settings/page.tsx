@@ -26,9 +26,15 @@ import {
   Coins,
   HardDrive,
   Zap,
+  Crown,
+  CreditCard,
 } from "lucide-react";
 import { TREATMENT_CATEGORIES } from "@/lib/types";
 import QRCode from "qrcode";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 
 interface ClinicSettings {
   clinicName: string;
@@ -38,6 +44,7 @@ interface ClinicSettings {
   storageLimitMB?: number;
   storageUsedMB?: number;
   storagePlan?: string;
+  plan?: string;
 }
 
 interface TokenBalanceData {
@@ -119,6 +126,11 @@ export default function SettingsPage() {
   const [tokenBalance, setTokenBalance] = useState<TokenBalanceData | null>(null);
   const [tokenHistory, setTokenHistory] = useState<TokenTransactionData[]>([]);
 
+  // Payment
+  const [paytrToken, setPaytrToken] = useState("");
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentLoading, setPaymentLoading] = useState("");
+
   // Telegram
   const [telegramConnected, setTelegramConnected] = useState(false);
   const [telegramLoading, setTelegramLoading] = useState(true);
@@ -144,6 +156,10 @@ export default function SettingsPage() {
             phone: data.phone || "",
             address: data.address || "",
             vatRate: data.vatRate ?? 20,
+            storageLimitMB: data.storageLimitMB,
+            storageUsedMB: data.storageUsedMB,
+            storagePlan: data.storagePlan,
+            plan: data.plan,
           });
           if (data.metaConnected) {
             setMetaConnected(true);
@@ -346,6 +362,29 @@ export default function SettingsPage() {
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function handlePayment(paymentType: string, packageId: string) {
+    const loadingKey = `${paymentType}_${packageId}`;
+    setPaymentLoading(loadingKey);
+    try {
+      const res = await fetch("/api/payment/paytr/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentType, packageId }),
+      });
+      const data = await res.json();
+      if (res.ok && data.token) {
+        setPaytrToken(data.token);
+        setShowPaymentModal(true);
+      } else {
+        setError(data.error || "Ödeme başlatılamadı");
+      }
+    } catch {
+      setError("Ödeme başlatılamadı");
+    } finally {
+      setPaymentLoading("");
+    }
   }
 
   if (loading) {
@@ -937,6 +976,91 @@ export default function SettingsPage() {
         </div>
       </motion.div>
 
+      {/* Subscription Plans */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.09 }}
+        className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
+      >
+        <div className="flex items-center gap-2 border-b border-gray-100 px-6 py-4">
+          <Crown className="h-4 w-4 text-amber-500" />
+          <h2 className="text-sm font-semibold text-gray-900">Abonelik Planları</h2>
+        </div>
+        <div className="p-6">
+          <div className="grid gap-4 sm:grid-cols-3">
+            {[
+              { id: "STARTER", name: "Başlangıç", price: "₺499", tokens: "50K", storage: "1 GB", features: ["AI Asistan", "Temel Raporlar"] },
+              { id: "PRO", name: "Profesyonel", price: "₺999", tokens: "200K", storage: "5 GB", popular: true, features: ["Gelişmiş AI", "WhatsApp", "Reklam"] },
+              { id: "BUSINESS", name: "İşletme", price: "₺1.999", tokens: "500K", storage: "20 GB", features: ["Sınırsız AI", "Öncelikli Destek", "API"] },
+            ].map((plan) => {
+              const isCurrent = settings.plan === plan.id;
+              const planOrder = ["STARTER", "PRO", "BUSINESS"];
+              const currentIndex = planOrder.indexOf(settings.plan || "STARTER");
+              const planIndex = planOrder.indexOf(plan.id);
+              const isUpgrade = planIndex > currentIndex;
+
+              return (
+                <div
+                  key={plan.id}
+                  className={`relative rounded-xl border p-5 ${
+                    plan.popular
+                      ? "border-blue-200 bg-blue-50/30 ring-1 ring-blue-100"
+                      : isCurrent
+                      ? "border-green-200 bg-green-50/30"
+                      : "border-gray-100"
+                  }`}
+                >
+                  {plan.popular && (
+                    <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-blue-600 px-3 py-0.5 text-[10px] font-semibold text-white">
+                      Popüler
+                    </span>
+                  )}
+                  <p className="text-base font-bold text-gray-900">{plan.name}</p>
+                  <p className="mt-1 text-2xl font-bold text-gray-900">
+                    {plan.price}<span className="text-xs font-normal text-gray-400">/ay</span>
+                  </p>
+                  <div className="mt-3 space-y-1.5 text-xs text-gray-600">
+                    <p>{plan.tokens} token/ay</p>
+                    <p>{plan.storage} depolama</p>
+                    {plan.features.map((f) => (
+                      <p key={f} className="flex items-center gap-1">
+                        <CheckCircle className="h-3 w-3 text-green-500" />
+                        {f}
+                      </p>
+                    ))}
+                  </div>
+                  <div className="mt-4">
+                    {isCurrent ? (
+                      <span className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-green-100 px-3 py-2 text-xs font-semibold text-green-700">
+                        <CheckCircle className="h-3.5 w-3.5" />
+                        Mevcut Plan
+                      </span>
+                    ) : isUpgrade ? (
+                      <button
+                        onClick={() => handlePayment("SUBSCRIPTION", plan.id)}
+                        disabled={paymentLoading === `SUBSCRIPTION_${plan.id}`}
+                        className="w-full rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        {paymentLoading === `SUBSCRIPTION_${plan.id}` ? (
+                          <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+                        ) : (
+                          "Yükselt"
+                        )}
+                      </button>
+                    ) : (
+                      <span className="inline-flex w-full items-center justify-center rounded-lg bg-gray-100 px-3 py-2 text-xs font-medium text-gray-400">
+                        Mevcut planınız daha üst
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </motion.div>
+
       {/* Token Management */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -988,12 +1112,12 @@ export default function SettingsPage() {
                 <h3 className="text-sm font-medium text-gray-800 mb-3">Token Paketleri</h3>
                 <div className="grid gap-3 sm:grid-cols-3">
                   {[
-                    { name: "Başlangıç", tokens: 100000, price: 79 },
-                    { name: "Popüler", tokens: 500000, price: 349, popular: true },
-                    { name: "İşletme", tokens: 1500000, price: 899 },
+                    { id: "TOKEN_100K", name: "Başlangıç", tokens: 100000, price: 79 },
+                    { id: "TOKEN_500K", name: "Popüler", tokens: 500000, price: 349, popular: true },
+                    { id: "TOKEN_1500K", name: "İşletme", tokens: 1500000, price: 899 },
                   ].map((pkg) => (
                     <div
-                      key={pkg.name}
+                      key={pkg.id}
                       className={`rounded-xl border p-4 text-center ${
                         pkg.popular
                           ? "border-blue-200 bg-blue-50/50 ring-1 ring-blue-100"
@@ -1013,10 +1137,15 @@ export default function SettingsPage() {
                         ₺{pkg.price}
                       </p>
                       <button
-                        disabled
-                        className="mt-3 w-full rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-400 cursor-not-allowed"
+                        onClick={() => handlePayment("TOKEN_PACKAGE", pkg.id)}
+                        disabled={paymentLoading === `TOKEN_PACKAGE_${pkg.id}`}
+                        className="mt-3 w-full rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
                       >
-                        Yakında
+                        {paymentLoading === `TOKEN_PACKAGE_${pkg.id}` ? (
+                          <Loader2 className="mx-auto h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          "Satın Al"
+                        )}
                       </button>
                     </div>
                   ))}
@@ -1104,18 +1233,23 @@ export default function SettingsPage() {
             <h3 className="text-sm font-medium text-gray-800 mb-3">Ek Depolama Paketleri</h3>
             <div className="grid gap-3 sm:grid-cols-3">
               {[
-                { name: "+5 GB", price: 14 },
-                { name: "+20 GB", price: 54 },
-                { name: "+50 GB", price: 135 },
+                { id: "STORAGE_5GB", name: "+5 GB", price: 14 },
+                { id: "STORAGE_20GB", name: "+20 GB", price: 54 },
+                { id: "STORAGE_50GB", name: "+50 GB", price: 135 },
               ].map((pkg) => (
-                <div key={pkg.name} className="rounded-xl border border-gray-100 p-4 text-center">
+                <div key={pkg.id} className="rounded-xl border border-gray-100 p-4 text-center">
                   <p className="text-sm font-semibold text-gray-900">{pkg.name}</p>
                   <p className="mt-2 text-lg font-bold text-gray-900">₺{pkg.price}<span className="text-xs font-normal text-gray-400">/ay</span></p>
                   <button
-                    disabled
-                    className="mt-3 w-full rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-400 cursor-not-allowed"
+                    onClick={() => handlePayment("STORAGE_PACKAGE", pkg.id)}
+                    disabled={paymentLoading === `STORAGE_PACKAGE_${pkg.id}`}
+                    className="mt-3 w-full rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
                   >
-                    Yakında
+                    {paymentLoading === `STORAGE_PACKAGE_${pkg.id}` ? (
+                      <Loader2 className="mx-auto h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      "Satın Al"
+                    )}
                   </button>
                 </div>
               ))}
@@ -1236,6 +1370,24 @@ export default function SettingsPage() {
           </form>
         </div>
       </motion.div>
+
+      {/* PayTR iFrame Modal */}
+      <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
+        <DialogContent className="max-w-lg p-0">
+          <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-3">
+            <CreditCard className="h-4 w-4 text-blue-600" />
+            <h3 className="text-sm font-semibold text-gray-900">Güvenli Ödeme</h3>
+          </div>
+          {paytrToken && (
+            <iframe
+              src={`https://www.paytr.com/odeme/guvenli/${paytrToken}`}
+              className="w-full border-0"
+              style={{ height: "500px" }}
+              allow="payment"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
