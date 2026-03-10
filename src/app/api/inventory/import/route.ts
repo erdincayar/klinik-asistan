@@ -7,6 +7,36 @@ const VALID_CATEGORIES = ["KOZMETIK", "MEDIKAL", "SARF_MALZEME", "DIGER"];
 const VALID_UNITS = ["ADET", "KUTU", "PAKET", "ML", "GR"];
 const VALID_CURRENCIES = ["TRY", "USD", "EUR"];
 
+// --- Exchange rate cache (server-side, 1 hour) ---
+let cachedRates: { rates: Record<string, number>; fetchedAt: number } | null = null;
+const FALLBACK_RATES: Record<string, number> = { TRY: 38, EUR: 0.92, USD: 1 };
+
+async function getExchangeRates(): Promise<Record<string, number>> {
+  const now = Date.now();
+  if (cachedRates && now - cachedRates.fetchedAt < 3600000) {
+    return cachedRates.rates;
+  }
+  try {
+    const res = await fetch("https://api.exchangerate-api.com/v4/latest/USD", {
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!res.ok) throw new Error("Kur alınamadı");
+    const data = await res.json();
+    cachedRates = { rates: data.rates, fetchedAt: now };
+    return data.rates;
+  } catch (err) {
+    console.error("Exchange rate fetch failed:", err);
+    return cachedRates?.rates || FALLBACK_RATES;
+  }
+}
+
+function convertToTRYKurus(amount: number, fromCurrency: string, rates: Record<string, number>): number {
+  if (fromCurrency === "TRY" || !rates.TRY) return Math.round(amount * 100);
+  const fromRate = rates[fromCurrency] || 1;
+  const tryRate = rates.TRY;
+  return Math.round(amount * (tryRate / fromRate) * 100);
+}
+
 function normalizeCategory(value: string): string {
   if (!value) return "DIGER";
   const upper = value.toUpperCase().trim();
@@ -73,6 +103,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ columns, preview, totalRows: rawRows.length });
     }
 
+    // Fetch exchange rates for currency conversion
+    const rates = await getExchangeRates();
+
     // Process rows with mapping
     const existingProducts = await prisma.product.findMany({
       where: { clinicId },
@@ -103,9 +136,27 @@ export async function POST(req: NextRequest) {
         const rawCurrency = mapping.currency ? String(row[mapping.currency] || "").toUpperCase().trim() : "TRY";
         const currency = VALID_CURRENCIES.includes(rawCurrency) ? rawCurrency : "TRY";
 
-        const purchasePriceTL = mapping.purchasePrice ? parseFloat(String(row[mapping.purchasePrice]).replace(",", ".")) || 0 : 0;
-        const purchasePriceUSD = mapping.purchasePriceUSD ? parseFloat(String(row[mapping.purchasePriceUSD]).replace(",", ".")) || null : null;
+        // Parse raw prices from Excel
+        const rawPurchasePrice = mapping.purchasePrice ? parseFloat(String(row[mapping.purchasePrice]).replace(",", ".")) || 0 : 0;
+        const rawPurchasePriceUSD = mapping.purchasePriceUSD ? parseFloat(String(row[mapping.purchasePriceUSD]).replace(",", ".")) || null : null;
         const salePriceTL = mapping.salePrice ? parseFloat(String(row[mapping.salePrice]).replace(",", ".")) || 0 : 0;
+
+        // Convert purchase price to TRY kuruş based on currency
+        let purchasePriceKurus: number;
+        let originalForeignPrice: number | null = null;
+
+        if (currency !== "TRY" && rawPurchasePrice > 0) {
+          // Foreign currency — convert to TRY
+          originalForeignPrice = rawPurchasePrice;
+          purchasePriceKurus = convertToTRYKurus(rawPurchasePrice, currency, rates);
+        } else {
+          purchasePriceKurus = Math.round(rawPurchasePrice * 100);
+        }
+
+        // If a separate USD price column is mapped, use it as the original foreign price
+        if (rawPurchasePriceUSD !== null) {
+          originalForeignPrice = rawPurchasePriceUSD;
+        }
 
         const existing = nameMap.get(name.toLowerCase().trim());
 
@@ -119,8 +170,8 @@ export async function POST(req: NextRequest) {
               ...(quantity !== undefined && { currentStock: quantity }),
               minStock,
               currency,
-              purchasePrice: Math.round(purchasePriceTL * 100),
-              purchasePriceUSD: purchasePriceUSD,
+              purchasePrice: purchasePriceKurus,
+              purchasePriceUSD: originalForeignPrice,
               salePrice: Math.round(salePriceTL * 100),
             },
           });
@@ -138,8 +189,8 @@ export async function POST(req: NextRequest) {
               ...(quantity !== undefined && { currentStock: quantity }),
               minStock,
               currency,
-              purchasePrice: Math.round(purchasePriceTL * 100),
-              purchasePriceUSD: purchasePriceUSD,
+              purchasePrice: purchasePriceKurus,
+              purchasePriceUSD: originalForeignPrice,
               salePrice: Math.round(salePriceTL * 100),
             },
           });

@@ -91,11 +91,6 @@ interface StockSummary {
   topConsumed: { productId: string; name: string; totalOut: number }[];
 }
 
-interface ExchangeRates {
-  rates: Record<string, number>;
-  fetchedAt: number;
-}
-
 // --- Constants ---
 
 const CATEGORIES = [
@@ -148,33 +143,6 @@ function getUnitLabel(value: string) {
 
 function getCurrencySymbol(value: string) {
   return CURRENCIES.find((c) => c.value === value)?.symbol || "₺";
-}
-
-// --- Exchange rate cache ---
-let cachedRates: ExchangeRates | null = null;
-
-async function getExchangeRates(): Promise<Record<string, number>> {
-  const now = Date.now();
-  // Cache for 1 hour
-  if (cachedRates && now - cachedRates.fetchedAt < 3600000) {
-    return cachedRates.rates;
-  }
-  try {
-    const res = await fetch("https://api.exchangerate-api.com/v4/latest/USD");
-    if (!res.ok) throw new Error("Kur alınamadı");
-    const data = await res.json();
-    cachedRates = { rates: data.rates, fetchedAt: now };
-    return data.rates;
-  } catch {
-    return cachedRates?.rates || { TRY: 38, EUR: 0.92, USD: 1 };
-  }
-}
-
-function convertToTRY(amountKurus: number, fromCurrency: string, rates: Record<string, number>): number {
-  if (fromCurrency === "TRY" || !rates.TRY) return amountKurus;
-  const fromRate = rates[fromCurrency] || 1;
-  const tryRate = rates.TRY;
-  return Math.round(amountKurus * (tryRate / fromRate));
 }
 
 function calcProfitMargin(costTRY: number, saleTRY: number): number | null {
@@ -242,11 +210,6 @@ function ProductsTab({ onDataChange }: { onDataChange?: () => void }) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
-  const [rates, setRates] = useState<Record<string, number>>({});
-
-  useEffect(() => {
-    getExchangeRates().then(setRates);
-  }, []);
 
   const fetchProducts = async () => {
     try {
@@ -468,8 +431,8 @@ function ProductsTab({ onDataChange }: { onDataChange?: () => void }) {
                 </TableHeader>
                 <TableBody>
                   {products.map((product) => {
-                    const costInTRY = convertToTRY(product.purchasePrice, product.currency, rates);
-                    const margin = calcProfitMargin(costInTRY, product.salePrice);
+                    // purchasePrice is always in TRY kuruş (converted during import/save)
+                    const margin = calcProfitMargin(product.purchasePrice, product.salePrice);
                     const marginLow = margin !== null && margin < product.minProfitMargin;
                     return (
                       <TableRow
@@ -505,9 +468,14 @@ function ProductsTab({ onDataChange }: { onDataChange?: () => void }) {
                           {formatCurrency(product.salePrice)}
                         </TableCell>
                         <TableCell className="text-right">
-                          {product.currency !== "TRY" ? (
-                            <span title={`${getCurrencySymbol(product.currency)} → ₺${(costInTRY / 100).toFixed(2)}`}>
-                              {getCurrencySymbol(product.currency)}{(product.purchasePrice / 100).toFixed(2)}
+                          {product.currency !== "TRY" && product.purchasePriceUSD ? (
+                            <span className="flex flex-col items-end leading-tight">
+                              <span className="text-muted-foreground text-xs">
+                                {getCurrencySymbol(product.currency)}{product.purchasePriceUSD.toFixed(2)}
+                              </span>
+                              <span className="font-medium">
+                                {formatCurrency(product.purchasePrice)}
+                              </span>
                             </span>
                           ) : (
                             formatCurrency(product.purchasePrice)
@@ -677,13 +645,13 @@ function ProductsTab({ onDataChange }: { onDataChange?: () => void }) {
                   {selectedProduct.orderAlert ? "Açık" : "Kapalı"}
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Alış Fiyatı ({selectedProduct.currency}):</span>{" "}
-                  {getCurrencySymbol(selectedProduct.currency)}{(selectedProduct.purchasePrice / 100).toFixed(2)}
+                  <span className="text-muted-foreground">Alış Fiyatı (TRY):</span>{" "}
+                  {formatCurrency(selectedProduct.purchasePrice)}
                 </div>
-                {selectedProduct.purchasePriceUSD != null && selectedProduct.purchasePriceUSD > 0 && (
+                {selectedProduct.currency !== "TRY" && selectedProduct.purchasePriceUSD != null && selectedProduct.purchasePriceUSD > 0 && (
                   <div>
-                    <span className="text-muted-foreground">Alış Fiyatı (USD):</span>{" "}
-                    ${selectedProduct.purchasePriceUSD.toFixed(2)}
+                    <span className="text-muted-foreground">Orijinal Fiyat ({selectedProduct.currency}):</span>{" "}
+                    {getCurrencySymbol(selectedProduct.currency)}{selectedProduct.purchasePriceUSD.toFixed(2)}
                   </div>
                 )}
                 <div>
@@ -695,8 +663,7 @@ function ProductsTab({ onDataChange }: { onDataChange?: () => void }) {
                   %{selectedProduct.minProfitMargin}
                 </div>
                 {(() => {
-                  const costTRY = convertToTRY(selectedProduct.purchasePrice, selectedProduct.currency, rates);
-                  const margin = calcProfitMargin(costTRY, selectedProduct.salePrice);
+                  const margin = calcProfitMargin(selectedProduct.purchasePrice, selectedProduct.salePrice);
                   if (margin === null) return null;
                   const marginLow = margin < selectedProduct.minProfitMargin;
                   return (
