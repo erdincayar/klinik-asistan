@@ -117,6 +117,7 @@ export async function POST(req: NextRequest) {
     let added = 0;
     let updated = 0;
     let errors = 0;
+    let noBrandCount = 0;
 
     for (let i = 0; i < rawRows.length; i++) {
       const row = rawRows[i];
@@ -175,6 +176,7 @@ export async function POST(req: NextRequest) {
               salePrice: Math.round(salePriceTL * 100),
             },
           });
+          if (!brand) noBrandCount++;
           updated++;
         } else {
           const sku = generateSku(name, i);
@@ -195,6 +197,7 @@ export async function POST(req: NextRequest) {
             },
           });
           nameMap.set(name.toLowerCase().trim(), { id: "", name, sku });
+          if (!brand) noBrandCount++;
           added++;
         }
       } catch (err) {
@@ -203,7 +206,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ added, updated, errors, total: rawRows.length });
+    return NextResponse.json({ added, updated, errors, total: rawRows.length, noBrandCount });
   } catch (error) {
     console.error("Import error:", error);
     return NextResponse.json({ error: "İçe aktarma hatası" }, { status: 500 });

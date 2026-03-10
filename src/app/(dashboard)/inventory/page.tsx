@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Plus, Search, AlertTriangle, CheckCircle, Upload, Download, Loader2, FileSpreadsheet, ArrowRight, Trash2, Pencil } from "lucide-react";
+import { Plus, Search, AlertTriangle, CheckCircle, Upload, Download, Loader2, FileSpreadsheet, ArrowRight, Trash2, Pencil, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -210,6 +210,15 @@ function ProductsTab({ onDataChange }: { onDataChange?: () => void }) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [showBulkBrand, setShowBulkBrand] = useState(false);
+  const [bulkBrandValue, setBulkBrandValue] = useState("");
+  const [bulkBrandSaving, setBulkBrandSaving] = useState(false);
+  const [brandEditTarget, setBrandEditTarget] = useState<Product | null>(null);
+  const [brandEditValue, setBrandEditValue] = useState("");
+  const [brandEditSaving, setBrandEditSaving] = useState(false);
+  const [importNoBrandNotice, setImportNoBrandNotice] = useState(0);
+
+  const existingBrands = Array.from(new Set(products.map((p) => p.brand).filter(Boolean) as string[])).sort();
 
   const fetchProducts = async () => {
     try {
@@ -333,6 +342,61 @@ function ProductsTab({ onDataChange }: { onDataChange?: () => void }) {
     }
   };
 
+  const handleBulkBrandAssign = async () => {
+    if (!bulkBrandValue.trim() || selectedIds.size === 0) return;
+    setBulkBrandSaving(true);
+    try {
+      const res = await fetch("/api/products/bulk-update", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedIds), data: { brand: bulkBrandValue.trim() } }),
+      });
+      if (!res.ok) throw new Error("Toplu güncelleme hatası");
+      setProducts((prev) =>
+        prev.map((p) => selectedIds.has(p.id) ? { ...p, brand: bulkBrandValue.trim() } : p)
+      );
+      setShowBulkBrand(false);
+      setBulkBrandValue("");
+      setSelectedIds(new Set());
+    } catch {
+      // silent
+    } finally {
+      setBulkBrandSaving(false);
+    }
+  };
+
+  const handleInlineBrandSave = async () => {
+    if (!brandEditTarget) return;
+    setBrandEditSaving(true);
+    try {
+      const res = await fetch(`/api/products/${brandEditTarget.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ brand: brandEditValue.trim() || null }),
+      });
+      if (!res.ok) throw new Error("Marka güncelleme hatası");
+      setProducts((prev) =>
+        prev.map((p) => p.id === brandEditTarget.id ? { ...p, brand: brandEditValue.trim() || null } : p)
+      );
+      setBrandEditTarget(null);
+      setBrandEditValue("");
+    } catch {
+      // silent
+    } finally {
+      setBrandEditSaving(false);
+    }
+  };
+
+  const handleImportSuccess = () => {
+    fetchProducts();
+  };
+
+  const handleImportComplete = (noBrandCount: number) => {
+    if (noBrandCount > 0) {
+      setImportNoBrandNotice(noBrandCount);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Filters and actions */}
@@ -378,12 +442,48 @@ function ProductsTab({ onDataChange }: { onDataChange?: () => void }) {
         </div>
       </div>
 
+      {/* Import no-brand notice */}
+      {importNoBrandNotice > 0 && (
+        <div className="flex items-center justify-between rounded-lg bg-yellow-50 border border-yellow-200 px-4 py-2">
+          <span className="text-sm text-yellow-800">
+            <strong>{importNoBrandNotice}</strong> ürünün markası boş. Şimdi atamak ister misiniz?
+          </span>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                // Select products without brand
+                const noBrandIds = new Set(products.filter((p) => !p.brand).map((p) => p.id));
+                setSelectedIds(noBrandIds);
+                setShowBulkBrand(true);
+                setImportNoBrandNotice(0);
+              }}
+            >
+              <Tag className="mr-1 h-3.5 w-3.5" />
+              Marka Ata
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setImportNoBrandNotice(0)}>
+              Kapat
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Bulk selection bar */}
       {selectedIds.size > 0 && (
-        <div className="flex items-center gap-3 rounded-lg bg-red-50 border border-red-200 px-4 py-2">
-          <span className="text-sm font-medium text-red-800">
+        <div className="flex items-center gap-3 rounded-lg bg-blue-50 border border-blue-200 px-4 py-2">
+          <span className="text-sm font-medium text-blue-800">
             {selectedIds.size} ürün seçildi
           </span>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setShowBulkBrand(true)}
+          >
+            <Tag className="mr-1 h-3.5 w-3.5" />
+            Marka Ata
+          </Button>
           <Button
             size="sm"
             variant="destructive"
@@ -448,8 +548,17 @@ function ProductsTab({ onDataChange }: { onDataChange?: () => void }) {
                             className="h-4 w-4 rounded border-gray-300"
                           />
                         </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {product.brand || "—"}
+                        <TableCell className="text-muted-foreground" onClick={(e) => e.stopPropagation()}>
+                          {product.brand ? (
+                            product.brand
+                          ) : (
+                            <button
+                              onClick={() => { setBrandEditTarget(product); setBrandEditValue(""); }}
+                              className="text-xs text-blue-500 hover:text-blue-700 hover:underline"
+                            >
+                              + Marka Ekle
+                            </button>
+                          )}
                         </TableCell>
                         <TableCell className="font-medium">{product.name}</TableCell>
                         <TableCell>
@@ -596,7 +705,8 @@ function ProductsTab({ onDataChange }: { onDataChange?: () => void }) {
       <ImportDialog
         open={showImport}
         onOpenChange={setShowImport}
-        onSuccess={fetchProducts}
+        onSuccess={handleImportSuccess}
+        onComplete={handleImportComplete}
       />
 
       {/* Product detail modal */}
@@ -713,6 +823,110 @@ function ProductsTab({ onDataChange }: { onDataChange?: () => void }) {
               )}
             </>
           ) : null}
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk brand assignment modal */}
+      <Dialog open={showBulkBrand} onOpenChange={(open) => { if (!open) { setShowBulkBrand(false); setBulkBrandValue(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Marka Ata</DialogTitle>
+            <DialogDescription>
+              <strong>{selectedIds.size}</strong> ürüne marka atayın
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {existingBrands.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Mevcut markalardan seç</Label>
+                <div className="flex flex-wrap gap-2">
+                  {existingBrands.map((b) => (
+                    <button
+                      key={b}
+                      onClick={() => setBulkBrandValue(b)}
+                      className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+                        bulkBrandValue === b
+                          ? "border-blue-500 bg-blue-50 text-blue-700"
+                          : "border-gray-200 bg-white text-gray-600 hover:border-blue-300"
+                      }`}
+                    >
+                      {b}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="bulkBrand">
+                {existingBrands.length > 0 ? "veya yeni marka yaz" : "Marka adı"}
+              </Label>
+              <Input
+                id="bulkBrand"
+                value={bulkBrandValue}
+                onChange={(e) => setBulkBrandValue(e.target.value)}
+                placeholder="Marka adı girin..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setShowBulkBrand(false); setBulkBrandValue(""); }}>
+              İptal
+            </Button>
+            <Button onClick={handleBulkBrandAssign} disabled={bulkBrandSaving || !bulkBrandValue.trim()}>
+              {bulkBrandSaving ? "Kaydediliyor..." : "Kaydet"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Inline brand edit modal */}
+      <Dialog open={brandEditTarget !== null} onOpenChange={(open) => { if (!open) { setBrandEditTarget(null); setBrandEditValue(""); } }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Marka Ekle</DialogTitle>
+            <DialogDescription>{brandEditTarget?.name}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {existingBrands.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Mevcut markalar</Label>
+                <div className="flex flex-wrap gap-2">
+                  {existingBrands.map((b) => (
+                    <button
+                      key={b}
+                      onClick={() => setBrandEditValue(b)}
+                      className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+                        brandEditValue === b
+                          ? "border-blue-500 bg-blue-50 text-blue-700"
+                          : "border-gray-200 bg-white text-gray-600 hover:border-blue-300"
+                      }`}
+                    >
+                      {b}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="inlineBrand">Marka</Label>
+              <Input
+                id="inlineBrand"
+                value={brandEditValue}
+                onChange={(e) => setBrandEditValue(e.target.value)}
+                placeholder="Marka adı..."
+                autoFocus
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleInlineBrandSave(); } }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setBrandEditTarget(null); setBrandEditValue(""); }}>
+              İptal
+            </Button>
+            <Button onClick={handleInlineBrandSave} disabled={brandEditSaving || !brandEditValue.trim()}>
+              {brandEditSaving ? "Kaydediliyor..." : "Kaydet"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
@@ -994,6 +1208,7 @@ interface ImportResult {
   updated: number;
   errors: number;
   total: number;
+  noBrandCount: number;
 }
 
 const MAPPING_FIELDS = [
@@ -1013,10 +1228,12 @@ function ImportDialog({
   open,
   onOpenChange,
   onSuccess,
+  onComplete,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  onComplete?: (noBrandCount: number) => void;
 }) {
   const [step, setStep] = useState<"upload" | "mapping" | "importing" | "result">("upload");
   const [preview, setPreview] = useState<ImportPreview | null>(null);
@@ -1127,6 +1344,9 @@ function ImportDialog({
       setResult(data);
       setStep("result");
       onSuccess();
+      if (data.noBrandCount > 0) {
+        onComplete?.(data.noBrandCount);
+      }
     } catch {
       setError("İçe aktarma sırasında hata oluştu");
       setStep("mapping");
@@ -1274,6 +1494,11 @@ function ImportDialog({
                   <p className="text-xs text-gray-500">Hatalı</p>
                 </div>
               </div>
+              {result.noBrandCount > 0 && (
+                <div className="mt-3 rounded-lg bg-yellow-50 border border-yellow-200 p-3 text-sm text-yellow-800">
+                  <strong>{result.noBrandCount}</strong> ürünün markası boş. Kapatınca marka atayabilirsiniz.
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button onClick={() => handleClose(false)}>Kapat</Button>
