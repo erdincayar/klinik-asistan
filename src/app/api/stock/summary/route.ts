@@ -21,9 +21,9 @@ export async function GET() {
     const totalProducts = allProducts.length;
     const activeCount = activeProducts.length;
 
-    // Low stock count
+    // Low stock count (only products with orderAlert enabled and stock > 0)
     const lowStockCount = activeProducts.filter(
-      (p) => p.currentStock <= p.minStock
+      (p) => p.orderAlert && p.currentStock > 0 && p.currentStock <= p.minStock
     ).length;
 
     // Total stock value

@@ -186,6 +186,11 @@ function calcProfitMargin(costTRY: number, saleTRY: number): number | null {
 
 export default function InventoryPage() {
   const [activeTab, setActiveTab] = useState("products");
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const triggerRefresh = useCallback(() => {
+    setRefreshKey((k) => k + 1);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -205,16 +210,16 @@ export default function InventoryPage() {
         </TabsList>
 
         <TabsContent value="products">
-          <ProductsTab />
+          <ProductsTab onDataChange={triggerRefresh} />
         </TabsContent>
         <TabsContent value="movements">
-          <MovementsTab />
+          <MovementsTab key={`movements-${refreshKey}`} />
         </TabsContent>
         <TabsContent value="alerts">
-          <AlertsTab />
+          <AlertsTab key={`alerts-${refreshKey}`} />
         </TabsContent>
         <TabsContent value="report">
-          <ReportTab />
+          <ReportTab key={`report-${refreshKey}`} />
         </TabsContent>
       </Tabs>
     </div>
@@ -225,7 +230,7 @@ export default function InventoryPage() {
 // TAB 1: Products
 // ============================================================
 
-function ProductsTab() {
+function ProductsTab({ onDataChange }: { onDataChange?: () => void }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -298,6 +303,7 @@ function ProductsTab() {
       setProducts((prev) => prev.filter((p) => p.id !== deleteTarget.id));
       setSelectedIds((prev) => { const next = new Set(prev); next.delete(deleteTarget.id); return next; });
       setDeleteTarget(null);
+      onDataChange?.();
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : "Silme hatası");
     } finally {
@@ -318,6 +324,7 @@ function ProductsTab() {
       setProducts((prev) => prev.filter((p) => !selectedIds.has(p.id)));
       setSelectedIds(new Set());
       setShowBulkDeleteConfirm(false);
+      onDataChange?.();
     } catch {
       // silent
     } finally {
