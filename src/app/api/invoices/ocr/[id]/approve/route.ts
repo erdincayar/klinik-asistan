@@ -10,6 +10,23 @@ interface StockMapping {
   unitPrice: number;
 }
 
+function calculateSimilarity(a: string, b: string): number {
+  if (a.includes(b) || b.includes(a)) return 0.9;
+  const wordsA = a.split(/\s+/).filter(w => w.length > 2);
+  const wordsB = b.split(/\s+/).filter(w => w.length > 2);
+  if (wordsA.length === 0 || wordsB.length === 0) return 0;
+  let matchCount = 0;
+  for (const wa of wordsA) {
+    for (const wb of wordsB) {
+      if (wa === wb || wa.includes(wb) || wb.includes(wa)) {
+        matchCount++;
+        break;
+      }
+    }
+  }
+  return matchCount / Math.max(wordsA.length, wordsB.length);
+}
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -48,6 +65,38 @@ export async function POST(
 
     const invoiceType = overrideInvoiceType || invoice.invoiceType;
     const parsedAmount = invoice.amount ? Math.round(invoice.amount * 100) : 0;
+
+    // Auto-match products when stockMappings is empty but OCR items exist
+    if (stockMappings.length === 0 && invoice.ocrData) {
+      const ocrItems = (invoice.ocrData as any).items;
+      if (Array.isArray(ocrItems) && ocrItems.length > 0) {
+        const products = await prisma.product.findMany({
+          where: { clinicId, isActive: true },
+          select: { id: true, name: true, currentStock: true, purchasePrice: true },
+        });
+
+        for (const item of ocrItems) {
+          const desc = (item.description || "").toLowerCase().trim();
+          let bestMatch: typeof products[number] | null = null;
+          let bestScore = 0;
+
+          for (const product of products) {
+            const score = calculateSimilarity(desc, product.name.toLowerCase().trim());
+            if (score > bestScore && score >= 0.3) {
+              bestScore = score;
+              bestMatch = product;
+            }
+          }
+
+          stockMappings.push({
+            description: item.description || "",
+            productId: bestMatch?.id || null,
+            quantity: item.quantity || 1,
+            unitPrice: item.unitPrice || 0,
+          });
+        }
+      }
+    }
 
     await prisma.$transaction(async (tx) => {
       // Update invoiceType if changed
