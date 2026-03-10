@@ -51,7 +51,38 @@ export async function GET(request: Request) {
       const treatmentTotal = rawTreatments.reduce((sum, t) => sum + (t.amount ?? 0), 0);
       const incomeTotal = rawIncomeRecords.reduce((sum, i) => sum + (i.amount ?? 0), 0);
       const ciro = treatmentTotal + incomeTotal;
-      const cogs = rawOutMovements.reduce((sum, m) => sum + (m.quantity * (m.product.purchasePrice ?? 0)), 0);
+
+      // COGS: non-invoice stock movements + invoice profitData costs (avoid double-counting)
+      const nonInvoiceCogs = rawOutMovements
+        .filter(m => !m.reference?.startsWith("invoice-"))
+        .reduce((sum, m) => sum + (m.quantity * (m.product.purchasePrice ?? 0)), 0);
+
+      // Fetch approved income invoices for profitData-based costs
+      const approvedIncomeInvoices = await prisma.uploadedInvoice.findMany({
+        where: {
+          clinicId,
+          approved: true,
+          invoiceType: "INCOME",
+          invoiceDate: { gte: startDate, lt: endDate },
+        },
+        select: { id: true, vendor: true, amount: true, profitData: true, invoiceDate: true },
+      });
+
+      let invoiceCogs = 0;
+      for (const inv of approvedIncomeInvoices) {
+        const pd = inv.profitData as any;
+        if (pd?.totalCost) {
+          invoiceCogs += pd.totalCost;
+        } else {
+          // Fallback: use invoice-related stock movements for this invoice
+          const invoiceMovementCogs = rawOutMovements
+            .filter(m => m.reference === `invoice-${inv.id}`)
+            .reduce((sum, m) => sum + (m.quantity * (m.product.purchasePrice ?? 0)), 0);
+          invoiceCogs += invoiceMovementCogs;
+        }
+      }
+
+      const cogs = nonInvoiceCogs + invoiceCogs;
       const gelir = ciro - cogs;
       const totalExpense = rawExpenses.reduce((sum, e) => sum + (e.amount ?? 0), 0);
       const totalProfit = gelir - totalExpense;
@@ -73,17 +104,6 @@ export async function GET(request: Request) {
         category: e.category,
         amount: e.amount,
       }));
-
-      // Fetch approved income invoices with profitData for this month
-      const approvedIncomeInvoices = await prisma.uploadedInvoice.findMany({
-        where: {
-          clinicId,
-          approved: true,
-          invoiceType: "INCOME",
-          invoiceDate: { gte: startDate, lt: endDate },
-        },
-        select: { id: true, vendor: true, amount: true, profitData: true, invoiceDate: true },
-      });
 
       const invoiceProfitSummary = {
         totalInvoiceRevenue: 0,

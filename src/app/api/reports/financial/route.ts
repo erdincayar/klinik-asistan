@@ -45,10 +45,10 @@ export async function GET(req: NextRequest) {
       include: { product: { select: { purchasePrice: true } } },
     });
 
-    // Get approved income invoices for unmatched item warnings
+    // Get approved income invoices for profit + unmatched item warnings
     const approvedIncomeInvoices = await prisma.uploadedInvoice.findMany({
       where: { clinicId, approved: true, invoiceType: "INCOME", invoiceDate: dateFilter },
-      select: { profitData: true },
+      select: { id: true, profitData: true },
     });
 
     // Aggregate by month
@@ -85,7 +85,27 @@ export async function GET(req: NextRequest) {
     const totalIncome = treatments.reduce((sum, t) => sum + t.amount, 0)
       + incomeRecords.reduce((sum, r) => sum + r.amount, 0);
     const totalExpense = expenses.reduce((sum, e) => sum + e.amount, 0);
-    const totalCogs = outMovements.reduce((sum, m) => sum + (m.quantity * (m.product.purchasePrice ?? 0)), 0);
+
+    // COGS: non-invoice stock movements + invoice profitData costs
+    const nonInvoiceCogs = outMovements
+      .filter(m => !m.reference?.startsWith("invoice-"))
+      .reduce((sum, m) => sum + (m.quantity * (m.product.purchasePrice ?? 0)), 0);
+
+    let invoiceCogs = 0;
+    for (const inv of approvedIncomeInvoices) {
+      const pd = inv.profitData as any;
+      if (pd?.totalCost) {
+        invoiceCogs += pd.totalCost;
+      } else {
+        // Fallback: use invoice-related stock movements
+        const movementCogs = outMovements
+          .filter(m => m.reference === `invoice-${inv.id}`)
+          .reduce((sum, m) => sum + (m.quantity * (m.product.purchasePrice ?? 0)), 0);
+        invoiceCogs += movementCogs;
+      }
+    }
+
+    const totalCogs = nonInvoiceCogs + invoiceCogs;
     const grossProfit = totalIncome - totalCogs;
     const netProfit = grossProfit - totalExpense;
 
