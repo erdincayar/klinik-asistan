@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -72,7 +72,9 @@ function Skeleton({ className }: { className?: string }) {
 
 export default function PatientDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const [patient, setPatient] = useState<Patient | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [photos, setPhotos] = useState<PatientPhoto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -183,6 +185,23 @@ export default function PatientDetailPage() {
     fetchCategories();
   }, [params.id, fetchPhotos, fetchCategories]);
 
+  async function handleDeletePatient() {
+    if (!confirm(`"${patient?.name}" müşterisini silmek istediğinize emin misiniz? Tüm tedavi kayıtları da silinecektir.`)) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/patients/${params.id}`, { method: "DELETE" });
+      if (res.ok) {
+        router.push("/patients");
+      } else {
+        setError("Müşteri silinemedi");
+      }
+    } catch {
+      setError("Müşteri silinemedi");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   async function handleSave() {
     setSaving(true);
     try {
@@ -274,6 +293,14 @@ export default function PatientDetailPage() {
             >
               <Pencil className="h-3.5 w-3.5" />
               {editing ? "İptal" : "Düzenle"}
+            </button>
+            <button
+              onClick={handleDeletePatient}
+              disabled={deleting}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 px-4 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              {deleting ? "Siliniyor..." : "Sil"}
             </button>
             <Link
               href={`/finance/new-income?patientId=${patient.id}`}

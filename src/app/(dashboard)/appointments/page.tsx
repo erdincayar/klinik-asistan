@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -11,6 +11,7 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
 import {
   Dialog,
@@ -393,6 +394,28 @@ export default function AppointmentsPage() {
     }
   }, [loading, viewMode, workStartTime]);
 
+  // Filter time slots: show work hours + 1 buffer slot + any slots with appointments
+  const visibleTimeSlots = useMemo(() => {
+    const startIdx = Math.max(0, ALL_TIME_SLOTS.indexOf(workStartTime) - 1);
+    const endIdx = Math.min(ALL_TIME_SLOTS.length - 1, ALL_TIME_SLOTS.indexOf(workEndTime) + 1);
+
+    // Collect all appointment start times
+    const appointmentTimes = new Set<string>();
+    if (viewMode === "daily") {
+      appointments.forEach((a) => appointmentTimes.add(a.startTime));
+    } else {
+      Object.values(weekAppointments).forEach((dayAppts) => {
+        dayAppts.forEach((a) => appointmentTimes.add(a.startTime));
+      });
+    }
+
+    return ALL_TIME_SLOTS.filter((time, idx) => {
+      if (idx >= startIdx && idx <= endIdx) return true;
+      if (appointmentTimes.has(time)) return true;
+      return false;
+    });
+  }, [workStartTime, workEndTime, appointments, weekAppointments, viewMode]);
+
   const isToday = formatDateISO(selectedDate) === formatDateISO(new Date());
   const nowTime = new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit", hour12: false });
 
@@ -413,8 +436,8 @@ export default function AppointmentsPage() {
           <h2 className="text-base font-semibold text-gray-900">{formatDateTR(selectedDate)}</h2>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {/* Work hours */}
-          <div className="flex items-center gap-1 rounded-xl border border-gray-200 bg-white px-2.5 py-1.5">
+          {/* Work hours (hidden on mobile) */}
+          <div className="hidden items-center gap-1 rounded-xl border border-gray-200 bg-white px-2.5 py-1.5 sm:flex">
             <span className="text-xs font-medium text-gray-500">Mesai:</span>
             <select
               value={workStartTime}
@@ -528,7 +551,7 @@ export default function AppointmentsPage() {
               </div>
             ) : (
               <div className="divide-y divide-gray-50">
-                {ALL_TIME_SLOTS.map((time) => {
+                {visibleTimeSlots.map((time) => {
                   const slotAppointments = getAppointmentsForSlot(time);
                   const isCurrentSlot = isToday && time === nowTime.slice(0, 5);
 
@@ -553,7 +576,7 @@ export default function AppointmentsPage() {
                       </div>
 
                       {/* Slot content */}
-                      <div className="flex flex-1 flex-col gap-1 px-3 py-2">
+                      <div className="flex flex-1 flex-col gap-1 px-3 py-3">
                         {slotAppointments.length > 0 ? (
                           slotAppointments.map((appointment) => {
                             const statusInfo = getStatusInfo(appointment.status);
@@ -656,7 +679,7 @@ export default function AppointmentsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {ALL_TIME_SLOTS.map((time) => {
+                    {visibleTimeSlots.map((time) => {
                       const isOffHours = isOutsideWorkHours(time, workStartTime, workEndTime);
                       return (
                       <tr key={time} data-time={time} className={cn("border-b border-gray-50", isOffHours && "bg-gray-50/70")}>
@@ -871,7 +894,7 @@ export default function AppointmentsPage() {
                 disabled={creating}
                 className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
               >
-                {creating ? "Kaydediliyor..." : "Randevu Oluştur"}
+                {creating ? <><Loader2 className="h-4 w-4 animate-spin" /> Kaydediliyor...</> : "Randevu Oluştur"}
               </button>
               <button
                 onClick={() => setCreateDialogOpen(false)}

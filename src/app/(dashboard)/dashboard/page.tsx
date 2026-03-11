@@ -252,6 +252,7 @@ export default function DashboardPage() {
       icon: Users,
       iconBg: "bg-blue-50",
       iconColor: "text-blue-600",
+      href: "/patients",
     },
     {
       title: "Bugünün Randevuları",
@@ -263,6 +264,7 @@ export default function DashboardPage() {
       icon: Calendar,
       iconBg: "bg-emerald-50",
       iconColor: "text-emerald-600",
+      href: "/appointments",
     },
     {
       title: "Aylık Gelir",
@@ -277,6 +279,7 @@ export default function DashboardPage() {
       iconColor: "text-amber-600",
       estimatedProfit: data.estimatedProfit,
       unmatchedItemCount: data.unmatchedItemCount,
+      href: "/finance",
     },
     {
       title: "Stok Uyarıları",
@@ -289,6 +292,7 @@ export default function DashboardPage() {
       icon: Package,
       iconBg: lowStockCount > 0 ? "bg-red-50" : "bg-emerald-50",
       iconColor: lowStockCount > 0 ? "text-red-600" : "text-emerald-600",
+      href: "/inventory",
     },
   ];
 
@@ -320,66 +324,67 @@ export default function DashboardPage() {
         {statCards.map((stat, i) => {
           const Icon = stat.icon;
           return (
-            <motion.div
-              key={stat.title}
-              variants={fadeUp}
-              initial="hidden"
-              animate="visible"
-              custom={i}
-              className="group rounded-2xl border border-gray-100 bg-white p-6 transition-shadow hover:shadow-md"
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-[13px] font-medium text-gray-500">
-                    {stat.title}
-                  </p>
-                  <p className="mt-2 text-2xl font-bold tracking-tight text-gray-900">
-                    {stat.value}
-                  </p>
-                  {stat.change && (
-                    <div className="mt-2 flex items-center gap-1">
-                      {"changeUp" in stat ? (
-                        stat.changeUp ? (
-                          <TrendingUp className="h-3 w-3 text-emerald-500" />
-                        ) : (
-                          <TrendingDown className="h-3 w-3 text-red-500" />
-                        )
-                      ) : null}
-                      <span
-                        className={cn(
-                          "text-xs font-medium",
-                          "changeUp" in stat
-                            ? stat.changeUp
-                              ? "text-emerald-600"
-                              : "text-red-600"
-                            : "text-gray-500"
+            <Link key={stat.title} href={stat.href}>
+              <motion.div
+                variants={fadeUp}
+                initial="hidden"
+                animate="visible"
+                custom={i}
+                className="group cursor-pointer rounded-2xl border border-gray-100 bg-white p-6 transition-all hover:shadow-md active:scale-[0.98]"
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-[13px] font-medium text-gray-500">
+                      {stat.title}
+                    </p>
+                    <p className="mt-2 text-2xl font-bold tracking-tight text-gray-900">
+                      {stat.value}
+                    </p>
+                    {stat.change && (
+                      <div className="mt-2 flex items-center gap-1">
+                        {"changeUp" in stat ? (
+                          stat.changeUp ? (
+                            <TrendingUp className="h-3 w-3 text-emerald-500" />
+                          ) : (
+                            <TrendingDown className="h-3 w-3 text-red-500" />
+                          )
+                        ) : null}
+                        <span
+                          className={cn(
+                            "text-xs font-medium",
+                            "changeUp" in stat
+                              ? stat.changeUp
+                                ? "text-emerald-600"
+                                : "text-red-600"
+                              : "text-gray-500"
+                          )}
+                        >
+                          {stat.change}
+                        </span>
+                      </div>
+                    )}
+                    {"estimatedProfit" in stat && stat.estimatedProfit !== 0 && (
+                      <div className="mt-1 flex items-center gap-1">
+                        <span className={cn("text-xs font-medium", (stat.estimatedProfit as number) >= 0 ? "text-emerald-600" : "text-red-600")}>
+                          Tahmini Kâr: {formatCurrency(stat.estimatedProfit as number)}
+                        </span>
+                        {"unmatchedItemCount" in stat && (stat.unmatchedItemCount as number) > 0 && (
+                          <AlertTriangle className="h-3 w-3 text-yellow-500" />
                         )}
-                      >
-                        {stat.change}
-                      </span>
-                    </div>
-                  )}
-                  {"estimatedProfit" in stat && stat.estimatedProfit !== 0 && (
-                    <div className="mt-1 flex items-center gap-1">
-                      <span className={cn("text-xs font-medium", (stat.estimatedProfit as number) >= 0 ? "text-emerald-600" : "text-red-600")}>
-                        Tahmini Kâr: {formatCurrency(stat.estimatedProfit as number)}
-                      </span>
-                      {"unmatchedItemCount" in stat && (stat.unmatchedItemCount as number) > 0 && (
-                        <AlertTriangle className="h-3 w-3 text-yellow-500" />
-                      )}
-                    </div>
-                  )}
+                      </div>
+                    )}
+                  </div>
+                  <div
+                    className={cn(
+                      "flex h-12 w-12 items-center justify-center rounded-xl",
+                      stat.iconBg
+                    )}
+                  >
+                    <Icon className={cn("h-5 w-5", stat.iconColor)} />
+                  </div>
                 </div>
-                <div
-                  className={cn(
-                    "flex h-12 w-12 items-center justify-center rounded-xl",
-                    stat.iconBg
-                  )}
-                >
-                  <Icon className={cn("h-5 w-5", stat.iconColor)} />
-                </div>
-              </div>
-            </motion.div>
+              </motion.div>
+            </Link>
           );
         })}
       </div>
@@ -395,10 +400,10 @@ export default function DashboardPage() {
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h2 className="text-base font-semibold text-gray-900">
-              Gelir Grafiği
+              Gelir / Gider Grafiği
             </h2>
             <p className="mt-0.5 text-[13px] text-gray-500">
-              {new Date().getFullYear()} yılı aylık gelir özeti
+              {new Date().getFullYear()} yılı aylık özet
             </p>
           </div>
           <Link
@@ -421,6 +426,10 @@ export default function DashboardPage() {
                 <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#2563eb" stopOpacity={0.15} />
                   <stop offset="100%" stopColor="#2563eb" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="expenseGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#ef4444" stopOpacity={0.12} />
+                  <stop offset="100%" stopColor="#ef4444" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid
@@ -455,6 +464,15 @@ export default function DashboardPage() {
                 fill="url(#incomeGrad)"
                 dot={false}
                 activeDot={{ r: 5, fill: "#2563eb", strokeWidth: 2, stroke: "#fff" }}
+              />
+              <Area
+                type="monotone"
+                dataKey="expense"
+                stroke="#ef4444"
+                strokeWidth={2}
+                fill="url(#expenseGrad)"
+                dot={false}
+                activeDot={{ r: 5, fill: "#ef4444", strokeWidth: 2, stroke: "#fff" }}
               />
             </AreaChart>
           </ResponsiveContainer>
@@ -564,6 +582,13 @@ export default function DashboardPage() {
                   <p className="text-sm text-gray-400">
                     Bugün randevu bulunmuyor
                   </p>
+                  <Link
+                    href="/appointments"
+                    className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700"
+                  >
+                    Randevu oluştur
+                    <ArrowRight className="h-3 w-3" />
+                  </Link>
                 </div>
               </div>
             ) : (
@@ -633,6 +658,13 @@ export default function DashboardPage() {
                   <p className="text-sm text-gray-400">
                     Henüz işlem bulunmuyor
                   </p>
+                  <Link
+                    href="/finance/new-income"
+                    className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700"
+                  >
+                    İşlem ekle
+                    <ArrowRight className="h-3 w-3" />
+                  </Link>
                 </div>
               </div>
             ) : (

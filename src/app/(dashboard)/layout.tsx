@@ -95,6 +95,9 @@ const navItems: NavItem[] = [
   { href: "/billing", label: "Abonelik", icon: CreditCard, minPlan: "BASIC" },
 ];
 
+// Nav group boundaries for visual separation
+const NAV_GROUP_BREAKS = new Set(["/inventory", "/messaging"]);
+
 const adminNavItems = [
   { href: "/admin", label: "Admin Panel", icon: Shield },
   { href: "/admin/users", label: "Kullanıcılar", icon: Users },
@@ -413,15 +416,19 @@ function Sidebar({
                     pathname.startsWith(item.href + "/");
                   const isLocked = !unlockAll && !hasAccess(clinicPlan, item.minPlan);
                   return (
-                    <SortableNavItem
-                      key={item.href}
-                      item={item}
-                      isActive={isActive}
-                      isLocked={isLocked}
-                      collapsed={collapsed}
-                      onClose={onClose}
-                      onLockedClick={handleLockedClick}
-                    />
+                    <div key={item.href}>
+                      {NAV_GROUP_BREAKS.has(item.href) && (
+                        <div className="border-t border-gray-100 mt-3 pt-3" />
+                      )}
+                      <SortableNavItem
+                        item={item}
+                        isActive={isActive}
+                        isLocked={isLocked}
+                        collapsed={collapsed}
+                        onClose={onClose}
+                        onLockedClick={handleLockedClick}
+                      />
+                    </div>
                   );
                 })}
               </div>
@@ -633,10 +640,10 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
               </span>
             </div>
 
-            {/* Logout (desktop) */}
+            {/* Logout (tablet only, sidebar has its own) */}
             <button
               onClick={() => signOut({ callbackUrl: "/" })}
-              className="hidden rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 sm:block"
+              className="hidden rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 sm:block lg:hidden"
               title="Çıkış Yap"
             >
               <LogOut className="h-5 w-5" />
@@ -645,7 +652,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Main content */}
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto px-4 py-4 sm:p-6">
           <motion.div
             key={pathname}
             initial={{ opacity: 0, y: 8 }}

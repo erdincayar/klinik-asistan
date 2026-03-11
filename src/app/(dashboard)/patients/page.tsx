@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Plus, Search, Users, ArrowRight, Phone, Upload, Download, Trash2 } from "lucide-react";
+import { Plus, Search, Users, ArrowRight, Phone, Upload, Download, ChevronRight } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,18 +86,6 @@ export default function PatientsPage() {
     const timer = setTimeout(fetchPatients, 300);
     return () => clearTimeout(timer);
   }, [search]);
-
-  async function handleDelete(id: string, name: string) {
-    if (!confirm(`"${name}" müşterisini silmek istediğinize emin misiniz? Tüm tedavi kayıtları da silinecektir.`)) return;
-    try {
-      const res = await fetch(`/api/patients/${id}`, { method: "DELETE" });
-      if (res.ok) {
-        setPatients(patients.filter((p) => p.id !== id));
-      }
-    } catch {
-      // Handle error
-    }
-  }
 
   return (
     <div className="space-y-6">
@@ -193,79 +181,101 @@ export default function PatientsPage() {
                 </div>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Müşteri</TableHead>
-                    <TableHead>Telefon</TableHead>
-                    <TableHead className="hidden md:table-cell">Email</TableHead>
-                    <TableHead>İşlem Sayısı</TableHead>
-                    <TableHead className="hidden md:table-cell">Kayıt Tarihi</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <>
+                {/* Mobile card view */}
+                <div className="space-y-2 md:hidden">
                   {patients.map((patient, i) => (
-                    <motion.tr key={patient.id} variants={fadeUp} initial="hidden" animate="visible" custom={i}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-sm font-semibold text-blue-700">
-                            {patient.name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")
-                              .toUpperCase()
-                              .slice(0, 2)}
+                    <motion.div key={patient.id} variants={fadeUp} initial="hidden" animate="visible" custom={i}>
+                      <Link
+                        href={`/patients/${patient.id}`}
+                        className="flex items-center gap-3 rounded-xl border border-gray-100 px-4 py-3 transition-colors hover:bg-gray-50 active:scale-[0.99]"
+                      >
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-sm font-semibold text-blue-700">
+                          {patient.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .toUpperCase()
+                            .slice(0, 2)}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-gray-900">{patient.name}</p>
+                          <div className="flex items-center gap-3 text-xs text-gray-500">
+                            {patient.phone && (
+                              <span className="flex items-center gap-1">
+                                <Phone className="h-3 w-3" />
+                                {patient.phone}
+                              </span>
+                            )}
+                            <span>{patient._count?.treatments ?? 0} işlem</span>
                           </div>
-                          <span className="text-sm font-medium text-gray-900">
-                            {patient.name}
-                          </span>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1.5">
-                          {patient.phone ? (
-                            <>
-                              <Phone className="h-3 w-3 text-gray-400 sm:hidden" />
-                              <span className="text-sm text-gray-600">{patient.phone}</span>
-                            </>
-                          ) : (
-                            <span className="text-sm text-gray-300">&mdash;</span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        {patient.email ? (
-                          <span className="truncate text-sm text-gray-600">{patient.email}</span>
-                        ) : (
-                          <span className="text-sm text-gray-300">&mdash;</span>
-                        )}
-                      </TableCell>
-                      <TableCell>{patient._count?.treatments ?? 0}</TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        {formatDate(patient.createdAt)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1.5">
-                          <Link href={`/patients/${patient.id}`}>
-                            <Button variant="outline" size="sm">
-                              Detay
-                            </Button>
-                          </Link>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDelete(patient.id, patient.name)}
-                            className="text-red-500 hover:bg-red-50 hover:text-red-600"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </motion.tr>
+                        <ChevronRight className="h-4 w-4 shrink-0 text-gray-400" />
+                      </Link>
+                    </motion.div>
                   ))}
-                </TableBody>
-              </Table>
+                </div>
+
+                {/* Desktop table view */}
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Müşteri</TableHead>
+                        <TableHead>Telefon</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>İşlem Sayısı</TableHead>
+                        <TableHead>Kayıt Tarihi</TableHead>
+                        <TableHead></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {patients.map((patient, i) => (
+                        <motion.tr key={patient.id} variants={fadeUp} initial="hidden" animate="visible" custom={i}>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-sm font-semibold text-blue-700">
+                                {patient.name
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")
+                                  .toUpperCase()
+                                  .slice(0, 2)}
+                              </div>
+                              <span className="text-sm font-medium text-gray-900">
+                                {patient.name}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {patient.phone ? (
+                              <span className="text-sm text-gray-600">{patient.phone}</span>
+                            ) : (
+                              <span className="text-sm text-gray-300">&mdash;</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {patient.email ? (
+                              <span className="truncate text-sm text-gray-600">{patient.email}</span>
+                            ) : (
+                              <span className="text-sm text-gray-300">&mdash;</span>
+                            )}
+                          </TableCell>
+                          <TableCell>{patient._count?.treatments ?? 0}</TableCell>
+                          <TableCell>{formatDate(patient.createdAt)}</TableCell>
+                          <TableCell>
+                            <Link href={`/patients/${patient.id}`}>
+                              <Button variant="outline" size="sm">
+                                Detay
+                              </Button>
+                            </Link>
+                          </TableCell>
+                        </motion.tr>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
