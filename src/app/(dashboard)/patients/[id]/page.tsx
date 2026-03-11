@@ -49,7 +49,7 @@ interface PatientPhoto {
   uploadedAt: string;
 }
 
-const DEFAULT_CATEGORIES = ["Genel", "Tedavi Öncesi", "Tedavi Sonrası", "Röntgen", "Diğer"];
+const DEFAULT_CATEGORIES = ["Genel"];
 
 const treatmentLabels: Record<string, string> = {
   BOTOX: "Botoks",
