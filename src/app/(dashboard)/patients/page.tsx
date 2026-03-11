@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Plus, Search, Users, ArrowRight, Phone, Upload, Download } from "lucide-react";
+import { Plus, Search, Users, ArrowRight, Phone, Upload, Download, Trash2 } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,6 +86,18 @@ export default function PatientsPage() {
     const timer = setTimeout(fetchPatients, 300);
     return () => clearTimeout(timer);
   }, [search]);
+
+  async function handleDelete(id: string, name: string) {
+    if (!confirm(`"${name}" müşterisini silmek istediğinize emin misiniz? Tüm tedavi kayıtları da silinecektir.`)) return;
+    try {
+      const res = await fetch(`/api/patients/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setPatients(patients.filter((p) => p.id !== id));
+      }
+    } catch {
+      // Handle error
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -234,11 +246,21 @@ export default function PatientsPage() {
                         {formatDate(patient.createdAt)}
                       </TableCell>
                       <TableCell>
-                        <Link href={`/patients/${patient.id}`}>
-                          <Button variant="outline" size="sm">
-                            Detay
+                        <div className="flex items-center gap-1.5">
+                          <Link href={`/patients/${patient.id}`}>
+                            <Button variant="outline" size="sm">
+                              Detay
+                            </Button>
+                          </Link>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDelete(patient.id, patient.name)}
+                            className="text-red-500 hover:bg-red-50 hover:text-red-600"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
                           </Button>
-                        </Link>
+                        </div>
                       </TableCell>
                     </motion.tr>
                   ))}
