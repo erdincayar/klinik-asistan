@@ -261,13 +261,13 @@ async function smartFallback(clinicId: string, userMessage: string): Promise<str
       prisma.appointment.count({
         where: { clinicId, date: { gte: dayStart, lte: dayEnd }, status: { not: "CANCELLED" } },
       }),
-      prisma.treatment.aggregate({
-        where: { clinicId, date: { gte: monthRange.start, lte: monthRange.end } },
+      prisma.expense.aggregate({
+        where: { clinicId, type: "INCOME", date: { gte: monthRange.start, lte: monthRange.end } },
         _sum: { amount: true },
         _count: { id: true },
       }),
       prisma.expense.aggregate({
-        where: { clinicId, date: { gte: monthRange.start, lte: monthRange.end } },
+        where: { clinicId, type: "EXPENSE", date: { gte: monthRange.start, lte: monthRange.end } },
         _sum: { amount: true },
       }),
       prisma.product.findMany({

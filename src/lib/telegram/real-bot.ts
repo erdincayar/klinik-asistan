@@ -71,14 +71,25 @@ async function getMe(): Promise<{ username: string }> {
 async function getClinicIdForChat(chatId: number): Promise<string | null> {
   // First check explicit chat→clinic mapping
   const mapped = CHAT_CLINIC_MAP.get(chatId);
-  if (mapped) return mapped;
+  if (mapped) {
+    console.log(`[Bot] clinicId from map: ${mapped} (chatId: ${chatId})`);
+    return mapped;
+  }
 
-  // Fallback: find user by telegramChatId or use first clinic
+  // Lookup by telegramChatId on Clinic table
   const clinic = await prisma.clinic.findFirst({
-    orderBy: { createdAt: "desc" },
+    where: { telegramChatId: String(chatId) },
     select: { id: true },
   });
-  return clinic?.id ?? null;
+
+  if (clinic) {
+    console.log(`[Bot] clinicId from DB (telegramChatId): ${clinic.id} (chatId: ${chatId})`);
+    CHAT_CLINIC_MAP.set(chatId, clinic.id);
+    return clinic.id;
+  }
+
+  console.log(`[Bot] clinicId NOT FOUND for chatId: ${chatId}`);
+  return null;
 }
 
 function isAuthorized(chatId: number): boolean {
