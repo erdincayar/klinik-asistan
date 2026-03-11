@@ -742,6 +742,9 @@ async function handleSlashCommand(clinicId: string, command: string): Promise<st
   if (cmd === "/müşteri" || cmd === "/musteri") {
     return getPatientsList(clinicId);
   }
+  if (cmd === "/fatura") {
+    return getInvoiceSummary(clinicId);
+  }
   if (cmd === "/rapor") {
     return getDailySummary(clinicId);
   }
@@ -760,6 +763,7 @@ function getSlashHelpMessage(): string {
 /gelir — Bu ayki gelir
 /gider — Bu ayki giderler
 /stok — Stok durumu
+/fatura — Fatura özeti
 /müşteri — Müşteri listesi
 /rapor — Günlük özet
 /yardım — Bu mesaj

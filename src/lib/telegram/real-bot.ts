@@ -1,9 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { handleCommand } from "@/lib/commands/command-handler";
-import {
-  parseWhatsAppMessage,
-  findOrCreatePatient,
-} from "@/lib/whatsapp/message-parser";
+import { handleBotMessage } from "@/lib/bot-ai-handler";
 
 // ── Prisma ──────────────────────────────────────────────────────────────────
 
@@ -149,10 +146,13 @@ async function processMessage(msg: TgMessage): Promise<void> {
       await tgSend(chatId, [
         "👋 Merhaba! Poby Bot'a hoş geldiniz.",
         "",
-        "Doğal dilde mesaj yazarak kayıt oluşturabilirsiniz:",
-        '📅 Randevu: "Erdinç Ayar pazartesi 15:00 botoks"',
-        '💰 Gelir: "Kerem İnanır dolgu 5000tl"',
-        '💸 Gider: "Nurederm ürün 50000tl"',
+        "Doğal dilde mesaj yazarak sorgulama ve kayıt yapabilirsiniz:",
+        "",
+        "📦 Stok: \"Stok durumu\" veya \"Botox ne kadar kaldı?\"",
+        "💰 Finans: \"Bu ay gelir\" veya \"Giderler ne durumda?\"",
+        "🧾 Fatura: \"Son faturalar\" veya \"Fatura durumu\"",
+        "📅 Randevu: \"Bugün randevum var mı?\"",
+        "📝 Kayıt: \"Erdinç Ayar pazartesi 15:00 botoks\"",
         "",
         "Komutlar için /yardim yazın.",
       ].join("\n"));
@@ -191,164 +191,12 @@ async function processMessage(msg: TgMessage): Promise<void> {
       return;
     }
 
-    // Natural language → AI parser
+    // Natural language → AI handler (stok, finans, fatura sorguları + veri girişi)
     await tgSend(chatId, "⏳ Mesajınız işleniyor...");
 
-    const parsed = await parseWhatsAppMessage(text);
-
-    if (parsed.type === "ERROR") {
-      await tgSend(chatId, `❌ ${parsed.message}`);
-      return;
-    }
-
-    if (parsed.type === "AMBIGUOUS") {
-      const options = parsed.options.map((o, i) => `${i + 1}. ${o}`).join("\n");
-      await tgSend(chatId, `🤔 ${parsed.message}\n\n${options}\n\nLütfen netleştirerek tekrar yazın.`);
-      return;
-    }
-
-    if (parsed.type === "APPOINTMENT") {
-      const { patient, isNew } = await findOrCreatePatient(parsed.patientName, clinicId);
-
-      const [h, m] = parsed.time.split(":").map(Number);
-      const endMinutes = h * 60 + m + 30;
-      const endTime = `${Math.floor(endMinutes / 60).toString().padStart(2, "0")}:${(endMinutes % 60).toString().padStart(2, "0")}`;
-
-      await prisma.appointment.create({
-        data: {
-          patientId: patient.id,
-          clinicId,
-          date: new Date(parsed.date),
-          startTime: parsed.time,
-          endTime,
-          treatmentType: parsed.treatmentType,
-          notes: parsed.notes || null,
-          status: "SCHEDULED",
-        },
-      });
-
-      const dateFormatted = new Date(parsed.date).toLocaleDateString("tr-TR", {
-        weekday: "long", day: "numeric", month: "long",
-      });
-      const treatmentLabel =
-        { BOTOX: "Botoks", DOLGU: "Dolgu", DIS_TEDAVI: "Diş Tedavi", GENEL: "Genel" }[
-          parsed.treatmentType
-        ] || parsed.treatmentType;
-
-      let reply = `✅ Randevu oluşturuldu:\n📋 ${patient.name}\n📅 ${dateFormatted} saat ${parsed.time}\n💉 ${treatmentLabel}`;
-      if (parsed.notes) reply += `\n📝 ${parsed.notes}`;
-      if (isNew) reply += `\n\n⚠️ Yeni müşteri kaydı oluşturuldu: ${patient.name}`;
-
-      await tgSend(chatId, reply);
-      return;
-    }
-
-    if (parsed.type === "INCOME") {
-      const { patient, isNew } = await findOrCreatePatient(parsed.patientName, clinicId);
-
-      await prisma.treatment.create({
-        data: {
-          patientId: patient.id,
-          clinicId,
-          name: parsed.treatmentName || parsed.treatmentType,
-          category: parsed.treatmentType,
-          amount: parsed.amount,
-          date: new Date(),
-          description: parsed.notes || null,
-        },
-      });
-
-      const amountTL = (parsed.amount / 100).toLocaleString("tr-TR");
-      const treatmentLabel =
-        { BOTOX: "Botoks", DOLGU: "Dolgu", DIS_TEDAVI: "Diş Tedavi", GENEL: "Genel" }[
-          parsed.treatmentType
-        ] || parsed.treatmentType;
-
-      let reply = `✅ Gelir kaydedildi:\n👤 ${patient.name}\n💉 ${treatmentLabel}\n💰 ${amountTL} TL`;
-      if (isNew) reply += `\n\n⚠️ Yeni müşteri kaydı oluşturuldu: ${patient.name}`;
-
-      await tgSend(chatId, reply);
-      return;
-    }
-
-    if (parsed.type === "EXPENSE") {
-      await prisma.expense.create({
-        data: {
-          clinicId,
-          description: parsed.description,
-          amount: parsed.amount,
-          category: parsed.category,
-          date: new Date(),
-        },
-      });
-
-      const amountTL = (parsed.amount / 100).toLocaleString("tr-TR");
-      const categoryLabel =
-        { MALZEME: "Malzeme", KIRA: "Kira", FATURA: "Fatura", MAAS: "Maaş", DIGER: "Diğer" }[
-          parsed.category
-        ] || parsed.category;
-
-      await tgSend(chatId, `✅ Gider kaydedildi:\n📦 ${parsed.description}\n🏷️ ${categoryLabel}\n💸 ${amountTL} TL`);
-      return;
-    }
-
-    if (parsed.type === "STOCK_IN" || parsed.type === "STOCK_OUT") {
-      const searchTerm = parsed.productName.trim().toLowerCase();
-      const products = await prisma.product.findMany({
-        where: { clinicId, isActive: true, name: { contains: parsed.productName.trim() } },
-      });
-      const product = products.find((p) => p.name.toLowerCase().includes(searchTerm));
-
-      if (!product) {
-        await tgSend(chatId, `❌ Urun bulunamadi: "${parsed.productName}"`);
-        return;
-      }
-
-      if (parsed.type === "STOCK_OUT" && product.currentStock < parsed.quantity) {
-        await tgSend(chatId, `❌ Yetersiz stok! ${product.name} mevcut: ${product.currentStock} ${product.unit}`);
-        return;
-      }
-
-      const isIn = parsed.type === "STOCK_IN";
-      const unitPrice = isIn ? product.purchasePrice : product.salePrice;
-
-      await prisma.$transaction([
-        prisma.stockMovement.create({
-          data: {
-            productId: product.id,
-            clinicId,
-            type: isIn ? "IN" : "OUT",
-            quantity: parsed.quantity,
-            unitPrice,
-            totalPrice: unitPrice * parsed.quantity,
-            description: parsed.notes || `Telegram dogal dil ile stok ${isIn ? "girisi" : "cikisi"}`,
-            date: new Date(),
-          },
-        }),
-        prisma.product.update({
-          where: { id: product.id },
-          data: {
-            currentStock: isIn
-              ? { increment: parsed.quantity }
-              : { decrement: parsed.quantity },
-          },
-        }),
-      ]);
-
-      const newStock = isIn
-        ? product.currentStock + parsed.quantity
-        : product.currentStock - parsed.quantity;
-
-      await tgSend(chatId, [
-        `✅ Stok ${isIn ? "girisi" : "cikisi"} kaydedildi:`,
-        `📦 ${product.name}`,
-        `${isIn ? "➕" : "➖"} ${parsed.quantity} ${product.unit}`,
-        `📊 Yeni stok: ${newStock} ${product.unit}`,
-      ].join("\n"));
-      return;
-    }
-
-    await tgSend(chatId, "❌ Mesaj anlaşılamadı. /yardim yazın.");
+    const senderId = `telegram:${chatId}`;
+    const result = await handleBotMessage(clinicId, text, senderId);
+    await tgSend(chatId, result.response);
   } catch (error) {
     console.error("[Bot] Hata:", error);
     await tgSend(chatId, "❌ İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin.");
