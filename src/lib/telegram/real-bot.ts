@@ -6,24 +6,6 @@ import { handleBotMessage } from "@/lib/bot-ai-handler";
 
 const prisma = new PrismaClient();
 
-// ── Config ──────────────────────────────────────────────────────────────────
-
-// Format: "chatId:clinicId,chatId:clinicId" or just "chatId,chatId" (legacy)
-const CHAT_CLINIC_MAP = new Map<number, string>();
-const AUTHORIZED_CHAT_IDS: number[] = [];
-
-if (process.env.TELEGRAM_AUTHORIZED_CHATS) {
-  for (const entry of process.env.TELEGRAM_AUTHORIZED_CHATS.split(",").filter(Boolean)) {
-    if (entry.includes(":")) {
-      const [chatStr, clinicId] = entry.split(":");
-      const chatId = Number(chatStr);
-      AUTHORIZED_CHAT_IDS.push(chatId);
-      CHAT_CLINIC_MAP.set(chatId, clinicId);
-    } else {
-      AUTHORIZED_CHAT_IDS.push(Number(entry));
-    }
-  }
-}
 
 // ── Telegram API ────────────────────────────────────────────────────────────
 
@@ -69,32 +51,13 @@ async function getMe(): Promise<{ username: string }> {
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 async function getClinicIdForChat(chatId: number): Promise<string | null> {
-  // First check explicit chat→clinic mapping
-  const mapped = CHAT_CLINIC_MAP.get(chatId);
-  if (mapped) {
-    console.log(`[Bot] clinicId from map: ${mapped} (chatId: ${chatId})`);
-    return mapped;
-  }
-
-  // Lookup by telegramChatId on Clinic table
   const clinic = await prisma.clinic.findFirst({
-    where: { telegramChatId: String(chatId) },
+    where: { telegramChatId: chatId.toString() },
     select: { id: true },
   });
 
-  if (clinic) {
-    console.log(`[Bot] clinicId from DB (telegramChatId): ${clinic.id} (chatId: ${chatId})`);
-    CHAT_CLINIC_MAP.set(chatId, clinic.id);
-    return clinic.id;
-  }
-
-  console.log(`[Bot] clinicId NOT FOUND for chatId: ${chatId}`);
-  return null;
-}
-
-function isAuthorized(chatId: number): boolean {
-  if (AUTHORIZED_CHAT_IDS.length === 0) return true;
-  return AUTHORIZED_CHAT_IDS.includes(chatId);
+  console.log(`[Bot] getClinicIdForChat chatId=${chatId} → clinicId=${clinic?.id ?? "NOT FOUND"}`);
+  return clinic?.id ?? null;
 }
 
 // ── Message Processing ──────────────────────────────────────────────────────
@@ -139,11 +102,6 @@ async function processMessage(msg: TgMessage): Promise<void> {
             where: { id: link.id },
             data: { used: true },
           });
-          // Add to runtime auth map so subsequent messages work without restart
-          CHAT_CLINIC_MAP.set(chatId, link.clinicId);
-          if (!AUTHORIZED_CHAT_IDS.includes(chatId)) {
-            AUTHORIZED_CHAT_IDS.push(chatId);
-          }
           await tgSend(chatId, "✅ Telegram bağlantısı başarılı! Artık bu chat üzerinden işletmenizi yönetebilirsiniz.");
           return;
         } catch (err) {
@@ -170,24 +128,9 @@ async function processMessage(msg: TgMessage): Promise<void> {
       return;
     }
 
-  if (!isAuthorized(chatId)) {
-    // Check DB for linked clinic (QR linked but bot restarted)
-    const linkedClinic = await prisma.clinic.findFirst({
-      where: { telegramChatId: String(chatId) },
-      select: { id: true },
-    });
-    if (linkedClinic) {
-      CHAT_CLINIC_MAP.set(chatId, linkedClinic.id);
-      AUTHORIZED_CHAT_IDS.push(chatId);
-    } else {
-      await tgSend(chatId, "⛔ Bu chat henüz bir işletmeye bağlı değil. Ayarlar sayfasından QR kod ile bağlantı kurun.");
-      return;
-    }
-  }
-
   const clinicId = await getClinicIdForChat(chatId);
   if (!clinicId) {
-    await tgSend(chatId, "❌ Klinik bulunamadı. Ayarlar sayfasından Telegram bağlantısını kurun.");
+    await tgSend(chatId, "⛔ Bu chat henüz bir işletmeye bağlı değil. Ayarlar sayfasından QR kod ile bağlantı kurun.");
     return;
   }
 
