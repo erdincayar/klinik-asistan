@@ -1206,6 +1206,54 @@ export async function getPatientPhotos(
   return { text: lines.join("\n"), photoUrls };
 }
 
+export async function deletePatientPhotos(
+  clinicId: string,
+  patientName: string
+): Promise<string> {
+  if (!patientName.trim()) {
+    return "⚠️ Musteri adi belirtmelisiniz.";
+  }
+
+  const searchName = patientName.trim().toLowerCase();
+  const patients = await prisma.patient.findMany({
+    where: { clinicId, name: { contains: patientName.trim() } },
+  });
+
+  const filtered = patients.filter((p) =>
+    p.name.toLowerCase().includes(searchName)
+  );
+
+  if (filtered.length === 0) {
+    return `❌ Musteri bulunamadi: "${patientName.trim()}"`;
+  }
+
+  const patient = filtered[0];
+
+  const photos = await prisma.patientPhoto.findMany({
+    where: { patientId: patient.id },
+  });
+
+  if (photos.length === 0) {
+    return `📷 ${patient.name} icin silinecek fotograf bulunmuyor.`;
+  }
+
+  // Delete files from disk
+  const fs = await import("fs");
+  const path = await import("path");
+  for (const photo of photos) {
+    const fileUrl = photo.fileUrl.replace(/^\/api\/uploads\//, "").replace(/^\/uploads\//, "");
+    const filePath = path.default.join(process.cwd(), "uploads", fileUrl);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+  }
+
+  // Delete DB records
+  await prisma.patientPhoto.deleteMany({ where: { patientId: patient.id } });
+
+  return `✅ ${patient.name} - ${photos.length} fotograf silindi.`;
+}
+
 // ── Help Command ─────────────────────────────────────────────────────────────
 
 export function getHelpText(): string {

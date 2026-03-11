@@ -20,6 +20,7 @@ import {
   getInvoiceSummary,
   sendReminderCommand,
   getPatientPhotos,
+  deletePatientPhotos,
 } from "./commands/command-executor";
 import { parseWhatsAppMessage, findOrCreatePatient } from "./whatsapp/message-parser";
 import { prisma } from "./prisma";
@@ -62,6 +63,7 @@ type IntentAction =
   | "PRIM_RAPOR"
   | "FATURA_OZET"
   | "HASTA_FOTO"
+  | "HASTA_FOTO_SIL"
   | "VERI_GIRISI"
   | "YARDIM"
   | "SERBEST_SORU";
@@ -109,6 +111,7 @@ TOP_MUSTERI: En çok gelen müşteriler ("en iyi müşteriler", "sadık müşter
 PRIM_RAPOR: Çalışan primleri ("prim raporu", "çalışan primleri", "personel primleri")
 FATURA_OZET: Fatura durumu ("fatura durumu", "bu ay kaç fatura kesildi", "fatura özeti")
 HASTA_FOTO: Hasta/müşteri fotoğrafı getir — param: müşteri adı ("Ahmet'in fotoğrafları", "Ayşe fotoğraflarını göster", "fotoğraf getir Mehmet")
+HASTA_FOTO_SIL: Hasta/müşteri fotoğraflarını sil — param: müşteri adı ("Ahmet'in fotoğraflarını sil", "Ayşe fotoğrafları sil")
 YARDIM: Ne yapabilirsin, yardım, nasıl kullanırım, komutlar
 
 VERI_GIRISI: Yeni kayıt oluşturma — kişi adı + tarih/saat + işlem, veya kişi adı + işlem + tutar, veya gider açıklaması + tutar, veya ürün + miktar + geldi/kullanıldı
@@ -198,7 +201,7 @@ const VALID_ACTIONS = new Set<string>([
   "STOK_DURUM", "STOK_ARA", "MUSTERI_ARA", "MUSTERI_LISTE",
   "HATIRLATMA", "HATIRLATMA_GONDER", "GUNLUK_OZET", "DETAYLI_RAPOR",
   "TOP_SERVIS", "TOP_MUSTERI", "PRIM_RAPOR", "FATURA_OZET",
-  "HASTA_FOTO", "VERI_GIRISI", "YARDIM", "SERBEST_SORU",
+  "HASTA_FOTO", "HASTA_FOTO_SIL", "VERI_GIRISI", "YARDIM", "SERBEST_SORU",
 ]);
 
 // ── Keyword Fallback (when AI is unavailable or fails) ──────────────────────
@@ -875,6 +878,18 @@ export async function handleBotMessage(
       const result = await getPatientPhotos(clinicId, patientName);
       await deductTokens(clinicId, tokenAction, tokenCost);
       return { response: result.text, intent: "HASTA_FOTO", photos: result.photoUrls };
+    }
+
+    // HASTA_FOTO_SIL: delete patient photos
+    if (intent.action === "HASTA_FOTO_SIL") {
+      const patientName = intent.param || message.replace(/foto(ğ|g)?raf(lar)?(ı|i|ını|ini)?/gi, "").replace(/sil|kaldır|kaldir/gi, "").trim();
+      if (!patientName) {
+        await deductTokens(clinicId, tokenAction, tokenCost);
+        return { response: "⚠️ Müşteri adı belirtmelisiniz. Örnek: \"Ahmet fotoğraflarını sil\"", intent: "HASTA_FOTO_SIL" };
+      }
+      const result = await deletePatientPhotos(clinicId, patientName);
+      await deductTokens(clinicId, tokenAction, tokenCost);
+      return { response: result, intent: "HASTA_FOTO_SIL" };
     }
 
     const response = await executeIntent(intent, clinicId, message, senderId);

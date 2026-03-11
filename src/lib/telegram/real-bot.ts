@@ -184,7 +184,8 @@ async function processMessage(msg: TgMessage): Promise<void> {
     // Send photos if available
     if (result.photos?.length) {
       for (const url of result.photos) {
-        const filePath = url.startsWith("/") ? url.substring(1) : url;
+        // Strip /api/uploads/ or /uploads/ prefix to get disk path relative to uploads/
+        const filePath = url.replace(/^\/?api\/uploads\//, "uploads/").replace(/^\/uploads\//, "uploads/");
         await tgSendPhoto(chatId, filePath);
       }
     }

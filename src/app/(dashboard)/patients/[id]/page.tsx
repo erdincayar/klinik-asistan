@@ -17,6 +17,7 @@ import {
   Columns,
   Image as ImageIcon,
   Loader2,
+  Trash2,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -128,6 +129,21 @@ export default function PatientDetailPage() {
       // Handle error
     } finally {
       setSavingCategory(false);
+    }
+  }
+
+  async function handleDeletePhoto(photoId: string) {
+    if (!confirm("Bu fotoğrafı silmek istediğinize emin misiniz?")) return;
+    try {
+      const res = await fetch(`/api/patients/${params.id}/photos?photoId=${photoId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setPhotos(photos.filter((p) => p.id !== photoId));
+        if (selectedPhoto?.id === photoId) setSelectedPhoto(null);
+      }
+    } catch {
+      // Handle error
     }
   }
 
@@ -532,6 +548,12 @@ export default function PatientDetailPage() {
                           alt={photo.fileName}
                           className="h-full w-full object-cover transition-transform group-hover:scale-105"
                         />
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDeletePhoto(photo.id); }}
+                          className="absolute right-1.5 top-1.5 rounded-full bg-black/50 p-1 text-white opacity-0 transition-opacity hover:bg-red-600 group-hover:opacity-100"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
                         <span className="absolute bottom-2 left-2 rounded-md bg-black/50 px-2 py-0.5 text-[10px] font-medium text-white">
                           {photo.category}
                         </span>
@@ -558,12 +580,20 @@ export default function PatientDetailPage() {
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
             onClick={() => setSelectedPhoto(null)}
           >
-            <button
-              className="absolute right-4 top-4 rounded-full bg-white/20 p-2 text-white hover:bg-white/30"
-              onClick={() => setSelectedPhoto(null)}
-            >
-              <X className="h-5 w-5" />
-            </button>
+            <div className="absolute right-4 top-4 flex items-center gap-2">
+              <button
+                className="rounded-full bg-white/20 p-2 text-white hover:bg-red-600"
+                onClick={(e) => { e.stopPropagation(); handleDeletePhoto(selectedPhoto.id); }}
+              >
+                <Trash2 className="h-5 w-5" />
+              </button>
+              <button
+                className="rounded-full bg-white/20 p-2 text-white hover:bg-white/30"
+                onClick={() => setSelectedPhoto(null)}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
             <motion.img
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
