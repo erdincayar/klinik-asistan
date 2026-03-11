@@ -111,6 +111,7 @@ model Clinic {
   storageLimitMB        Int                    @default(1024)
   storageUsedMB         Int                    @default(0)
   storagePlan           String                 @default("free")
+  photoCategories       String[]               @default(["Genel"])
   tokenBalance          TokenBalance?
   tokenTransactions     TokenTransaction[]
   stockAlarms           StockAlarm[]

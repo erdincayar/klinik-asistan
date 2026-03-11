@@ -19,6 +19,7 @@ import {
   searchStock,
   getInvoiceSummary,
   sendReminderCommand,
+  getPatientPhotos,
 } from "./commands/command-executor";
 import { parseWhatsAppMessage, findOrCreatePatient } from "./whatsapp/message-parser";
 import { prisma } from "./prisma";
@@ -60,6 +61,7 @@ type IntentAction =
   | "TOP_MUSTERI"
   | "PRIM_RAPOR"
   | "FATURA_OZET"
+  | "HASTA_FOTO"
   | "VERI_GIRISI"
   | "YARDIM"
   | "SERBEST_SORU";
@@ -106,6 +108,7 @@ TOP_SERVIS: En çok kazandıran hizmetler ("en çok kazandıran", "popüler işl
 TOP_MUSTERI: En çok gelen müşteriler ("en iyi müşteriler", "sadık müşteriler", "en çok gelen")
 PRIM_RAPOR: Çalışan primleri ("prim raporu", "çalışan primleri", "personel primleri")
 FATURA_OZET: Fatura durumu ("fatura durumu", "bu ay kaç fatura kesildi", "fatura özeti")
+HASTA_FOTO: Hasta/müşteri fotoğrafı getir — param: müşteri adı ("Ahmet'in fotoğrafları", "Ayşe fotoğraflarını göster", "fotoğraf getir Mehmet")
 YARDIM: Ne yapabilirsin, yardım, nasıl kullanırım, komutlar
 
 VERI_GIRISI: Yeni kayıt oluşturma — kişi adı + tarih/saat + işlem, veya kişi adı + işlem + tutar, veya gider açıklaması + tutar, veya ürün + miktar + geldi/kullanıldı
@@ -195,7 +198,7 @@ const VALID_ACTIONS = new Set<string>([
   "STOK_DURUM", "STOK_ARA", "MUSTERI_ARA", "MUSTERI_LISTE",
   "HATIRLATMA", "HATIRLATMA_GONDER", "GUNLUK_OZET", "DETAYLI_RAPOR",
   "TOP_SERVIS", "TOP_MUSTERI", "PRIM_RAPOR", "FATURA_OZET",
-  "VERI_GIRISI", "YARDIM", "SERBEST_SORU",
+  "HASTA_FOTO", "VERI_GIRISI", "YARDIM", "SERBEST_SORU",
 ]);
 
 // ── Keyword Fallback (when AI is unavailable or fails) ──────────────────────
@@ -211,6 +214,7 @@ function keywordFallback(lower: string): ClassifiedIntent {
   if (/gider|harcama|harca/.test(lower)) return { action: "FINANS_GIDER" };
   if (/rapor|mali durum|finansal/.test(lower)) return { action: "FINANS_RAPOR" };
   if (/kasa|bakiye/.test(lower)) return { action: "FINANS_KASA" };
+  if (/foto(ğ|g)?raf/.test(lower)) return { action: "HASTA_FOTO" };
   if (/stok|ürün|urun/.test(lower)) return { action: "STOK_DURUM" };
   if (/müşteri|musteri|hasta/.test(lower)) return { action: "MUSTERI_LISTE" };
   if (/hatırlatma|hatirlatma/.test(lower)) return { action: "HATIRLATMA" };
@@ -732,6 +736,10 @@ Doğal dilde yazabilirsiniz, komut ezberlemenize gerek yok!
 • "Detaylı rapor"
 • "En çok kazandıran işlemler"
 
+📷 Fotoğraf:
+• "Ahmet fotoğrafları"
+• "Ayşe'nin fotoğraflarını göster"
+
 📝 Veri Girişi:
 • "Ahmet yarın 15:00 dolgu" (randevu)
 • "Ayşe botoks 5000tl" (gelir)
@@ -799,6 +807,7 @@ function getSlashHelpMessage(): string {
 export interface BotResponse {
   response: string;
   intent: IntentAction;
+  photos?: string[];
 }
 
 export async function handleBotMessage(
@@ -855,6 +864,18 @@ export async function handleBotMessage(
     const intent = await classifyIntent(message);
 
     console.log(`[BotAI] Message: "${message}" → Intent: ${intent.action}${intent.param ? ` (${intent.param})` : ""}`);
+
+    // HASTA_FOTO: special handling to return photos
+    if (intent.action === "HASTA_FOTO") {
+      const patientName = intent.param || message.replace(/foto(ğ|g)?raf(lar)?(ı|i|ını|ini)?/gi, "").replace(/getir|göster|goster/gi, "").trim();
+      if (!patientName) {
+        await deductTokens(clinicId, tokenAction, tokenCost);
+        return { response: "⚠️ Müşteri adı belirtmelisiniz. Örnek: \"Ahmet fotoğrafları\"", intent: "HASTA_FOTO" };
+      }
+      const result = await getPatientPhotos(clinicId, patientName);
+      await deductTokens(clinicId, tokenAction, tokenCost);
+      return { response: result.text, intent: "HASTA_FOTO", photos: result.photoUrls };
+    }
 
     const response = await executeIntent(intent, clinicId, message, senderId);
 

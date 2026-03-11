@@ -49,13 +49,7 @@ interface PatientPhoto {
   uploadedAt: string;
 }
 
-const categoryLabels: Record<string, string> = {
-  GENERAL: "Genel",
-  BEFORE: "Tedavi Öncesi",
-  AFTER: "Tedavi Sonrası",
-  XRAY: "Röntgen",
-  OTHER: "Diğer",
-};
+const DEFAULT_CATEGORIES = ["Genel", "Tedavi Öncesi", "Tedavi Sonrası", "Röntgen", "Diğer"];
 
 const treatmentLabels: Record<string, string> = {
   BOTOX: "Botoks",
@@ -88,11 +82,54 @@ export default function PatientDetailPage() {
   // Photo states
   const [photoFilter, setPhotoFilter] = useState("ALL");
   const [uploading, setUploading] = useState(false);
-  const [uploadCategory, setUploadCategory] = useState("GENERAL");
+  const [uploadCategory, setUploadCategory] = useState("Genel");
   const [uploadNotes, setUploadNotes] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<PatientPhoto | null>(null);
+
+  // Dynamic categories
+  const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [savingCategory, setSavingCategory] = useState(false);
+
+  const fetchCategories = useCallback(async () => {
+    try {
+      const res = await fetch("/api/settings/photo-categories");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.categories?.length > 0) {
+          setCategories(data.categories);
+        }
+      }
+    } catch {
+      // Use defaults
+    }
+  }, []);
+
+  async function handleAddCategory() {
+    const name = newCategoryName.trim();
+    if (!name || categories.includes(name)) return;
+    setSavingCategory(true);
+    try {
+      const updated = [...categories, name];
+      const res = await fetch("/api/settings/photo-categories", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ categories: updated }),
+      });
+      if (res.ok) {
+        setCategories(updated);
+        setNewCategoryName("");
+        setShowAddCategory(false);
+      }
+    } catch {
+      // Handle error
+    } finally {
+      setSavingCategory(false);
+    }
+  }
 
   const fetchPhotos = useCallback(async () => {
     try {
@@ -127,7 +164,8 @@ export default function PatientDetailPage() {
     }
     fetchPatient();
     fetchPhotos();
-  }, [params.id, fetchPhotos]);
+    fetchCategories();
+  }, [params.id, fetchPhotos, fetchCategories]);
 
   async function handleSave() {
     setSaving(true);
@@ -177,8 +215,8 @@ export default function PatientDetailPage() {
   };
 
   const filteredPhotos = photoFilter === "ALL" ? photos : photos.filter((p) => p.category === photoFilter);
-  const beforePhotos = photos.filter((p) => p.category === "BEFORE");
-  const afterPhotos = photos.filter((p) => p.category === "AFTER");
+  const beforePhotos = photos.filter((p) => p.category === "Tedavi Öncesi" || p.category === "BEFORE");
+  const afterPhotos = photos.filter((p) => p.category === "Tedavi Sonrası" || p.category === "AFTER");
 
   if (loading) {
     return (
@@ -358,8 +396,8 @@ export default function PatientDetailPage() {
                     onChange={(e) => setUploadCategory(e.target.value)}
                     className="rounded-lg border border-gray-200 px-3 py-2 text-xs text-gray-700 focus:border-blue-400 focus:outline-none"
                   >
-                    {Object.entries(categoryLabels).map(([val, label]) => (
-                      <option key={val} value={val}>{label}</option>
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
                     ))}
                   </select>
                   <input
@@ -418,8 +456,8 @@ export default function PatientDetailPage() {
             <>
               {/* Filter */}
               {photos.length > 0 && (
-                <div className="flex gap-2 flex-wrap">
-                  {["ALL", ...Object.keys(categoryLabels)].map((cat) => (
+                <div className="flex gap-2 flex-wrap items-center">
+                  {["ALL", ...categories].map((cat) => (
                     <button
                       key={cat}
                       onClick={() => setPhotoFilter(cat)}
@@ -429,9 +467,41 @@ export default function PatientDetailPage() {
                           : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                       }`}
                     >
-                      {cat === "ALL" ? "Tümü" : categoryLabels[cat]}
+                      {cat === "ALL" ? "Tümü" : cat}
                     </button>
                   ))}
+                  {showAddCategory ? (
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        value={newCategoryName}
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleAddCategory()}
+                        placeholder="Kategori adı"
+                        autoFocus
+                        className="w-28 rounded-lg border border-gray-200 px-2 py-1 text-xs focus:border-blue-400 focus:outline-none"
+                      />
+                      <button
+                        onClick={handleAddCategory}
+                        disabled={savingCategory || !newCategoryName.trim()}
+                        className="rounded-lg bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        {savingCategory ? "..." : "Ekle"}
+                      </button>
+                      <button
+                        onClick={() => { setShowAddCategory(false); setNewCategoryName(""); }}
+                        className="rounded-lg px-1.5 py-1 text-xs text-gray-400 hover:text-gray-600"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setShowAddCategory(true)}
+                      className="rounded-lg border border-dashed border-gray-300 px-2 py-1.5 text-xs font-medium text-gray-400 hover:border-gray-400 hover:text-gray-500"
+                    >
+                      <Plus className="h-3 w-3" />
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -463,7 +533,7 @@ export default function PatientDetailPage() {
                           className="h-full w-full object-cover transition-transform group-hover:scale-105"
                         />
                         <span className="absolute bottom-2 left-2 rounded-md bg-black/50 px-2 py-0.5 text-[10px] font-medium text-white">
-                          {categoryLabels[photo.category]}
+                          {photo.category}
                         </span>
                       </div>
                       {photo.notes && (

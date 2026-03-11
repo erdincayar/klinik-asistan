@@ -33,6 +33,35 @@ async function tgSend(chatId: number, text: string): Promise<void> {
   });
 }
 
+async function tgSendPhoto(chatId: number, filePath: string, caption?: string): Promise<void> {
+  const fs = await import("fs");
+  const path = await import("path");
+
+  const absolutePath = path.default.join(process.cwd(), filePath);
+  if (!fs.existsSync(absolutePath)) {
+    console.error(`[Bot] Photo file not found: ${absolutePath}`);
+    return;
+  }
+
+  const fileBuffer = fs.readFileSync(absolutePath);
+  const fileName = path.default.basename(absolutePath);
+  const blob = new Blob([fileBuffer]);
+
+  const formData = new FormData();
+  formData.append("chat_id", chatId.toString());
+  formData.append("photo", blob, fileName);
+  if (caption) formData.append("caption", caption);
+
+  try {
+    await fetch(`${API_BASE}/sendPhoto`, {
+      method: "POST",
+      body: formData,
+    });
+  } catch (error) {
+    console.error("[Bot] sendPhoto error:", error);
+  }
+}
+
 async function getUpdates(offset: number): Promise<TgUpdate[]> {
   const res = await fetch(
     `${API_BASE}/getUpdates?offset=${offset}&timeout=30&allowed_updates=["message"]`
@@ -151,6 +180,14 @@ async function processMessage(msg: TgMessage): Promise<void> {
     const senderId = `telegram:${chatId}`;
     const result = await handleBotMessage(clinicId, text, senderId);
     await tgSend(chatId, result.response);
+
+    // Send photos if available
+    if (result.photos?.length) {
+      for (const url of result.photos) {
+        const filePath = url.startsWith("/") ? url.substring(1) : url;
+        await tgSendPhoto(chatId, filePath);
+      }
+    }
   } catch (error) {
     console.error("[Bot] Hata:", error);
     await tgSend(chatId, "❌ İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin.");

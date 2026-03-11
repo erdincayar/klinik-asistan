@@ -41,7 +41,7 @@ export async function POST(
     const { id: patientId } = await params;
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
-    const category = (formData.get("category") as string) || "GENERAL";
+    const category = (formData.get("category") as string) || "Genel";
     const notes = (formData.get("notes") as string) || null;
 
     if (!file) {

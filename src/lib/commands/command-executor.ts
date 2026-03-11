@@ -1156,6 +1156,56 @@ export async function createInvoiceForPatient(
   return lines.join("\n");
 }
 
+// ── Patient Photo Commands ───────────────────────────────────────────────
+
+export async function getPatientPhotos(
+  clinicId: string,
+  patientName: string
+): Promise<{ text: string; photoUrls: string[] }> {
+  if (!patientName.trim()) {
+    return { text: "⚠️ Musteri adi belirtmelisiniz.", photoUrls: [] };
+  }
+
+  const searchName = patientName.trim().toLowerCase();
+
+  const patients = await prisma.patient.findMany({
+    where: {
+      clinicId,
+      name: { contains: patientName.trim() },
+    },
+  });
+
+  const filtered = patients.filter((p) =>
+    p.name.toLowerCase().includes(searchName)
+  );
+
+  if (filtered.length === 0) {
+    return { text: `❌ Musteri bulunamadi: "${patientName.trim()}"`, photoUrls: [] };
+  }
+
+  const patient = filtered[0];
+
+  const photos = await prisma.patientPhoto.findMany({
+    where: { patientId: patient.id },
+    orderBy: { uploadedAt: "desc" },
+    take: 5,
+  });
+
+  if (photos.length === 0) {
+    return { text: `📷 ${patient.name} icin fotograf bulunmuyor.`, photoUrls: [] };
+  }
+
+  const lines: string[] = [`📷 ${patient.name} - Fotograflar (${photos.length}):`];
+  for (const photo of photos) {
+    const dateStr = formatDateShort(photo.uploadedAt);
+    lines.push(`- ${photo.category} (${dateStr})${photo.notes ? ` — ${photo.notes}` : ""}`);
+  }
+
+  const photoUrls = photos.map((p) => p.fileUrl);
+
+  return { text: lines.join("\n"), photoUrls };
+}
+
 // ── Help Command ─────────────────────────────────────────────────────────────
 
 export function getHelpText(): string {
@@ -1196,6 +1246,9 @@ export function getHelpText(): string {
     "🧾 Fatura Komutlari:",
     "/fatura - Bu ayin fatura ozeti",
     "/fatura [musteri adi] - Musteri icin fatura bilgisi",
+    "",
+    "📷 Fotograf Komutlari:",
+    "/foto [musteri adi] - Musteri fotograflari",
     "",
     "📋 Genel:",
     "/ozet - Günlük ozet",
