@@ -256,7 +256,7 @@ async function smartFallback(clinicId: string, userMessage: string): Promise<str
   const dayEnd = endOfDayUTC(today);
   const monthRange = getCurrentMonthRange();
 
-  const [appointmentCount, incomeResult, expenseResult, lowStockProducts, patientCount] =
+  const [appointmentCount, incomeResult, expenseResult, approvedIncomeInvoices, lowStockProducts, patientCount] =
     await Promise.all([
       prisma.appointment.count({
         where: { clinicId, date: { gte: dayStart, lte: dayEnd }, status: { not: "CANCELLED" } },
@@ -270,6 +270,15 @@ async function smartFallback(clinicId: string, userMessage: string): Promise<str
         where: { clinicId, type: "EXPENSE", date: { gte: monthRange.start, lte: monthRange.end } },
         _sum: { amount: true },
       }),
+      prisma.uploadedInvoice.findMany({
+        where: {
+          clinicId,
+          approved: true,
+          invoiceType: "INCOME",
+          invoiceDate: { gte: monthRange.start, lte: monthRange.end },
+        },
+        select: { profitData: true },
+      }),
       prisma.product.findMany({
         where: { clinicId, isActive: true },
         select: { name: true, currentStock: true, minStock: true, unit: true },
@@ -277,22 +286,36 @@ async function smartFallback(clinicId: string, userMessage: string): Promise<str
       prisma.patient.count({ where: { clinicId } }),
     ]);
 
-  const totalIncome = incomeResult._sum.amount || 0;
+  const ciro = incomeResult._sum.amount || 0;
   const totalExpense = expenseResult._sum.amount || 0;
   const lowStock = lowStockProducts.filter((p) => p.currentStock <= p.minStock);
 
+  // COGS from approved income invoices
+  let cogs = 0;
+  for (const inv of approvedIncomeInvoices) {
+    const pd = inv.profitData as any;
+    if (pd?.totalCost) {
+      cogs += pd.totalCost;
+    }
+  }
+
+  const grossProfit = ciro - cogs;
+  const netProfit = grossProfit - totalExpense;
+
   const clinicData = `İşletme Verileri:
 - Bugünkü randevu: ${appointmentCount}
-- Bu ay gelir: ${(totalIncome / 100).toLocaleString("tr-TR")} TL (${incomeResult._count.id} işlem)
+- Bu ay ciro: ${(ciro / 100).toLocaleString("tr-TR")} TL (${incomeResult._count.id} işlem)
+- Maliyet (COGS): ${(cogs / 100).toLocaleString("tr-TR")} TL
+- Brüt kar: ${(grossProfit / 100).toLocaleString("tr-TR")} TL
 - Bu ay gider: ${(totalExpense / 100).toLocaleString("tr-TR")} TL
+- Net kar: ${(netProfit / 100).toLocaleString("tr-TR")} TL
 - Toplam müşteri: ${patientCount}
 - Düşük stok uyarısı: ${lowStock.length} ürün${lowStock.length > 0 ? " (" + lowStock.map((p) => `${p.name}: ${p.currentStock} ${p.unit}`).join(", ") + ")" : ""}`;
 
   // Try to get a smart AI response using clinic data
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey || apiKey.length < 10) {
-    // No API key — return summary data directly
-    return `📋 İşletme Özeti:\n📅 Bugün ${appointmentCount} randevu\n💰 Bu ay gelir: ${(totalIncome / 100).toLocaleString("tr-TR")} TL\n💸 Bu ay gider: ${(totalExpense / 100).toLocaleString("tr-TR")} TL\n👥 Toplam müşteri: ${patientCount}\n${lowStock.length > 0 ? `⚠️ ${lowStock.length} üründe düşük stok` : "✅ Stoklar normal"}`;
+    return `📋 İşletme Özeti:\n📅 Bugün ${appointmentCount} randevu\n💰 Ciro: ${(ciro / 100).toLocaleString("tr-TR")} TL\n📦 Maliyet: ${(cogs / 100).toLocaleString("tr-TR")} TL\n✨ Brüt Kar: ${(grossProfit / 100).toLocaleString("tr-TR")} TL\n💸 Gider: ${(totalExpense / 100).toLocaleString("tr-TR")} TL\n📈 Net Kar: ${(netProfit / 100).toLocaleString("tr-TR")} TL\n👥 Toplam müşteri: ${patientCount}\n${lowStock.length > 0 ? `⚠️ ${lowStock.length} üründe düşük stok` : "✅ Stoklar normal"}`;
   }
 
   try {
@@ -317,7 +340,7 @@ ${clinicData}`,
   }
 
   // Final fallback — return raw data
-  return `📋 İşletme Özeti:\n📅 Bugün ${appointmentCount} randevu\n💰 Bu ay gelir: ${(totalIncome / 100).toLocaleString("tr-TR")} TL\n💸 Bu ay gider: ${(totalExpense / 100).toLocaleString("tr-TR")} TL\n👥 Toplam müşteri: ${patientCount}\n${lowStock.length > 0 ? `⚠️ ${lowStock.length} üründe düşük stok` : "✅ Stoklar normal"}\n\nBaşka bir konuda yardım ister misiniz?`;
+  return `📋 İşletme Özeti:\n📅 Bugün ${appointmentCount} randevu\n💰 Ciro: ${(ciro / 100).toLocaleString("tr-TR")} TL\n📦 Maliyet: ${(cogs / 100).toLocaleString("tr-TR")} TL\n✨ Brüt Kar: ${(grossProfit / 100).toLocaleString("tr-TR")} TL\n💸 Gider: ${(totalExpense / 100).toLocaleString("tr-TR")} TL\n📈 Net Kar: ${(netProfit / 100).toLocaleString("tr-TR")} TL\n👥 Toplam müşteri: ${patientCount}\n${lowStock.length > 0 ? `⚠️ ${lowStock.length} üründe düşük stok` : "✅ Stoklar normal"}`;
 }
 
 // ── Employee Selection Helpers ──────────────────────────────────────────────

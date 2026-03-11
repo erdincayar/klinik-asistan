@@ -308,10 +308,7 @@ export async function getReport(
   endDate: Date,
   periodLabel: string
 ): Promise<string> {
-  const clinic = await prisma.clinic.findUnique({ where: { id: clinicId } });
-  const taxRate = clinic?.taxRate ?? 20;
-
-  const [incomeResult, expenseResult, patientCount, appointmentCount] =
+  const [incomeResult, expenseResult, approvedIncomeInvoices] =
     await Promise.all([
       prisma.expense.aggregate({
         where: { clinicId, type: "INCOME", date: { gte: startDate, lte: endDate } },
@@ -321,34 +318,39 @@ export async function getReport(
         where: { clinicId, type: "EXPENSE", date: { gte: startDate, lte: endDate } },
         _sum: { amount: true },
       }),
-      prisma.treatment.findMany({
-        where: { clinicId, date: { gte: startDate, lte: endDate } },
-        select: { patientId: true },
-        distinct: ["patientId"],
-      }),
-      prisma.appointment.count({
+      prisma.uploadedInvoice.findMany({
         where: {
           clinicId,
-          date: { gte: startDate, lte: endDate },
-          status: { not: "CANCELLED" },
+          approved: true,
+          invoiceType: "INCOME",
+          invoiceDate: { gte: startDate, lte: endDate },
         },
+        select: { profitData: true },
       }),
     ]);
 
-  const totalIncome = incomeResult._sum.amount || 0;
+  const ciro = incomeResult._sum.amount || 0;
   const totalExpense = expenseResult._sum.amount || 0;
-  const netProfit = totalIncome - totalExpense;
-  const kdv = Math.round((totalIncome * taxRate) / (100 + taxRate));
-  const uniquePatients = patientCount.length;
+
+  // COGS: sum of profitData.totalCost from approved income invoices
+  let cogs = 0;
+  for (const inv of approvedIncomeInvoices) {
+    const pd = inv.profitData as any;
+    if (pd?.totalCost) {
+      cogs += pd.totalCost;
+    }
+  }
+
+  const grossProfit = ciro - cogs;
+  const netProfit = grossProfit - totalExpense;
 
   return [
     `📊 ${periodLabel} Raporu:`,
-    `💰 Gelir: ${formatTLDetailed(totalIncome)}`,
+    `💰 Ciro: ${formatTLDetailed(ciro)}`,
+    `📦 Maliyet: ${formatTLDetailed(cogs)}`,
+    `✨ Brüt Kar: ${formatTLDetailed(grossProfit)}`,
     `💸 Gider: ${formatTLDetailed(totalExpense)}`,
     `📈 Net Kar: ${formatTLDetailed(netProfit)}`,
-    `🧾 KDV (%${taxRate}): ${formatTLDetailed(kdv)}`,
-    `👥 Musteri Sayisi: ${uniquePatients}`,
-    `📋 Randevu: ${appointmentCount}`,
   ].join("\n");
 }
 
@@ -636,15 +638,12 @@ export async function getDailySummary(clinicId: string): Promise<string> {
 // ── Report Commands ─────────────────────────────────────────────────────────
 
 export async function getDetailedReport(clinicId: string): Promise<string> {
-  const clinic = await prisma.clinic.findUnique({ where: { id: clinicId } });
-  const taxRate = clinic?.taxRate ?? 20;
-
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
   const monthName = TURKISH_MONTHS[now.getUTCMonth()];
 
-  const [incomeResult, expenseResult, incomeByCategory, patientCount, appointmentCount] =
+  const [incomeResult, expenseResult, incomeByCategory, approvedIncomeInvoices, patientCount, appointmentCount] =
     await Promise.all([
       prisma.expense.aggregate({
         where: { clinicId, type: "INCOME", date: { gte: monthStart, lt: monthEnd } },
@@ -660,17 +659,36 @@ export async function getDetailedReport(clinicId: string): Promise<string> {
         where: { clinicId, type: "INCOME", date: { gte: monthStart, lt: monthEnd } },
         select: { category: true, amount: true },
       }),
+      prisma.uploadedInvoice.findMany({
+        where: {
+          clinicId,
+          approved: true,
+          invoiceType: "INCOME",
+          invoiceDate: { gte: monthStart, lt: monthEnd },
+        },
+        select: { profitData: true },
+      }),
       prisma.patient.count({ where: { clinicId } }),
       prisma.appointment.count({
         where: { clinicId, date: { gte: monthStart, lt: monthEnd }, status: { not: "CANCELLED" } },
       }),
     ]);
 
-  const totalIncome = incomeResult._sum.amount || 0;
+  const ciro = incomeResult._sum.amount || 0;
   const totalExpense = expenseResult._sum.amount || 0;
-  const netProfit = totalIncome - totalExpense;
-  const kdv = Math.round((totalIncome * taxRate) / (100 + taxRate));
-  const profitMargin = totalIncome > 0 ? Math.round((netProfit / totalIncome) * 100) : 0;
+
+  // COGS from approved income invoices
+  let cogs = 0;
+  for (const inv of approvedIncomeInvoices) {
+    const pd = inv.profitData as any;
+    if (pd?.totalCost) {
+      cogs += pd.totalCost;
+    }
+  }
+
+  const grossProfit = ciro - cogs;
+  const netProfit = grossProfit - totalExpense;
+  const profitMargin = ciro > 0 ? Math.round((netProfit / ciro) * 100) : 0;
 
   // Category breakdown
   const categoryTotals: Record<string, number> = {};
@@ -682,28 +700,25 @@ export async function getDetailedReport(clinicId: string): Promise<string> {
   const lines: string[] = [
     `📊 Detayli Rapor - ${monthName} ${now.getFullYear()}:`,
     "",
-    "💰 Gelir:",
-    `Toplam: ${formatTLDetailed(totalIncome)} (${incomeResult._count.id} islem)`,
+    `💰 Ciro: ${formatTLDetailed(ciro)} (${incomeResult._count.id} islem)`,
+    `📦 Maliyet: ${formatTLDetailed(cogs)}`,
+    `✨ Brüt Kar: ${formatTLDetailed(grossProfit)}`,
     "",
   ];
 
   // Category details
   if (sortedCategories.length > 0) {
-    lines.push("📋 Kategori Dagilimi:");
+    lines.push("📋 Gelir Kategori Dagilimi:");
     for (const [cat, amount] of sortedCategories) {
-      const pct = Math.round((amount / totalIncome) * 100);
+      const pct = Math.round((amount / ciro) * 100);
       lines.push(`${getCategoryLabel(cat)}: ${formatTL(amount)} (%${pct})`);
     }
     lines.push("");
   }
 
-  lines.push("💸 Gider:");
-  lines.push(`Toplam: ${formatTLDetailed(totalExpense)} (${expenseResult._count.id} islem)`);
-  lines.push("");
-  lines.push("📈 Kar-Zarar:");
-  lines.push(`Net Kar: ${formatTLDetailed(netProfit)}`);
+  lines.push(`💸 Gider: ${formatTLDetailed(totalExpense)} (${expenseResult._count.id} islem)`);
+  lines.push(`📈 Net Kar: ${formatTLDetailed(netProfit)}`);
   lines.push(`Kar Marji: %${profitMargin}`);
-  lines.push(`KDV (%${taxRate}): ${formatTLDetailed(kdv)}`);
   lines.push("");
   lines.push(`👥 Müşteri: ${patientCount} | 📋 Randevu: ${appointmentCount}`);
 
