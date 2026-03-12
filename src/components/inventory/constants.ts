@@ -170,6 +170,7 @@ export const DEFAULT_COLUMNS = [
   { key: "name", label: "Ürün Adı", locked: true },
   { key: "sku", label: "SKU" },
   { key: "category", label: "Kategori" },
+  { key: "unit", label: "Birim" },
   { key: "stock", label: "Stok" },
   { key: "purchasePriceTRY", label: "Alış TL" },
   { key: "purchasePriceFX", label: "Alış Döviz" },
@@ -177,7 +178,6 @@ export const DEFAULT_COLUMNS = [
   { key: "salePriceFX", label: "Satış Döviz" },
   { key: "profitMargin", label: "Kâr %" },
   { key: "currency", label: "Para Birimi" },
-  { key: "orderAlert", label: "Sipariş" },
   { key: "actions", label: "İşlemler", locked: true },
 ] as const;
 

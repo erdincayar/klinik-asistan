@@ -449,6 +449,7 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
                               <Badge className={CATEGORY_BADGE_COLORS[product.category] || "bg-gray-100 text-gray-800"}>{getCategoryLabel(product.category)}</Badge>
                             </TableCell>
                           );
+                          if (key === "unit") return <TableCell key={key}>{getUnitLabel(product.unit)}</TableCell>;
                           if (key === "stock") return (
                             <TableCell key={key} className="text-right">
                               {product.currentStock === null || product.currentStock === undefined
@@ -485,11 +486,6 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
                             </TableCell>
                           );
                           if (key === "currency") return <TableCell key={key}>{product.currency}</TableCell>;
-                          if (key === "orderAlert") return (
-                            <TableCell key={key}>
-                              {product.orderAlert ? <Badge className="bg-green-100 text-green-800">Aktif</Badge> : <span className="text-gray-300">&mdash;</span>}
-                            </TableCell>
-                          );
                           if (key === "actions") return (
                             <TableCell key={key} className="text-center" onClick={(e) => e.stopPropagation()}>
                               <div className="flex items-center justify-center gap-1">
