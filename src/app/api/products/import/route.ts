@@ -20,7 +20,8 @@ function normalizeCategory(value: string): string {
 
 function normalizeUnit(value: string): string {
   if (!value) return "ADET";
-  const upper = value.toUpperCase().trim();
+  const trimmed = value.trim();
+  const upper = trimmed.toUpperCase();
   if (VALID_UNITS.includes(upper)) return upper;
   if (upper.includes("KUTU")) return "KUTU";
   if (upper.includes("PAKET")) return "PAKET";
@@ -30,6 +31,8 @@ function normalizeUnit(value: string): string {
   if (upper === "LT" || upper.includes("LITRE") || upper.includes("LİTRE")) return "LT";
   if (upper.includes("ŞİŞE") || upper.includes("SISE") || upper.includes("SIŞE")) return "SISE";
   if (upper.includes("TÜP") || upper.includes("TUP")) return "TUP";
+  // Tanınmayan birim → olduğu gibi sakla (unique key'de fark yaratsın)
+  if (trimmed) return trimmed;
   return "ADET";
 }
 
@@ -161,7 +164,6 @@ export async function POST(req: NextRequest) {
         }
         const hasCustomFields = Object.keys(customFields).length > 0;
 
-        const sku = generateSku(name, i);
         const productData = {
           ...(brand !== null && { brand }),
           category,
@@ -174,29 +176,37 @@ export async function POST(req: NextRequest) {
           ...(hasCustomFields && { customFields }),
         };
 
-        // Use upsert with clinicId+name+unit unique constraint
-        const result = await prisma.product.upsert({
+        // Find existing product by name+unit (case-insensitive)
+        const existing = await prisma.product.findFirst({
           where: {
-            clinicId_name_unit: { clinicId, name, unit: unit || "ADET" },
-          },
-          update: {
-            ...productData,
-            ...(quantity !== undefined && { currentStock: quantity }),
-          },
-          create: {
             clinicId,
-            name,
-            sku,
-            ...productData,
-            currentStock: quantity !== undefined ? quantity : null,
+            name: { equals: name, mode: "insensitive" },
+            unit,
           },
+          select: { id: true },
         });
 
-        // If the returned sku matches the generated one, it was newly created
-        if (result.sku === sku) {
-          added++;
-        } else {
+        if (existing) {
+          await prisma.product.update({
+            where: { id: existing.id },
+            data: {
+              ...productData,
+              ...(quantity !== undefined && { currentStock: quantity }),
+            },
+          });
           updated++;
+        } else {
+          const sku = generateSku(name, i);
+          await prisma.product.create({
+            data: {
+              clinicId,
+              name,
+              sku,
+              ...productData,
+              currentStock: quantity !== undefined ? quantity : null,
+            },
+          });
+          added++;
         }
         if (!brand) noBrandCount++;
       } catch (err) {
