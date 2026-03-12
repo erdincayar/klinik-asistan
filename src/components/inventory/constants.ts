@@ -52,6 +52,8 @@ export interface StockSummary {
   totalProducts: number;
   activeProducts: number;
   lowStockCount: number;
+  trackedCount: number;
+  untrackedCount: number;
   totalStockValue: { purchase: number; sale: number };
   categoryDistribution: { category: string; count: number; value: number }[];
   recentMovements: { in: number; out: number };

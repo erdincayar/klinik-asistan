@@ -28,6 +28,10 @@ export async function GET() {
       (p) => p.orderAlert && p.currentStock !== null && p.currentStock <= p.minStock
     ).length;
 
+    // Tracked vs untracked counts
+    const trackedCount = activeProducts.filter((p) => p.currentStock !== null).length;
+    const untrackedCount = activeCount - trackedCount;
+
     // Total stock value (skip null stock products)
     const totalStockValue = {
       purchase: activeProducts.reduce(
@@ -99,6 +103,8 @@ export async function GET() {
       totalProducts,
       activeProducts: activeCount,
       lowStockCount,
+      trackedCount,
+      untrackedCount,
       totalStockValue,
       categoryDistribution,
       recentMovements,
