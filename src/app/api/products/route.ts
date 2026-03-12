@@ -23,13 +23,19 @@ export async function GET(request: Request) {
 
     if (search) {
       where.OR = [
-        { name: { contains: search } },
-        { sku: { contains: search } },
+        { name: { contains: search, mode: "insensitive" } },
+        { sku: { contains: search, mode: "insensitive" } },
+        { brand: { contains: search, mode: "insensitive" } },
       ];
     }
 
     if (category) {
       where.category = category;
+    }
+
+    const brand = searchParams.get("brand") || "";
+    if (brand) {
+      where.brand = brand;
     }
 
     // Default to active products; pass active=false to include inactive

@@ -37,6 +37,8 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [brandFilter, setBrandFilter] = useState("");
+  const [brandOptions, setBrandOptions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showNewProduct, setShowNewProduct] = useState(false);
@@ -113,6 +115,7 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
       const params = new URLSearchParams();
       if (search) params.set("search", search);
       if (categoryFilter) params.set("category", categoryFilter);
+      if (brandFilter) params.set("brand", brandFilter);
       const qs = params.toString();
       const res = await fetch(`/api/products${qs ? `?${qs}` : ""}`);
       if (!res.ok) throw new Error("Ürünler alınamadı");
@@ -124,7 +127,21 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
     } finally {
       setLoading(false);
     }
-  }, [search, categoryFilter]);
+  }, [search, categoryFilter, brandFilter]);
+
+  // Fetch unique brands for filter
+  useEffect(() => {
+    async function fetchBrands() {
+      try {
+        const res = await fetch("/api/products?active=all");
+        if (!res.ok) return;
+        const data: Product[] = await res.json();
+        const brands = Array.from(new Set(data.map((p) => p.brand).filter(Boolean) as string[])).sort();
+        setBrandOptions(brands);
+      } catch { /* ignore */ }
+    }
+    fetchBrands();
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(fetchProducts, 300);
@@ -269,11 +286,23 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
             onChange={(e) => setCategoryFilter(e.target.value)}
             className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
           >
-            <option value="">Tümü</option>
+            <option value="">Kategori</option>
             {CATEGORIES.map((c) => (
               <option key={c.value} value={c.value}>{c.label}</option>
             ))}
           </select>
+          {brandOptions.length > 0 && (
+            <select
+              value={brandFilter}
+              onChange={(e) => setBrandFilter(e.target.value)}
+              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
+            >
+              <option value="">Marka</option>
+              {brandOptions.map((b) => (
+                <option key={b} value={b}>{b}</option>
+              ))}
+            </select>
+          )}
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="icon" onClick={() => setShowColumnManager(true)} title="Kolonları Düzenle">
