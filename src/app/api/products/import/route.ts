@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
         // Use upsert with clinicId+name+unit unique constraint
         const result = await prisma.product.upsert({
           where: {
-            clinicId_name_unit: { clinicId, name, unit },
+            clinicId_name_unit: { clinicId, name, unit: unit || "ADET" },
           },
           update: {
             ...productData,
