@@ -155,7 +155,7 @@ export async function POST(
             await tx.product.update({
               where: { id: mapping.productId },
               data: {
-                currentStock: product.currentStock + mapping.quantity,
+                currentStock: (product.currentStock ?? 0) + mapping.quantity,
                 purchasePrice: unitPriceKurus,
               },
             });
@@ -249,7 +249,7 @@ export async function POST(
             });
 
             // Stock OUT for sales
-            const newStock = Math.max(0, product.currentStock - mapping.quantity);
+            const newStock = Math.max(0, (product.currentStock ?? 0) - mapping.quantity);
             await tx.stockMovement.create({
               data: {
                 productId: mapping.productId,

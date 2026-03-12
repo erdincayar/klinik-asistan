@@ -21,8 +21,8 @@ export async function GET() {
     });
 
     const lowStock = allActive
-      .filter((p) => p.orderAlert && p.currentStock > 0 && p.currentStock <= p.minStock)
-      .sort((a, b) => (a.currentStock - a.minStock) - (b.currentStock - b.minStock));
+      .filter((p) => p.orderAlert && p.currentStock !== null && p.currentStock <= p.minStock)
+      .sort((a, b) => ((a.currentStock ?? 0) - a.minStock) - ((b.currentStock ?? 0) - b.minStock));
 
     return Response.json(lowStock);
   } catch {

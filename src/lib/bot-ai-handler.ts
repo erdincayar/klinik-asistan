@@ -295,7 +295,7 @@ async function smartFallback(clinicId: string, userMessage: string): Promise<str
 
   const ciro = incomeResult._sum.amount || 0;
   const totalExpense = expenseResult._sum.amount || 0;
-  const lowStock = lowStockProducts.filter((p) => p.currentStock <= p.minStock);
+  const lowStock = lowStockProducts.filter((p) => p.currentStock !== null && p.currentStock <= p.minStock);
 
   // COGS from approved income invoices
   let cogs = 0;

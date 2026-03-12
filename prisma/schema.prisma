@@ -289,7 +289,7 @@ model Product {
   brand            String?
   category         String          @default("DIGER") // KOZMETIK, MEDIKAL, SARF_MALZEME, DIGER
   unit             String          @default("ADET") // ADET, KUTU, ML, GR
-  currentStock     Int             @default(0)
+  currentStock     Int?
   minStock         Int             @default(0)
   orderAlert       Boolean         @default(false)
   purchasePrice    Int             @default(0) // kuruş (TL)

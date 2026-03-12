@@ -869,10 +869,10 @@ export async function getStockOverview(clinicId: string): Promise<string> {
   }
 
   const totalValue = products.reduce(
-    (sum, p) => sum + p.currentStock * p.purchasePrice,
+    (sum, p) => sum + (p.currentStock ?? 0) * p.purchasePrice,
     0
   );
-  const lowStock = products.filter((p) => p.currentStock <= p.minStock);
+  const lowStock = products.filter((p) => p.currentStock !== null && p.currentStock <= p.minStock);
 
   const lines: string[] = [
     "📦 Stok Durumu:",
@@ -926,13 +926,13 @@ export async function searchStock(
   const lines: string[] = [];
   for (const p of filtered) {
     const stockStatus =
-      p.currentStock <= p.minStock ? "⚠️ DUSUK" : "✅ Normal";
+      p.currentStock !== null && p.currentStock <= p.minStock ? "⚠️ DUSUK" : p.currentStock === null ? "—" : "✅ Normal";
     lines.push(
       [
         `📦 ${p.name}`,
         `SKU: ${p.sku}`,
         `Kategori: ${p.category}`,
-        `Stok: ${p.currentStock} ${p.unit} (min: ${p.minStock}) ${stockStatus}`,
+        `Stok: ${p.currentStock ?? "-"} ${p.unit} (min: ${p.minStock}) ${stockStatus}`,
         `Alis: ${formatTL(p.purchasePrice)} | Satis: ${formatTL(p.salePrice)}`,
       ].join("\n")
     );
@@ -986,7 +986,7 @@ export async function stockEntry(
     }),
   ]);
 
-  const newStock = product.currentStock + quantity;
+  const newStock = (product.currentStock ?? 0) + quantity;
 
   return [
     "✅ Stok girisi yapildi:",
@@ -1022,8 +1022,8 @@ export async function stockExit(
     return `❌ Urun bulunamadi: "${productName.trim()}"`;
   }
 
-  if (product.currentStock < quantity) {
-    return `❌ Yetersiz stok! ${product.name} mevcut stok: ${product.currentStock} ${product.unit}`;
+  if ((product.currentStock ?? 0) < quantity) {
+    return `❌ Yetersiz stok! ${product.name} mevcut stok: ${product.currentStock ?? 0} ${product.unit}`;
   }
 
   await prisma.$transaction([
@@ -1045,7 +1045,7 @@ export async function stockExit(
     }),
   ]);
 
-  const newStock = product.currentStock - quantity;
+  const newStock = (product.currentStock ?? 0) - quantity;
 
   return [
     "✅ Stok cikisi yapildi:",

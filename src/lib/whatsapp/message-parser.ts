@@ -482,11 +482,11 @@ export async function processWhatsAppMessage(
 
       const isIn = parsed.type === "STOCK_IN";
 
-      if (!isIn && product.currentStock < parsed.quantity) {
+      if (!isIn && (product.currentStock ?? 0) < parsed.quantity) {
         return {
           success: false,
           parsed,
-          confirmationMessage: `❌ Yetersiz stok! ${product.name} mevcut: ${product.currentStock} ${product.unit}`,
+          confirmationMessage: `❌ Yetersiz stok! ${product.name} mevcut: ${product.currentStock ?? 0} ${product.unit}`,
         };
       }
 
@@ -515,8 +515,8 @@ export async function processWhatsAppMessage(
       });
 
       const newStock = isIn
-        ? product.currentStock + parsed.quantity
-        : product.currentStock - parsed.quantity;
+        ? (product.currentStock ?? 0) + parsed.quantity
+        : (product.currentStock ?? 0) - parsed.quantity;
 
       return {
         success: true,

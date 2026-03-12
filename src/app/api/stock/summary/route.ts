@@ -23,19 +23,19 @@ export async function GET() {
       where: { clinicId, isActive: true },
     });
 
-    // Low stock count (only products with orderAlert enabled and stock > 0)
+    // Low stock count (only products with orderAlert enabled and non-null stock)
     const lowStockCount = activeProducts.filter(
-      (p) => p.orderAlert && p.currentStock > 0 && p.currentStock <= p.minStock
+      (p) => p.orderAlert && p.currentStock !== null && p.currentStock <= p.minStock
     ).length;
 
-    // Total stock value
+    // Total stock value (skip null stock products)
     const totalStockValue = {
       purchase: activeProducts.reduce(
-        (sum, p) => sum + p.currentStock * p.purchasePrice,
+        (sum, p) => sum + (p.currentStock ?? 0) * p.purchasePrice,
         0
       ),
       sale: activeProducts.reduce(
-        (sum, p) => sum + p.currentStock * p.salePrice,
+        (sum, p) => sum + (p.currentStock ?? 0) * p.salePrice,
         0
       ),
     };
@@ -45,7 +45,7 @@ export async function GET() {
     for (const p of activeProducts) {
       const existing = categoryMap.get(p.category) || { count: 0, value: 0 };
       existing.count += 1;
-      existing.value += p.currentStock * p.salePrice;
+      existing.value += (p.currentStock ?? 0) * p.salePrice;
       categoryMap.set(p.category, existing);
     }
     const categoryDistribution = Array.from(categoryMap.entries()).map(

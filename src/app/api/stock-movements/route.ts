@@ -86,22 +86,20 @@ export async function POST(request: Request) {
     const totalPrice = quantity * unitPrice;
 
     // Calculate new stock
-    let newStock = product.currentStock;
+    const currentQty = product.currentStock ?? 0;
+    let newStock = currentQty;
     if (type === "IN") {
-      newStock = product.currentStock + quantity;
+      newStock = currentQty + quantity;
     } else if (type === "OUT") {
-      if (product.currentStock < quantity) {
+      if (currentQty < quantity) {
         return Response.json(
           { error: "Yetersiz stok" },
           { status: 400 }
         );
       }
-      newStock = product.currentStock - quantity;
+      newStock = currentQty - quantity;
     } else if (type === "ADJUSTMENT") {
-      // For adjustment: positive quantity adds, negative would subtract
-      // But since quantity min is 1, we use the quantity as the new absolute difference
-      // Actually per spec: ADJUSTMENT sets currentStock + quantity for positive
-      newStock = product.currentStock + quantity;
+      newStock = currentQty + quantity;
     }
 
     // Create movement and update stock in a transaction

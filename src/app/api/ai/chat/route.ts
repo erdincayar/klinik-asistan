@@ -558,8 +558,8 @@ async function executeTool(name: string, input: Record<string, unknown>, clinicI
       const products = await prisma.product.findMany({
         where: { clinicId, isActive: true },
       });
-      const totalValue = products.reduce((sum, p) => sum + p.currentStock * p.purchasePrice, 0);
-      const lowStockCount = products.filter((p) => p.currentStock <= p.minStock).length;
+      const totalValue = products.reduce((sum, p) => sum + (p.currentStock ?? 0) * p.purchasePrice, 0);
+      const lowStockCount = products.filter((p) => p.currentStock !== null && p.currentStock <= p.minStock).length;
       const categoryDist: Record<string, number> = {};
       for (const p of products) {
         categoryDist[p.category] = (categoryDist[p.category] || 0) + 1;
@@ -576,7 +576,7 @@ async function executeTool(name: string, input: Record<string, unknown>, clinicI
         where: { clinicId, isActive: true },
       });
       const lowStock = allProducts
-        .filter((p) => p.currentStock <= p.minStock)
+        .filter((p) => p.currentStock !== null && p.currentStock <= p.minStock)
         .map((p) => ({
           name: p.name,
           sku: p.sku,
@@ -627,8 +627,8 @@ async function executeTool(name: string, input: Record<string, unknown>, clinicI
       const product = matchingProducts.find((p) => p.name.toLowerCase().includes(searchTerm));
       if (!product) return { error: `Urun bulunamadi: "${productName}"` };
 
-      if (movementType === "OUT" && product.currentStock < quantity) {
-        return { error: `Yetersiz stok! ${product.name} mevcut: ${product.currentStock} ${product.unit}` };
+      if (movementType === "OUT" && (product.currentStock ?? 0) < quantity) {
+        return { error: `Yetersiz stok! ${product.name} mevcut: ${product.currentStock ?? 0} ${product.unit}` };
       }
 
       const unitPrice = movementType === "IN" ? product.purchasePrice : product.salePrice;
@@ -657,8 +657,8 @@ async function executeTool(name: string, input: Record<string, unknown>, clinicI
       ]);
 
       const newStock = movementType === "IN"
-        ? product.currentStock + quantity
-        : product.currentStock - quantity;
+        ? (product.currentStock ?? 0) + quantity
+        : (product.currentStock ?? 0) - quantity;
 
       return {
         success: true,

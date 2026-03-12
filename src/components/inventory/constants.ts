@@ -7,7 +7,7 @@ export interface Product {
   brand: string | null;
   category: string;
   unit: string;
-  currentStock: number;
+  currentStock: number | null;
   minStock: number;
   orderAlert: boolean;
   purchasePrice: number;

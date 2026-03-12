@@ -422,7 +422,11 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
                           );
                           if (key === "stock") return (
                             <TableCell key={key} className="text-right">
-                              {product.currentStock > 0 ? <>{product.currentStock} {getUnitLabel(product.unit)}</> : <span className="text-gray-400">Stok Yok</span>}
+                              {product.currentStock === null || product.currentStock === undefined
+                                ? <span className="text-gray-400">-</span>
+                                : product.currentStock === 0
+                                  ? <span className="text-gray-400">0</span>
+                                  : <>{product.currentStock} {getUnitLabel(product.unit)}</>}
                             </TableCell>
                           );
                           if (key === "purchasePriceTRY") return <TableCell key={key} className="text-right">{formatCurrency(product.purchasePrice)}</TableCell>;
@@ -570,7 +574,7 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
                 <div><span className="text-muted-foreground">Kategori:</span> {getCategoryLabel(selectedProduct.category)}</div>
                 <div><span className="text-muted-foreground">Birim:</span> {getUnitLabel(selectedProduct.unit)}</div>
                 <div><span className="text-muted-foreground">Para Birimi:</span> {selectedProduct.currency}</div>
-                <div><span className="text-muted-foreground">Mevcut Stok:</span> {selectedProduct.currentStock > 0 ? selectedProduct.currentStock : "Stok Yok"}</div>
+                <div><span className="text-muted-foreground">Mevcut Stok:</span> {selectedProduct.currentStock === null || selectedProduct.currentStock === undefined ? "-" : selectedProduct.currentStock}</div>
                 <div><span className="text-muted-foreground">Min Stok:</span> {selectedProduct.minStock}</div>
                 <div><span className="text-muted-foreground">Alış Fiyatı (TRY):</span> {formatCurrency(selectedProduct.purchasePrice)}</div>
                 {selectedProduct.currency !== "TRY" && selectedProduct.purchasePriceUSD != null && selectedProduct.purchasePriceUSD > 0 && (
@@ -901,7 +905,7 @@ function EditProductDialog({
         brand: product.brand || "",
         category: product.category,
         unit: product.unit,
-        currentStock: product.currentStock,
+        currentStock: product.currentStock ?? 0,
         minStock: product.minStock,
         orderAlert: product.orderAlert,
         purchasePrice: fromKurus(product.purchasePrice),
@@ -1152,10 +1156,12 @@ function ImportDialog({
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
+  const [importBrand, setImportBrand] = useState("");
 
   function reset() {
     setStep("upload"); setPreview(null); setMapping({}); setResult(null); setError("");
     setUploading(false); setImportFile(null); setSelectedCurrency("TRY"); setExchangeRate(null);
+    setImportBrand("");
   }
 
   function handleClose(isOpen: boolean) {
@@ -1240,6 +1246,7 @@ function ImportDialog({
       formData.append("file", importFile);
       formData.append("mapping", JSON.stringify(mapping));
       formData.append("currency", selectedCurrency);
+      if (importBrand.trim()) formData.append("brand", importBrand.trim());
       const res = await fetch("/api/products/import", { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok) { setError(data.error || "İçe aktarma hatası"); setStep("mapping"); return; }
@@ -1315,6 +1322,18 @@ function ImportDialog({
                   </select>
                 </div>
               ))}
+            </div>
+
+            {/* Brand for this import */}
+            <div className="rounded-lg border border-gray-200 p-4 space-y-1">
+              <Label className="text-xs font-semibold">Marka (opsiyonel)</Label>
+              <p className="text-xs text-muted-foreground">Sadece bu import&apos;taki ürünlere uygulanır. Excel&apos;de marka kolonu varsa o önceliklidir.</p>
+              <Input
+                value={importBrand}
+                onChange={(e) => setImportBrand(e.target.value)}
+                placeholder="Ör: Bioderma"
+                className="max-w-[300px]"
+              />
             </div>
 
             {/* Currency selection */}

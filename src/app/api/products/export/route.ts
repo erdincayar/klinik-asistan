@@ -25,7 +25,7 @@ export async function GET(_req: NextRequest) {
       "Marka": p.brand ?? "",
       "Kategori": p.category,
       "Birim": p.unit,
-      "Mevcut Stok": p.currentStock,
+      "Mevcut Stok": p.currentStock ?? "",
       "Minimum Stok": p.minStock,
       "Alış Fiyatı TL": p.purchasePrice / 100,
       "Alış Fiyatı USD": p.purchasePriceUSD ?? "",

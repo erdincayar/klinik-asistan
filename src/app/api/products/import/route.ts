@@ -52,6 +52,7 @@ export async function POST(req: NextRequest) {
     const file = formData.get("file") as File | null;
     const mappingStr = formData.get("mapping") as string | null;
     const bodyCurrency = formData.get("currency") as string | null;
+    const importBrand = formData.get("brand") as string | null;
 
     if (!file) {
       return NextResponse.json({ error: "Dosya gerekli" }, { status: 400 });
@@ -102,10 +103,16 @@ export async function POST(req: NextRequest) {
           continue;
         }
 
-        const brand = mapping.brand ? String(row[mapping.brand] || "").trim() || null : null;
+        const excelBrand = mapping.brand ? String(row[mapping.brand] || "").trim() || null : null;
+        const brand = excelBrand || (importBrand?.trim() || null);
         const category = normalizeCategory(mapping.category ? String(row[mapping.category] || "") : "");
         const unit = normalizeUnit(mapping.unit ? String(row[mapping.unit] || "") : "");
-        const quantity = mapping.quantity ? Math.max(0, Math.round(Number(row[mapping.quantity]) || 0)) : undefined;
+        const rawQuantity = mapping.quantity ? row[mapping.quantity] : undefined;
+        const quantity: number | null | undefined = rawQuantity === undefined
+          ? undefined
+          : (rawQuantity === null || rawQuantity === "" || rawQuantity === undefined)
+            ? null
+            : Math.max(0, Math.round(Number(rawQuantity) || 0));
         const minStock = mapping.minStock ? Math.max(0, Math.round(Number(row[mapping.minStock]) || 0)) : 0;
         // Use global currency from user selection, fallback to per-row mapping
         const currency = globalCurrency || (() => {
@@ -161,7 +168,7 @@ export async function POST(req: NextRequest) {
               ...(brand !== null && { brand }),
               category,
               unit,
-              ...(quantity !== undefined && { currentStock: quantity }),
+              currentStock: quantity !== undefined ? quantity : null,
               minStock,
               currency,
               purchasePrice: purchasePriceKurus,
