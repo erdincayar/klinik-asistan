@@ -5,7 +5,7 @@ import * as XLSX from "xlsx";
 import { getExchangeRates, convertToTRYKurus } from "@/lib/exchange-rate";
 
 const VALID_CATEGORIES = ["KOZMETIK", "MEDIKAL", "SARF_MALZEME", "DIGER"];
-const VALID_UNITS = ["ADET", "KUTU", "PAKET", "ML", "GR"];
+const VALID_UNITS = ["ADET", "KUTU", "PAKET", "ML", "GR", "KG", "LT", "SISE", "TUP", "DIGER"];
 const VALID_CURRENCIES = ["TRY", "USD", "EUR", "GBP"];
 
 function normalizeCategory(value: string): string {
@@ -26,6 +26,10 @@ function normalizeUnit(value: string): string {
   if (upper.includes("PAKET")) return "PAKET";
   if (upper === "ML" || upper.includes("MILI")) return "ML";
   if (upper === "GR" || upper.includes("GRAM")) return "GR";
+  if (upper === "KG" || upper.includes("KILO")) return "KG";
+  if (upper === "LT" || upper.includes("LITRE") || upper.includes("LİTRE")) return "LT";
+  if (upper.includes("ŞİŞE") || upper.includes("SISE") || upper.includes("SIŞE")) return "SISE";
+  if (upper.includes("TÜP") || upper.includes("TUP")) return "TUP";
   return "ADET";
 }
 
@@ -83,9 +87,12 @@ export async function POST(req: NextRequest) {
     // Process rows with mapping
     const existingProducts = await prisma.product.findMany({
       where: { clinicId },
-      select: { id: true, name: true, sku: true },
+      select: { id: true, name: true, sku: true, unit: true },
     });
 
+    // Key: "name_lowercase|unit" for name+unit unique matching
+    const nameUnitMap = new Map(existingProducts.map((p) => [`${p.name.toLowerCase().trim()}|${p.unit}`, p]));
+    // Fallback: name-only map for backward compat (when no unit mapped)
     const nameMap = new Map(existingProducts.map((p) => [p.name.toLowerCase().trim(), p]));
 
     let added = 0;
@@ -153,7 +160,23 @@ export async function POST(req: NextRequest) {
           originalForeignPrice = rawPurchasePriceUSD;
         }
 
-        const existing = nameMap.get(name.toLowerCase().trim());
+        // Match by name+unit first, then fallback to name-only
+        const nameKey = name.toLowerCase().trim();
+        const nameUnitKey = `${nameKey}|${unit}`;
+        const existing = nameUnitMap.get(nameUnitKey) || nameMap.get(nameKey);
+
+        // Handle customFields from mapping
+        const customFields: Record<string, any> = {};
+        if (mapping._customFields) {
+          const customMappings: { name: string; column: string }[] = JSON.parse(mapping._customFields);
+          for (const cm of customMappings) {
+            const val = row[cm.column];
+            if (val !== undefined && val !== null && val !== "") {
+              customFields[cm.name] = val;
+            }
+          }
+        }
+        const hasCustomFields = Object.keys(customFields).length > 0;
 
         if (existing) {
           await prisma.product.update({
@@ -168,6 +191,7 @@ export async function POST(req: NextRequest) {
               purchasePrice: purchasePriceKurus,
               purchasePriceUSD: originalForeignPrice,
               salePrice: Math.round(salePriceTL * 100),
+              ...(hasCustomFields && { customFields }),
             },
           });
           if (!brand) noBrandCount++;
@@ -188,9 +212,11 @@ export async function POST(req: NextRequest) {
               purchasePrice: purchasePriceKurus,
               purchasePriceUSD: originalForeignPrice,
               salePrice: Math.round(salePriceTL * 100),
+              ...(hasCustomFields && { customFields }),
             },
           });
-          nameMap.set(name.toLowerCase().trim(), { id: "", name, sku });
+          nameUnitMap.set(nameUnitKey, { id: "", name, sku, unit });
+          nameMap.set(nameKey, { id: "", name, sku, unit });
           if (!brand) noBrandCount++;
           added++;
         }

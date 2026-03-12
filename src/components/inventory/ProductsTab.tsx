@@ -502,10 +502,13 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
                           // Custom columns
                           const customCol = columnConfig.customColumns.find((c) => c.id === key);
                           if (customCol) {
-                            const val = product.customFields?.[key];
+                            // For cf_ prefixed columns, lookup by name in customFields; otherwise by id
+                            const cfKey = key.startsWith("cf_") ? customCol.name : key;
+                            const val = product.customFields?.[cfKey];
                             return (
                               <TableCell key={key}>
                                 {customCol.type === "boolean" ? (val ? "Evet" : "Hayır") :
+                                  customCol.type === "number" && val != null ? String(val) :
                                   customCol.type === "date" && val ? formatDate(val) :
                                   val != null ? String(val) : <span className="text-gray-300">&mdash;</span>}
                               </TableCell>
@@ -738,6 +741,7 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
         onOpenChange={setShowColumnManager}
         columnConfig={columnConfig}
         onSave={(config) => { setColumnConfig(config); setShowColumnManager(false); }}
+        products={products}
       />
     </div>
   );
@@ -1091,32 +1095,36 @@ function EditProductDialog({
             <div className="space-y-3 border-t pt-4">
               <p className="text-sm font-semibold text-gray-700">Özel Alanlar</p>
               <div className="grid grid-cols-2 gap-4">
-                {customColumns.map((col) => (
-                  <div key={col.id} className="space-y-2">
-                    <Label htmlFor={`custom-${col.id}`}>{col.name}</Label>
-                    {col.type === "boolean" ? (
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
+                {customColumns.map((col) => {
+                  // For cf_ prefixed columns, use col.name as the storage key
+                  const cfKey = col.id.startsWith("cf_") ? col.name : col.id;
+                  return (
+                    <div key={col.id} className="space-y-2">
+                      <Label htmlFor={`custom-${col.id}`}>{col.name}</Label>
+                      {col.type === "boolean" ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            id={`custom-${col.id}`}
+                            checked={!!customFieldValues[cfKey]}
+                            onChange={(e) => setCustomFieldValues({ ...customFieldValues, [cfKey]: e.target.checked })}
+                            className="h-4 w-4 rounded border-gray-300"
+                          />
+                        </div>
+                      ) : (
+                        <Input
                           id={`custom-${col.id}`}
-                          checked={!!customFieldValues[col.id]}
-                          onChange={(e) => setCustomFieldValues({ ...customFieldValues, [col.id]: e.target.checked })}
-                          className="h-4 w-4 rounded border-gray-300"
+                          type={col.type === "number" ? "number" : col.type === "date" ? "date" : "text"}
+                          value={customFieldValues[cfKey] ?? ""}
+                          onChange={(e) => setCustomFieldValues({
+                            ...customFieldValues,
+                            [cfKey]: col.type === "number" ? (e.target.value ? Number(e.target.value) : "") : e.target.value,
+                          })}
                         />
-                      </div>
-                    ) : (
-                      <Input
-                        id={`custom-${col.id}`}
-                        type={col.type === "number" ? "number" : col.type === "date" ? "date" : "text"}
-                        value={customFieldValues[col.id] ?? ""}
-                        onChange={(e) => setCustomFieldValues({
-                          ...customFieldValues,
-                          [col.id]: col.type === "number" ? (e.target.value ? Number(e.target.value) : "") : e.target.value,
-                        })}
-                      />
-                    )}
-                  </div>
-                ))}
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -1158,6 +1166,7 @@ const MAPPING_FIELDS = [
   { key: "name", label: "Ürün Adı", required: true },
   { key: "brand", label: "Marka", required: false },
   { key: "category", label: "Kategori", required: false },
+  { key: "unit", label: "Birim", required: false },
   { key: "sku", label: "SKU", required: false },
   { key: "quantity", label: "Stok Miktarı", required: false },
   { key: "minStock", label: "Min Stok", required: false },
@@ -1194,11 +1203,13 @@ function ImportDialog({
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importBrand, setImportBrand] = useState("");
   const [showErrorDetails, setShowErrorDetails] = useState(false);
+  const [customMappings, setCustomMappings] = useState<{ name: string; column: string }[]>([]);
+  const [newCustomName, setNewCustomName] = useState("");
 
   function reset() {
     setStep("upload"); setPreview(null); setMapping({}); setResult(null); setError("");
     setUploading(false); setImportFile(null); setSelectedCurrency("TRY"); setExchangeRate(null);
-    setImportBrand(""); setShowErrorDetails(false);
+    setImportBrand(""); setShowErrorDetails(false); setCustomMappings([]); setNewCustomName("");
   }
 
   function handleClose(isOpen: boolean) {
@@ -1257,6 +1268,7 @@ function ImportDialog({
           if (field.key === "name") return cl.includes("ürün") || cl.includes("urun") || cl.includes("ad") || cl === "name" || cl === "product";
           if (field.key === "brand") return cl.includes("marka") || cl.includes("brand");
           if (field.key === "category") return cl.includes("kategori") || cl.includes("category");
+          if (field.key === "unit") return cl.includes("birim") || cl === "unit";
           if (field.key === "sku") return cl.includes("sku") || cl.includes("kod") || cl.includes("code");
           if (field.key === "quantity") return cl.includes("miktar") || cl.includes("stok") || cl.includes("quantity") || cl.includes("stock");
           if (field.key === "minStock") return cl.includes("min") || cl.includes("minimum");
@@ -1281,7 +1293,11 @@ function ImportDialog({
     try {
       const formData = new FormData();
       formData.append("file", importFile);
-      formData.append("mapping", JSON.stringify(mapping));
+      const finalMapping = { ...mapping };
+      if (customMappings.length > 0) {
+        finalMapping._customFields = JSON.stringify(customMappings);
+      }
+      formData.append("mapping", JSON.stringify(finalMapping));
       formData.append("currency", selectedCurrency);
       if (importBrand.trim()) formData.append("brand", importBrand.trim());
       const res = await fetch("/api/products/import", { method: "POST", body: formData });
@@ -1374,6 +1390,65 @@ function ImportDialog({
                 placeholder="Ör: Bioderma"
                 className="max-w-[300px]"
               />
+            </div>
+
+            {/* Custom field mappings */}
+            <div className="rounded-lg border border-gray-200 p-4 space-y-3">
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold">Özel Kolonlar (opsiyonel)</Label>
+                <p className="text-xs text-muted-foreground">Excel&apos;deki ek sütunları özel alan olarak içe aktarın</p>
+              </div>
+              {customMappings.map((cm, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <span className="w-28 shrink-0 text-sm text-gray-700 truncate" title={cm.name}>{cm.name}</span>
+                  <ArrowRight className="h-3.5 w-3.5 shrink-0 text-gray-300" />
+                  <select
+                    value={cm.column}
+                    onChange={(e) => setCustomMappings((prev) => prev.map((m, i) => i === idx ? { ...m, column: e.target.value } : m))}
+                    className="flex h-9 w-full min-w-0 rounded-md border border-input bg-background px-2 py-1 text-sm"
+                  >
+                    <option value="">Eşleştirme yok</option>
+                    {preview.columns.map((col) => (<option key={col} value={col}>{col}</option>))}
+                  </select>
+                  <button
+                    onClick={() => setCustomMappings((prev) => prev.filter((_, i) => i !== idx))}
+                    className="shrink-0 rounded p-1 text-gray-400 hover:text-red-500 hover:bg-red-50"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Kolon adı (ör: İskonto Fiyatı)"
+                  value={newCustomName}
+                  onChange={(e) => setNewCustomName(e.target.value)}
+                  className="flex-1"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      if (newCustomName.trim()) {
+                        setCustomMappings((prev) => [...prev, { name: newCustomName.trim(), column: "" }]);
+                        setNewCustomName("");
+                      }
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={!newCustomName.trim()}
+                  onClick={() => {
+                    if (newCustomName.trim()) {
+                      setCustomMappings((prev) => [...prev, { name: newCustomName.trim(), column: "" }]);
+                      setNewCustomName("");
+                    }
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-1" /> Ekle
+                </Button>
+              </div>
             </div>
 
             {/* Currency selection */}
@@ -1762,12 +1837,13 @@ const CUSTOM_COL_TYPES = [
 ] as const;
 
 function ColumnManagerDialog({
-  open, onOpenChange, columnConfig, onSave,
+  open, onOpenChange, columnConfig, onSave, products = [],
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   columnConfig: ColumnConfig;
   onSave: (config: ColumnConfig) => void;
+  products?: Product[];
 }) {
   const [localOrder, setLocalOrder] = useState<string[]>([]);
   const [localHidden, setLocalHidden] = useState<string[]>([]);
@@ -1778,11 +1854,46 @@ function ColumnManagerDialog({
 
   useEffect(() => {
     if (open) {
-      setLocalOrder(columnConfig.order.filter((k) => k !== "actions"));
+      // Auto-detect custom field keys from products' customFields
+      const detectedKeys = new Set<string>();
+      for (const p of products) {
+        if (p.customFields && typeof p.customFields === "object") {
+          for (const key of Object.keys(p.customFields)) {
+            detectedKeys.add(key);
+          }
+        }
+      }
+
+      // Merge detected keys into existing custom columns
+      const existingCustomIds = new Set(columnConfig.customColumns.map((c) => c.id));
+      const existingCustomNames = new Set(columnConfig.customColumns.map((c) => c.name));
+      const mergedCustom = [...columnConfig.customColumns];
+      const mergedOrder = columnConfig.order.filter((k) => k !== "actions");
+
+      Array.from(detectedKeys).forEach((key) => {
+        // Use key as both id and name if not already tracked
+        const cfId = `cf_${key}`;
+        if (!existingCustomIds.has(cfId) && !existingCustomNames.has(key)) {
+          // Detect type from first non-null value
+          let detectedType: CustomColumn["type"] = "text";
+          for (const p of products) {
+            const val = p.customFields?.[key];
+            if (val != null) {
+              if (typeof val === "number") detectedType = "number";
+              else if (typeof val === "boolean") detectedType = "boolean";
+              break;
+            }
+          }
+          mergedCustom.push({ id: cfId, name: key, type: detectedType });
+          if (!mergedOrder.includes(cfId)) mergedOrder.push(cfId);
+        }
+      });
+
+      setLocalOrder(mergedOrder);
       setLocalHidden([...columnConfig.hidden]);
-      setLocalCustom([...columnConfig.customColumns]);
+      setLocalCustom(mergedCustom);
     }
-  }, [open, columnConfig]);
+  }, [open, columnConfig, products]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),

@@ -81,6 +81,26 @@ export async function PUT(
       }
     }
 
+    // Check name+unit uniqueness if name or unit changed
+    const newName = parsed.data.name ?? existing.name;
+    const newUnit = parsed.data.unit ?? existing.unit;
+    if (newName !== existing.name || newUnit !== existing.unit) {
+      const existingNameUnit = await prisma.product.findFirst({
+        where: {
+          clinicId,
+          name: { equals: newName, mode: "insensitive" },
+          unit: newUnit,
+          id: { not: params.id },
+        },
+      });
+      if (existingNameUnit) {
+        return Response.json(
+          { error: `"${newName}" adlı ürün bu birimle zaten mevcut. Farklı bir birim seçin.` },
+          { status: 400 }
+        );
+      }
+    }
+
     const { customFields, ...rest } = parsed.data;
     const product = await prisma.product.update({
       where: { id: params.id },

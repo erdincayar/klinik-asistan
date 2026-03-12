@@ -100,8 +100,14 @@ export const CATEGORIES = [
 export const UNITS = [
   { value: "ADET", label: "Adet" },
   { value: "KUTU", label: "Kutu" },
+  { value: "PAKET", label: "Paket" },
   { value: "ML", label: "ml" },
   { value: "GR", label: "gr" },
+  { value: "KG", label: "kg" },
+  { value: "LT", label: "lt" },
+  { value: "SISE", label: "Şişe" },
+  { value: "TUP", label: "Tüp" },
+  { value: "DIGER", label: "Diğer" },
 ];
 
 export const CURRENCIES = [

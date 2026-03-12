@@ -64,6 +64,10 @@ type IntentAction =
   | "FATURA_OZET"
   | "HASTA_FOTO"
   | "HASTA_FOTO_SIL"
+  | "URUN_EKLE"
+  | "URUN_FIYAT_GUNCELLE"
+  | "STOK_GUNCELLE"
+  | "URUN_SIL"
   | "VERI_GIRISI"
   | "YARDIM"
   | "SERBEST_SORU";
@@ -112,6 +116,10 @@ PRIM_RAPOR: Çalışan primleri ("prim raporu", "çalışan primleri", "personel
 FATURA_OZET: Fatura durumu ("fatura durumu", "bu ay kaç fatura kesildi", "fatura özeti")
 HASTA_FOTO: Hasta/müşteri fotoğrafı getir — param: müşteri adı ("Ahmet'in fotoğrafları", "Ayşe fotoğraflarını göster", "fotoğraf getir Mehmet")
 HASTA_FOTO_SIL: Hasta/müşteri fotoğraflarını sil — param: müşteri adı ("Ahmet'in fotoğraflarını sil", "Ayşe fotoğrafları sil")
+URUN_EKLE: Yeni ürün ekleme — param: tüm mesaj ("ürün ekle Royal Protein, alış 500, satış 750", "yeni ürün Botox 50U, alış 1200, satış 2000, marka Allergan", "ürün ekle Dolgu 1ml alış 800 satış 1500 stok 10")
+URUN_FIYAT_GUNCELLE: Ürün fiyat güncelleme — param: tüm mesaj ("Royal Protein alış 600", "Botox fiyatını 1500 yap", "Botox alış 1200 satış 2500")
+STOK_GUNCELLE: Stok miktarı güncelleme — param: tüm mesaj ("Botox stok 25", "Royal Protein stoğunu 10 yap", "Nurederm stok güncelle 50")
+URUN_SIL: Ürün silme — param: ürün adı ("Royal Protein sil", "ürün sil Botox", "Nurederm ürününü sil")
 YARDIM: Ne yapabilirsin, yardım, nasıl kullanırım, komutlar
 
 VERI_GIRISI: Yeni kayıt oluşturma — kişi adı + tarih/saat + işlem, veya kişi adı + işlem + tutar, veya gider açıklaması + tutar, veya ürün + miktar + geldi/kullanıldı
@@ -128,10 +136,14 @@ SERBEST_SORU: Yukarıdakilerin hiçbirine uymayan AMA yine de işletmeyle ilgili
 - Müşteri/hasta kelimesi geçen HER mesaj → MUSTERI_ARA veya MUSTERI_LISTE
 - Kişi adı + zaman + işlem türü → VERI_GIRISI
 - Kişi adı + işlem + tutar → VERI_GIRISI
+- "ürün ekle", "yeni ürün" + fiyat bilgisi → URUN_EKLE
+- "fiyat güncelle", "fiyatını değiştir", "alış/satış" + ürün adı → URUN_FIYAT_GUNCELLE
+- "stok güncelle", "stok set", "stok düzelt", "stoğunu yap" → STOK_GUNCELLE
+- "ürün sil", "sil" + ürün adı → URUN_SIL
 - Belirsiz durumlarda GUNLUK_OZET tercih et (SERBEST_SORU yerine)
 
 SADECE JSON döndür: {"action":"AKSIYON_ADI","param":"varsa parametre"}
-param sadece RANDEVU_IPTAL, STOK_ARA, MUSTERI_ARA için gerekli.`;
+param sadece RANDEVU_IPTAL, STOK_ARA, MUSTERI_ARA için gerekli. URUN_EKLE, URUN_FIYAT_GUNCELLE, STOK_GUNCELLE, URUN_SIL için param = tüm kullanıcı mesajı.`;
 }
 
 // ── Intent Classification ───────────────────────────────────────────────────
@@ -198,7 +210,8 @@ async function classifyIntent(message: string): Promise<ClassifiedIntent> {
 const VALID_ACTIONS = new Set<string>([
   "SELAMLAMA", "RANDEVU_BUGUN", "RANDEVU_YARIN", "RANDEVU_HAFTA", "RANDEVU_IPTAL",
   "FINANS_GELIR", "FINANS_GIDER", "FINANS_RAPOR", "FINANS_KASA",
-  "STOK_DURUM", "STOK_ARA", "MUSTERI_ARA", "MUSTERI_LISTE",
+  "STOK_DURUM", "STOK_ARA", "URUN_EKLE", "URUN_FIYAT_GUNCELLE", "STOK_GUNCELLE", "URUN_SIL",
+  "MUSTERI_ARA", "MUSTERI_LISTE",
   "HATIRLATMA", "HATIRLATMA_GONDER", "GUNLUK_OZET", "DETAYLI_RAPOR",
   "TOP_SERVIS", "TOP_MUSTERI", "PRIM_RAPOR", "FATURA_OZET",
   "HASTA_FOTO", "HASTA_FOTO_SIL", "VERI_GIRISI", "YARDIM", "SERBEST_SORU",
@@ -218,6 +231,10 @@ function keywordFallback(lower: string): ClassifiedIntent {
   if (/rapor|mali durum|finansal/.test(lower)) return { action: "FINANS_RAPOR" };
   if (/kasa|bakiye/.test(lower)) return { action: "FINANS_KASA" };
   if (/foto(ğ|g)?raf/.test(lower)) return { action: "HASTA_FOTO" };
+  if (/ürün ekle|yeni ürün|urun ekle|yeni urun/.test(lower)) return { action: "URUN_EKLE", param: lower };
+  if (/ürün sil|urun sil/.test(lower)) return { action: "URUN_SIL", param: lower };
+  if (/fiyat (güncelle|guncelle|değiştir|degistir)|fiyatını/.test(lower)) return { action: "URUN_FIYAT_GUNCELLE", param: lower };
+  if (/stok (güncelle|guncelle|set|düzelt|duzelt)|stoğunu.*yap/.test(lower)) return { action: "STOK_GUNCELLE", param: lower };
   if (/stok|ürün|urun/.test(lower)) return { action: "STOK_DURUM" };
   if (/müşteri|musteri|hasta/.test(lower)) return { action: "MUSTERI_LISTE" };
   if (/hatırlatma|hatirlatma/.test(lower)) return { action: "HATIRLATMA" };
@@ -611,6 +628,275 @@ async function handleConflictConfirmation(
   return "Lütfen 'evet' veya 'hayır' yazın.";
 }
 
+// ── Stock Management Handlers ───────────────────────────────────────────────
+
+async function handleProductAdd(clinicId: string, message: string): Promise<string> {
+  // Parse: "ürün ekle NAME, alış X, satış Y, [marka Z], [stok N]"
+  const lower = message.toLowerCase();
+  const cleaned = lower
+    .replace(/ürün ekle|yeni ürün|urun ekle|yeni urun/gi, "")
+    .trim();
+
+  // Extract fields using regex
+  const alisMatch = cleaned.match(/al[ıi](?:ş|s)\s*(?:fiyat[ıi]?)?\s*(\d+(?:[.,]\d+)?)/);
+  const satisMatch = cleaned.match(/sat[ıi](?:ş|s)\s*(?:fiyat[ıi]?)?\s*(\d+(?:[.,]\d+)?)/);
+  const markaMatch = cleaned.match(/marka\s+([^,]+?)(?:\s*,|\s+al[ıi]|\s+sat[ıi]|\s+stok|\s*$)/i);
+  const stokMatch = cleaned.match(/stok\s*(\d+)/);
+
+  // Name = everything before first comma or keyword
+  let name = cleaned
+    .replace(/,?\s*al[ıi](?:ş|s)\s*(?:fiyat[ıi]?)?\s*\d+(?:[.,]\d+)?/gi, "")
+    .replace(/,?\s*sat[ıi](?:ş|s)\s*(?:fiyat[ıi]?)?\s*\d+(?:[.,]\d+)?/gi, "")
+    .replace(/,?\s*marka\s+[^,]+/gi, "")
+    .replace(/,?\s*stok\s*\d+/gi, "")
+    .replace(/^[,\s]+|[,\s]+$/g, "")
+    .trim();
+
+  if (!name) {
+    return "❌ Ürün adı belirtmelisiniz.\n\n📝 Örnek: \"ürün ekle Royal Protein, alış 500, satış 750\"";
+  }
+
+  // Capitalize first letter of each word
+  name = name.replace(/\b\w/g, (c) => c.toUpperCase());
+
+  const purchasePrice = alisMatch ? Math.round(parseFloat(alisMatch[1].replace(",", ".")) * 100) : 0;
+  const salePrice = satisMatch ? Math.round(parseFloat(satisMatch[1].replace(",", ".")) * 100) : 0;
+  const brand = markaMatch ? markaMatch[1].trim().replace(/\b\w/g, (c) => c.toUpperCase()) : null;
+  const stock = stokMatch ? parseInt(stokMatch[1]) : null;
+
+  // Check if product already exists
+  const existing = await prisma.product.findFirst({
+    where: { clinicId, name: { equals: name, mode: "insensitive" } },
+  });
+
+  if (existing) {
+    return `⚠️ "${name}" adlı ürün zaten mevcut. Fiyat güncellemek için:\n"${name} alış ${purchasePrice / 100} satış ${salePrice / 100}"`;
+  }
+
+  // Generate SKU
+  const prefix = name.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 5);
+  const sku = `${prefix || "PRD"}-${Date.now().toString(36).slice(-4).toUpperCase()}`;
+
+  const product = await prisma.product.create({
+    data: {
+      clinicId,
+      name,
+      sku,
+      ...(brand && { brand }),
+      category: "DIGER",
+      unit: "ADET",
+      currentStock: stock,
+      purchasePrice,
+      salePrice,
+    },
+  });
+
+  let msg = `✅ Ürün eklendi!\n\n📦 ${product.name}\n🏷️ SKU: ${product.sku}`;
+  if (brand) msg += `\n🔖 Marka: ${brand}`;
+  if (purchasePrice > 0) msg += `\n💰 Alış: ${(purchasePrice / 100).toLocaleString("tr-TR")} ₺`;
+  if (salePrice > 0) msg += `\n💵 Satış: ${(salePrice / 100).toLocaleString("tr-TR")} ₺`;
+  if (stock !== null) msg += `\n📊 Stok: ${stock}`;
+
+  return msg;
+}
+
+async function handlePriceUpdate(clinicId: string, message: string): Promise<string> {
+  const lower = message.toLowerCase();
+
+  // Extract prices
+  const alisMatch = lower.match(/al[ıi](?:ş|s)\s*(?:fiyat[ıi]?)?\s*(\d+(?:[.,]\d+)?)/);
+  const satisMatch = lower.match(/sat[ıi](?:ş|s)\s*(?:fiyat[ıi]?)?\s*(\d+(?:[.,]\d+)?)/);
+  const genericPrice = lower.match(/fiyat[ıi]?(?:n[ıi])?\s*(\d+(?:[.,]\d+)?)\s*(?:yap|tl)?/);
+
+  if (!alisMatch && !satisMatch && !genericPrice) {
+    return "❌ Fiyat bilgisi bulunamadı.\n\n📝 Örnek: \"Botox alış 1200 satış 2500\"\nveya: \"Botox fiyatını 1500 yap\"";
+  }
+
+  // Extract product name — remove keywords
+  const productName = lower
+    .replace(/fiyat\s*(güncelle|guncelle|değiştir|degistir)/gi, "")
+    .replace(/al[ıi](?:ş|s)\s*(?:fiyat[ıi]?)?\s*\d+(?:[.,]\d+)?/gi, "")
+    .replace(/sat[ıi](?:ş|s)\s*(?:fiyat[ıi]?)?\s*\d+(?:[.,]\d+)?/gi, "")
+    .replace(/fiyat[ıi]?(?:n[ıi])?\s*\d+(?:[.,]\d+)?\s*(?:yap|tl)?/gi, "")
+    .replace(/ürün|urun|ürünü|urunu/gi, "")
+    .replace(/^[,\s]+|[,\s]+$/g, "")
+    .trim();
+
+  if (!productName) {
+    return "❌ Ürün adı belirtmelisiniz.\n\n📝 Örnek: \"Botox alış 1200 satış 2500\"";
+  }
+
+  // Find product (case-insensitive)
+  const product = await prisma.product.findFirst({
+    where: { clinicId, name: { contains: productName, mode: "insensitive" }, isActive: true },
+  });
+
+  if (!product) {
+    return `❌ "${productName}" adlı ürün bulunamadı.`;
+  }
+
+  const updateData: any = {};
+  const changes: string[] = [];
+
+  if (alisMatch) {
+    const val = Math.round(parseFloat(alisMatch[1].replace(",", ".")) * 100);
+    updateData.purchasePrice = val;
+    changes.push(`💰 Alış: ${(product.purchasePrice / 100).toLocaleString("tr-TR")} ₺ → ${(val / 100).toLocaleString("tr-TR")} ₺`);
+  }
+
+  if (satisMatch) {
+    const val = Math.round(parseFloat(satisMatch[1].replace(",", ".")) * 100);
+    updateData.salePrice = val;
+    changes.push(`💵 Satış: ${(product.salePrice / 100).toLocaleString("tr-TR")} ₺ → ${(val / 100).toLocaleString("tr-TR")} ₺`);
+  }
+
+  // Generic "fiyatını X yap" → treat as sale price
+  if (genericPrice && !alisMatch && !satisMatch) {
+    const val = Math.round(parseFloat(genericPrice[1].replace(",", ".")) * 100);
+    updateData.salePrice = val;
+    changes.push(`💵 Satış: ${(product.salePrice / 100).toLocaleString("tr-TR")} ₺ → ${(val / 100).toLocaleString("tr-TR")} ₺`);
+  }
+
+  await prisma.product.update({
+    where: { id: product.id },
+    data: updateData,
+  });
+
+  return `✅ ${product.name} fiyatı güncellendi!\n\n${changes.join("\n")}`;
+}
+
+async function handleStockUpdate(clinicId: string, message: string): Promise<string> {
+  const lower = message.toLowerCase();
+
+  // Extract stock quantity
+  const stokMatch = lower.match(/stok\s*(?:güncelle|guncelle|set|düzelt|duzelt)?\s*(\d+)/) ||
+    lower.match(/(\d+)\s*(?:yap|adet)/) ||
+    lower.match(/stoğunu\s*(\d+)/);
+
+  if (!stokMatch) {
+    return "❌ Stok miktarı belirtmelisiniz.\n\n📝 Örnek: \"Botox stok 25\"\nveya: \"Botox stoğunu 10 yap\"";
+  }
+
+  const newStock = parseInt(stokMatch[1]);
+
+  // Extract product name
+  const productName = lower
+    .replace(/stok\s*(güncelle|guncelle|set|düzelt|duzelt)?\s*\d+/gi, "")
+    .replace(/stoğunu\s*\d+\s*(yap)?/gi, "")
+    .replace(/\d+\s*(yap|adet)/gi, "")
+    .replace(/ürün|urun/gi, "")
+    .replace(/^[,\s]+|[,\s]+$/g, "")
+    .trim();
+
+  if (!productName) {
+    return "❌ Ürün adı belirtmelisiniz.\n\n📝 Örnek: \"Botox stok 25\"";
+  }
+
+  // Find product
+  const product = await prisma.product.findFirst({
+    where: { clinicId, name: { contains: productName, mode: "insensitive" }, isActive: true },
+  });
+
+  if (!product) {
+    return `❌ "${productName}" adlı ürün bulunamadı.`;
+  }
+
+  const oldStock = product.currentStock;
+
+  // Update stock
+  await prisma.product.update({
+    where: { id: product.id },
+    data: { currentStock: newStock },
+  });
+
+  // Create ADJUSTMENT stock movement
+  const diff = newStock - (oldStock ?? 0);
+  if (diff !== 0) {
+    await prisma.stockMovement.create({
+      data: {
+        productId: product.id,
+        clinicId,
+        type: "ADJUSTMENT",
+        quantity: Math.abs(diff),
+        unitPrice: 0,
+        totalPrice: 0,
+        description: `Bot ile stok düzeltme: ${oldStock ?? "yok"} → ${newStock}`,
+      },
+    });
+  }
+
+  return `✅ ${product.name} stoğu güncellendi!\n\n📊 ${oldStock !== null ? oldStock : "-"} → ${newStock} ${product.unit.toLowerCase()}`;
+}
+
+async function handleProductDelete(
+  clinicId: string,
+  message: string,
+  senderId: string
+): Promise<string> {
+  const lower = message.toLowerCase();
+
+  // Extract product name
+  const productName = lower
+    .replace(/ürün sil|urun sil|ürünü sil|urunu sil|sil/gi, "")
+    .replace(/ürün|urun/gi, "")
+    .replace(/^[,\s]+|[,\s]+$/g, "")
+    .trim();
+
+  if (!productName) {
+    return "❌ Ürün adı belirtmelisiniz.\n\n📝 Örnek: \"ürün sil Royal Protein\"";
+  }
+
+  // Find product
+  const product = await prisma.product.findFirst({
+    where: { clinicId, name: { contains: productName, mode: "insensitive" }, isActive: true },
+  });
+
+  if (!product) {
+    return `❌ "${productName}" adlı aktif ürün bulunamadı.`;
+  }
+
+  // Set conversation state for confirmation
+  setConversationState(senderId, {
+    step: "AWAITING_PRODUCT_DELETE_CONFIRM",
+    clinicId,
+    pendingProductDelete: {
+      productId: product.id,
+      productName: product.name,
+    },
+    createdAt: Date.now(),
+  });
+
+  return `⚠️ "${product.name}" silinecek. Emin misiniz?\n\n🗑️ Bu işlem geri alınamaz.\n\nEvet / Hayır yazın.`;
+}
+
+async function handleProductDeleteConfirmation(
+  convKey: string,
+  state: ConversationState,
+  message: string
+): Promise<string> {
+  const pending = state.pendingProductDelete!;
+  const lower = message.toLowerCase().trim();
+
+  if (/^(evet|e|yes|y|olsun|tamam|ok)/.test(lower)) {
+    clearConversationState(convKey);
+
+    // Soft delete — set isActive = false
+    await prisma.product.update({
+      where: { id: pending.productId },
+      data: { isActive: false },
+    });
+
+    return `🗑️ "${pending.productName}" başarıyla silindi.`;
+  }
+
+  if (/^(hayır|hayir|h|no|n|vazgeç|vazgec|iptal)/.test(lower)) {
+    clearConversationState(convKey);
+    return "❌ Silme işlemi iptal edildi.";
+  }
+
+  return "Lütfen 'evet' veya 'hayır' yazın.";
+}
+
 // ── Intent Executor ─────────────────────────────────────────────────────────
 
 async function executeIntent(
@@ -696,6 +982,18 @@ async function executeIntent(
     case "FATURA_OZET":
       return getInvoiceSummary(clinicId);
 
+    case "URUN_EKLE":
+      return handleProductAdd(clinicId, intent.param || originalMessage);
+
+    case "URUN_FIYAT_GUNCELLE":
+      return handlePriceUpdate(clinicId, intent.param || originalMessage);
+
+    case "STOK_GUNCELLE":
+      return handleStockUpdate(clinicId, intent.param || originalMessage);
+
+    case "URUN_SIL":
+      return handleProductDelete(clinicId, intent.param || originalMessage, senderId);
+
     case "VERI_GIRISI":
       return handleDataEntry(originalMessage, clinicId, senderId);
 
@@ -730,6 +1028,10 @@ Doğal dilde yazabilirsiniz, komut ezberlemenize gerek yok!
 📦 Stok:
 • "Stok durumu nedir?"
 • "Botox ne kadar kaldı?"
+• "ürün ekle Royal Protein, alış 500, satış 750"
+• "Botox alış 1200 satış 2500" (fiyat güncelle)
+• "Botox stok 25" (stok güncelle)
+• "ürün sil Royal Protein"
 
 👤 Müşteri:
 • "Ahmet'in bilgilerini göster"
@@ -840,6 +1142,10 @@ export async function handleBotMessage(
       if (convState.step === "AWAITING_CONFLICT_CONFIRM") {
         const response = await handleConflictConfirmation(senderId, convState, message);
         return { response, intent: "VERI_GIRISI" };
+      }
+      if (convState.step === "AWAITING_PRODUCT_DELETE_CONFIRM") {
+        const response = await handleProductDeleteConfirmation(senderId, convState, message);
+        return { response, intent: "URUN_SIL" };
       }
     }
 

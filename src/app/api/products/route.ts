@@ -90,6 +90,21 @@ export async function POST(request: Request) {
       );
     }
 
+    // Check name+unit uniqueness within clinic
+    const existingNameUnit = await prisma.product.findFirst({
+      where: {
+        clinicId,
+        name: { equals: parsed.data.name, mode: "insensitive" },
+        unit: parsed.data.unit,
+      },
+    });
+    if (existingNameUnit) {
+      return Response.json(
+        { error: `"${parsed.data.name}" adlı ürün bu birimle zaten mevcut. Farklı bir birim seçin.` },
+        { status: 400 }
+      );
+    }
+
     const { customFields, ...rest } = parsed.data;
     const product = await prisma.product.create({
       data: {

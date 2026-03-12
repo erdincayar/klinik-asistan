@@ -1,7 +1,7 @@
 // In-memory conversation state manager for bot appointment employee selection
 // Key format: "telegram:{chatId}" or "whatsapp:{phone}" or "test:{phone}"
 
-export type ConversationStep = "IDLE" | "AWAITING_EMPLOYEE" | "AWAITING_CONFLICT_CONFIRM";
+export type ConversationStep = "IDLE" | "AWAITING_EMPLOYEE" | "AWAITING_CONFLICT_CONFIRM" | "AWAITING_PRODUCT_DELETE_CONFIRM";
 
 export interface PendingAppointmentData {
   patientId: string;
@@ -16,10 +16,16 @@ export interface PendingAppointmentData {
   selectedEmployeeName?: string;
 }
 
+export interface PendingProductDeleteData {
+  productId: string;
+  productName: string;
+}
+
 export interface ConversationState {
   step: ConversationStep;
   clinicId: string;
   pendingAppointment?: PendingAppointmentData;
+  pendingProductDelete?: PendingProductDeleteData;
   createdAt: number;
 }
 

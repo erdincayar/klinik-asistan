@@ -307,6 +307,8 @@ model Product {
   updatedAt        DateTime        @updatedAt
   movements        StockMovement[]
   stockAlarms      StockAlarm[]
+
+  @@unique([clinicId, name, unit])
 }
 
 // StockMovementType values: IN, OUT, ADJUSTMENT
