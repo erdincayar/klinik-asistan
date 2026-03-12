@@ -108,7 +108,7 @@ model Clinic {
   adCampaignMetrics     AdCampaignMetric[]
   socialMediaAssets     SocialMediaAsset[]
   scheduledPosts        ScheduledPost[]
-  storageLimitMB        Int                    @default(1024)
+  storageLimitMB        Int                    @default(100)
   storageUsedMB         Int                    @default(0)
   storagePlan           String                 @default("free")
   photoCategories       String[]               @default(["Genel"])

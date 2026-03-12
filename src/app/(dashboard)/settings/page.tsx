@@ -1210,14 +1210,15 @@ export default function SettingsPage() {
         <div className="p-6 space-y-6">
           {(() => {
             const used = settings.storageUsedMB || 0;
-            const limit = settings.storageLimitMB || 1024;
+            const limit = settings.storageLimitMB || 100;
             const pct = Math.min(100, (used / limit) * 100);
-            const barColor = pct >= 100 ? "bg-red-500" : pct >= 80 ? "bg-amber-500" : "bg-blue-500";
+            const barColor = pct >= 100 ? "bg-red-500" : pct >= 95 ? "bg-red-400" : pct >= 80 ? "bg-amber-500" : "bg-blue-500";
+            const formatSize = (mb: number) => mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${mb} MB`;
             return (
               <div className="rounded-xl bg-gray-50 p-5">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm font-medium text-gray-700">Kullanılan Alan</span>
-                  <span className="text-xs text-gray-500">{used} MB / {limit} MB</span>
+                  <span className="text-xs text-gray-500">{formatSize(used)} / {formatSize(limit)}</span>
                 </div>
                 <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
                   <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${pct}%` }} />
@@ -1230,15 +1231,17 @@ export default function SettingsPage() {
           })()}
 
           <div>
-            <h3 className="text-sm font-medium text-gray-800 mb-3">Ek Depolama Paketleri</h3>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <h3 className="text-sm font-medium text-gray-800 mb-3">Depolama Paketleri</h3>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {[
-                { id: "STORAGE_5GB", name: "+5 GB", price: 14 },
-                { id: "STORAGE_20GB", name: "+20 GB", price: 54 },
-                { id: "STORAGE_50GB", name: "+50 GB", price: 135 },
+                { id: "STORAGE_STARTER", name: "Starter", size: "2 GB", price: 19 },
+                { id: "STORAGE_PROFESSIONAL", name: "Professional", size: "10 GB", price: 49 },
+                { id: "STORAGE_BUSINESS", name: "Business", size: "50 GB", price: 129 },
+                { id: "STORAGE_ENTERPRISE", name: "Enterprise", size: "500 GB", price: 899 },
               ].map((pkg) => (
                 <div key={pkg.id} className="rounded-xl border border-gray-100 p-4 text-center">
                   <p className="text-sm font-semibold text-gray-900">{pkg.name}</p>
+                  <p className="text-xs text-gray-500 mt-1">{pkg.size}</p>
                   <p className="mt-2 text-lg font-bold text-gray-900">₺{pkg.price}<span className="text-xs font-normal text-gray-400">/ay</span></p>
                   <button
                     onClick={() => handlePayment("STORAGE_PACKAGE", pkg.id)}
@@ -1248,7 +1251,7 @@ export default function SettingsPage() {
                     {paymentLoading === `STORAGE_PACKAGE_${pkg.id}` ? (
                       <Loader2 className="mx-auto h-3.5 w-3.5 animate-spin" />
                     ) : (
-                      "Satın Al"
+                      "Yükselt"
                     )}
                   </button>
                 </div>

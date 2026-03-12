@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     const verifyExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
     const clinic = await prisma.clinic.create({
-      data: { name: clinicName },
+      data: { name: clinicName, storageLimitMB: 100 },
     });
 
     await Promise.all([

@@ -56,26 +56,33 @@ export const TOKEN_PACKAGES = {
 } as const;
 
 export const STORAGE_PACKAGES = {
-  STORAGE_5GB: {
-    id: "STORAGE_5GB",
-    name: "+5 GB Depolama",
-    price: 1400,
-    displayPrice: "₺14/ay",
-    sizeMB: 5120,
+  STORAGE_STARTER: {
+    id: "STORAGE_STARTER",
+    name: "Starter — 2 GB Depolama",
+    price: 1900,
+    displayPrice: "₺19/ay",
+    sizeMB: 2048,
   },
-  STORAGE_20GB: {
-    id: "STORAGE_20GB",
-    name: "+20 GB Depolama",
-    price: 5400,
-    displayPrice: "₺54/ay",
-    sizeMB: 20480,
+  STORAGE_PROFESSIONAL: {
+    id: "STORAGE_PROFESSIONAL",
+    name: "Professional — 10 GB Depolama",
+    price: 4900,
+    displayPrice: "₺49/ay",
+    sizeMB: 10240,
   },
-  STORAGE_50GB: {
-    id: "STORAGE_50GB",
-    name: "+50 GB Depolama",
-    price: 13500,
-    displayPrice: "₺135/ay",
+  STORAGE_BUSINESS: {
+    id: "STORAGE_BUSINESS",
+    name: "Business — 50 GB Depolama",
+    price: 12900,
+    displayPrice: "₺129/ay",
     sizeMB: 51200,
+  },
+  STORAGE_ENTERPRISE: {
+    id: "STORAGE_ENTERPRISE",
+    name: "Enterprise — 500 GB Depolama",
+    price: 89900,
+    displayPrice: "₺899/ay",
+    sizeMB: 512000,
   },
 } as const;
 

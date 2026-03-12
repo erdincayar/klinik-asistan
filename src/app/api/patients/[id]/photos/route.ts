@@ -40,6 +40,16 @@ export async function POST(
     }
 
     const { id: patientId } = await params;
+
+    // Hasta'nın clinic'ini bul
+    const patient = await prisma.patient.findUnique({
+      where: { id: patientId },
+      select: { clinicId: true },
+    });
+    if (!patient) {
+      return NextResponse.json({ error: "Hasta bulunamadı" }, { status: 404 });
+    }
+
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
     const category = (formData.get("category") as string) || "Genel";
@@ -47,6 +57,20 @@ export async function POST(
 
     if (!file) {
       return NextResponse.json({ error: "Dosya gerekli" }, { status: 400 });
+    }
+
+    const fileSizeMB = Math.ceil(file.size / (1024 * 1024));
+
+    // Kota kontrolü
+    const clinic = await prisma.clinic.findUnique({
+      where: { id: patient.clinicId },
+      select: { storageUsedMB: true, storageLimitMB: true },
+    });
+    if (clinic && (clinic.storageUsedMB + fileSizeMB) > clinic.storageLimitMB) {
+      return NextResponse.json(
+        { error: "Depolama kotası doldu. Lütfen depolama paketinizi yükseltin." },
+        { status: 413 }
+      );
     }
 
     const bytes = await file.arrayBuffer();
@@ -69,6 +93,12 @@ export async function POST(
         notes,
         takenAt: new Date(),
       },
+    });
+
+    // storageUsedMB güncelle
+    await prisma.clinic.update({
+      where: { id: patient.clinicId },
+      data: { storageUsedMB: { increment: fileSizeMB } },
     });
 
     return NextResponse.json(photo, { status: 201 });
@@ -104,15 +134,38 @@ export async function DELETE(
       return NextResponse.json({ error: "Fotoğraf bulunamadı" }, { status: 404 });
     }
 
+    // Hasta'nın clinic'ini bul
+    const patient = await prisma.patient.findUnique({
+      where: { id: patientId },
+      select: { clinicId: true },
+    });
+
     // Delete file from disk
     const fileUrl = photo.fileUrl.replace(/^\/api\/uploads\//, "").replace(/^\/uploads\//, "");
     const filePath = path.join(process.cwd(), "uploads", fileUrl);
+    let fileSizeMB = 0;
     if (existsSync(filePath)) {
+      const { stat } = await import("fs/promises");
+      const stats = await stat(filePath);
+      fileSizeMB = Math.ceil(stats.size / (1024 * 1024));
       await unlink(filePath);
     }
 
     // Delete DB record
     await prisma.patientPhoto.delete({ where: { id: photoId } });
+
+    // storageUsedMB güncelle
+    if (patient && fileSizeMB > 0) {
+      const clinic = await prisma.clinic.findUnique({
+        where: { id: patient.clinicId },
+        select: { storageUsedMB: true },
+      });
+      const newUsed = Math.max(0, (clinic?.storageUsedMB || 0) - fileSizeMB);
+      await prisma.clinic.update({
+        where: { id: patient.clinicId },
+        data: { storageUsedMB: newUsed },
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
