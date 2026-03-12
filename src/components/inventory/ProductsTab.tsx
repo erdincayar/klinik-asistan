@@ -1110,12 +1110,19 @@ interface ImportPreview {
   totalRows: number;
 }
 
+interface ImportErrorDetail {
+  row: number;
+  productName: string;
+  reason: string;
+}
+
 interface ImportResult {
   added: number;
   updated: number;
   errors: number;
   total: number;
   noBrandCount: number;
+  errorDetails?: ImportErrorDetail[];
 }
 
 const MAPPING_FIELDS = [
@@ -1157,11 +1164,12 @@ function ImportDialog({
   const [uploading, setUploading] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importBrand, setImportBrand] = useState("");
+  const [showErrorDetails, setShowErrorDetails] = useState(false);
 
   function reset() {
     setStep("upload"); setPreview(null); setMapping({}); setResult(null); setError("");
     setUploading(false); setImportFile(null); setSelectedCurrency("TRY"); setExchangeRate(null);
-    setImportBrand("");
+    setImportBrand(""); setShowErrorDetails(false);
   }
 
   function handleClose(isOpen: boolean) {
@@ -1442,6 +1450,11 @@ function ImportDialog({
                 <div className="rounded-lg bg-white p-3 text-center">
                   <p className={`text-2xl font-bold ${result.errors > 0 ? "text-red-600" : "text-gray-400"}`}>{result.errors}</p>
                   <p className="text-xs text-gray-500">Hatalı</p>
+                  {result.errors > 0 && result.errorDetails && result.errorDetails.length > 0 && (
+                    <button onClick={() => setShowErrorDetails(!showErrorDetails)} className="mt-1 text-xs text-red-600 hover:text-red-800 underline">
+                      {showErrorDetails ? "Gizle" : "Detayları Gör"}
+                    </button>
+                  )}
                 </div>
               </div>
               {result.noBrandCount > 0 && (
@@ -1450,6 +1463,48 @@ function ImportDialog({
                 </div>
               )}
             </div>
+
+            {showErrorDetails && result.errorDetails && result.errorDetails.length > 0 && (
+              <div className="rounded-xl border border-red-100 bg-red-50/50 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-red-800">Hatalı Satırlar ({result.errorDetails.length})</p>
+                  <button
+                    onClick={() => {
+                      const csv = ["Satır,Ürün Adı,Hata Sebebi", ...result.errorDetails!.map((e) => `${e.row},"${e.productName.replace(/"/g, '""')}","${e.reason.replace(/"/g, '""')}"`)].join("\n");
+                      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url; a.download = "import-hatalari.csv"; a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                    className="flex items-center gap-1 rounded-lg bg-white border border-red-200 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 transition-colors"
+                  >
+                    <Download className="h-3.5 w-3.5" /> CSV İndir
+                  </button>
+                </div>
+                <div className="max-h-48 overflow-y-auto rounded-lg border border-red-100 bg-white">
+                  <table className="w-full text-xs">
+                    <thead className="bg-red-50 sticky top-0">
+                      <tr>
+                        <th className="px-3 py-2 text-left font-medium text-red-700 w-16">Satır</th>
+                        <th className="px-3 py-2 text-left font-medium text-red-700">Ürün Adı</th>
+                        <th className="px-3 py-2 text-left font-medium text-red-700">Hata Sebebi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-red-50">
+                      {result.errorDetails.map((err, idx) => (
+                        <tr key={idx}>
+                          <td className="px-3 py-1.5 text-gray-600">{err.row}</td>
+                          <td className="px-3 py-1.5 text-gray-800 max-w-[150px] truncate">{err.productName}</td>
+                          <td className="px-3 py-1.5 text-red-600">{err.reason}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
             <DialogFooter><Button onClick={() => handleClose(false)}>Kapat</Button></DialogFooter>
           </div>
         )}

@@ -92,6 +92,7 @@ export async function POST(req: NextRequest) {
     let updated = 0;
     let errors = 0;
     let noBrandCount = 0;
+    const errorDetails: { row: number; productName: string; reason: string }[] = [];
 
     for (let i = 0; i < rawRows.length; i++) {
       const row = rawRows[i];
@@ -99,6 +100,7 @@ export async function POST(req: NextRequest) {
       try {
         const name = mapping.name ? String(row[mapping.name] || "").trim() : "";
         if (!name) {
+          errorDetails.push({ row: i + 2, productName: "-", reason: "Ürün adı eksik" });
           errors++;
           continue;
         }
@@ -120,9 +122,21 @@ export async function POST(req: NextRequest) {
           return VALID_CURRENCIES.includes(rawCurrency) ? rawCurrency : "TRY";
         })();
 
-        const rawPurchasePrice = mapping.purchasePrice ? parseFloat(String(row[mapping.purchasePrice]).replace(",", ".")) || 0 : 0;
+        const rawPurchaseStr = mapping.purchasePrice ? String(row[mapping.purchasePrice] ?? "").replace(",", ".") : "0";
+        const rawPurchasePrice = parseFloat(rawPurchaseStr) || 0;
+        if (mapping.purchasePrice && rawPurchaseStr.trim() !== "" && isNaN(parseFloat(rawPurchaseStr))) {
+          errorDetails.push({ row: i + 2, productName: name, reason: `Alış fiyatı geçersiz format: "${row[mapping.purchasePrice]}"` });
+          errors++;
+          continue;
+        }
+        const rawSaleStr = mapping.salePrice ? String(row[mapping.salePrice] ?? "").replace(",", ".") : "0";
+        const salePriceTL = parseFloat(rawSaleStr) || 0;
+        if (mapping.salePrice && rawSaleStr.trim() !== "" && isNaN(parseFloat(rawSaleStr))) {
+          errorDetails.push({ row: i + 2, productName: name, reason: `Satış fiyatı geçersiz format: "${row[mapping.salePrice]}"` });
+          errors++;
+          continue;
+        }
         const rawPurchasePriceUSD = mapping.purchasePriceUSD ? parseFloat(String(row[mapping.purchasePriceUSD]).replace(",", ".")) || null : null;
-        const salePriceTL = mapping.salePrice ? parseFloat(String(row[mapping.salePrice]).replace(",", ".")) || 0 : 0;
 
         let purchasePriceKurus: number;
         let originalForeignPrice: number | null = null;
@@ -181,12 +195,15 @@ export async function POST(req: NextRequest) {
           added++;
         }
       } catch (err) {
+        const productName = mapping.name ? String(row[mapping.name] || "").trim() : "-";
+        const reason = err instanceof Error ? err.message : "Bilinmeyen hata";
         console.error(`Row ${i} import error:`, err);
+        errorDetails.push({ row: i + 2, productName, reason });
         errors++;
       }
     }
 
-    return NextResponse.json({ added, updated, errors, total: rawRows.length, noBrandCount });
+    return NextResponse.json({ added, updated, errors, total: rawRows.length, noBrandCount, errorDetails });
   } catch (error) {
     console.error("Import error:", error);
     return NextResponse.json({ error: "İçe aktarma hatası" }, { status: 500 });
