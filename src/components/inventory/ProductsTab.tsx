@@ -1399,13 +1399,24 @@ function ImportDialog({
 
               {/* Add custom column input */}
               <div className="flex items-center gap-2 border-t border-dashed pt-3">
-                <span className="w-28 shrink-0 text-xs text-gray-400">Özel Kolon Ekle</span>
-                <ArrowRight className="h-3.5 w-3.5 shrink-0 text-transparent" />
+                <button
+                  disabled={!newCustomName.trim()}
+                  onClick={() => {
+                    if (newCustomName.trim()) {
+                      setCustomMappings((prev) => [...prev, { name: newCustomName.trim(), column: "" }]);
+                      setNewCustomName("");
+                    }
+                  }}
+                  className="shrink-0 rounded-md border border-dashed border-gray-300 p-1.5 text-gray-400 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  title="Özel Kolon Ekle"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
                 <Input
-                  placeholder="Kolon adı girin..."
+                  placeholder="Özel kolon adı girin..."
                   value={newCustomName}
                   onChange={(e) => setNewCustomName(e.target.value)}
-                  className="flex-1 h-9"
+                  className="flex-1 h-9 text-sm"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
@@ -1416,18 +1427,6 @@ function ImportDialog({
                     }
                   }}
                 />
-                <button
-                  disabled={!newCustomName.trim()}
-                  onClick={() => {
-                    if (newCustomName.trim()) {
-                      setCustomMappings((prev) => [...prev, { name: newCustomName.trim(), column: "" }]);
-                      setNewCustomName("");
-                    }
-                  }}
-                  className="shrink-0 rounded p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
               </div>
             </div>
 
@@ -1517,8 +1516,8 @@ function ImportDialog({
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => reset()}>Geri</Button>
-              <Button className="flex-1" onClick={handleImport} disabled={!mapping.name}><ArrowRight className="mr-2 h-4 w-4" />İçe Aktar ({preview.totalRows} satır)</Button>
+              <Button variant="outline" size="sm" onClick={() => reset()}>Geri</Button>
+              <Button size="sm" onClick={handleImport} disabled={!mapping.name}>İçe Aktar ({preview.totalRows})</Button>
             </div>
           </div>
         )}
