@@ -31,9 +31,8 @@ function normalizeUnit(value: string): string {
   if (upper === "LT" || upper.includes("LITRE") || upper.includes("LİTRE")) return "LT";
   if (upper.includes("ŞİŞE") || upper.includes("SISE") || upper.includes("SIŞE")) return "SISE";
   if (upper.includes("TÜP") || upper.includes("TUP")) return "TUP";
-  // Tanınmayan birim → olduğu gibi sakla (unique key'de fark yaratsın)
-  if (trimmed) return trimmed;
-  return "ADET";
+  // Tanınmayan birim → DIGER olarak kaydet
+  return "DIGER";
 }
 
 function generateSku(name: string, index: number): string {

@@ -376,6 +376,9 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
           <Button size="sm" variant="destructive" onClick={() => setShowBulkDeleteConfirm(true)}>
             <Trash2 className="mr-1 h-3.5 w-3.5" /> Sil
           </Button>
+          <button onClick={() => setSelectedIds(new Set())} className="ml-auto rounded p-1 text-blue-400 hover:text-blue-700 hover:bg-blue-100 transition-colors" title="Seçimi kaldır">
+            <X className="h-4 w-4" />
+          </button>
         </div>
       )}
 

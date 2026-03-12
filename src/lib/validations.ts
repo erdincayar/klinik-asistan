@@ -113,7 +113,7 @@ export const productSchema = z.object({
   sku: z.string().min(1, "SKU kodu gerekli"),
   brand: z.string().nullable().optional(),
   category: z.enum(["KOZMETIK", "MEDIKAL", "SARF_MALZEME", "DIGER"]),
-  unit: z.enum(["ADET", "KUTU", "PAKET", "ML", "GR", "KG", "LT", "SISE", "TUP", "DIGER"]),
+  unit: z.string().default("ADET"),
   currentStock: z.number().int().min(0, "Stok negatif olamaz").nullable().optional(),
   minStock: z.number().int().min(0).optional(),
   orderAlert: z.boolean().optional(),
