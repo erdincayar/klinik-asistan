@@ -84,17 +84,6 @@ export async function POST(req: NextRequest) {
     // Fetch exchange rates for currency conversion
     const rates = await getExchangeRates();
 
-    // Process rows with mapping
-    const existingProducts = await prisma.product.findMany({
-      where: { clinicId },
-      select: { id: true, name: true, sku: true, unit: true },
-    });
-
-    // Key: "name_lowercase|unit" for name+unit unique matching
-    const nameUnitMap = new Map(existingProducts.map((p) => [`${p.name.toLowerCase().trim()}|${p.unit}`, p]));
-    // Fallback: name-only map for backward compat (when no unit mapped)
-    const nameMap = new Map(existingProducts.map((p) => [p.name.toLowerCase().trim(), p]));
-
     let added = 0;
     let updated = 0;
     let errors = 0;
@@ -151,7 +140,6 @@ export async function POST(req: NextRequest) {
         if (currency !== "TRY" && rawPurchasePrice > 0) {
           originalForeignPrice = rawPurchasePrice;
           purchasePriceKurus = convertToTRYKurus(rawPurchasePrice, currency, rates);
-          console.log("Kur:", rates.TRY, `${currency} fiyat:`, rawPurchasePrice, "TRY kuruş:", purchasePriceKurus);
         } else {
           purchasePriceKurus = Math.round(rawPurchasePrice * 100);
         }
@@ -159,11 +147,6 @@ export async function POST(req: NextRequest) {
         if (rawPurchasePriceUSD !== null) {
           originalForeignPrice = rawPurchasePriceUSD;
         }
-
-        // Match by name+unit first, then fallback to name-only
-        const nameKey = name.toLowerCase().trim();
-        const nameUnitKey = `${nameKey}|${unit}`;
-        const existing = nameUnitMap.get(nameUnitKey) || nameMap.get(nameKey);
 
         // Handle customFields from mapping
         const customFields: Record<string, any> = {};
@@ -178,51 +161,60 @@ export async function POST(req: NextRequest) {
         }
         const hasCustomFields = Object.keys(customFields).length > 0;
 
-        if (existing) {
-          await prisma.product.update({
-            where: { id: existing.id },
-            data: {
-              ...(brand !== null && { brand }),
-              category,
-              unit,
-              ...(quantity !== undefined && { currentStock: quantity }),
-              minStock,
-              currency,
-              purchasePrice: purchasePriceKurus,
-              purchasePriceUSD: originalForeignPrice,
-              salePrice: Math.round(salePriceTL * 100),
-              ...(hasCustomFields && { customFields }),
-            },
-          });
-          if (!brand) noBrandCount++;
-          updated++;
-        } else {
-          const sku = generateSku(name, i);
-          await prisma.product.create({
-            data: {
-              clinicId,
-              name,
-              sku,
-              ...(brand !== null && { brand }),
-              category,
-              unit,
-              currentStock: quantity !== undefined ? quantity : null,
-              minStock,
-              currency,
-              purchasePrice: purchasePriceKurus,
-              purchasePriceUSD: originalForeignPrice,
-              salePrice: Math.round(salePriceTL * 100),
-              ...(hasCustomFields && { customFields }),
-            },
-          });
-          nameUnitMap.set(nameUnitKey, { id: "", name, sku, unit });
-          nameMap.set(nameKey, { id: "", name, sku, unit });
-          if (!brand) noBrandCount++;
+        const sku = generateSku(name, i);
+        const productData = {
+          ...(brand !== null && { brand }),
+          category,
+          unit,
+          minStock,
+          currency,
+          purchasePrice: purchasePriceKurus,
+          purchasePriceUSD: originalForeignPrice,
+          salePrice: Math.round(salePriceTL * 100),
+          ...(hasCustomFields && { customFields }),
+        };
+
+        // Use upsert with clinicId+name+unit unique constraint
+        const result = await prisma.product.upsert({
+          where: {
+            clinicId_name_unit: { clinicId, name, unit },
+          },
+          update: {
+            ...productData,
+            ...(quantity !== undefined && { currentStock: quantity }),
+          },
+          create: {
+            clinicId,
+            name,
+            sku,
+            ...productData,
+            currentStock: quantity !== undefined ? quantity : null,
+          },
+        });
+
+        // If the returned sku matches the generated one, it was newly created
+        if (result.sku === sku) {
           added++;
+        } else {
+          updated++;
         }
+        if (!brand) noBrandCount++;
       } catch (err) {
         const productName = mapping.name ? String(row[mapping.name] || "").trim() : "-";
-        const reason = err instanceof Error ? err.message : "Bilinmeyen hata";
+        // Türkçeleştir: teknik Prisma hatalarını kullanıcı dostu mesaja çevir
+        let reason = "Bilinmeyen hata";
+        if (err instanceof Error) {
+          const msg = err.message;
+          if (msg.includes("Record to update not found") || msg.includes("not found")) {
+            reason = "Ürün bulunamadı, yeni olarak eklendi";
+          } else if (msg.includes("Unique constraint")) {
+            reason = "Bu ürün zaten mevcut (aynı isim ve birim)";
+          } else if (msg.includes("Foreign key")) {
+            reason = "Geçersiz referans verisi";
+          } else {
+            reason = "Veritabanı hatası";
+          }
+        }
         console.error(`Row ${i} import error:`, err);
         errorDetails.push({ row: i + 2, productName, reason });
         errors++;

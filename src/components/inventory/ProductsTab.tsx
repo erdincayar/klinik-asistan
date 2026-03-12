@@ -1378,29 +1378,11 @@ function ImportDialog({
                   </select>
                 </div>
               ))}
-            </div>
 
-            {/* Brand for this import */}
-            <div className="rounded-lg border border-gray-200 p-4 space-y-1">
-              <Label className="text-xs font-semibold">Marka (opsiyonel)</Label>
-              <p className="text-xs text-muted-foreground">Sadece bu import&apos;taki ürünlere uygulanır. Excel&apos;de marka kolonu varsa o önceliklidir.</p>
-              <Input
-                value={importBrand}
-                onChange={(e) => setImportBrand(e.target.value)}
-                placeholder="Ör: Bioderma"
-                className="max-w-[300px]"
-              />
-            </div>
-
-            {/* Custom field mappings */}
-            <div className="rounded-lg border border-gray-200 p-4 space-y-3">
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">Özel Kolonlar (opsiyonel)</Label>
-                <p className="text-xs text-muted-foreground">Excel&apos;deki ek sütunları özel alan olarak içe aktarın</p>
-              </div>
+              {/* Custom field mappings — added by user */}
               {customMappings.map((cm, idx) => (
-                <div key={idx} className="flex items-center gap-2">
-                  <span className="w-28 shrink-0 text-sm text-gray-700 truncate" title={cm.name}>{cm.name}</span>
+                <div key={`custom-${idx}`} className="flex items-center gap-2">
+                  <span className="w-28 shrink-0 text-sm text-purple-700 truncate" title={cm.name}>{cm.name}</span>
                   <ArrowRight className="h-3.5 w-3.5 shrink-0 text-gray-300" />
                   <select
                     value={cm.column}
@@ -1418,12 +1400,16 @@ function ImportDialog({
                   </button>
                 </div>
               ))}
-              <div className="flex gap-2">
+
+              {/* Add custom column input */}
+              <div className="flex items-center gap-2 border-t border-dashed pt-3">
+                <span className="w-28 shrink-0 text-xs text-gray-400">Özel Kolon Ekle</span>
+                <ArrowRight className="h-3.5 w-3.5 shrink-0 text-transparent" />
                 <Input
-                  placeholder="Kolon adı (ör: İskonto Fiyatı)"
+                  placeholder="Kolon adı girin..."
                   value={newCustomName}
                   onChange={(e) => setNewCustomName(e.target.value)}
-                  className="flex-1"
+                  className="flex-1 h-9"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
@@ -1434,10 +1420,7 @@ function ImportDialog({
                     }
                   }}
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
+                <button
                   disabled={!newCustomName.trim()}
                   onClick={() => {
                     if (newCustomName.trim()) {
@@ -1445,10 +1428,23 @@ function ImportDialog({
                       setNewCustomName("");
                     }
                   }}
+                  className="shrink-0 rounded p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 disabled:opacity-30 disabled:cursor-not-allowed"
                 >
-                  <Plus className="h-4 w-4 mr-1" /> Ekle
-                </Button>
+                  <Plus className="h-4 w-4" />
+                </button>
               </div>
+            </div>
+
+            {/* Brand for this import */}
+            <div className="rounded-lg border border-gray-200 p-4 space-y-1">
+              <Label className="text-xs font-semibold">Marka (opsiyonel)</Label>
+              <p className="text-xs text-muted-foreground">Sadece bu import&apos;taki ürünlere uygulanır. Excel&apos;de marka kolonu varsa o önceliklidir.</p>
+              <Input
+                value={importBrand}
+                onChange={(e) => setImportBrand(e.target.value)}
+                placeholder="Ör: Bioderma"
+                className="max-w-[300px]"
+              />
             </div>
 
             {/* Currency selection */}
@@ -1524,10 +1520,10 @@ function ImportDialog({
               </div>
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
-            <DialogFooter>
+            <div className="flex gap-2">
               <Button variant="outline" onClick={() => reset()}>Geri</Button>
-              <Button onClick={handleImport} disabled={!mapping.name}><ArrowRight className="mr-2 h-4 w-4" />İçe Aktar ({preview.totalRows} satır)</Button>
-            </DialogFooter>
+              <Button className="flex-1" onClick={handleImport} disabled={!mapping.name}><ArrowRight className="mr-2 h-4 w-4" />İçe Aktar ({preview.totalRows} satır)</Button>
+            </div>
           </div>
         )}
 
