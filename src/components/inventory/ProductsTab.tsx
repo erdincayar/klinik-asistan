@@ -1348,13 +1348,16 @@ function ImportDialog({
             </div>
 
             {/* Column mapping */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
               {MAPPING_FIELDS.map((field) => (
-                <div key={field.key} className="space-y-1">
-                  <Label className="text-xs">{field.label}{field.required && <span className="text-red-500"> *</span>}</Label>
+                <div key={field.key} className="flex items-center gap-2">
+                  <span className="w-28 shrink-0 text-sm text-gray-700">
+                    {field.label}{field.required && <span className="text-red-500"> *</span>}
+                  </span>
+                  <ArrowRight className="h-3.5 w-3.5 shrink-0 text-gray-300" />
                   <select value={mapping[field.key] || ""} onChange={(e) => setMapping((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                    className="flex h-9 w-full rounded-md border border-input bg-background px-2 py-1 text-sm">
-                    <option value="">— Seçin —</option>
+                    className="flex h-9 w-full min-w-0 rounded-md border border-input bg-background px-2 py-1 text-sm">
+                    <option value="">Eşleştirme yok</option>
                     {preview.columns.map((col) => (<option key={col} value={col}>{col}</option>))}
                   </select>
                 </div>
