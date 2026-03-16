@@ -236,15 +236,15 @@ function SortableNavItem({
         href={item.href}
         onClick={onClose}
         title={collapsed ? item.label : undefined}
-        className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-200 ${
+        className={`group relative flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[13px] font-medium transition-all duration-200 ${
           isActive
-            ? "bg-blue-50 text-blue-700"
-            : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+            ? "bg-gradient-to-r from-[#EF9F27] to-[#F5B940] text-white shadow-sm"
+            : "text-gray-500 hover:bg-[#FDF3E3] hover:text-[#BA7517]"
         } ${collapsed ? "lg:justify-center lg:px-0" : ""}`}
       >
         <Icon
           className={`h-[18px] w-[18px] shrink-0 ${
-            isActive ? "text-blue-600" : "text-gray-400 group-hover:text-gray-600"
+            isActive ? "text-white" : "text-gray-400 group-hover:text-[#BA7517]"
           }`}
         />
         <span className={collapsed ? "lg:hidden" : ""}>
@@ -255,7 +255,7 @@ function SortableNavItem({
         {isActive && (
           <motion.div
             layoutId="sidebar-active"
-            className="absolute -left-3 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-blue-600"
+            className="absolute -left-3 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[#EF9F27]"
             transition={{ type: "spring", stiffness: 350, damping: 30 }}
           />
         )}
@@ -363,20 +363,26 @@ function Sidebar({
       </AnimatePresence>
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-gray-200 bg-white transition-all duration-300 lg:static lg:z-auto ${
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-[#F0EDE8] bg-white transition-all duration-300 lg:static lg:z-auto ${
           open ? "translate-x-0" : "-translate-x-full"
-        } lg:translate-x-0 ${collapsed ? "lg:w-[72px]" : "lg:w-64"} w-64`}
+        } lg:translate-x-0 ${collapsed ? "lg:w-[72px]" : "lg:w-[240px]"} w-[240px]`}
       >
         {/* Logo */}
         <div className="flex h-16 shrink-0 items-center justify-between border-b border-gray-100 px-5">
           <Link href="/dashboard" className="flex items-center gap-2">
             {collapsed ? (
-              <span className="text-lg font-extrabold text-blue-600">Po</span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#EF9F27]">
+                <span className="text-sm font-extrabold text-white">P</span>
+              </div>
             ) : (
-              <span className="text-xl font-extrabold tracking-tight">
-                <span className="text-blue-600">Po</span>
-                <span className="text-gray-800">by</span>
-              </span>
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#EF9F27]">
+                  <span className="text-sm font-extrabold text-white">P</span>
+                </div>
+                <span className="text-xl font-extrabold tracking-tight text-gray-800">
+                  poby<span className="text-[#EF9F27]">.</span>
+                </span>
+              </div>
             )}
           </Link>
 
@@ -439,7 +445,7 @@ function Sidebar({
           {(session?.user as any)?.role === "ADMIN" && (
             <div className="mt-4 border-t border-gray-100 pt-4">
               {!collapsed && (
-                <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-[#A8A29E]">
                   Yönetim
                 </p>
               )}
@@ -493,24 +499,24 @@ function Sidebar({
               href="/settings"
               onClick={onClose}
               title={collapsed ? "Ayarlar" : undefined}
-              className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-200 ${
+              className={`group relative flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[13px] font-medium transition-all duration-200 ${
                 pathname === "/settings" || pathname.startsWith("/settings/")
-                  ? "bg-blue-50 text-blue-700"
-                  : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+                  ? "bg-gradient-to-r from-[#EF9F27] to-[#F5B940] text-white shadow-sm"
+                  : "text-gray-500 hover:bg-[#FDF3E3] hover:text-[#BA7517]"
               } ${collapsed ? "lg:justify-center lg:px-0" : ""}`}
             >
               <Settings
                 className={`h-[18px] w-[18px] shrink-0 ${
                   pathname === "/settings" || pathname.startsWith("/settings/")
-                    ? "text-blue-600"
-                    : "text-gray-400 group-hover:text-gray-600"
+                    ? "text-white"
+                    : "text-gray-400 group-hover:text-[#BA7517]"
                 }`}
               />
               <span className={collapsed ? "lg:hidden" : ""}>Ayarlar</span>
               {(pathname === "/settings" || pathname.startsWith("/settings/")) && (
                 <motion.div
                   layoutId="sidebar-settings-active"
-                  className="absolute -left-3 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-blue-600"
+                  className="absolute -left-3 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[#EF9F27]"
                   transition={{ type: "spring", stiffness: 350, damping: 30 }}
                 />
               )}
@@ -519,14 +525,14 @@ function Sidebar({
 
           {/* Plan badge */}
           {!collapsed && (
-            <div className="mb-3 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 px-3 py-2.5">
+            <div className="mb-3 rounded-xl bg-gradient-to-r from-[#FDF3E3] to-[#FCE7C7] px-3 py-2.5">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-blue-600" />
-                <span className="text-xs font-semibold text-blue-700">
+                <Sparkles className="h-4 w-4 text-[#EF9F27]" />
+                <span className="text-xs font-semibold text-[#BA7517]">
                   {PLAN_LABELS[clinicPlan] || "Pro"} Plan
                 </span>
               </div>
-              <p className="mt-0.5 text-[11px] text-blue-500">
+              <p className="mt-0.5 text-[11px] text-[#D88A1B]">
                 {clinicPlan === "BUSINESS"
                   ? "Tüm özellikler aktif"
                   : clinicPlan === "PRO"
@@ -537,19 +543,19 @@ function Sidebar({
           )}
           {collapsed && (
             <div className="mb-3 flex justify-center">
-              <div className="rounded-lg bg-blue-50 p-2" title={`${PLAN_LABELS[clinicPlan] || "Pro"} Plan`}>
-                <Sparkles className="h-4 w-4 text-blue-600" />
+              <div className="rounded-lg bg-[#FDF3E3] p-2" title={`${PLAN_LABELS[clinicPlan] || "Pro"} Plan`}>
+                <Sparkles className="h-4 w-4 text-[#EF9F27]" />
               </div>
             </div>
           )}
 
           {/* User */}
           <div
-            className={`flex items-center gap-3 rounded-xl px-2 py-2 ${
+            className={`flex items-center gap-3 rounded-xl bg-[#FDF3E3] px-2 py-2 ${
               collapsed ? "lg:justify-center" : ""
             }`}
           >
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-semibold text-white">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#EF9F27] text-xs font-semibold text-white">
               {(session?.user?.name || "K")
                 .split(" ")
                 .map((n) => n[0])
@@ -593,7 +599,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-[#F8F7F4]">
       <Sidebar
         open={sidebarOpen}
         collapsed={collapsed}
@@ -603,7 +609,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Top header */}
-        <header className="flex h-16 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-6">
+        <header className="flex h-16 shrink-0 items-center justify-between border-b border-[#F0EDE8] bg-white px-6">
           {/* Left side */}
           <div className="flex items-center gap-4">
             <button
@@ -622,12 +628,12 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             {/* Notifications */}
             <button className="relative rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600">
               <Bell className="h-5 w-5" />
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-blue-600" />
+              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#EF9F27]" />
             </button>
 
             {/* User (desktop) */}
             <div className="hidden items-center gap-3 rounded-xl px-3 py-1.5 sm:flex">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-xs font-semibold text-white">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#EF9F27] text-xs font-semibold text-white">
                 {(session?.user?.name || "K")
                   .split(" ")
                   .map((n) => n[0])

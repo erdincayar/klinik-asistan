@@ -307,7 +307,7 @@ function OnboardingChat() {
         animate={{ scale: 1 }}
         transition={{ delay: 2, type: "spring", stiffness: 200 }}
         onClick={() => setOpen(!open)}
-        className="fixed bottom-6 right-6 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-600/30 transition-transform hover:scale-105"
+        className="fixed bottom-6 right-6 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-[#EF9F27] text-white shadow-lg shadow-[#EF9F27]/30 transition-transform hover:scale-105"
       >
         {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
       </motion.button>
@@ -322,13 +322,13 @@ function OnboardingChat() {
             className="fixed bottom-24 right-6 z-[60] flex w-[380px] max-w-[calc(100vw-48px)] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl shadow-black/10"
             style={{ height: suggestedModules ? "560px" : "480px" }}
           >
-            <div className="flex items-center gap-3 border-b border-gray-100 bg-blue-600 px-5 py-4">
+            <div className="flex items-center gap-3 border-b border-gray-100 bg-[#EF9F27] px-5 py-4">
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20">
                 <Bot className="h-5 w-5 text-white" />
               </div>
               <div>
                 <p className="text-sm font-semibold text-white">Poby Asistan</p>
-                <p className="text-[11px] text-blue-200">İşletmeniz için en uygun planı bulalım</p>
+                <p className="text-[11px] text-amber-100">İşletmeniz için en uygun planı bulalım</p>
               </div>
             </div>
 
@@ -344,7 +344,7 @@ function OnboardingChat() {
                   <div
                     className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed ${
                       msg.role === "user"
-                        ? "bg-blue-600 text-white rounded-br-md"
+                        ? "bg-[#EF9F27] text-white rounded-br-md"
                         : "bg-gray-100 text-gray-800 rounded-bl-md"
                     }`}
                   >
@@ -372,13 +372,13 @@ function OnboardingChat() {
                       onClick={() => toggleModule(mod.name)}
                       className={`flex w-full items-start gap-3 rounded-xl border p-3 text-left transition-all ${
                         selectedModules.has(mod.name)
-                          ? "border-blue-300 bg-blue-50"
+                          ? "border-[#F5B940] bg-[#FDF3E3]"
                           : "border-gray-200 bg-white hover:border-gray-300"
                       }`}
                     >
                       <div
                         className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors ${
-                          selectedModules.has(mod.name) ? "border-blue-600 bg-blue-600" : "border-gray-300"
+                          selectedModules.has(mod.name) ? "border-[#EF9F27] bg-[#EF9F27]" : "border-gray-300"
                         }`}
                       >
                         {selectedModules.has(mod.name) && <Check className="h-3 w-3 text-white" />}
@@ -386,7 +386,7 @@ function OnboardingChat() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <span className="text-[13px] font-semibold text-gray-800">{mod.displayName}</span>
-                          <span className="text-[13px] font-bold text-blue-600">₺{mod.price}/ay</span>
+                          <span className="text-[13px] font-bold text-[#EF9F27]">₺{mod.price}/ay</span>
                         </div>
                         <p className="mt-0.5 text-[11px] text-gray-500 leading-snug">{mod.reason}</p>
                       </div>
@@ -402,7 +402,7 @@ function OnboardingChat() {
 
                   <button
                     onClick={handleStartNow}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white transition-all hover:bg-blue-700"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#EF9F27] py-3 text-sm font-semibold text-white transition-all hover:bg-[#D88A1B]"
                   >
                     Hemen Başla
                     <ArrowRight className="h-4 w-4" />
@@ -423,12 +423,12 @@ function OnboardingChat() {
                     onKeyDown={(e) => e.key === "Enter" && handleSend()}
                     placeholder="Mesajınızı yazın..."
                     disabled={loading}
-                    className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                    className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#EF9F27] focus:outline-none focus:ring-2 focus:ring-[#EF9F27]/20"
                   />
                   <button
                     onClick={handleSend}
                     disabled={!input.trim() || loading}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white transition-colors hover:bg-blue-700 disabled:opacity-40"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EF9F27] text-white transition-colors hover:bg-[#D88A1B] disabled:opacity-40"
                   >
                     {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                   </button>
@@ -479,7 +479,7 @@ function DashboardOverview() {
     <div>
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
-          { label: "Toplam Müşteri", target: 247, prefix: "", icon: Users, change: "+18", up: true, color: "text-blue-600", bg: "bg-blue-50" },
+          { label: "Toplam Müşteri", target: 247, prefix: "", icon: Users, change: "+18", up: true, color: "text-[#EF9F27]", bg: "bg-[#FDF3E3]" },
           { label: "Bugünün Randevuları", target: 12, prefix: "", icon: Calendar, change: "+3", up: true, color: "text-emerald-600", bg: "bg-emerald-50" },
           { label: "Aylık Gelir", target: 48500, prefix: "₺", icon: TrendingUp, change: "+22%", up: true, color: "text-amber-600", bg: "bg-amber-50" },
           { label: "Stok Uyarısı", target: 3, prefix: "", icon: AlertTriangle, change: "Kritik", up: false, color: "text-red-600", bg: "bg-red-50" },
@@ -507,7 +507,7 @@ function DashboardOverview() {
         <p className="mb-3 text-xs font-semibold text-gray-500">Aylık Gelir Trendi</p>
         <div className="flex h-[100px] items-end gap-2">
           {[35, 50, 40, 65, 55, 80, 60, 75, 90, 70, 85, 95].map((h, i) => (
-            <div key={i} className="flex-1 rounded-t bg-gradient-to-t from-blue-500 to-blue-400" style={{ height: `${h}%` }} />
+            <div key={i} className="flex-1 rounded-t bg-gradient-to-t from-[#EF9F27] to-[#F5B940]" style={{ height: `${h}%` }} />
           ))}
         </div>
         <div className="mt-2 flex justify-between text-[10px] text-gray-400">
@@ -536,7 +536,7 @@ function DashboardAppointments() {
         {appointments.map((a) => (
           <div key={a.name} className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-xs font-bold text-blue-600">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FDF3E3] text-xs font-bold text-[#EF9F27]">
                 {a.name.split(" ").map(n => n[0]).join("")}
               </div>
               <div>
@@ -564,7 +564,7 @@ function DashboardFinance() {
         {[
           { label: "Gelir", target: 48500, color: "text-emerald-600", bg: "bg-emerald-50", icon: TrendingUp },
           { label: "Gider", target: 12300, color: "text-red-600", bg: "bg-red-50", icon: TrendingDown },
-          { label: "Net Kâr", target: 36200, color: "text-blue-600", bg: "bg-blue-50", icon: DollarSign },
+          { label: "Net Kâr", target: 36200, color: "text-[#EF9F27]", bg: "bg-[#FDF3E3]", icon: DollarSign },
         ].map((s) => {
           const Icon = s.icon;
           return (
@@ -644,7 +644,7 @@ function DashboardStock() {
 
 function DashboardCustomers() {
   const customers = [
-    { name: "Ahmet Yılmaz", lastVisit: "10 Mar 2026", total: "₺4.800", visits: 12, color: "bg-blue-500" },
+    { name: "Ahmet Yılmaz", lastVisit: "10 Mar 2026", total: "₺4.800", visits: 12, color: "bg-[#EF9F27]" },
     { name: "Fatma Kaya", lastVisit: "8 Mar 2026", total: "₺3.200", visits: 8, color: "bg-emerald-500" },
     { name: "Mehmet Demir", lastVisit: "5 Mar 2026", total: "₺6.100", visits: 15, color: "bg-purple-500" },
     { name: "Ayşe Çelik", lastVisit: "3 Mar 2026", total: "₺2.400", visits: 6, color: "bg-amber-500" },
@@ -674,7 +674,7 @@ function DashboardCustomers() {
 
 function DashboardEmployees() {
   const employees = [
-    { name: "Dr. Elif Şahin", role: "Diş Hekimi", commission: "₺12.400", color: "bg-blue-500" },
+    { name: "Dr. Elif Şahin", role: "Diş Hekimi", commission: "₺12.400", color: "bg-[#EF9F27]" },
     { name: "Selin Aydın", role: "Hijyenist", commission: "₺4.200", color: "bg-emerald-500" },
     { name: "Burak Erdoğan", role: "Asistan", commission: "₺2.800", color: "bg-purple-500" },
     { name: "Derya Yılmaz", role: "Sekreter", commission: "₺1.500", color: "bg-amber-500" },
@@ -742,7 +742,7 @@ export default function Home() {
       >
         <div className="mx-auto flex max-w-[1200px] items-center justify-between px-6 py-4">
           <Link href="/" className="text-2xl font-extrabold tracking-tight">
-            <span className="text-blue-600">Po</span>
+            <span className="text-[#EF9F27]">Po</span>
             <span className="text-gray-800">by</span>
           </Link>
 
@@ -764,7 +764,7 @@ export default function Home() {
             </Link>
             <Link
               href="/register"
-              className="rounded-[10px] bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/30"
+              className="rounded-[10px] bg-[#EF9F27] px-5 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-[#D88A1B] hover:shadow-lg hover:shadow-[#EF9F27]/30"
             >
               Kayıt Ol
             </Link>
@@ -800,7 +800,7 @@ export default function Home() {
               </Link>
               <Link
                 href="/register"
-                className="inline-flex items-center justify-center rounded-[10px] bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white"
+                className="inline-flex items-center justify-center rounded-[10px] bg-[#EF9F27] px-6 py-2.5 text-sm font-semibold text-white"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Kayıt Ol
@@ -816,14 +816,14 @@ export default function Home() {
         <div
           className="animate-gradient pointer-events-none absolute inset-0"
           style={{
-            background: "linear-gradient(135deg, #dbeafe 0%, #eff6ff 25%, #e0e7ff 50%, #dbeafe 75%, #eff6ff 100%)",
+            background: "linear-gradient(135deg, #FDF3E3 0%, #FFF8F0 25%, #FCE7C7 50%, #FDF3E3 75%, #FFF8F0 100%)",
           }}
         />
         <div
           className="pointer-events-none absolute inset-0"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(37,99,235,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,0.04) 1px,transparent 1px)",
+              "linear-gradient(rgba(239,159,39,0.06) 1px,transparent 1px),linear-gradient(90deg,rgba(239,159,39,0.06) 1px,transparent 1px)",
             backgroundSize: "60px 60px",
           }}
         />
@@ -834,9 +834,9 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white/80 px-4 py-1.5 text-[13px] font-medium text-blue-700 backdrop-blur-sm"
+            className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#F5B940] bg-white/80 px-4 py-1.5 text-[13px] font-medium text-[#BA7517] backdrop-blur-sm"
           >
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-blue-500" />
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#EF9F27]" />
             AI destekli yeni nesil işletme yönetimi
           </motion.div>
 
@@ -847,7 +847,7 @@ export default function Home() {
             className="mb-6 text-[clamp(32px,5.5vw,64px)] font-extrabold leading-[1.1] tracking-[-2px] text-gray-900"
           >
             Kişisel AI Asistanınız{" "}
-            <span className="bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#EF9F27] to-[#F5B940] bg-clip-text text-transparent">
               Poby
             </span>
             <br />
@@ -872,7 +872,7 @@ export default function Home() {
           >
             <Link
               href="/register"
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-8 py-4 text-[15px] font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/30"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#EF9F27] px-8 py-4 text-[15px] font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-[#D88A1B] hover:shadow-xl hover:shadow-[#EF9F27]/30"
             >
               Ücretsiz Başla
               <ArrowRight className="h-4 w-4" />
@@ -899,7 +899,7 @@ export default function Home() {
             viewport={{ once: true }}
             className="mb-4 text-center"
           >
-            <span className="mb-3 inline-block text-[13px] font-semibold uppercase tracking-widest text-blue-600">
+            <span className="mb-3 inline-block text-[13px] font-semibold uppercase tracking-widest text-[#EF9F27]">
               Dashboard
             </span>
             <h2 className="mb-4 text-[clamp(28px,4vw,42px)] font-extrabold leading-tight tracking-tight text-gray-900">
@@ -942,7 +942,7 @@ export default function Home() {
                       onClick={() => setActiveTab(i)}
                       className={`relative whitespace-nowrap px-4 py-3 text-[13px] font-medium transition-colors ${
                         activeTab === i
-                          ? "text-blue-600"
+                          ? "text-[#EF9F27]"
                           : "text-gray-500 hover:text-gray-700"
                       }`}
                     >
@@ -950,7 +950,7 @@ export default function Home() {
                       {activeTab === i && (
                         <motion.div
                           layoutId="activeTab"
-                          className="absolute inset-x-0 bottom-0 h-0.5 bg-blue-600"
+                          className="absolute inset-x-0 bottom-0 h-0.5 bg-[#EF9F27]"
                           transition={{ type: "spring", stiffness: 400, damping: 30 }}
                         />
                       )}
@@ -991,7 +991,7 @@ export default function Home() {
           viewport={{ once: true }}
           className="mb-12 text-center px-6"
         >
-          <span className="mb-3 inline-block text-[13px] font-semibold uppercase tracking-widest text-blue-600">
+          <span className="mb-3 inline-block text-[13px] font-semibold uppercase tracking-widest text-[#EF9F27]">
             Yorumlar
           </span>
           <h2 className="mb-4 text-[clamp(28px,4vw,42px)] font-extrabold leading-tight tracking-tight text-gray-900">
@@ -1020,7 +1020,7 @@ export default function Home() {
             viewport={{ once: true }}
             className="mb-14 text-center"
           >
-            <span className="mb-3 inline-block text-[13px] font-semibold uppercase tracking-widest text-blue-600">
+            <span className="mb-3 inline-block text-[13px] font-semibold uppercase tracking-widest text-[#EF9F27]">
               Modüller
             </span>
             <h2 className="mb-4 text-[clamp(28px,4vw,42px)] font-extrabold leading-tight tracking-tight text-gray-900">
@@ -1043,7 +1043,7 @@ export default function Home() {
                 key={mod.title}
                 variants={fadeUp}
                 custom={i}
-                className="group cursor-default rounded-2xl border border-gray-200 bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-600/[0.06]"
+                className="group cursor-default rounded-2xl border border-gray-200 bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[#F5B940] hover:shadow-lg hover:shadow-[#EF9F27]/[0.06]"
               >
                 <span className="mb-4 block text-3xl">{mod.icon}</span>
                 <h3 className="mb-2 text-[15px] font-bold text-gray-900">{mod.title}</h3>
@@ -1059,7 +1059,7 @@ export default function Home() {
         <div
           className="animate-gradient pointer-events-none absolute inset-0"
           style={{
-            background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 25%, #3b82f6 50%, #2563eb 75%, #1d4ed8 100%)",
+            background: "linear-gradient(135deg, #EF9F27 0%, #D88A1B 25%, #F5B940 50%, #EF9F27 75%, #D88A1B 100%)",
           }}
         />
         <div
@@ -1085,7 +1085,7 @@ export default function Home() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="mx-auto mb-10 max-w-[480px] text-[17px] leading-relaxed text-blue-100"
+            className="mx-auto mb-10 max-w-[480px] text-[17px] leading-relaxed text-amber-100"
           >
             İlk ay ücretsiz, kredi kartı gerekmez. Hemen başlayın ve farkı görün.
           </motion.p>
@@ -1097,7 +1097,7 @@ export default function Home() {
           >
             <Link
               href="/register"
-              className="inline-flex items-center gap-2 rounded-[14px] bg-white px-10 py-4 text-base font-semibold text-blue-600 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-black/20"
+              className="inline-flex items-center gap-2 rounded-[14px] bg-white px-10 py-4 text-base font-semibold text-[#EF9F27] transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-black/20"
             >
               Ücretsiz Hesap Oluştur
               <ArrowRight className="h-4 w-4" />
@@ -1112,8 +1112,8 @@ export default function Home() {
           <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr]">
             <div>
               <Link href="/" className="text-xl font-extrabold">
-                <span className="text-blue-600">in</span>
-                <span className="text-gray-800">Pobi</span>
+                <span className="text-[#EF9F27]">Po</span>
+                <span className="text-gray-800">by</span>
               </Link>
               <p className="mt-3 max-w-[280px] text-[13px] leading-relaxed text-gray-500">
                 İşletmenizin cebindeki akıllı asistan. Tüm operasyonlarınızı tek
@@ -1128,7 +1128,7 @@ export default function Home() {
                 <ul className="space-y-2.5">
                   {links.map((link) => (
                     <li key={link}>
-                      <Link href="#" className="text-[13px] text-gray-500 transition-colors hover:text-blue-600">
+                      <Link href="#" className="text-[13px] text-gray-500 transition-colors hover:text-[#EF9F27]">
                         {link}
                       </Link>
                     </li>

@@ -232,7 +232,7 @@ export default function DashboardPage() {
           <p className="text-sm text-red-500">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="mt-3 text-sm font-medium text-blue-600 hover:underline"
+            className="mt-3 text-sm font-medium text-[#BA7517] hover:underline"
           >
             Tekrar dene
           </button>
@@ -250,8 +250,8 @@ export default function DashboardPage() {
       value: data.totalPatients.toLocaleString("tr-TR"),
       change: null,
       icon: Users,
-      iconBg: "bg-blue-50",
-      iconColor: "text-blue-600",
+      iconBg: "bg-[#FDF3E3]",
+      iconColor: "text-[#EF9F27]",
       href: "/patients",
     },
     {
@@ -408,7 +408,7 @@ export default function DashboardPage() {
           </div>
           <Link
             href="/reports"
-            className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700"
+            className="flex items-center gap-1 text-xs font-medium text-[#BA7517] hover:text-[#8C5811]"
           >
             Detaylı Rapor
             <ArrowRight className="h-3 w-3" />
@@ -424,8 +424,8 @@ export default function DashboardPage() {
             <AreaChart data={chartData}>
               <defs>
                 <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#2563eb" stopOpacity={0.15} />
-                  <stop offset="100%" stopColor="#2563eb" stopOpacity={0} />
+                  <stop offset="0%" stopColor="#EF9F27" stopOpacity={0.15} />
+                  <stop offset="100%" stopColor="#EF9F27" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="expenseGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#ef4444" stopOpacity={0.12} />
@@ -459,11 +459,11 @@ export default function DashboardPage() {
               <Area
                 type="monotone"
                 dataKey="income"
-                stroke="#2563eb"
+                stroke="#EF9F27"
                 strokeWidth={2.5}
                 fill="url(#incomeGrad)"
                 dot={false}
-                activeDot={{ r: 5, fill: "#2563eb", strokeWidth: 2, stroke: "#fff" }}
+                activeDot={{ r: 5, fill: "#EF9F27", strokeWidth: 2, stroke: "#fff" }}
               />
               <Area
                 type="monotone"
@@ -499,7 +499,7 @@ export default function DashboardPage() {
           </div>
           <Link
             href="/finance?tab=upcoming"
-            className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700"
+            className="flex items-center gap-1 text-xs font-medium text-[#BA7517] hover:text-[#8C5811]"
           >
             Tümünü Gör
             <ArrowRight className="h-3 w-3" />
@@ -555,19 +555,19 @@ export default function DashboardPage() {
         >
           <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-blue-600" />
+              <Calendar className="h-4 w-4 text-[#EF9F27]" />
               <h2 className="text-sm font-semibold text-gray-900">
                 Bugünün Randevuları
               </h2>
               {data.todayAppointments.length > 0 && (
-                <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700">
+                <span className="rounded-full bg-[#FDF3E3] px-2 py-0.5 text-[11px] font-semibold text-[#BA7517]">
                   {data.todayAppointments.length}
                 </span>
               )}
             </div>
             <Link
               href="/appointments"
-              className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700"
+              className="flex items-center gap-1 text-xs font-medium text-[#BA7517] hover:text-[#8C5811]"
             >
               Tümünü Gör
               <ArrowRight className="h-3 w-3" />
@@ -584,7 +584,7 @@ export default function DashboardPage() {
                   </p>
                   <Link
                     href="/appointments"
-                    className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700"
+                    className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#BA7517] hover:text-[#8C5811]"
                   >
                     Randevu oluştur
                     <ArrowRight className="h-3 w-3" />
@@ -605,7 +605,7 @@ export default function DashboardPage() {
                       className="flex items-center justify-between rounded-xl px-4 py-3 transition-colors hover:bg-gray-50"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-xs font-bold text-blue-700">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#FDF3E3] text-xs font-bold text-[#BA7517]">
                           {appt.startTime}
                         </div>
                         <div>
@@ -643,7 +643,7 @@ export default function DashboardPage() {
             </div>
             <Link
               href="/finance"
-              className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700"
+              className="flex items-center gap-1 text-xs font-medium text-[#BA7517] hover:text-[#8C5811]"
             >
               Tümünü Gör
               <ArrowRight className="h-3 w-3" />
@@ -660,7 +660,7 @@ export default function DashboardPage() {
                   </p>
                   <Link
                     href="/finance/new-income"
-                    className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700"
+                    className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#BA7517] hover:text-[#8C5811]"
                   >
                     İşlem ekle
                     <ArrowRight className="h-3 w-3" />
