@@ -118,6 +118,7 @@ model Clinic {
   fixedAssets           FixedAsset[]
   inventoryColumnConfig InventoryColumnConfig?
   employeeRoles         EmployeeRole[]
+  hrDocuments           HrDocument[]
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
 }
@@ -713,6 +714,27 @@ model InventoryColumnConfig {
   clinicId  String   @unique
   clinic    Clinic   @relation(fields: [clinicId], references: [id])
   columns   Json     // { order: string[], hidden: string[], customColumns: CustomColumn[] }
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ═══════════════════════════════════════════════════════════
+// İK Belge Yönetimi
+// ═══════════════════════════════════════════════════════════
+
+// HrDocument source values: AI, UPLOAD
+// HrDocument category values: hire, terminate, other
+model HrDocument {
+  id        String   @id @default(cuid())
+  clinicId  String
+  clinic    Clinic   @relation(fields: [clinicId], references: [id])
+  name      String
+  category  String   @default("other")
+  source    String
+  content   String?  @db.Text
+  fileUrl   String?
+  fileName  String?
+  fileSize  Int?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

@@ -20,12 +20,15 @@ const documentTypes = [
 ] as const;
 
 const requestSchema = z.object({
-  documentType: z.enum(documentTypes),
-  employeeName: z.string().min(2, "Ad soyad en az 2 karakter olmalı"),
-  tcNo: z.string().length(11, "TC Kimlik No 11 haneli olmalı"),
-  startDate: z.string().min(1, "Tarih gerekli"),
-  position: z.string().min(1, "Pozisyon gerekli"),
-  salary: z.string().min(1, "Maaş gerekli"),
+  documentType: z.string().min(1, "Belge türü gerekli"),
+  employeeName: z.string().optional().default(""),
+  tcNo: z.string().optional().default(""),
+  startDate: z.string().optional().default(""),
+  position: z.string().optional().default(""),
+  salary: z.string().optional().default(""),
+  customName: z.string().optional(),
+  customDescription: z.string().optional(),
+  category: z.enum(["hire", "terminate", "other"]).optional().default("other"),
 });
 
 const documentLabels: Record<string, string> = {
@@ -207,6 +210,14 @@ Hukuki geçerliliği olan, eksiksiz bir ibraname hazırla.`,
   return prompts[documentType] || base;
 }
 
+function getCategoryFromType(documentType: string): string {
+  const hireTypes = ["is_sozlesmesi", "ise_baslama_bildirimi", "ozluk_formu", "gizlilik_sozlesmesi"];
+  const terminateTypes = ["istifa_dilekçesi", "fesih_bildirimi", "kidem_ihbar_formu", "ibraname"];
+  if (hireTypes.includes(documentType)) return "hire";
+  if (terminateTypes.includes(documentType)) return "terminate";
+  return "other";
+}
+
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
@@ -242,7 +253,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { documentType, employeeName, tcNo, startDate, position, salary } = parsed.data;
+    const { documentType, employeeName, tcNo, startDate, position, salary, customName, customDescription, category } = parsed.data;
 
     // İşyeri adını al
     const clinic = await prisma.clinic.findUnique({
@@ -252,7 +263,29 @@ export async function POST(req: NextRequest) {
 
     const clinicName = clinic?.name || "İşyeri";
 
-    const prompt = getPrompt(documentType, employeeName, tcNo, startDate, position, salary, clinicName);
+    let prompt: string;
+    let docLabel: string;
+
+    if (documentType === "custom" && customName) {
+      // Custom document generation
+      docLabel = customName;
+      prompt = `Sen bir Türk İş Hukuku uzmanısın. 4857 sayılı İş Kanunu'na ve ilgili mevzuata tam uygun belgeler hazırlıyorsun.
+
+İşveren Bilgileri:
+- İşyeri Adı: ${clinicName}
+
+Bugünün tarihi: ${new Date().toLocaleDateString("tr-TR")}
+
+"${customName}" adında bir belge şablonu hazırla.
+${customDescription ? `Açıklama/Yönerge: ${customDescription}` : ""}
+${category === "hire" ? "Bu bir işe alış belgesidir." : category === "terminate" ? "Bu bir işten çıkarma belgesidir." : ""}
+
+Belge bir şablon olarak hazırlanmalı — çalışan bilgileri için boş alanlar bırak (ör: [AD SOYAD], [TC KİMLİK NO] gibi).
+Resmi ve profesyonel bir dil kullan. Markdown formatında hazırla.`;
+    } else {
+      docLabel = documentLabels[documentType] || customName || documentType;
+      prompt = getPrompt(documentType, employeeName, tcNo, startDate, position, salary, clinicName);
+    }
 
     const message = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
@@ -274,15 +307,27 @@ export async function POST(req: NextRequest) {
         clinicId,
         "HR_DOCUMENT",
         TOKEN_COSTS.HR_DOCUMENT,
-        `İK Belgesi: ${documentLabels[documentType]}`
+        `İK Belgesi: ${docLabel}`
       );
     }
+
+    // Save to DB
+    const savedDoc = await prisma.hrDocument.create({
+      data: {
+        clinicId,
+        name: docLabel,
+        category: category || (documentType === "custom" ? "other" : getCategoryFromType(documentType)),
+        source: "AI",
+        content,
+      },
+    });
 
     return Response.json({
       success: true,
       content,
       documentType,
-      documentLabel: documentLabels[documentType],
+      documentLabel: docLabel,
+      documentId: savedDoc.id,
     });
   } catch (error: any) {
     console.error("HR document generation error:", error);
