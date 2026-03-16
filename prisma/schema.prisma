@@ -117,6 +117,7 @@ model Clinic {
   stockAlarms           StockAlarm[]
   fixedAssets           FixedAsset[]
   inventoryColumnConfig InventoryColumnConfig?
+  employeeRoles         EmployeeRole[]
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
 }
@@ -260,24 +261,38 @@ model ReminderLog {
   createdAt      DateTime  @default(now())
 }
 
-// Employee role values: DOKTOR, ASISTAN, SEKRETER, TEKNISYEN, DIGER
 model Employee {
-  id             String        @id @default(cuid())
-  name           String
-  role           String        @default("ASISTAN") // DOKTOR, ASISTAN, SEKRETER, TEKNISYEN, DIGER
-  phone          String?
-  email          String?
-  userId         String?
-  color          String        @default("#3b82f6")
-  commissionRate Int           @default(0) // yüzde cinsinden (ör: 10 = %10)
-  permissions    Json?
-  isActive       Boolean       @default(true)
-  clinicId       String
-  clinic         Clinic        @relation(fields: [clinicId], references: [id])
-  treatments     Treatment[]
-  appointments   Appointment[]
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id                    String                 @id @default(cuid())
+  name                  String
+  role                  String                 @default("ASISTAN")
+  phone                 String?
+  email                 String?
+  userId                String?
+  color                 String                 @default("#3b82f6")
+  commissionRate        Int                    @default(0) // yüzde cinsinden (ör: 10 = %10)
+  permissions           Json?
+  isActive              Boolean                @default(true)
+  salaryGross           Int?                   // Brüt maaş (kuruş)
+  salaryNet             Int?                   // Net maaş (kuruş)
+  salarySSI             Int?                   // SGK işveren payı (kuruş)
+  salaryPayDay          Int?                   // Maaş ödeme günü (1-28)
+  clinicId              String
+  clinic                Clinic                 @relation(fields: [clinicId], references: [id])
+  treatments            Treatment[]
+  appointments          Appointment[]
+  recurringTransactions RecurringTransaction[]
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+}
+
+model EmployeeRole {
+  id        String   @id @default(cuid())
+  clinicId  String
+  clinic    Clinic   @relation(fields: [clinicId], references: [id])
+  name      String
+  createdAt DateTime @default(now())
+
+  @@unique([clinicId, name])
 }
 
 // ProductCategory values: KOZMETIK, MEDIKAL, SARF_MALZEME, DIGER
@@ -371,6 +386,8 @@ model RecurringTransaction {
   isActive     Boolean            @default(true)
   remindBefore Int                @default(3)
   notes        String?
+  employeeId   String?
+  employee     Employee?          @relation(fields: [employeeId], references: [id])
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
   payments     RecurringPayment[]

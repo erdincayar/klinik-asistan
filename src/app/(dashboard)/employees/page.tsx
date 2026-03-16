@@ -13,6 +13,7 @@ import {
   Pencil,
   TrendingUp,
   DollarSign,
+  Banknote,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,22 +33,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-
-const ROLE_LABELS: Record<string, string> = {
-  DOKTOR: "Doktor",
-  ASISTAN: "Asistan",
-  SEKRETER: "Sekreter",
-  TEKNISYEN: "Teknisyen",
-  DIGER: "Diğer",
-};
-
-const ROLE_COLORS: Record<string, string> = {
-  DOKTOR: "bg-blue-100 text-blue-800",
-  ASISTAN: "bg-green-100 text-green-800",
-  SEKRETER: "bg-purple-100 text-purple-800",
-  TEKNISYEN: "bg-orange-100 text-orange-800",
-  DIGER: "bg-gray-100 text-gray-800",
-};
 
 const PERMISSION_LABELS: Record<string, string> = {
   canViewFinance: "Finans Görüntüleme",
@@ -83,6 +68,10 @@ interface Employee {
   commissionRate: number;
   permissions: PermissionsMap | null;
   isActive: boolean;
+  salaryGross: number | null;
+  salaryNet: number | null;
+  salarySSI: number | null;
+  salaryPayDay: number | null;
   createdAt: string;
   totalRevenue: number;
   totalTreatmentCount: number;
@@ -100,16 +89,29 @@ interface EmployeeForm {
   commissionRate: string;
   color: string;
   permissions: PermissionsMap;
+  salaryGross: string;
+  salaryNet: string;
+  salarySSI: string;
+  salaryPayDay: string;
+}
+
+interface RoleItem {
+  id: string;
+  name: string;
 }
 
 const emptyForm: EmployeeForm = {
   name: "",
-  role: "ASISTAN",
+  role: "",
   phone: "",
   email: "",
   commissionRate: "0",
   color: "#3b82f6",
   permissions: { ...defaultPermissions },
+  salaryGross: "",
+  salaryNet: "",
+  salarySSI: "",
+  salaryPayDay: "",
 };
 
 function formatTL(amount: number): string {
@@ -121,11 +123,21 @@ function formatTL(amount: number): string {
   );
 }
 
+function kurusToTL(kurus: number | null): string {
+  if (!kurus) return "0 TL";
+  return formatTL(kurus / 100);
+}
+
 export default function EmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Roles
+  const [roles, setRoles] = useState<RoleItem[]>([]);
+  const [newRoleName, setNewRoleName] = useState("");
+  const [addingRole, setAddingRole] = useState(false);
 
   // Dialog states
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -134,6 +146,17 @@ export default function EmployeesPage() {
 
   // Form state
   const [form, setForm] = useState<EmployeeForm>(emptyForm);
+
+  async function fetchRoles() {
+    try {
+      const res = await fetch("/api/employees/roles");
+      if (!res.ok) return;
+      const data = await res.json();
+      setRoles(data.roles || []);
+    } catch {
+      // silent
+    }
+  }
 
   async function fetchEmployees() {
     try {
@@ -151,7 +174,33 @@ export default function EmployeesPage() {
 
   useEffect(() => {
     fetchEmployees();
+    fetchRoles();
   }, []);
+
+  async function handleAddRole() {
+    if (!newRoleName.trim()) return;
+    try {
+      setAddingRole(true);
+      const res = await fetch("/api/employees/roles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newRoleName.trim() }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || "Rol eklenemedi");
+        return;
+      }
+      const data = await res.json();
+      setRoles((prev) => [...prev, data.role]);
+      setForm((prev) => ({ ...prev, role: data.role.name }));
+      setNewRoleName("");
+    } catch {
+      setError("Rol eklenemedi");
+    } finally {
+      setAddingRole(false);
+    }
+  }
 
   async function handleCreate() {
     if (!form.name.trim()) return;
@@ -160,7 +209,14 @@ export default function EmployeesPage() {
       const res = await fetch("/api/employees", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "create", ...form }),
+        body: JSON.stringify({
+          action: "create",
+          ...form,
+          salaryGross: form.salaryGross ? Math.round(parseFloat(form.salaryGross) * 100) : null,
+          salaryNet: form.salaryNet ? Math.round(parseFloat(form.salaryNet) * 100) : null,
+          salarySSI: form.salarySSI ? Math.round(parseFloat(form.salarySSI) * 100) : null,
+          salaryPayDay: form.salaryPayDay || null,
+        }),
       });
       if (!res.ok) throw new Error("Çalışan eklenemedi");
       setShowAddDialog(false);
@@ -180,7 +236,15 @@ export default function EmployeesPage() {
       const res = await fetch("/api/employees", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "update", id: editingEmployee.id, ...form }),
+        body: JSON.stringify({
+          action: "update",
+          id: editingEmployee.id,
+          ...form,
+          salaryGross: form.salaryGross ? Math.round(parseFloat(form.salaryGross) * 100) : null,
+          salaryNet: form.salaryNet ? Math.round(parseFloat(form.salaryNet) * 100) : null,
+          salarySSI: form.salarySSI ? Math.round(parseFloat(form.salarySSI) * 100) : null,
+          salaryPayDay: form.salaryPayDay || null,
+        }),
       });
       if (!res.ok) throw new Error("Çalışan güncellenemedi");
       setEditingEmployee(null);
@@ -238,6 +302,10 @@ export default function EmployeesPage() {
       permissions: emp.permissions
         ? { ...defaultPermissions, ...emp.permissions }
         : { ...defaultPermissions },
+      salaryGross: emp.salaryGross ? String(emp.salaryGross / 100) : "",
+      salaryNet: emp.salaryNet ? String(emp.salaryNet / 100) : "",
+      salarySSI: emp.salarySSI ? String(emp.salarySSI / 100) : "",
+      salaryPayDay: emp.salaryPayDay ? String(emp.salaryPayDay) : "",
     });
   }
 
@@ -245,11 +313,14 @@ export default function EmployeesPage() {
   const totalEmployees = employees.length;
   const activeEmployees = employees.filter((e) => e.isActive).length;
   const totalMonthlyCommission = employees.reduce((sum, e) => sum + e.monthlyCommission, 0);
+  const totalMonthlySalary = employees
+    .filter((e) => e.isActive)
+    .reduce((sum, e) => sum + ((e.salaryGross || 0) + (e.salarySSI || 0)) / 100, 0);
 
   // Reusable form fields renderer for both Add and Edit dialogs
   function renderFormFields(idPrefix: string) {
     return (
-      <div className="space-y-4 py-2">
+      <div className="space-y-4 py-2 max-h-[60vh] overflow-y-auto">
         <div className="space-y-2">
           <Label htmlFor={`${idPrefix}-name`}>İsim *</Label>
           <Input
@@ -259,6 +330,8 @@ export default function EmployeesPage() {
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
         </div>
+
+        {/* Role selection */}
         <div className="space-y-2">
           <Label htmlFor={`${idPrefix}-role`}>Rol</Label>
           <Select
@@ -266,13 +339,33 @@ export default function EmployeesPage() {
             value={form.role}
             onChange={(e) => setForm({ ...form, role: e.target.value })}
           >
-            {Object.entries(ROLE_LABELS).map(([key, label]) => (
-              <option key={key} value={key}>
-                {label}
+            <option value="">Rol seçin</option>
+            {roles.map((r) => (
+              <option key={r.id} value={r.name}>
+                {r.name}
               </option>
             ))}
           </Select>
+          <div className="flex gap-2">
+            <Input
+              placeholder="Yeni rol adı"
+              value={newRoleName}
+              onChange={(e) => setNewRoleName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddRole(); } }}
+              className="text-sm"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleAddRole}
+              disabled={addingRole || !newRoleName.trim()}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
+
         <div className="space-y-2">
           <Label htmlFor={`${idPrefix}-phone`}>Telefon</Label>
           <Input
@@ -317,6 +410,68 @@ export default function EmployeesPage() {
             <span className="text-sm text-muted-foreground">{form.color}</span>
           </div>
         </div>
+
+        {/* Salary Section */}
+        <div className="space-y-3 rounded-lg border p-4">
+          <h4 className="text-sm font-semibold flex items-center gap-2">
+            <Banknote className="h-4 w-4" />
+            Maaş Bilgileri
+          </h4>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label htmlFor={`${idPrefix}-salaryNet`} className="text-xs">Net Maaş (₺)</Label>
+              <Input
+                id={`${idPrefix}-salaryNet`}
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0"
+                value={form.salaryNet}
+                onChange={(e) => setForm({ ...form, salaryNet: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor={`${idPrefix}-salaryGross`} className="text-xs">Brüt Maaş (₺)</Label>
+              <Input
+                id={`${idPrefix}-salaryGross`}
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0"
+                value={form.salaryGross}
+                onChange={(e) => setForm({ ...form, salaryGross: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor={`${idPrefix}-salarySSI`} className="text-xs">SGK İşveren Payı (₺)</Label>
+              <Input
+                id={`${idPrefix}-salarySSI`}
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0"
+                value={form.salarySSI}
+                onChange={(e) => setForm({ ...form, salarySSI: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor={`${idPrefix}-salaryPayDay`} className="text-xs">Ödeme Günü</Label>
+              <Select
+                id={`${idPrefix}-salaryPayDay`}
+                value={form.salaryPayDay}
+                onChange={(e) => setForm({ ...form, salaryPayDay: e.target.value })}
+              >
+                <option value="">Seçin</option>
+                {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
+                  <option key={d} value={String(d)}>
+                    {d}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          </div>
+        </div>
+
         <div className="space-y-2">
           <Label>İzinler</Label>
           <div className="space-y-2 rounded-md border p-3">
@@ -363,7 +518,7 @@ export default function EmployeesPage() {
       </div>
 
       {/* Stats Row */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -394,6 +549,17 @@ export default function EmployeesPage() {
                 <p className="text-2xl font-bold">{formatTL(totalMonthlyCommission)}</p>
               </div>
               <DollarSign className="h-8 w-8 text-muted-foreground/50" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Aylık Maaş Gideri</p>
+                <p className="text-2xl font-bold">{formatTL(totalMonthlySalary)}</p>
+              </div>
+              <Banknote className="h-8 w-8 text-muted-foreground/50" />
             </div>
           </CardContent>
         </Card>
@@ -441,9 +607,11 @@ export default function EmployeesPage() {
                             title={`Renk: ${emp.color || "#3b82f6"}`}
                           />
                           <p className="font-medium truncate">{emp.name}</p>
-                          <Badge className={ROLE_COLORS[emp.role] || ROLE_COLORS.DIGER}>
-                            {ROLE_LABELS[emp.role] || emp.role}
-                          </Badge>
+                          {emp.role && (
+                            <Badge className="bg-gray-100 text-gray-700">
+                              {emp.role}
+                            </Badge>
+                          )}
                           {!emp.isActive && (
                             <Badge variant="outline" className="text-gray-500">
                               Pasif
@@ -527,9 +695,11 @@ export default function EmployeesPage() {
                     />
                     <CardTitle className="text-lg">{selectedEmployee.name}</CardTitle>
                   </div>
-                  <Badge className={ROLE_COLORS[selectedEmployee.role] || ROLE_COLORS.DIGER}>
-                    {ROLE_LABELS[selectedEmployee.role] || selectedEmployee.role}
-                  </Badge>
+                  {selectedEmployee.role && (
+                    <Badge className="bg-gray-100 text-gray-700">
+                      {selectedEmployee.role}
+                    </Badge>
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="space-y-5">
@@ -552,6 +722,42 @@ export default function EmployeesPage() {
                     <span>Komisyon Oranı: %{selectedEmployee.commissionRate}</span>
                   </div>
                 </div>
+
+                {/* Salary Info */}
+                {(selectedEmployee.salaryGross || selectedEmployee.salaryNet) && (
+                  <div className="space-y-2 rounded-lg border p-3">
+                    <h4 className="text-sm font-semibold flex items-center gap-2">
+                      <Banknote className="h-4 w-4" />
+                      Maaş Bilgileri
+                    </h4>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Net Maaş</span>
+                        <span className="font-medium">{kurusToTL(selectedEmployee.salaryNet)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Brüt Maaş</span>
+                        <span className="font-medium">{kurusToTL(selectedEmployee.salaryGross)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">SGK İşveren Payı</span>
+                        <span className="font-medium">{kurusToTL(selectedEmployee.salarySSI)}</span>
+                      </div>
+                      {selectedEmployee.salaryPayDay && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Ödeme Günü</span>
+                          <span className="font-medium">Her ayın {selectedEmployee.salaryPayDay}. günü</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between pt-1 border-t mt-1">
+                        <span className="text-muted-foreground font-medium">Toplam Maliyet</span>
+                        <span className="font-bold">
+                          {kurusToTL((selectedEmployee.salaryGross || 0) + (selectedEmployee.salarySSI || 0))}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Status Toggle */}
                 <div className="flex items-center justify-between p-3 rounded-lg bg-accent/30">

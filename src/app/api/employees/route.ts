@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const session = await auth();
     if (!session?.user) return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -55,6 +55,57 @@ export async function GET(req: NextRequest) {
   }
 }
 
+async function upsertSalaryRecurring(
+  clinicId: string,
+  employeeId: string,
+  employeeName: string,
+  salaryGross: number | null,
+  salaryNet: number | null,
+  salarySSI: number | null,
+  salaryPayDay: number | null
+) {
+  const existing = await prisma.recurringTransaction.findFirst({
+    where: { clinicId, employeeId },
+  });
+
+  const hasSalary = salaryPayDay && salaryGross;
+
+  if (hasSalary) {
+    const amount = salaryGross / 100; // kuruştan TL'ye
+    const netTL = salaryNet ? (salaryNet / 100).toLocaleString("tr-TR") : "0";
+    const ssiTL = salarySSI ? (salarySSI / 100).toLocaleString("tr-TR") : "0";
+    const grossTL = (salaryGross / 100).toLocaleString("tr-TR");
+    const notes = `Net: ${netTL} TL, SGK: ${ssiTL} TL, Brüt: ${grossTL} TL`;
+
+    if (existing) {
+      await prisma.recurringTransaction.update({
+        where: { id: existing.id },
+        data: {
+          name: `Maaş - ${employeeName}`,
+          amount,
+          dayOfMonth: salaryPayDay,
+          notes,
+        },
+      });
+    } else {
+      await prisma.recurringTransaction.create({
+        data: {
+          clinicId,
+          employeeId,
+          type: "EXPENSE",
+          category: "FIXED",
+          name: `Maaş - ${employeeName}`,
+          amount,
+          dayOfMonth: salaryPayDay,
+          notes,
+        },
+      });
+    }
+  } else if (existing) {
+    await prisma.recurringTransaction.delete({ where: { id: existing.id } });
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
@@ -67,8 +118,16 @@ export async function POST(req: NextRequest) {
 
     switch (action) {
       case "create": {
-        const { name, role, phone, email, commissionRate, color, permissions } = body;
+        const {
+          name, role, phone, email, commissionRate, color, permissions,
+          salaryGross, salaryNet, salarySSI, salaryPayDay,
+        } = body;
         if (!name) return Response.json({ error: "Name required" }, { status: 400 });
+
+        const grossVal = salaryGross ? parseInt(salaryGross) : null;
+        const netVal = salaryNet ? parseInt(salaryNet) : null;
+        const ssiVal = salarySSI ? parseInt(salarySSI) : null;
+        const payDayVal = salaryPayDay ? parseInt(salaryPayDay) : null;
 
         const employee = await prisma.employee.create({
           data: {
@@ -80,46 +139,83 @@ export async function POST(req: NextRequest) {
             color: color || "#3b82f6",
             permissions: permissions || null,
             isActive: true,
+            salaryGross: grossVal,
+            salaryNet: netVal,
+            salarySSI: ssiVal,
+            salaryPayDay: payDayVal,
             clinicId,
           },
         });
+
+        await upsertSalaryRecurring(clinicId, employee.id, name, grossVal, netVal, ssiVal, payDayVal);
+
         return Response.json({ success: true, employee });
       }
       case "update": {
-        const { id, name, role, phone, email, commissionRate, isActive, color, permissions } = body;
+        const {
+          id, name, role, phone, email, commissionRate, isActive, color, permissions,
+          salaryGross, salaryNet, salarySSI, salaryPayDay,
+        } = body;
         if (!id) return Response.json({ error: "ID required" }, { status: 400 });
-        // Verify employee belongs to this clinic
+
         const existingEmp = await prisma.employee.findFirst({
           where: { id, clinicId },
         });
         if (!existingEmp) {
           return Response.json({ error: "Calisan bulunamadi" }, { status: 404 });
         }
+
+        const updateData: Record<string, any> = {};
+        if (name !== undefined) updateData.name = name;
+        if (role !== undefined) updateData.role = role;
+        if (phone !== undefined) updateData.phone = phone;
+        if (email !== undefined) updateData.email = email;
+        if (commissionRate !== undefined) updateData.commissionRate = parseInt(commissionRate);
+        if (isActive !== undefined) updateData.isActive = isActive;
+        if (color !== undefined) updateData.color = color;
+        if (permissions !== undefined) updateData.permissions = permissions;
+
+        if (salaryGross !== undefined) updateData.salaryGross = salaryGross ? parseInt(salaryGross) : null;
+        if (salaryNet !== undefined) updateData.salaryNet = salaryNet ? parseInt(salaryNet) : null;
+        if (salarySSI !== undefined) updateData.salarySSI = salarySSI ? parseInt(salarySSI) : null;
+        if (salaryPayDay !== undefined) updateData.salaryPayDay = salaryPayDay ? parseInt(salaryPayDay) : null;
+
         const employee = await prisma.employee.update({
           where: { id },
-          data: {
-            ...(name !== undefined && { name }),
-            ...(role !== undefined && { role }),
-            ...(phone !== undefined && { phone }),
-            ...(email !== undefined && { email }),
-            ...(commissionRate !== undefined && { commissionRate: parseInt(commissionRate) }),
-            ...(isActive !== undefined && { isActive }),
-            ...(color !== undefined && { color }),
-            ...(permissions !== undefined && { permissions }),
-          },
+          data: updateData,
         });
+
+        // Update recurring if salary fields were touched
+        if (salaryGross !== undefined || salaryNet !== undefined || salarySSI !== undefined || salaryPayDay !== undefined) {
+          await upsertSalaryRecurring(
+            clinicId,
+            id,
+            employee.name,
+            employee.salaryGross,
+            employee.salaryNet,
+            employee.salarySSI,
+            employee.salaryPayDay
+          );
+        }
+
         return Response.json({ success: true, employee });
       }
       case "delete": {
         const { id } = body;
         if (!id) return Response.json({ error: "ID required" }, { status: 400 });
-        // Verify employee belongs to this clinic
+
         const empToDelete = await prisma.employee.findFirst({
           where: { id, clinicId },
         });
         if (!empToDelete) {
           return Response.json({ error: "Çalışan bulunamadı" }, { status: 404 });
         }
+
+        // Delete associated recurring transactions first
+        await prisma.recurringTransaction.deleteMany({
+          where: { employeeId: id, clinicId },
+        });
+
         await prisma.employee.delete({ where: { id } });
         return Response.json({ success: true });
       }
