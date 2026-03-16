@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   UserCog,
   Plus,
@@ -14,7 +14,11 @@ import {
   TrendingUp,
   DollarSign,
   Banknote,
+  Calculator,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
+import { brutToNet, netToBrut, type SalaryResult } from "@/lib/salary-calculator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,6 +37,11 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+
+const AY_ISIMLERI = [
+  "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+  "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
+];
 
 const PERMISSION_LABELS: Record<string, string> = {
   canViewFinance: "Finans Görüntüleme",
@@ -89,9 +98,8 @@ interface EmployeeForm {
   commissionRate: string;
   color: string;
   permissions: PermissionsMap;
-  salaryGross: string;
-  salaryNet: string;
-  salarySSI: string;
+  salaryType: string; // "NET" or "BRUT"
+  salaryAmount: string; // TL cinsinden
   salaryPayDay: string;
 }
 
@@ -108,9 +116,8 @@ const emptyForm: EmployeeForm = {
   commissionRate: "0",
   color: "#3b82f6",
   permissions: { ...defaultPermissions },
-  salaryGross: "",
-  salaryNet: "",
-  salarySSI: "",
+  salaryType: "NET",
+  salaryAmount: "",
   salaryPayDay: "",
 };
 
@@ -123,9 +130,30 @@ function formatTL(amount: number): string {
   );
 }
 
-function kurusToTL(kurus: number | null): string {
-  if (!kurus) return "0 TL";
-  return formatTL(kurus / 100);
+function calculateMonthlyBreakdown(
+  type: "NET" | "BRUT",
+  amount: number
+): (SalaryResult & { ay: number })[] {
+  return Array.from({ length: 12 }, (_, i) => {
+    const ay = i + 1;
+    const result = type === "BRUT" ? brutToNet(amount, ay) : netToBrut(amount, ay);
+    return { ay, ...result };
+  });
+}
+
+function getSalaryTypeAndAmount(emp: Employee): { type: "NET" | "BRUT"; amount: number } | null {
+  // Convention: if only one is stored, that's the agreed type
+  // If both stored (legacy), treat as BRUT
+  if (emp.salaryGross && !emp.salaryNet) {
+    return { type: "BRUT", amount: emp.salaryGross / 100 };
+  }
+  if (emp.salaryNet && !emp.salaryGross) {
+    return { type: "NET", amount: emp.salaryNet / 100 };
+  }
+  if (emp.salaryGross) {
+    return { type: "BRUT", amount: emp.salaryGross / 100 };
+  }
+  return null;
 }
 
 export default function EmployeesPage() {
@@ -143,9 +171,31 @@ export default function EmployeesPage() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [showMonthlyTable, setShowMonthlyTable] = useState(false);
 
   // Form state
   const [form, setForm] = useState<EmployeeForm>(emptyForm);
+
+  // Monthly breakdown for detail panel
+  const selectedMonthly = useMemo(() => {
+    if (!selectedEmployee) return null;
+    const info = getSalaryTypeAndAmount(selectedEmployee);
+    if (!info) return null;
+    return {
+      type: info.type,
+      amount: info.amount,
+      months: calculateMonthlyBreakdown(info.type, info.amount),
+    };
+  }, [selectedEmployee]);
+
+  // Form salary preview
+  const formPreview = useMemo(() => {
+    const amount = parseFloat(form.salaryAmount);
+    if (!form.salaryAmount || isNaN(amount) || amount <= 0) return null;
+    const type = form.salaryType as "NET" | "BRUT";
+    const result = type === "BRUT" ? brutToNet(amount) : netToBrut(amount);
+    return result;
+  }, [form.salaryAmount, form.salaryType]);
 
   async function fetchRoles() {
     try {
@@ -202,19 +252,47 @@ export default function EmployeesPage() {
     }
   }
 
+  function buildSalaryPayload() {
+    const amount = parseFloat(form.salaryAmount);
+    if (!form.salaryAmount || isNaN(amount) || amount <= 0) {
+      return { salaryGross: null, salaryNet: null, salarySSI: null };
+    }
+    const amountKurus = Math.round(amount * 100);
+    if (form.salaryType === "BRUT") {
+      const result = brutToNet(amount);
+      return {
+        salaryGross: amountKurus,
+        salaryNet: null, // null = brüt anlaşma
+        salarySSI: Math.round((result.sgkIsveren + result.issizlikIsveren) * 100),
+      };
+    } else {
+      const result = netToBrut(amount);
+      return {
+        salaryNet: amountKurus,
+        salaryGross: null, // null = net anlaşma
+        salarySSI: Math.round((result.sgkIsveren + result.issizlikIsveren) * 100),
+      };
+    }
+  }
+
   async function handleCreate() {
     if (!form.name.trim()) return;
     try {
       setSaving(true);
+      const salary = buildSalaryPayload();
       const res = await fetch("/api/employees", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "create",
-          ...form,
-          salaryGross: form.salaryGross ? Math.round(parseFloat(form.salaryGross) * 100) : null,
-          salaryNet: form.salaryNet ? Math.round(parseFloat(form.salaryNet) * 100) : null,
-          salarySSI: form.salarySSI ? Math.round(parseFloat(form.salarySSI) * 100) : null,
+          name: form.name,
+          role: form.role,
+          phone: form.phone,
+          email: form.email,
+          commissionRate: form.commissionRate,
+          color: form.color,
+          permissions: form.permissions,
+          ...salary,
           salaryPayDay: form.salaryPayDay || null,
         }),
       });
@@ -233,16 +311,21 @@ export default function EmployeesPage() {
     if (!editingEmployee) return;
     try {
       setSaving(true);
+      const salary = buildSalaryPayload();
       const res = await fetch("/api/employees", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "update",
           id: editingEmployee.id,
-          ...form,
-          salaryGross: form.salaryGross ? Math.round(parseFloat(form.salaryGross) * 100) : null,
-          salaryNet: form.salaryNet ? Math.round(parseFloat(form.salaryNet) * 100) : null,
-          salarySSI: form.salarySSI ? Math.round(parseFloat(form.salarySSI) * 100) : null,
+          name: form.name,
+          role: form.role,
+          phone: form.phone,
+          email: form.email,
+          commissionRate: form.commissionRate,
+          color: form.color,
+          permissions: form.permissions,
+          ...salary,
           salaryPayDay: form.salaryPayDay || null,
         }),
       });
@@ -292,6 +375,7 @@ export default function EmployeesPage() {
 
   function openEdit(emp: Employee) {
     setEditingEmployee(emp);
+    const info = getSalaryTypeAndAmount(emp);
     setForm({
       name: emp.name,
       role: emp.role,
@@ -302,9 +386,8 @@ export default function EmployeesPage() {
       permissions: emp.permissions
         ? { ...defaultPermissions, ...emp.permissions }
         : { ...defaultPermissions },
-      salaryGross: emp.salaryGross ? String(emp.salaryGross / 100) : "",
-      salaryNet: emp.salaryNet ? String(emp.salaryNet / 100) : "",
-      salarySSI: emp.salarySSI ? String(emp.salarySSI / 100) : "",
+      salaryType: info?.type || "NET",
+      salaryAmount: info ? String(info.amount) : "",
       salaryPayDay: emp.salaryPayDay ? String(emp.salaryPayDay) : "",
     });
   }
@@ -315,7 +398,12 @@ export default function EmployeesPage() {
   const totalMonthlyCommission = employees.reduce((sum, e) => sum + e.monthlyCommission, 0);
   const totalMonthlySalary = employees
     .filter((e) => e.isActive)
-    .reduce((sum, e) => sum + ((e.salaryGross || 0) + (e.salarySSI || 0)) / 100, 0);
+    .reduce((sum, e) => {
+      const info = getSalaryTypeAndAmount(e);
+      if (!info) return sum;
+      const jan = info.type === "BRUT" ? brutToNet(info.amount) : netToBrut(info.amount);
+      return sum + jan.brut + jan.sgkIsveren + jan.issizlikIsveren;
+    }, 0);
 
   // Reusable form fields renderer for both Add and Edit dialogs
   function renderFormFields(idPrefix: string) {
@@ -414,44 +502,49 @@ export default function EmployeesPage() {
         {/* Salary Section */}
         <div className="space-y-3 rounded-lg border p-4">
           <h4 className="text-sm font-semibold flex items-center gap-2">
-            <Banknote className="h-4 w-4" />
+            <Calculator className="h-4 w-4" />
             Maaş Bilgileri
+            <span className="text-xs font-normal text-muted-foreground ml-auto">2026 oranları</span>
           </h4>
+
+          {/* NET / BRÜT Toggle */}
+          <div className="flex rounded-lg border overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, salaryType: "NET", salaryAmount: "" })}
+              className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                form.salaryType === "NET"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted/30 text-muted-foreground hover:bg-muted/50"
+              }`}
+            >
+              Net Maaş
+            </button>
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, salaryType: "BRUT", salaryAmount: "" })}
+              className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                form.salaryType === "BRUT"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted/30 text-muted-foreground hover:bg-muted/50"
+              }`}
+            >
+              Brüt Maaş
+            </button>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label htmlFor={`${idPrefix}-salaryNet`} className="text-xs">Net Maaş (₺)</Label>
+              <Label htmlFor={`${idPrefix}-salaryAmount`} className="text-xs">
+                {form.salaryType === "NET" ? "Net Maaş (₺)" : "Brüt Maaş (₺)"}
+              </Label>
               <Input
-                id={`${idPrefix}-salaryNet`}
+                id={`${idPrefix}-salaryAmount`}
                 type="number"
                 min="0"
-                step="0.01"
-                placeholder="0"
-                value={form.salaryNet}
-                onChange={(e) => setForm({ ...form, salaryNet: e.target.value })}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor={`${idPrefix}-salaryGross`} className="text-xs">Brüt Maaş (₺)</Label>
-              <Input
-                id={`${idPrefix}-salaryGross`}
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0"
-                value={form.salaryGross}
-                onChange={(e) => setForm({ ...form, salaryGross: e.target.value })}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor={`${idPrefix}-salarySSI`} className="text-xs">SGK İşveren Payı (₺)</Label>
-              <Input
-                id={`${idPrefix}-salarySSI`}
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0"
-                value={form.salarySSI}
-                onChange={(e) => setForm({ ...form, salarySSI: e.target.value })}
+                placeholder={form.salaryType === "NET" ? "Anlaşılan net tutar" : "Anlaşılan brüt tutar"}
+                value={form.salaryAmount}
+                onChange={(e) => setForm({ ...form, salaryAmount: e.target.value })}
               />
             </div>
             <div className="space-y-1">
@@ -470,6 +563,31 @@ export default function EmployeesPage() {
               </Select>
             </div>
           </div>
+
+          {/* Preview */}
+          {formPreview && (
+            <div className="text-xs bg-accent/30 rounded-md p-3 space-y-1.5">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Brüt</span>
+                  <span className="font-medium">{formatTL(formPreview.brut)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Net</span>
+                  <span className="font-medium">{formatTL(formPreview.net)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">SGK İşveren</span>
+                  <span className="font-medium">{formatTL(formPreview.sgkIsveren + formPreview.issizlikIsveren)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground font-medium">Toplam Maliyet</span>
+                  <span className="font-bold">{formatTL(formPreview.toplamIsverenMaliyet)}</span>
+                </div>
+              </div>
+              <p className="text-[10px] opacity-70">* Ocak ayı hesabı. Detay panel yıllık tabloyu gösterir.</p>
+            </div>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -593,7 +711,7 @@ export default function EmployeesPage() {
                   {employees.map((emp) => (
                     <div
                       key={emp.id}
-                      onClick={() => setSelectedEmployee(emp)}
+                      onClick={() => { setSelectedEmployee(emp); setShowMonthlyTable(false); }}
                       className={`flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors hover:bg-accent/50 ${
                         selectedEmployee?.id === emp.id ? "border-primary bg-accent/30" : ""
                       }`}
@@ -723,25 +841,26 @@ export default function EmployeesPage() {
                   </div>
                 </div>
 
-                {/* Salary Info */}
-                {(selectedEmployee.salaryGross || selectedEmployee.salaryNet) && (
-                  <div className="space-y-2 rounded-lg border p-3">
-                    <h4 className="text-sm font-semibold flex items-center gap-2">
-                      <Banknote className="h-4 w-4" />
-                      Maaş Bilgileri
-                    </h4>
+                {/* Salary Info with Monthly Breakdown */}
+                {selectedMonthly && (
+                  <div className="space-y-3 rounded-lg border p-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-semibold flex items-center gap-2">
+                        <Calculator className="h-4 w-4" />
+                        Maaş Bilgileri
+                      </h4>
+                      <Badge variant="outline" className="text-xs">
+                        {selectedMonthly.type === "NET" ? "Net" : "Brüt"} anlaşma
+                      </Badge>
+                    </div>
+
+                    {/* Summary */}
                     <div className="space-y-1 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Net Maaş</span>
-                        <span className="font-medium">{kurusToTL(selectedEmployee.salaryNet)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Brüt Maaş</span>
-                        <span className="font-medium">{kurusToTL(selectedEmployee.salaryGross)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">SGK İşveren Payı</span>
-                        <span className="font-medium">{kurusToTL(selectedEmployee.salarySSI)}</span>
+                        <span className="text-muted-foreground">
+                          Anlaşılan {selectedMonthly.type === "NET" ? "Net" : "Brüt"}
+                        </span>
+                        <span className="font-bold">{formatTL(selectedMonthly.amount)}</span>
                       </div>
                       {selectedEmployee.salaryPayDay && (
                         <div className="flex justify-between">
@@ -750,12 +869,69 @@ export default function EmployeesPage() {
                         </div>
                       )}
                       <div className="flex justify-between pt-1 border-t mt-1">
-                        <span className="text-muted-foreground font-medium">Toplam Maliyet</span>
+                        <span className="text-muted-foreground">Yıllık Toplam Maliyet</span>
                         <span className="font-bold">
-                          {kurusToTL((selectedEmployee.salaryGross || 0) + (selectedEmployee.salarySSI || 0))}
+                          {formatTL(selectedMonthly.months.reduce((s, m) => s + m.toplamIsverenMaliyet, 0))}
                         </span>
                       </div>
                     </div>
+
+                    {/* Monthly Table Toggle */}
+                    <button
+                      onClick={() => setShowMonthlyTable(!showMonthlyTable)}
+                      className="flex items-center gap-1 text-xs text-primary font-medium w-full justify-center py-1 hover:underline"
+                    >
+                      {showMonthlyTable ? (
+                        <><ChevronUp className="h-3 w-3" /> Aylık tabloyu gizle</>
+                      ) : (
+                        <><ChevronDown className="h-3 w-3" /> 12 aylık detay tablosu</>
+                      )}
+                    </button>
+
+                    {/* Monthly Table */}
+                    {showMonthlyTable && (
+                      <div className="overflow-x-auto -mx-1">
+                        <table className="w-full text-xs">
+                          <thead>
+                            <tr className="border-b text-muted-foreground">
+                              <th className="text-left py-1.5 pl-1">Ay</th>
+                              <th className="text-right py-1.5">Brüt</th>
+                              <th className="text-right py-1.5">Net</th>
+                              <th className="text-right py-1.5">SGK İşv.</th>
+                              <th className="text-right py-1.5 pr-1">Maliyet</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {selectedMonthly.months.map((m) => (
+                              <tr key={m.ay} className="border-b last:border-0 hover:bg-accent/20">
+                                <td className="py-1.5 pl-1 font-medium">{AY_ISIMLERI[m.ay - 1]}</td>
+                                <td className="text-right py-1.5">{formatTL(m.brut)}</td>
+                                <td className="text-right py-1.5">{formatTL(m.net)}</td>
+                                <td className="text-right py-1.5">{formatTL(m.sgkIsveren + m.issizlikIsveren)}</td>
+                                <td className="text-right py-1.5 pr-1 font-medium">{formatTL(m.toplamIsverenMaliyet)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                          <tfoot>
+                            <tr className="border-t-2 font-semibold">
+                              <td className="py-1.5 pl-1">Toplam</td>
+                              <td className="text-right py-1.5">
+                                {formatTL(selectedMonthly.months.reduce((s, m) => s + m.brut, 0))}
+                              </td>
+                              <td className="text-right py-1.5">
+                                {formatTL(selectedMonthly.months.reduce((s, m) => s + m.net, 0))}
+                              </td>
+                              <td className="text-right py-1.5">
+                                {formatTL(selectedMonthly.months.reduce((s, m) => s + m.sgkIsveren + m.issizlikIsveren, 0))}
+                              </td>
+                              <td className="text-right py-1.5 pr-1">
+                                {formatTL(selectedMonthly.months.reduce((s, m) => s + m.toplamIsverenMaliyet, 0))}
+                              </td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    )}
                   </div>
                 )}
 
