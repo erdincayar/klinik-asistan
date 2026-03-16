@@ -20,22 +20,20 @@ const SGK_ISVEREN_5_PUAN = 0.1675; // %16.75
 const SGK_ISVEREN_2_PUAN = 0.1975; // %19.75
 const ISSIZLIK_ISVEREN_ORANI = 0.02; // %2
 
-// Gelir vergisi dilimleri (kümülatif yıllık matrah)
+// Gelir vergisi dilimleri (kümülatif yıllık ücret geliri matrahı)
 const GELIR_VERGISI_DILIMLERI = [
-  { limit: 230_000, rate: 0.15 },
+  { limit: 190_000, rate: 0.15 },
   { limit: 580_000, rate: 0.20 },
   { limit: 1_900_000, rate: 0.27 },
   { limit: 4_400_000, rate: 0.35 },
   { limit: Infinity, rate: 0.40 },
 ];
 
-// Asgari ücret GV istisnası (sabit vergi indirimi, her ay düşülür)
-// = asgari ücret matrahı × ilk dilim oranı = 28.075,50 × 0.15 = 4.211,33 TL
+// Asgari ücret matrahı = 33.030 × (1 - 0.14 - 0.01) = 28.075,50 TL
 const ASGARI_MATRAH = ASGARI_UCRET_BRUT * (1 - SGK_ISCI_ORANI - ISSIZLIK_ISCI_ORANI);
-const GV_ISTISNA = Math.round(ASGARI_MATRAH * 0.15 * 100) / 100; // 4.211,33 TL
 
-// Damga vergisi istisnası = asgari ücret brüt × damga oranı = 250,80 TL
-const DV_ISTISNA = Math.round(ASGARI_UCRET_BRUT * DAMGA_VERGISI_ORANI * 100) / 100;
+// Damga vergisi istisnası (sabit, her ay)
+const DV_ISTISNA = 250.70;
 
 // ═══════════════════════════════════════════════════════════
 // YARDIMCI FONKSİYONLAR
@@ -103,8 +101,9 @@ export type TesvikTipi = "YOK" | "5_PUAN" | "2_PUAN";
  * 2. İşsizlik İşçi = min(Brüt, SGK Tavan) × %1
  * 3. GV Matrahı = Brüt - SGK İşçi - İşsizlik İşçi (tam matrah)
  * 4. Kümülatif GV = vergi(küm. sonra) - vergi(küm. önce)
- * 5. Ödenecek GV = max(0, Kümülatif GV - 4.211,33)  ← asgari ücret istisnası
- * 6. Damga = max(0, Brüt × binde 7,59 - 250,80)      ← DV istisnası
+ * 5. Asgari GV istisnası = vergi(küm. asgari sonra) - vergi(küm. asgari önce)
+ * 6. Ödenecek GV = max(0, hesaplananGV - MIN(hesaplananGV, asgariGV))
+ * 7. Damga = max(0, Brüt × binde 7,59 - 250,70)      ← DV istisnası
  * 7. Net = Brüt - SGK İşçi - İşsizlik İşçi - GV - Damga
  */
 export function brutToNet(
@@ -129,8 +128,16 @@ export function brutToNet(
     calculateProgressiveTax(kumulatifMatrahSonra) -
     calculateProgressiveTax(kumulatifMatrahOnceki);
 
-  // Asgari ücret GV istisnası düşülür (sabit 4.211,33 TL/ay)
-  const gelirVergisi = Math.max(0, round2(brutGV - GV_ISTISNA));
+  // Asgari ücret GV istisnası (kümülatif asgari matrah üzerinden dinamik)
+  // Asgari ücretlinin o ay ödeyeceği GV kadar istisna uygulanır
+  const kumAsgariOnceki = (ay - 1) * ASGARI_MATRAH;
+  const kumAsgariSonra = ay * ASGARI_MATRAH;
+  const asgariAylikGV =
+    calculateProgressiveTax(kumAsgariSonra) -
+    calculateProgressiveTax(kumAsgariOnceki);
+
+  // İstisna = MIN(hesaplananGV, asgariAylikGV)
+  const gelirVergisi = Math.max(0, round2(brutGV - Math.min(brutGV, asgariAylikGV)));
 
   // Damga vergisi (asgari ücret DV istisnası düşülür)
   const damgaVergisi = Math.max(0, round2(brut * DAMGA_VERGISI_ORANI - DV_ISTISNA));
