@@ -18,7 +18,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import { brutToNet, netToBrut, type SalaryResult } from "@/lib/salary-calculator";
+import { brutToNet, netToBrut, yillikFromBrut, yillikFromNet, type SalaryResult } from "@/lib/salary-calculator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -130,16 +130,6 @@ function formatTL(amount: number): string {
   );
 }
 
-function calculateMonthlyBreakdown(
-  type: "NET" | "BRUT",
-  amount: number
-): (SalaryResult & { ay: number })[] {
-  return Array.from({ length: 12 }, (_, i) => {
-    const ay = i + 1;
-    const result = type === "BRUT" ? brutToNet(amount, ay) : netToBrut(amount, ay);
-    return { ay, ...result };
-  });
-}
 
 function getSalaryTypeAndAmount(emp: Employee): { type: "NET" | "BRUT"; amount: number } | null {
   // Convention: if only one is stored, that's the agreed type
@@ -176,15 +166,19 @@ export default function EmployeesPage() {
   // Form state
   const [form, setForm] = useState<EmployeeForm>(emptyForm);
 
-  // Monthly breakdown for detail panel
+  // Monthly breakdown for detail panel (cumulative tracking)
   const selectedMonthly = useMemo(() => {
     if (!selectedEmployee) return null;
     const info = getSalaryTypeAndAmount(selectedEmployee);
     if (!info) return null;
+    const yearly = info.type === "BRUT"
+      ? yillikFromBrut(info.amount)
+      : yillikFromNet(info.amount);
     return {
       type: info.type,
       amount: info.amount,
-      months: calculateMonthlyBreakdown(info.type, info.amount),
+      months: yearly.aylar,
+      yillik: yearly,
     };
   }, [selectedEmployee]);
 
@@ -401,8 +395,10 @@ export default function EmployeesPage() {
     .reduce((sum, e) => {
       const info = getSalaryTypeAndAmount(e);
       if (!info) return sum;
-      const jan = info.type === "BRUT" ? brutToNet(info.amount) : netToBrut(info.amount);
-      return sum + jan.brut + jan.sgkIsveren + jan.issizlikIsveren;
+      const yearly = info.type === "BRUT"
+        ? yillikFromBrut(info.amount)
+        : yillikFromNet(info.amount);
+      return sum + yearly.yillikIsverenMaliyet / 12;
     }, 0);
 
   // Reusable form fields renderer for both Add and Edit dialogs
