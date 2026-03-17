@@ -18,6 +18,7 @@ export const registerSchema = z.object({
   email: z.string().email("Geçerli bir email adresi girin"),
   password: strongPasswordSchema,
   clinicName: z.string().min(2, "Klinik adı en az 2 karakter olmalı"),
+  onboardingProfileSessionId: z.string().optional(),
 });
 
 export const patientSchema = z.object({

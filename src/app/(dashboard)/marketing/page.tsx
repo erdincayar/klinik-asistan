@@ -1,9 +1,10 @@
 "use client";
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Megaphone, Share2, Calendar } from "lucide-react";
+import { Megaphone, Share2, Sparkles } from "lucide-react";
 import MetaAdsContent from "@/components/marketing/MetaAdsContent";
 import SocialMediaContent from "@/components/marketing/SocialMediaContent";
+import AiStudioContent from "@/components/marketing/AiStudioContent";
 
 export default function MarketingPage() {
   return (
@@ -17,9 +18,9 @@ export default function MarketingPage() {
           <Share2 className="mr-1.5 h-4 w-4" />
           Sosyal Medya
         </TabsTrigger>
-        <TabsTrigger value="content-planning">
-          <Calendar className="mr-1.5 h-4 w-4" />
-          İçerik Planlama
+        <TabsTrigger value="ai-studio">
+          <Sparkles className="mr-1.5 h-4 w-4" />
+          AI Stüdyo
         </TabsTrigger>
       </TabsList>
 
@@ -31,14 +32,8 @@ export default function MarketingPage() {
         <SocialMediaContent />
       </TabsContent>
 
-      <TabsContent value="content-planning">
-        <div className="flex min-h-[400px] items-center justify-center rounded-2xl border border-gray-100 bg-white">
-          <div className="text-center">
-            <Calendar className="mx-auto mb-3 h-10 w-10 text-gray-300" />
-            <h3 className="text-base font-semibold text-gray-900 mb-1">İçerik Planlama</h3>
-            <p className="text-sm text-gray-500">Yakında gelecek...</p>
-          </div>
-        </div>
+      <TabsContent value="ai-studio">
+        <AiStudioContent />
       </TabsContent>
     </Tabs>
   );

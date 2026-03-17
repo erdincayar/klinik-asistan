@@ -15,7 +15,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { name, email, password, clinicName } = parsed.data;
+    const { name, email, password, clinicName, onboardingProfileSessionId } = parsed.data;
     const hashedPassword = await hash(password, 12);
 
     const verifyCode = generateVerificationCode();
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
       data: { name: clinicName, storageLimitMB: 100 },
     });
 
-    await Promise.all([
+    const promises: Promise<any>[] = [
       prisma.user.create({
         data: {
           name,
@@ -40,7 +40,18 @@ export async function POST(request: Request) {
       prisma.tokenBalance.create({
         data: { clinicId: clinic.id, balance: 50000 },
       }),
-    ]);
+    ];
+
+    if (onboardingProfileSessionId) {
+      promises.push(
+        prisma.onboardingProfile.updateMany({
+          where: { sessionId: onboardingProfileSessionId, clinicId: null },
+          data: { clinicId: clinic.id },
+        })
+      );
+    }
+
+    await Promise.all(promises);
 
     // Send verification email (non-blocking — don't fail registration if email fails)
     try {

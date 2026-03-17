@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { handleBotMessage } from "@/lib/bot-ai-handler";
 import { sendWhatsAppMessage } from "@/lib/whatsapp/sender";
 import { prisma } from "@/lib/prisma";
+import { processMessage as processAssistantMessage } from "@/lib/assistant/assistant-agent";
 
 const WELCOME_MESSAGE = `🤖 Poby AI Asistan'a hoşgeldiniz!
 
@@ -89,7 +90,32 @@ export async function POST(req: NextRequest) {
       return Response.json({ ok: true });
     }
 
-    // ── AI destekli doğal dil işleme (selamlama dahil) ──
+    // ── Poby Asistan aktifse önce onu dene ──
+    try {
+      const assistantConfig = await prisma.clinicAssistantConfig.findUnique({
+        where: { clinicId: clinic.id },
+      });
+
+      if (assistantConfig?.isActive) {
+        const { response } = await processAssistantMessage(
+          clinic.id,
+          "whatsapp",
+          senderPhone,
+          null,
+          messageText
+        );
+        await sendWhatsAppMessage(senderPhone, response);
+        return Response.json({ ok: true });
+      }
+    } catch (err) {
+      // If assistant fails (inactive, no tokens, etc.), fall through to legacy handler
+      const errMsg = err instanceof Error ? err.message : "";
+      if (errMsg !== "ASSISTANT_INACTIVE") {
+        console.error("[WhatsApp Webhook] Assistant error:", errMsg);
+      }
+    }
+
+    // ── Legacy: AI destekli doğal dil işleme ──
     const result = await handleBotMessage(clinic.id, messageText, `whatsapp:${senderPhone}`);
 
     await sendWhatsAppMessage(senderPhone, result.response);

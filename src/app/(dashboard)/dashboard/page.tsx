@@ -16,7 +16,10 @@ import {
   Clock,
   Coins,
   AlertTriangle,
+  Sparkles,
+  Bot,
 } from "lucide-react";
+import type { ModuleRecommendation } from "@/lib/onboarding/onboarding-agent";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import { APPOINTMENT_STATUSES, TREATMENT_CATEGORIES } from "@/lib/types";
 import {
@@ -171,6 +174,11 @@ export default function DashboardPage() {
   const [lowStockCount, setLowStockCount] = useState(0);
   const [upcomingPayments, setUpcomingPayments] = useState<UpcomingPayment[]>([]);
   const [tokenBalance, setTokenBalance] = useState<number | null>(null);
+  const [onboardingProfile, setOnboardingProfile] = useState<{
+    customMessage?: string;
+    selectedModules?: ModuleRecommendation[];
+    upsellModules?: ModuleRecommendation[];
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -180,7 +188,7 @@ export default function DashboardPage() {
         const today = new Date();
         const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
-        const [dashRes, chartRes, lowStockRes, upcomingRes, tokenRes] = await Promise.all([
+        const [dashRes, chartRes, lowStockRes, upcomingRes, tokenRes, onbRes] = await Promise.all([
           fetch("/api/dashboard"),
           fetch(
             `/api/finance?type=monthly-summary&year=${today.getFullYear()}`
@@ -188,6 +196,7 @@ export default function DashboardPage() {
           fetch("/api/products/low-stock"),
           fetch("/api/finance/recurring/upcoming"),
           fetch("/api/settings/tokens"),
+          fetch("/api/onboarding/dashboard-profile"),
         ]);
 
         if (!dashRes.ok) throw new Error("Dashboard verisi alınamadı");
@@ -213,6 +222,28 @@ export default function DashboardPage() {
         if (tokenRes.ok) {
           const tokenData = await tokenRes.json();
           setTokenBalance(tokenData.balance?.balance ?? null);
+        }
+
+        if (onbRes.ok) {
+          const onbData = await onbRes.json();
+          if (onbData.profile) {
+            const profile = onbData.profile;
+            const analysis = profile.analysisResult as {
+              customMessage?: string;
+              upsellModules?: ModuleRecommendation[];
+            } | null;
+            const recommended = (profile.recommendedModules || []) as ModuleRecommendation[];
+            const selected = (profile.selectedModules || []) as string[];
+            const selectedRecs = recommended.filter((m: ModuleRecommendation) => selected.includes(m.slug));
+            const upsellMods = (analysis?.upsellModules || []).filter(
+              (m: ModuleRecommendation) => !selected.includes(m.slug)
+            );
+            setOnboardingProfile({
+              customMessage: analysis?.customMessage,
+              selectedModules: selectedRecs,
+              upsellModules: upsellMods,
+            });
+          }
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Bir hata oluştu");
@@ -317,6 +348,89 @@ export default function DashboardPage() {
             {tokenBalance.toLocaleString("tr-TR")} token
           </motion.div>
         </Link>
+      )}
+
+      {/* ── ONBOARDING PERSONALIZATION ── */}
+      {onboardingProfile?.selectedModules && onboardingProfile.selectedModules.length > 0 && (
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          animate="visible"
+          custom={0}
+          className="rounded-2xl border border-[#F5B940]/30 bg-gradient-to-br from-[#FDF3E3] to-white p-6"
+        >
+          {onboardingProfile.customMessage && (
+            <div className="mb-4 flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EF9F27]">
+                <Bot className="h-4 w-4 text-white" />
+              </div>
+              <p className="text-sm leading-relaxed text-[#8C5811]">
+                {onboardingProfile.customMessage}
+              </p>
+            </div>
+          )}
+          <div className="mb-3 flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-[#EF9F27]" />
+            <h3 className="text-sm font-semibold text-gray-900">Sizin İçin Hazırlandı</h3>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {onboardingProfile.selectedModules.map((mod) => (
+              <div key={mod.slug} className="rounded-xl border border-gray-100 bg-white p-4">
+                <div className="mb-2 flex items-center gap-2">
+                  <div
+                    className="flex h-8 w-8 items-center justify-center rounded-lg"
+                    style={{ backgroundColor: `${mod.color}15` }}
+                  >
+                    <span className="text-sm" style={{ color: mod.color }}>
+                      {mod.icon === "MessageCircle" ? "💬" : mod.icon === "Calendar" ? "📅" : mod.icon === "DollarSign" ? "💰" : mod.icon === "Users" ? "👥" : mod.icon === "Bot" ? "🤖" : mod.icon === "Megaphone" ? "📣" : mod.icon === "Share2" ? "📱" : "✨"}
+                    </span>
+                  </div>
+                  <span className="text-sm font-semibold text-gray-900">{mod.name}</span>
+                </div>
+                <p className="text-xs text-gray-500">{mod.shortDescription}</p>
+              </div>
+            ))}
+          </div>
+          {onboardingProfile.upsellModules && onboardingProfile.upsellModules.length > 0 && (
+            <div className="mt-4 border-t border-gray-100 pt-4">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                Keşfet — Büyümeye Devam Et
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {onboardingProfile.upsellModules.map((mod) => (
+                  <div
+                    key={mod.slug}
+                    className="inline-flex items-center gap-2 rounded-lg border border-gray-100 bg-white px-3 py-2"
+                  >
+                    <span className="text-xs font-medium text-gray-700">{mod.name}</span>
+                    <span className="text-[11px] text-[#EF9F27]">₺{mod.basePrice}/ay</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </motion.div>
+      )}
+
+      {/* ── CTA for users without profile ── */}
+      {!onboardingProfile && (
+        <motion.button
+          variants={fadeUp}
+          initial="hidden"
+          animate="visible"
+          custom={0}
+          onClick={() => window.dispatchEvent(new Event("open-onboarding-widget"))}
+          className="flex w-full items-center gap-4 rounded-2xl border border-dashed border-[#F5B940] bg-[#FDF3E3]/50 p-5 text-left transition-all hover:bg-[#FDF3E3] hover:shadow-md"
+        >
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#EF9F27]">
+            <Sparkles className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-900">Platformu size özel kuralım</p>
+            <p className="text-xs text-gray-500">Sektörünüze uygun modülleri keşfedin</p>
+          </div>
+          <ArrowRight className="ml-auto h-4 w-4 text-[#EF9F27]" />
+        </motion.button>
       )}
 
       {/* ── STAT CARDS ── */}

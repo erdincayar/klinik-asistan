@@ -96,6 +96,7 @@ model Clinic {
   whatsappConnected     Boolean                @default(false)
   clinicModules         ClinicModule[]
   onboardingChats       OnboardingChat[]
+  onboardingProfiles    OnboardingProfile[]
   uploadedInvoices      UploadedInvoice[]
   financialReports      FinancialReport[]
   metaAppId             String?
@@ -119,6 +120,12 @@ model Clinic {
   inventoryColumnConfig InventoryColumnConfig?
   employeeRoles         EmployeeRole[]
   hrDocuments           HrDocument[]
+  styleProfile          ClinicStyleProfile?
+  aiGeneratedContents   AiGeneratedContent[]
+  assistantConfig       ClinicAssistantConfig?
+  knowledgeBase         ClinicKnowledgeBase[]
+  clinicConversations   ClinicConversation[]
+  assistantAppointments AssistantAppointment[]
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
 }
@@ -737,6 +744,167 @@ model HrDocument {
   fileSize  Int?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ═══════════════════════════════════════════════════════════
+// AI İçerik Stüdyosu
+// ═══════════════════════════════════════════════════════════
+
+// ClinicStyleProfile source values: INSTAGRAM, MANUAL
+model ClinicStyleProfile {
+  id                  String   @id @default(cuid())
+  clinicId            String   @unique
+  clinic              Clinic   @relation(fields: [clinicId], references: [id])
+  source              String   @default("MANUAL") // INSTAGRAM, MANUAL
+  colorPalette        String[] @default([])
+  designTone          String?
+  contentMood         String?
+  compositionStyle    String?
+  typographyStyle     String?
+  visualComplexity    String?  @default("medium")
+  stylePromptFragment String?  @db.Text
+  analyzedAt          DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+// AiGeneratedContent status values: PENDING, GENERATING, COMPLETED, FAILED
+model AiGeneratedContent {
+  id           String   @id @default(cuid())
+  clinicId     String
+  clinic       Clinic   @relation(fields: [clinicId], references: [id])
+  userPrompt   String   @db.Text
+  agentPrompt  String?  @db.Text
+  model        String   @default("dall-e-3")
+  status       String   @default("PENDING") // PENDING, GENERATING, COMPLETED, FAILED
+  imageUrl     String?
+  errorMessage String?
+  tokensCost   Int      @default(0)
+  isLiked      Boolean?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// OccasionCalendar category values: NATIONAL, RELIGIOUS, COMMERCIAL, AWARENESS
+model OccasionCalendar {
+  id         String   @id @default(cuid())
+  date       String                        // "MM-DD"
+  name       String
+  nameEn     String?
+  category   String   @default("NATIONAL") // NATIONAL, RELIGIOUS, COMMERCIAL, AWARENESS
+  promptHint String?  @db.Text
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+}
+
+// ═══════════════════════════════════════════════════════════
+// Poby Asistan
+// ═══════════════════════════════════════════════════════════
+
+// ClinicKnowledgeBase source_type values: manual, document, whatsapp_export, whatsapp_learned
+model ClinicKnowledgeBase {
+  id             String                      @id @default(cuid())
+  clinicId       String
+  clinic         Clinic                      @relation(fields: [clinicId], references: [id])
+  sourceType     String                      // manual, document, whatsapp_export, whatsapp_learned
+  sourceFilename String?
+  content        String                      @db.Text
+  embedding      Unsupported("vector(1536)")?
+  metadata       Json?
+  createdAt      DateTime                    @default(now())
+}
+
+// ClinicAssistantConfig tone values: warm, formal, informative
+// response_length values: short, medium, detailed
+// emoji_usage values: none, minimal, normal
+// language values: tr, en, both
+model ClinicAssistantConfig {
+  id                        String    @id @default(cuid())
+  clinicId                  String    @unique
+  clinic                    Clinic    @relation(fields: [clinicId], references: [id])
+  isActive                  Boolean   @default(false)
+  assistantName             String    @default("Asistan") @db.VarChar(100)
+  tone                      String    @default("warm")
+  responseLength            String    @default("medium")
+  emojiUsage                String    @default("minimal")
+  language                  String    @default("tr")
+  capabilities              Json      @default("{\"answer_services\":true,\"answer_hours\":true,\"answer_location\":true,\"send_location\":false,\"book_appointment\":false,\"modify_appointment\":false,\"cancel_appointment\":false,\"query_appointment\":false,\"suggest_products\":false,\"share_campaigns\":false}")
+  learnedStylePrompt        String?   @db.Text
+  whatsappExportProcessed   Boolean   @default(false)
+  whatsappConversationCount Int       @default(0)
+  lastLearnedAt             DateTime?
+  systemPromptOverride      String?   @db.Text
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+}
+
+// ClinicConversation channel values: whatsapp, telegram, instagram
+model ClinicConversation {
+  id                    String                 @id @default(cuid())
+  clinicId              String
+  clinic                Clinic                 @relation(fields: [clinicId], references: [id])
+  channel               String                 // whatsapp, telegram, instagram
+  customerPhone         String?
+  customerChatId        String?
+  customerName          String?
+  messages              Json                   // [{role, content, timestamp}]
+  lastMessageAt         DateTime
+  assistantAppointments AssistantAppointment[]
+  createdAt             DateTime               @default(now())
+}
+
+// AssistantAppointment status values: pending, confirmed, cancelled
+model AssistantAppointment {
+  id              String              @id @default(cuid())
+  clinicId        String
+  clinic          Clinic              @relation(fields: [clinicId], references: [id])
+  conversationId  String?
+  conversation    ClinicConversation? @relation(fields: [conversationId], references: [id])
+  customerName    String
+  customerPhone   String
+  serviceName     String
+  appointmentDate DateTime
+  notes           String?             @db.Text
+  status          String              @default("pending") // pending, confirmed, cancelled
+  sourceChannel   String
+  createdAt       DateTime            @default(now())
+}
+
+// ═══════════════════════════════════════════════════════════
+// Onboarding Agent
+// ═══════════════════════════════════════════════════════════
+
+model OnboardingProfile {
+  id                 String   @id @default(cuid())
+  sessionId          String   @unique @default(cuid())
+  clinicId           String?
+  clinic             Clinic?  @relation(fields: [clinicId], references: [id])
+  sector             String?
+  sectorCustom       String?
+  teamSize           String?
+  painPoints         Json?
+  recommendedModules Json?
+  selectedModules    Json?
+  analysisResult     Json?
+  completed          Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model ModuleDefinition {
+  id               String   @id @default(cuid())
+  slug             String   @unique
+  name             String
+  shortDescription String
+  featureList      Json
+  icon             String
+  color            String
+  basePrice        Int
+  sectors          Json
+  isPremium        Boolean  @default(false)
+  sortOrder        Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 // FixedAsset status values: ACTIVE, MAINTENANCE, BROKEN, SCRAPPED

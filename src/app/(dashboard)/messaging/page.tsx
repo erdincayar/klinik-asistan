@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MessageCircle, Send } from "lucide-react";
+import { MessageCircle, Send, Bot } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import WhatsAppContent from "@/components/messaging/WhatsAppContent";
+import PobyAssistantContent from "@/components/messaging/PobyAssistantContent";
 
 function TelegramStatus() {
   const [connected, setConnected] = useState<boolean | null>(null);
@@ -74,6 +75,10 @@ export default function MessagingPage() {
           <Send className="mr-1.5 h-4 w-4" />
           Telegram
         </TabsTrigger>
+        <TabsTrigger value="assistant">
+          <Bot className="mr-1.5 h-4 w-4" />
+          Poby Asistan
+        </TabsTrigger>
       </TabsList>
 
       <TabsContent value="whatsapp">
@@ -82,6 +87,10 @@ export default function MessagingPage() {
 
       <TabsContent value="telegram">
         <TelegramStatus />
+      </TabsContent>
+
+      <TabsContent value="assistant">
+        <PobyAssistantContent />
       </TabsContent>
     </Tabs>
   );

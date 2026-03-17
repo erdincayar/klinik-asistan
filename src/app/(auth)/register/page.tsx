@@ -67,6 +67,7 @@ export default function RegisterPage() {
     setError("");
 
     try {
+      const onboardingProfileSessionId = sessionStorage.getItem("onboardingProfileSessionId") || undefined;
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -75,6 +76,7 @@ export default function RegisterPage() {
           email: data.email,
           password: data.password,
           clinicName: data.clinicName,
+          onboardingProfileSessionId,
         }),
       });
 
