@@ -12,13 +12,25 @@ import {
   ArrowRight,
   Menu,
   X,
+  ChevronLeft,
+  Check,
+  Loader2,
   TrendingUp,
   TrendingDown,
   AlertTriangle,
   Heart,
-  Play,
+  Bot,
+  Megaphone,
+  Share2,
+  Sparkles,
+  MessageCircle,
 } from "lucide-react";
-import OnboardingWidget from "@/components/onboarding/OnboardingWidget";
+import {
+  SECTOR_OPTIONS,
+  TEAM_SIZE_OPTIONS,
+  PAIN_POINT_OPTIONS,
+} from "@/lib/onboarding/module-definitions";
+import type { ModuleRecommendation, AnalysisResult } from "@/lib/onboarding/onboarding-agent";
 
 /* ══════════════════════════════ DATA ══════════════════════════════ */
 
@@ -198,7 +210,67 @@ function AnimatedNumber({ target, prefix = "", duration = 1500 }: { target: numb
   return <span ref={ref}>{prefix}{value.toLocaleString("tr-TR")}</span>;
 }
 
-/* OnboardingChat replaced by OnboardingWidget — see src/components/onboarding/OnboardingWidget.tsx */
+/* ══════════════════════════ HERO ICON MAP ══════════════════════════ */
+
+const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+  MessageCircle, Calendar, DollarSign, Sparkles, Megaphone, Share2, Users, Bot,
+};
+
+function ModuleIcon({ name, className, color }: { name: string; className?: string; color?: string }) {
+  const Icon = ICON_MAP[name] || Bot;
+  return <span style={color ? { color } : undefined}><Icon className={className} /></span>;
+}
+
+/* ══════════════════════════ HERO MODULE CARD ══════════════════════════ */
+
+function HeroModuleCard({
+  mod,
+  selected,
+  onToggle,
+  muted,
+}: {
+  mod: ModuleRecommendation;
+  selected: boolean;
+  onToggle: () => void;
+  muted?: boolean;
+}) {
+  return (
+    <button
+      onClick={onToggle}
+      className={`flex w-full items-center gap-3 rounded-xl border-2 p-4 text-left backdrop-blur-sm transition-all ${
+        selected
+          ? "border-[#EF9F27] bg-[#FDF3E3]/80 shadow-md shadow-[#EF9F27]/10"
+          : muted
+          ? "border-gray-200/60 bg-white/50 opacity-70 hover:opacity-100"
+          : "border-gray-200/80 bg-white/80 hover:border-gray-300"
+      }`}
+    >
+      <div
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+        style={{ backgroundColor: `${mod.color}15` }}
+      >
+        <ModuleIcon name={mod.icon} className="h-5 w-5" color={mod.color} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold text-gray-900">{mod.name}</p>
+        <p className="text-xs text-gray-500 line-clamp-1">{mod.shortDescription}</p>
+        {mod.reasoning && (
+          <p className="mt-0.5 text-[11px] italic text-[#BA7517] line-clamp-1">{mod.reasoning}</p>
+        )}
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
+        <span className="text-xs font-bold text-gray-600">₺{mod.basePrice}/ay</span>
+        <div
+          className={`flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all ${
+            selected ? "border-[#EF9F27] bg-[#EF9F27]" : "border-gray-300"
+          }`}
+        >
+          {selected && <Check className="h-3 w-3 text-white" />}
+        </div>
+      </div>
+    </button>
+  );
+}
 
 /* ══════════════════════════ TWEET CARD ══════════════════════════ */
 
@@ -473,6 +545,121 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState(0);
   const [tabHovered, setTabHovered] = useState(false);
 
+  /* ── Inline onboarding state ── */
+  const [obStep, setObStep] = useState(0); // 0=sector, 1=team, 2=pain, 3=analysis, 4=package
+  const [obDirection, setObDirection] = useState(1);
+  const [obSessionId, setObSessionId] = useState<string | null>(null);
+  const [obSector, setObSector] = useState<string | null>(null);
+  const [obSectorCustom, setObSectorCustom] = useState("");
+  const [obTeamSize, setObTeamSize] = useState<string | null>(null);
+  const [obPainPoints, setObPainPoints] = useState<Set<string>>(new Set());
+  const [obAnalysis, setObAnalysis] = useState<AnalysisResult | null>(null);
+  const [obSelected, setObSelected] = useState<Set<string>>(new Set());
+  const [obAnalyzing, setObAnalyzing] = useState(false);
+  const heroRef = useRef<HTMLElement>(null);
+
+  const obStarted = obStep > 0 || obSector !== null;
+
+  function obFireUpdate(data: Record<string, unknown>) {
+    if (!obSessionId) return;
+    fetch("/api/onboarding/update", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId: obSessionId, ...data }),
+    }).catch(console.error);
+  }
+
+  function obGoNext() { setObDirection(1); setObStep((s) => s + 1); }
+  function obGoBack() { setObDirection(-1); setObStep((s) => Math.max(0, s - 1)); }
+
+  function startSession() {
+    if (obSessionId) return;
+    fetch("/api/onboarding/start", { method: "POST" })
+      .then((r) => r.json())
+      .then((d) => { if (d.sessionId) setObSessionId(d.sessionId); })
+      .catch(console.error);
+  }
+
+  function handleSectorSelect(id: string) {
+    startSession();
+    setObSector(id);
+    if (id !== "other") {
+      setTimeout(() => obFireUpdate({ sector: id }), 200);
+      setObDirection(1);
+      setObStep(1);
+      heroRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
+  function handleSectorCustomSubmit() {
+    if (!obSectorCustom.trim()) return;
+    obFireUpdate({ sector: "other", sectorCustom: obSectorCustom.trim() });
+    setObDirection(1);
+    setObStep(1);
+    heroRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function handleTeamSelect(id: string) {
+    setObTeamSize(id);
+    obFireUpdate({ teamSize: id });
+    obGoNext();
+  }
+
+  function togglePain(id: string) {
+    setObPainPoints((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    });
+  }
+
+  async function handleAnalyze() {
+    if (obPainPoints.size === 0 || !obSessionId) return;
+    const arr = Array.from(obPainPoints);
+    obFireUpdate({ painPoints: arr });
+    setObAnalyzing(true);
+    obGoNext();
+    try {
+      const res = await fetch("/api/onboarding/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: obSessionId }),
+      });
+      const data: AnalysisResult = await res.json();
+      setObAnalysis(data);
+      setObSelected(new Set(data.recommendedModules.map((m) => m.slug)));
+    } catch { /* fallback */ } finally { setObAnalyzing(false); }
+  }
+
+  function toggleModule(slug: string) {
+    setObSelected((prev) => {
+      const n = new Set(prev);
+      if (n.has(slug)) n.delete(slug); else n.add(slug);
+      return n;
+    });
+  }
+
+  async function handleComplete() {
+    if (!obSessionId) return;
+    await fetch("/api/onboarding/complete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId: obSessionId, selectedModules: Array.from(obSelected) }),
+    }).catch(console.error);
+    sessionStorage.setItem("onboardingProfileSessionId", obSessionId);
+    window.location.href = "/register";
+  }
+
+  const obTotalPrice = obAnalysis
+    ? [...obAnalysis.recommendedModules, ...obAnalysis.upsellModules]
+        .filter((m) => obSelected.has(m.slug))
+        .reduce((sum, m) => sum + m.basePrice, 0)
+    : 0;
+
+  const obSelectedList = obAnalysis
+    ? [...obAnalysis.recommendedModules, ...obAnalysis.upsellModules].filter((m) => obSelected.has(m.slug))
+    : [];
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll);
@@ -578,8 +765,8 @@ export default function Home() {
         )}
       </nav>
 
-      {/* ════════════════════════ HERO ════════════════════════ */}
-      <section className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 pb-20 pt-32">
+      {/* ════════════════════════ HERO + INLINE ONBOARDING ════════════════════════ */}
+      <section ref={heroRef} className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 pb-20 pt-28">
         {/* Animated gradient background */}
         <div
           className="animate-gradient pointer-events-none absolute inset-0"
@@ -597,64 +784,347 @@ export default function Home() {
         />
 
         {/* Hero content */}
-        <div className="relative z-20 mx-auto max-w-[900px] text-center">
+        <div className="relative z-20 mx-auto w-full max-w-[900px] text-center">
+          {/* ── Title area — compacts after step 0 ── */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#F5B940] bg-white/80 px-4 py-1.5 text-[13px] font-medium text-[#BA7517] backdrop-blur-sm"
+            animate={obStarted ? { marginBottom: 24 } : { marginBottom: 0 }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
           >
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#EF9F27]" />
-            AI destekli yeni nesil işletme yönetimi
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#F5B940] bg-white/80 px-4 py-1.5 text-[13px] font-medium text-[#BA7517] backdrop-blur-sm"
+            >
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#EF9F27]" />
+              AI destekli yeni nesil işletme yönetimi
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={obStarted
+                ? { opacity: 1, y: 0, fontSize: "clamp(24px,4vw,40px)" }
+                : { opacity: 1, y: 0, fontSize: "clamp(32px,5.5vw,64px)" }
+              }
+              transition={{ duration: 0.6, delay: obStarted ? 0 : 0.4 }}
+              className="mb-4 font-extrabold leading-[1.1] tracking-[-2px] text-gray-900"
+            >
+              Kişisel AI Asistanınız{" "}
+              <span className="bg-gradient-to-r from-[#EF9F27] to-[#F5B940] bg-clip-text text-transparent">
+                Poby
+              </span>
+              {!obStarted && (
+                <>
+                  <br />
+                  Her İşleminizde Yanınızda
+                </>
+              )}
+            </motion.h1>
+
+            <AnimatePresence mode="wait">
+              {!obStarted ? (
+                <motion.p
+                  key="hero-sub"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.4, delay: obStarted ? 0 : 0.6 }}
+                  className="mx-auto mb-8 max-w-[600px] text-lg leading-relaxed text-gray-500"
+                >
+                  Randevu, finans, stok, çalışan yönetimi ve daha fazlası — hepsi tek
+                  platformda, yapay zeka destekli.
+                </motion.p>
+              ) : null}
+            </AnimatePresence>
           </motion.div>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="mb-6 text-[clamp(32px,5.5vw,64px)] font-extrabold leading-[1.1] tracking-[-2px] text-gray-900"
-          >
-            Kişisel AI Asistanınız{" "}
-            <span className="bg-gradient-to-r from-[#EF9F27] to-[#F5B940] bg-clip-text text-transparent">
-              Poby
-            </span>
-            <br />
-            Her İşleminizde Yanınızda
-          </motion.h1>
+          {/* ── Progress dots (visible after step 0) ── */}
+          <AnimatePresence>
+            {obStarted && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="mb-6 flex items-center justify-center gap-2"
+              >
+                {obStep > 0 && (
+                  <button
+                    onClick={obGoBack}
+                    className="mr-3 flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white/80 text-gray-500 backdrop-blur-sm transition-all hover:border-gray-300 hover:text-gray-700"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                )}
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <div
+                    key={i}
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      i === obStep ? "w-7 bg-[#EF9F27]" : i < obStep ? "w-2 bg-[#F5B940]" : "w-2 bg-gray-300/60"
+                    }`}
+                  />
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-            className="mx-auto mb-10 max-w-[600px] text-lg leading-relaxed text-gray-500"
-          >
-            Randevu, finans, stok, çalışan yönetimi ve daha fazlası — hepsi tek
-            platformda, yapay zeka destekli.
-          </motion.p>
+          {/* ── Inline onboarding steps ── */}
+          <AnimatePresence mode="wait" custom={obDirection}>
+            {/* ── STEP 0: Sector selection ── */}
+            {obStep === 0 && (
+              <motion.div
+                key="ob-0"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, x: -200 }}
+                transition={{ duration: 0.4, delay: obStarted ? 0 : 0.8 }}
+              >
+                <p className="mb-6 text-[15px] font-medium text-gray-500">
+                  Sektörünüzü seçin, size özel platformu kuralım
+                </p>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.8 }}
-            className="flex flex-wrap items-center justify-center gap-4"
-          >
-            <Link
-              href="/register"
-              className="inline-flex items-center gap-2 rounded-xl bg-[#EF9F27] px-8 py-4 text-[15px] font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-[#D88A1B] hover:shadow-xl hover:shadow-[#EF9F27]/30"
-            >
-              Ücretsiz Başla
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <button
-              onClick={() => {
-                document.getElementById("dashboard-preview")?.scrollIntoView({ behavior: "smooth" });
-              }}
-              className="inline-flex items-center gap-2 rounded-xl border-[1.5px] border-gray-300 bg-white/80 px-8 py-4 text-[15px] font-semibold text-gray-700 backdrop-blur-sm transition-all hover:border-gray-400 hover:bg-white"
-            >
-              <Play className="h-4 w-4" />
-              Demo İzle
-            </button>
-          </motion.div>
+                <div className="mx-auto grid max-w-[560px] grid-cols-2 gap-3 sm:grid-cols-3">
+                  {SECTOR_OPTIONS.filter((s) => s.id !== "other").map((s) => (
+                    <motion.button
+                      key={s.id}
+                      whileHover={{ scale: 1.03, y: -2 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => handleSectorSelect(s.id)}
+                      className={`flex flex-col items-center gap-2 rounded-2xl border-2 bg-white/80 p-5 backdrop-blur-sm transition-all hover:border-[#F5B940] hover:shadow-lg hover:shadow-[#EF9F27]/10 ${
+                        obSector === s.id ? "border-[#EF9F27] bg-[#FDF3E3]/80 shadow-lg shadow-[#EF9F27]/10" : "border-gray-200/80"
+                      }`}
+                    >
+                      <span className="text-3xl">{s.emoji}</span>
+                      <span className="text-sm font-semibold text-gray-800">{s.label}</span>
+                    </motion.button>
+                  ))}
+                </div>
+
+                {/* "Diğer" — full width below */}
+                <div className="mx-auto mt-3 max-w-[560px]">
+                  <motion.button
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={() => handleSectorSelect("other")}
+                    className={`flex w-full items-center justify-center gap-2 rounded-2xl border-2 bg-white/80 p-4 backdrop-blur-sm transition-all hover:border-[#F5B940] ${
+                      obSector === "other" ? "border-[#EF9F27] bg-[#FDF3E3]/80" : "border-gray-200/80"
+                    }`}
+                  >
+                    <span className="text-xl">✏️</span>
+                    <span className="text-sm font-semibold text-gray-800">Diğer</span>
+                  </motion.button>
+
+                  <AnimatePresence>
+                    {obSector === "other" && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="mt-3 flex gap-2 overflow-hidden"
+                      >
+                        <input
+                          value={obSectorCustom}
+                          onChange={(e) => setObSectorCustom(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && handleSectorCustomSubmit()}
+                          placeholder="Sektörünüzü yazın..."
+                          className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm focus:border-[#EF9F27] focus:outline-none focus:ring-2 focus:ring-[#EF9F27]/20"
+                          autoFocus
+                        />
+                        <button
+                          onClick={handleSectorCustomSubmit}
+                          disabled={!obSectorCustom.trim()}
+                          className="rounded-xl bg-[#EF9F27] px-5 py-3 text-sm font-semibold text-white transition-all hover:bg-[#D88A1B] disabled:opacity-40"
+                        >
+                          <ArrowRight className="h-4 w-4" />
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </motion.div>
+            )}
+
+            {/* ── STEP 1: Team size ── */}
+            {obStep === 1 && (
+              <motion.div
+                key="ob-1"
+                custom={obDirection}
+                initial={{ opacity: 0, x: obDirection > 0 ? 200 : -200 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: obDirection < 0 ? 200 : -200 }}
+                transition={{ duration: 0.35 }}
+              >
+                <h3 className="mb-2 text-xl font-bold text-gray-900">Ekibiniz kaç kişi?</h3>
+                <p className="mb-6 text-sm text-gray-500">Ekip büyüklüğünüze göre çözüm öneriyoruz</p>
+                <div className="mx-auto flex max-w-[480px] flex-col gap-3 sm:flex-row">
+                  {TEAM_SIZE_OPTIONS.map((t) => (
+                    <motion.button
+                      key={t.id}
+                      whileHover={{ scale: 1.03, y: -2 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => handleTeamSelect(t.id)}
+                      className={`flex flex-1 flex-col items-center gap-2 rounded-2xl border-2 bg-white/80 p-6 backdrop-blur-sm transition-all hover:border-[#F5B940] hover:shadow-lg hover:shadow-[#EF9F27]/10 ${
+                        obTeamSize === t.id ? "border-[#EF9F27] bg-[#FDF3E3]/80" : "border-gray-200/80"
+                      }`}
+                    >
+                      <span className="text-4xl">{t.emoji}</span>
+                      <span className="text-base font-semibold text-gray-800">{t.label}</span>
+                    </motion.button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {/* ── STEP 2: Pain points ── */}
+            {obStep === 2 && (
+              <motion.div
+                key="ob-2"
+                custom={obDirection}
+                initial={{ opacity: 0, x: obDirection > 0 ? 200 : -200 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: obDirection < 0 ? 200 : -200 }}
+                transition={{ duration: 0.35 }}
+              >
+                <h3 className="mb-2 text-xl font-bold text-gray-900">En çok hangi konuda zorlanıyorsunuz?</h3>
+                <p className="mb-6 text-sm text-gray-500">Birden fazla seçebilirsiniz</p>
+                <div className="mx-auto flex max-w-[520px] flex-wrap justify-center gap-2.5">
+                  {PAIN_POINT_OPTIONS.map((p) => {
+                    const PainIcon = ICON_MAP[p.icon] || Bot;
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => togglePain(p.id)}
+                        className={`inline-flex items-center gap-2 rounded-full border-2 bg-white/80 px-5 py-3 text-sm font-medium backdrop-blur-sm transition-all ${
+                          obPainPoints.has(p.id)
+                            ? "border-[#EF9F27] bg-[#FDF3E3]/80 text-[#BA7517] shadow-md shadow-[#EF9F27]/10"
+                            : "border-gray-200/80 text-gray-600 hover:border-gray-300"
+                        }`}
+                      >
+                        <PainIcon className="h-4 w-4" />
+                        {p.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleAnalyze}
+                  disabled={obPainPoints.size === 0}
+                  className="mt-8 inline-flex items-center gap-2 rounded-xl bg-[#EF9F27] px-10 py-4 text-[15px] font-semibold text-white transition-all hover:bg-[#D88A1B] hover:shadow-xl hover:shadow-[#EF9F27]/30 disabled:opacity-40"
+                >
+                  Analiz Et
+                  <ArrowRight className="h-4 w-4" />
+                </motion.button>
+              </motion.div>
+            )}
+
+            {/* ── STEP 3: Analysis results ── */}
+            {obStep === 3 && (
+              <motion.div
+                key="ob-3"
+                custom={obDirection}
+                initial={{ opacity: 0, x: obDirection > 0 ? 200 : -200 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: obDirection < 0 ? 200 : -200 }}
+                transition={{ duration: 0.35 }}
+                className="mx-auto max-w-[600px] text-left"
+              >
+                {obAnalyzing ? (
+                  <div className="flex flex-col items-center py-16 text-center">
+                    <Loader2 className="mb-4 h-10 w-10 animate-spin text-[#EF9F27]" />
+                    <p className="text-base font-medium text-gray-600">Profiliniz analiz ediliyor...</p>
+                    <p className="mt-1 text-sm text-gray-400">Bu birkaç saniye sürebilir</p>
+                  </div>
+                ) : obAnalysis ? (
+                  <>
+                    <div className="mb-5 rounded-2xl border border-[#F5B940]/40 bg-[#FDF3E3]/80 p-5 backdrop-blur-sm">
+                      <p className="text-sm leading-relaxed text-[#8C5811]">{obAnalysis.customMessage}</p>
+                    </div>
+                    <div className="mb-3 flex items-center gap-2">
+                      <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">Sizin için önerildi</span>
+                    </div>
+                    <div className="space-y-2.5">
+                      {obAnalysis.recommendedModules.map((mod) => (
+                        <HeroModuleCard key={mod.slug} mod={mod} selected={obSelected.has(mod.slug)} onToggle={() => toggleModule(mod.slug)} />
+                      ))}
+                    </div>
+                    {obAnalysis.upsellModules.length > 0 && (
+                      <>
+                        <p className="mb-2 mt-5 text-xs font-semibold uppercase tracking-wider text-gray-400">Keşfet</p>
+                        <div className="space-y-2.5">
+                          {obAnalysis.upsellModules.map((mod) => (
+                            <HeroModuleCard key={mod.slug} mod={mod} selected={obSelected.has(mod.slug)} onToggle={() => toggleModule(mod.slug)} muted />
+                          ))}
+                        </div>
+                      </>
+                    )}
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => { setObDirection(1); setObStep(4); }}
+                      disabled={obSelected.size === 0}
+                      className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#EF9F27] py-4 text-[15px] font-semibold text-white transition-all hover:bg-[#D88A1B] disabled:opacity-40"
+                    >
+                      Paketimi Oluştur
+                      <ArrowRight className="h-4 w-4" />
+                    </motion.button>
+                  </>
+                ) : (
+                  <div className="py-16 text-center">
+                    <p className="text-sm text-gray-500">Bir hata oluştu.</p>
+                    <button onClick={obGoBack} className="mt-3 text-sm font-medium text-[#EF9F27]">Geri Dön</button>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {/* ── STEP 4: Package summary ── */}
+            {obStep === 4 && (
+              <motion.div
+                key="ob-4"
+                custom={obDirection}
+                initial={{ opacity: 0, x: 200 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -200 }}
+                transition={{ duration: 0.35 }}
+                className="mx-auto max-w-[520px] text-left"
+              >
+                <h3 className="mb-1 text-center text-xl font-bold text-gray-900">Kişisel Paketiniz</h3>
+                <p className="mb-6 text-center text-sm text-gray-500">{obSelected.size} modül seçildi</p>
+                <div className="space-y-2">
+                  {obSelectedList.map((mod) => (
+                    <div key={mod.slug} className="flex items-center gap-3 rounded-xl border border-gray-200/80 bg-white/80 p-4 backdrop-blur-sm">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: `${mod.color}15` }}>
+                        <ModuleIcon name={mod.icon} className="h-5 w-5" color={mod.color} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900">{mod.name}</p>
+                        <p className="text-xs text-gray-500">{mod.shortDescription}</p>
+                      </div>
+                      <span className="text-sm font-bold text-gray-700">₺{mod.basePrice}/ay</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 rounded-xl bg-white/80 p-5 backdrop-blur-sm border border-gray-200/80">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-600">Toplam</span>
+                    <span className="text-2xl font-bold text-gray-900">₺{obTotalPrice}/ay</span>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-400">AI kredisi kullandıkça ödeyin</p>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleComplete}
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#EF9F27] py-4 text-[15px] font-semibold text-white transition-all hover:bg-[#D88A1B] hover:shadow-xl hover:shadow-[#EF9F27]/30"
+                >
+                  Hemen Başla — Ücretsiz Dene
+                  <ArrowRight className="h-4 w-4" />
+                </motion.button>
+                <p className="mt-4 text-center text-xs text-gray-400">14 gün ücretsiz, kredi kartı gerekmez</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </section>
 
@@ -911,8 +1381,6 @@ export default function Home() {
         </div>
       </footer>
 
-      {/* AI Onboarding Widget */}
-      <OnboardingWidget />
     </div>
   );
 }
