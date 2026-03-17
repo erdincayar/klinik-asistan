@@ -556,43 +556,63 @@ export default function Home() {
   const [obAnalysis, setObAnalysis] = useState<AnalysisResult | null>(null);
   const [obSelected, setObSelected] = useState<Set<string>>(new Set());
   const [obAnalyzing, setObAnalyzing] = useState(false);
+  const [obError, setObError] = useState<string | null>(null);
   const heroRef = useRef<HTMLElement>(null);
+  const obSessionIdRef = useRef<string | null>(null);
 
   const obStarted = obStep > 0 || obSector !== null;
 
-  function obFireUpdate(data: Record<string, unknown>) {
-    if (!obSessionId) return;
-    fetch("/api/onboarding/update", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sessionId: obSessionId, ...data }),
-    }).catch(console.error);
+  async function obFireUpdate(data: Record<string, unknown>) {
+    const sid = obSessionIdRef.current;
+    if (!sid) return;
+    try {
+      await fetch("/api/onboarding/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: sid, ...data }),
+      });
+    } catch (err) {
+      console.error("[obFireUpdate]", err);
+    }
   }
 
   function obGoNext() { setObDirection(1); setObStep((s) => s + 1); }
   function obGoBack() { setObDirection(-1); setObStep((s) => Math.max(0, s - 1)); }
 
-  function startSession() {
-    if (obSessionId) return;
-    fetch("/api/onboarding/start", { method: "POST" })
-      .then((r) => r.json())
-      .then((d) => { if (d.sessionId) setObSessionId(d.sessionId); })
-      .catch(console.error);
+  async function startSession(): Promise<string | null> {
+    if (obSessionIdRef.current) return obSessionIdRef.current;
+    try {
+      const res = await fetch("/api/onboarding/start", { method: "POST" });
+      if (!res.ok) throw new Error("Oturum başlatılamadı");
+      const d = await res.json();
+      if (d.sessionId) {
+        obSessionIdRef.current = d.sessionId;
+        setObSessionId(d.sessionId);
+        return d.sessionId;
+      }
+      return null;
+    } catch (err) {
+      console.error("[startSession]", err);
+      return null;
+    }
   }
 
-  function handleSectorSelect(id: string) {
-    startSession();
+  async function handleSectorSelect(id: string) {
     setObSector(id);
-    if (id !== "other") {
-      setTimeout(() => obFireUpdate({ sector: id }), 200);
+    setObError(null);
+    const sid = await startSession();
+    if (id !== "other" && sid) {
+      obFireUpdate({ sector: id });
       setObDirection(1);
       setObStep(1);
       heroRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }
 
-  function handleSectorCustomSubmit() {
+  async function handleSectorCustomSubmit() {
     if (!obSectorCustom.trim()) return;
+    const sid = await startSession();
+    if (!sid) return;
     obFireUpdate({ sector: "other", sectorCustom: obSectorCustom.trim() });
     setObDirection(1);
     setObStep(1);
@@ -614,21 +634,55 @@ export default function Home() {
   }
 
   async function handleAnalyze() {
-    if (obPainPoints.size === 0 || !obSessionId) return;
-    const arr = Array.from(obPainPoints);
-    obFireUpdate({ painPoints: arr });
+    if (obPainPoints.size === 0) return;
+    setObError(null);
+
+    // Ensure session exists
+    let sid = obSessionIdRef.current;
+    if (!sid) {
+      sid = await startSession();
+      if (!sid) {
+        setObError("Oturum başlatılamadı. Lütfen sayfayı yenileyip tekrar deneyin.");
+        return;
+      }
+    }
+
     setObAnalyzing(true);
-    obGoNext();
+    obGoNext(); // move to step 3 to show loading spinner
+
     try {
+      // Await painPoints update so DB has the data before analyze
+      await obFireUpdate({ painPoints: Array.from(obPainPoints) });
+
       const res = await fetch("/api/onboarding/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId: obSessionId }),
+        body: JSON.stringify({ sessionId: sid }),
       });
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.error || `Analiz başarısız (${res.status})`);
+      }
+
       const data: AnalysisResult = await res.json();
+
+      if (!data.recommendedModules?.length) {
+        throw new Error("Modül önerisi alınamadı");
+      }
+
       setObAnalysis(data);
       setObSelected(new Set(data.recommendedModules.map((m) => m.slug)));
-    } catch { /* fallback */ } finally { setObAnalyzing(false); }
+    } catch (err) {
+      console.error("[handleAnalyze]", err);
+      const msg = err instanceof Error ? err.message : "Analiz sırasında bir hata oluştu.";
+      setObError(msg);
+      // Go back to step 2 so user can retry
+      setObDirection(-1);
+      setObStep(2);
+    } finally {
+      setObAnalyzing(false);
+    }
   }
 
   function toggleModule(slug: string) {
@@ -640,14 +694,19 @@ export default function Home() {
   }
 
   async function handleComplete() {
-    if (!obSessionId) return;
-    await fetch("/api/onboarding/complete", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sessionId: obSessionId, selectedModules: Array.from(obSelected) }),
-    }).catch(console.error);
-    sessionStorage.setItem("onboardingProfileSessionId", obSessionId);
-    window.location.href = "/register";
+    const sid = obSessionIdRef.current;
+    if (!sid) return;
+    try {
+      await fetch("/api/onboarding/complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: sid, selectedModules: Array.from(obSelected) }),
+      });
+      sessionStorage.setItem("onboardingProfileSessionId", sid);
+      window.location.href = "/register";
+    } catch (err) {
+      console.error("[handleComplete]", err);
+    }
   }
 
   const obTotalPrice = obAnalysis
@@ -1005,15 +1064,33 @@ export default function Home() {
                     );
                   })}
                 </div>
+                {obError && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-4 text-sm font-medium text-red-600"
+                  >
+                    {obError}
+                  </motion.p>
+                )}
                 <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={!obAnalyzing ? { scale: 1.02 } : {}}
+                  whileTap={!obAnalyzing ? { scale: 0.98 } : {}}
                   onClick={handleAnalyze}
-                  disabled={obPainPoints.size === 0}
+                  disabled={obPainPoints.size === 0 || obAnalyzing}
                   className="mt-8 inline-flex items-center gap-2 rounded-xl bg-[#EF9F27] px-10 py-4 text-[15px] font-semibold text-white transition-all hover:bg-[#D88A1B] hover:shadow-xl hover:shadow-[#EF9F27]/30 disabled:opacity-40"
                 >
-                  Analiz Et
-                  <ArrowRight className="h-4 w-4" />
+                  {obAnalyzing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Analiz ediliyor...
+                    </>
+                  ) : (
+                    <>
+                      Analiz Et
+                      <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
                 </motion.button>
               </motion.div>
             )}
@@ -1071,8 +1148,8 @@ export default function Home() {
                   </>
                 ) : (
                   <div className="py-16 text-center">
-                    <p className="text-sm text-gray-500">Bir hata oluştu.</p>
-                    <button onClick={obGoBack} className="mt-3 text-sm font-medium text-[#EF9F27]">Geri Dön</button>
+                    <p className="text-sm text-red-600">{obError || "Bir hata oluştu. Lütfen tekrar deneyin."}</p>
+                    <button onClick={() => { setObError(null); obGoBack(); }} className="mt-3 text-sm font-medium text-[#EF9F27] hover:underline">Geri Dön</button>
                   </div>
                 )}
               </motion.div>
