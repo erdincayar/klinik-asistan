@@ -20,8 +20,11 @@ import {
   Shield,
   Send,
   AlertTriangle,
-  Zap,
+  Info,
   X,
+  Eye,
+  ShieldCheck,
+  ShieldOff,
 } from "lucide-react";
 import { brutToNet, netToBrut, yillikFromBrut, yillikFromNet, type SalaryResult } from "@/lib/salary-calculator";
 import { Button } from "@/components/ui/button";
@@ -48,32 +51,42 @@ const AY_ISIMLERI = [
   "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
 ];
 
-const PERMISSION_LABELS: Record<string, string> = {
-  canViewDashboard: "Dashboard görüntüle",
-  canViewAppointments: "Randevular (görüntüle)",
-  canManageAppointments: "Randevular (düzenle)",
-  canViewPatients: "Müşteriler (görüntüle)",
-  canEditPatients: "Müşteriler (düzenle)",
-  canViewFinance: "Finans (görüntüle)",
-  canEditFinance: "Finans (düzenle)",
-  canManageMarketing: "Pazarlama & Meta Ads",
-  canManageAIStudio: "AI İçerik Stüdyosu",
-  canManageMessaging: "Mesajlaşma (WhatsApp/Telegram)",
-  canManageAssistant: "Poby Asistan yönetimi",
-  canManageInventory: "Stok & Envanter",
-  canViewEmployees: "Çalışanlar (görüntüle)",
-  canEditEmployees: "Çalışanlar (düzenle)",
-  canManageAlarms: "Alarmlar",
-  canViewReports: "Raporlar",
-  canManageSettings: "Ayarlar",
-};
+type AccessLevel = "full" | "view" | "none";
 
-interface PermissionsMap {
-  [key: string]: boolean;
+const MODULE_PERMISSIONS: { key: string; label: string }[] = [
+  { key: "dashboard", label: "Dashboard" },
+  { key: "appointments", label: "Randevular" },
+  { key: "customers", label: "Müşteriler" },
+  { key: "finance", label: "Finans" },
+  { key: "inventory", label: "Stok & Envanter" },
+  { key: "employees", label: "Çalışanlar" },
+  { key: "hr", label: "İnsan Kaynakları" },
+  { key: "marketing", label: "Pazarlama" },
+  { key: "messaging", label: "Mesajlaşma" },
+  { key: "ai_assistant", label: "AI Asistan" },
+  { key: "reports", label: "Raporlar" },
+  { key: "alarms", label: "Alarmlar" },
+  { key: "reminders", label: "Hatırlatmalar" },
+  { key: "settings", label: "Ayarlar" },
+];
+
+interface ModulePermissions {
+  [key: string]: AccessLevel;
 }
 
-const defaultPermissions: PermissionsMap = Object.fromEntries(
-  Object.keys(PERMISSION_LABELS).map((k) => [k, false])
+const defaultPermissions: ModulePermissions = Object.fromEntries(
+  MODULE_PERMISSIONS.map((m) => [m.key, "none" as AccessLevel])
+);
+
+const fullPermissions: ModulePermissions = Object.fromEntries(
+  MODULE_PERMISSIONS.map((m) => [m.key, "full" as AccessLevel])
+);
+
+const viewOnlyPermissions: ModulePermissions = Object.fromEntries(
+  MODULE_PERMISSIONS.map((m) => {
+    const viewable = ["dashboard", "appointments", "customers", "finance", "inventory", "employees", "hr", "reports", "alarms", "reminders"];
+    return [m.key, viewable.includes(m.key) ? "view" as AccessLevel : "none" as AccessLevel];
+  })
 );
 
 interface EmployeeCustomValueItem {
@@ -98,7 +111,8 @@ interface Employee {
   email: string | null;
   color: string;
   commissionRate: number;
-  permissions: PermissionsMap | null;
+  permissions: ModulePermissions | null;
+  roleTemplate: string | null;
   isActive: boolean;
   salaryGross: number | null;
   salaryNet: number | null;
@@ -128,13 +142,19 @@ interface EmployeeForm {
   email: string;
   commissionRate: string;
   color: string;
-  permissions: PermissionsMap;
+  permissions: ModulePermissions;
+  roleTemplate: string;
   salaryType: string;
   salaryAmount: string;
   salaryPayDay: string;
   manualSalaryEntry: boolean;
   salaryGross: string;
   salaryNet: string;
+}
+
+interface InlineFieldRow {
+  name: string;
+  type: string;
 }
 
 interface RoleItem {
@@ -150,6 +170,7 @@ const emptyForm: EmployeeForm = {
   commissionRate: "0",
   color: "#3b82f6",
   permissions: { ...defaultPermissions },
+  roleTemplate: "custom",
   salaryType: "NET",
   salaryAmount: "",
   salaryPayDay: "",
@@ -215,6 +236,9 @@ export default function EmployeesPage() {
   const [showAddFieldDialog, setShowAddFieldDialog] = useState(false);
   const [newFieldName, setNewFieldName] = useState("");
   const [newFieldType, setNewFieldType] = useState("text");
+
+  // Inline custom field adding in form
+  const [inlineNewFields, setInlineNewFields] = useState<InlineFieldRow[]>([]);
 
   // Form state
   const [form, setForm] = useState<EmployeeForm>(emptyForm);
@@ -352,6 +376,22 @@ export default function EmployeesPage() {
     if (!form.name.trim()) return;
     try {
       setSaving(true);
+
+      // Save inline new fields first
+      for (const field of inlineNewFields) {
+        if (field.name.trim()) {
+          await fetch("/api/clinic/employee-custom-fields", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ fieldName: field.name.trim(), fieldType: field.type }),
+          });
+        }
+      }
+      if (inlineNewFields.length > 0) {
+        await fetchCustomFields();
+        setInlineNewFields([]);
+      }
+
       const salary = buildSalaryPayload();
       const res = await fetch("/api/employees", {
         method: "POST",
@@ -384,6 +424,22 @@ export default function EmployeesPage() {
     if (!editingEmployee) return;
     try {
       setSaving(true);
+
+      // Save inline new fields
+      for (const field of inlineNewFields) {
+        if (field.name.trim()) {
+          await fetch("/api/clinic/employee-custom-fields", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ fieldName: field.name.trim(), fieldType: field.type }),
+          });
+        }
+      }
+      if (inlineNewFields.length > 0) {
+        await fetchCustomFields();
+        setInlineNewFields([]);
+      }
+
       const salary = buildSalaryPayload();
 
       // Detect salary change
@@ -484,6 +540,7 @@ export default function EmployeesPage() {
 
   function openEdit(emp: Employee) {
     setEditingEmployee(emp);
+    setInlineNewFields([]);
     const info = getSalaryTypeAndAmount(emp);
     setForm({
       name: emp.name,
@@ -495,6 +552,7 @@ export default function EmployeesPage() {
       permissions: emp.permissions
         ? { ...defaultPermissions, ...emp.permissions }
         : { ...defaultPermissions },
+      roleTemplate: emp.roleTemplate || "custom",
       salaryType: info?.type || "NET",
       salaryAmount: info ? String(info.amount) : "",
       salaryPayDay: emp.salaryPayDay ? String(emp.salaryPayDay) : "",
@@ -697,18 +755,24 @@ export default function EmployeesPage() {
               <Calculator className="h-4 w-4" />
               Maaş Bilgileri
             </h4>
-            <button
-              type="button"
-              onClick={() => setForm({ ...form, manualSalaryEntry: !form.manualSalaryEntry })}
-              className={`flex items-center gap-1.5 text-xs font-medium rounded-full px-3 py-1 transition-colors ${
-                form.manualSalaryEntry
-                  ? "bg-gray-200 text-gray-700"
-                  : "bg-blue-100 text-blue-700"
-              }`}
-            >
-              <Zap className="h-3 w-3" />
-              {form.manualSalaryEntry ? "Manuel Giriş" : "Otomatik Hesapla"}
-            </button>
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={!form.manualSalaryEntry}
+                onChange={(e) => setForm({ ...form, manualSalaryEntry: !e.target.checked })}
+                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              <span className="text-xs font-medium text-gray-600">Otomatik hesapla</span>
+              <div className="relative">
+                <Info className="h-3.5 w-3.5 text-gray-400 group-hover:text-gray-600" />
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 rounded-lg bg-gray-900 px-3 py-2 text-[11px] text-white opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-10">
+                  {form.manualSalaryEntry
+                    ? "Manuel giriş — değerler otomatik hesaplanmayacak"
+                    : "Brüt/net otomatik hesaplanır, SGK dahil"}
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900" />
+                </div>
+              </div>
+            </label>
           </div>
 
           {form.manualSalaryEntry ? (
@@ -848,7 +912,7 @@ export default function EmployeesPage() {
         </div>
 
         {/* Custom fields */}
-        {customFields.length > 0 && (
+        {(customFields.length > 0 || inlineNewFields.length > 0) && (
           <div className="space-y-2">
             <Label>Özel Alanlar</Label>
             <div className="space-y-2 rounded-md border p-3">
@@ -869,37 +933,146 @@ export default function EmployeesPage() {
                   />
                 </div>
               ))}
+              {/* Inline new field rows */}
+              {inlineNewFields.map((row, idx) => (
+                <div key={`inline-${idx}`} className="flex items-end gap-2">
+                  <div className="flex-1 space-y-1">
+                    <Label className="text-xs">Alan Adı</Label>
+                    <Input
+                      placeholder="örn. TC Kimlik"
+                      value={row.name}
+                      onChange={(e) => {
+                        const updated = [...inlineNewFields];
+                        updated[idx] = { ...updated[idx], name: e.target.value };
+                        setInlineNewFields(updated);
+                      }}
+                    />
+                  </div>
+                  <div className="w-24 space-y-1">
+                    <Label className="text-xs">Tip</Label>
+                    <Select
+                      value={row.type}
+                      onChange={(e) => {
+                        const updated = [...inlineNewFields];
+                        updated[idx] = { ...updated[idx], type: e.target.value };
+                        setInlineNewFields(updated);
+                      }}
+                    >
+                      <option value="text">Metin</option>
+                      <option value="number">Sayı</option>
+                      <option value="date">Tarih</option>
+                    </Select>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setInlineNewFields(inlineNewFields.filter((_, i) => i !== idx))}
+                    className="p-2 text-gray-400 hover:text-red-500"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
         )}
+        {/* Inline add field button */}
+        <button
+          type="button"
+          onClick={() => setInlineNewFields([...inlineNewFields, { name: "", type: "text" }])}
+          className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Alan Ekle
+        </button>
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label>Modül Erişim İzinleri</Label>
+        {/* Permission System - 2 Layer */}
+        <div className="space-y-3 rounded-lg border p-4">
+          <div className="flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            <h4 className="text-sm font-semibold">Modül Erişim İzinleri</h4>
           </div>
-          <div className="space-y-2 rounded-md border p-3 max-h-[200px] overflow-y-auto">
-            {Object.entries(PERMISSION_LABELS).map(([key, label]) => (
-              <label
-                key={key}
-                className="flex items-center gap-2 cursor-pointer text-sm"
-              >
-                <input
-                  type="checkbox"
-                  checked={form.permissions[key] || false}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      permissions: {
-                        ...form.permissions,
-                        [key]: e.target.checked,
-                      },
-                    })
-                  }
-                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                />
-                <span>{label}</span>
-              </label>
-            ))}
+
+          {/* Layer 1: Role Templates */}
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, roleTemplate: "full", permissions: { ...fullPermissions } })}
+              className={`flex flex-col items-center gap-1.5 rounded-lg border-2 p-3 text-center transition-all ${
+                form.roleTemplate === "full"
+                  ? "border-green-500 bg-green-50"
+                  : "border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              <ShieldCheck className={`h-5 w-5 ${form.roleTemplate === "full" ? "text-green-600" : "text-gray-400"}`} />
+              <span className="text-xs font-semibold">Tam Yetkili</span>
+              <span className="text-[10px] text-gray-500">Tüm modüller</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, roleTemplate: "view_only", permissions: { ...viewOnlyPermissions } })}
+              className={`flex flex-col items-center gap-1.5 rounded-lg border-2 p-3 text-center transition-all ${
+                form.roleTemplate === "view_only"
+                  ? "border-blue-500 bg-blue-50"
+                  : "border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              <Eye className={`h-5 w-5 ${form.roleTemplate === "view_only" ? "text-blue-600" : "text-gray-400"}`} />
+              <span className="text-xs font-semibold">Sadece Görüntüle</span>
+              <span className="text-[10px] text-gray-500">Düzenleme yok</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, roleTemplate: "custom" })}
+              className={`flex flex-col items-center gap-1.5 rounded-lg border-2 p-3 text-center transition-all ${
+                form.roleTemplate === "custom"
+                  ? "border-orange-500 bg-orange-50"
+                  : "border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              <Shield className={`h-5 w-5 ${form.roleTemplate === "custom" ? "text-orange-600" : "text-gray-400"}`} />
+              <span className="text-xs font-semibold">Özel</span>
+              <span className="text-[10px] text-gray-500">Modül bazlı</span>
+            </button>
+          </div>
+
+          {/* Layer 2: Per-module access levels (visible when custom or always) */}
+          <div
+            className={`space-y-1 overflow-hidden transition-all duration-300 ${
+              form.roleTemplate === "custom" ? "max-h-[600px] opacity-100" : "max-h-0 opacity-0"
+            }`}
+          >
+            <div className="rounded-md border">
+              {/* Header */}
+              <div className="flex items-center border-b bg-gray-50 px-3 py-2 text-[11px] font-semibold text-gray-500">
+                <span className="flex-1">Modül</span>
+                <span className="w-16 text-center">Tam</span>
+                <span className="w-16 text-center">Görüntüle</span>
+                <span className="w-16 text-center">Kapalı</span>
+              </div>
+              {/* Rows */}
+              {MODULE_PERMISSIONS.map((mod) => (
+                <div key={mod.key} className="flex items-center border-b last:border-0 px-3 py-2 hover:bg-gray-50/50">
+                  <span className="flex-1 text-sm">{mod.label}</span>
+                  {(["full", "view", "none"] as AccessLevel[]).map((level) => (
+                    <label key={level} className="w-16 flex justify-center">
+                      <input
+                        type="radio"
+                        name={`perm-${mod.key}`}
+                        checked={form.permissions[mod.key] === level}
+                        onChange={() =>
+                          setForm({
+                            ...form,
+                            roleTemplate: "custom",
+                            permissions: { ...form.permissions, [mod.key]: level },
+                          })
+                        }
+                        className="h-4 w-4 border-gray-300 text-primary focus:ring-primary"
+                      />
+                    </label>
+                  ))}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -1504,19 +1677,31 @@ export default function EmployeesPage() {
 
             <div className="space-y-2">
               <Label>Erişim İzinleri</Label>
-              <div className="space-y-2 rounded-md border p-3 max-h-[200px] overflow-y-auto">
-                {Object.entries(PERMISSION_LABELS).map(([key, label]) => (
-                  <label key={key} className="flex items-center gap-2 cursor-pointer text-sm">
-                    <input
-                      type="checkbox"
-                      checked={form.permissions[key] || false}
-                      onChange={(e) => setForm({ ...form, permissions: { ...form.permissions, [key]: e.target.checked } })}
-                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                    />
-                    <span>{label}</span>
-                  </label>
-                ))}
+              <div className="grid grid-cols-3 gap-2 mb-2">
+                <button type="button" onClick={() => setForm({ ...form, roleTemplate: "full", permissions: { ...fullPermissions } })} className={`text-xs font-medium rounded-lg border-2 p-2 transition-all ${form.roleTemplate === "full" ? "border-green-500 bg-green-50 text-green-700" : "border-gray-200"}`}>
+                  Tam Yetkili
+                </button>
+                <button type="button" onClick={() => setForm({ ...form, roleTemplate: "view_only", permissions: { ...viewOnlyPermissions } })} className={`text-xs font-medium rounded-lg border-2 p-2 transition-all ${form.roleTemplate === "view_only" ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200"}`}>
+                  Sadece Görüntüle
+                </button>
+                <button type="button" onClick={() => setForm({ ...form, roleTemplate: "custom" })} className={`text-xs font-medium rounded-lg border-2 p-2 transition-all ${form.roleTemplate === "custom" ? "border-orange-500 bg-orange-50 text-orange-700" : "border-gray-200"}`}>
+                  Özel
+                </button>
               </div>
+              {form.roleTemplate === "custom" && (
+                <div className="rounded-md border max-h-[200px] overflow-y-auto">
+                  {MODULE_PERMISSIONS.map((mod) => (
+                    <div key={mod.key} className="flex items-center border-b last:border-0 px-3 py-1.5 text-sm">
+                      <span className="flex-1">{mod.label}</span>
+                      {(["full", "view", "none"] as AccessLevel[]).map((level) => (
+                        <label key={level} className="w-14 flex justify-center">
+                          <input type="radio" name={`invite-perm-${mod.key}`} checked={form.permissions[mod.key] === level} onChange={() => setForm({ ...form, permissions: { ...form.permissions, [mod.key]: level } })} className="h-3.5 w-3.5" />
+                        </label>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter>

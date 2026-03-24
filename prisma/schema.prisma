@@ -297,6 +297,7 @@ model Employee {
   salarySSI             Int?                   // SGK işveren payı (kuruş)
   salaryPayDay          Int?                   // Maaş ödeme günü (1-28)
   manualSalaryEntry     Boolean                @default(false)
+  roleTemplate          String?                // full, view_only, custom
   hasSystemAccess       Boolean                @default(false)
   systemEmail           String?
   inviteStatus          String?                // not_invited, invited, active

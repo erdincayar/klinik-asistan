@@ -180,6 +180,7 @@ export default function DashboardPage() {
     selectedModules?: ModuleRecommendation[];
     upsellModules?: ModuleRecommendation[];
   } | null>(null);
+  const [employeePerms, setEmployeePerms] = useState<Record<string, string> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -189,7 +190,7 @@ export default function DashboardPage() {
         const today = new Date();
         const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
-        const [dashRes, chartRes, lowStockRes, upcomingRes, tokenRes, onbRes] = await Promise.all([
+        const [dashRes, chartRes, lowStockRes, upcomingRes, tokenRes, onbRes, permRes] = await Promise.all([
           fetch("/api/dashboard"),
           fetch(
             `/api/finance?type=monthly-summary&year=${today.getFullYear()}`
@@ -198,6 +199,7 @@ export default function DashboardPage() {
           fetch("/api/finance/recurring/upcoming"),
           fetch("/api/settings/tokens"),
           fetch("/api/onboarding/dashboard-profile"),
+          fetch("/api/employees/me/permissions"),
         ]);
 
         if (!dashRes.ok) throw new Error("Dashboard verisi alınamadı");
@@ -246,6 +248,11 @@ export default function DashboardPage() {
             });
           }
         }
+
+        if (permRes.ok) {
+          const permData = await permRes.json();
+          if (permData.permissions) setEmployeePerms(permData.permissions);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Bir hata oluştu");
       } finally {
@@ -276,7 +283,7 @@ export default function DashboardPage() {
   if (!data) return null;
 
   /* ── Stat cards config ── */
-  const statCards = [
+  const allStatCards = [
     {
       title: "Toplam Müşteri",
       value: data.totalPatients.toLocaleString("tr-TR"),
@@ -285,6 +292,7 @@ export default function DashboardPage() {
       iconBg: "bg-[#FDF3E3]",
       iconColor: "text-[#EF9F27]",
       href: "/patients",
+      permKey: "customers",
     },
     {
       title: "Bugünün Randevuları",
@@ -297,6 +305,7 @@ export default function DashboardPage() {
       iconBg: "bg-emerald-50",
       iconColor: "text-emerald-600",
       href: "/appointments",
+      permKey: "appointments",
     },
     {
       title: "Aylık Gelir",
@@ -312,6 +321,7 @@ export default function DashboardPage() {
       estimatedProfit: data.estimatedProfit,
       unmatchedItemCount: data.unmatchedItemCount,
       href: "/finance",
+      permKey: "finance",
     },
     {
       title: "Stok Uyarıları",
@@ -325,8 +335,15 @@ export default function DashboardPage() {
       iconBg: lowStockCount > 0 ? "bg-red-50" : "bg-emerald-50",
       iconColor: lowStockCount > 0 ? "text-red-600" : "text-emerald-600",
       href: "/inventory",
+      permKey: "inventory",
     },
   ];
+
+  // Filter stat cards based on employee permissions
+  const statCards = allStatCards.filter((card) => {
+    if (!employeePerms) return true; // No restrictions (admin/owner)
+    return employeePerms[card.permKey] !== "none";
+  });
 
   return (
     <div className="space-y-6">

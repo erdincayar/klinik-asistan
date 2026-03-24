@@ -60,6 +60,7 @@ interface NavItem {
   label: string;
   icon: LucideIcon;
   minPlan: PlanTier;
+  permKey?: string; // maps to module permission key
 }
 
 const PLAN_LEVELS: Record<PlanTier, number> = {
@@ -81,19 +82,19 @@ function hasAccess(userPlan: PlanTier, requiredPlan: PlanTier): boolean {
 /* ──────────────────────── DATA ──────────────────────── */
 
 const navItems: NavItem[] = [
-  { href: "/dashboard", label: "Genel Bakış", icon: LayoutDashboard, minPlan: "BASIC" },
-  { href: "/patients", label: "Müşteriler", icon: Users, minPlan: "BASIC" },
-  { href: "/appointments", label: "Randevular", icon: Calendar, minPlan: "BASIC" },
-  { href: "/finance", label: "Finans", icon: DollarSign, minPlan: "BASIC" },
-  { href: "/inventory", label: "Stok/Envanter", icon: Package, minPlan: "PRO" },
-  { href: "/employees", label: "Çalışanlar", icon: UserCog, minPlan: "PRO" },
-  { href: "/hr", label: "İnsan Kaynakları", icon: ClipboardList, minPlan: "PRO" },
-  { href: "/marketing", label: "Pazarlama", icon: Megaphone, minPlan: "BUSINESS" },
-  { href: "/messaging", label: "Mesajlaşma", icon: MessageCircle, minPlan: "PRO" },
-  { href: "/ai-assistant", label: "AI Asistan", icon: Bot, minPlan: "PRO" },
-  { href: "/reports", label: "Raporlar", icon: BarChart3, minPlan: "BUSINESS" },
-  { href: "/alarmlar", label: "Alarmlar", icon: BellRing, minPlan: "PRO" },
-  { href: "/reminders", label: "Hatırlatmalar", icon: Bell, minPlan: "PRO" },
+  { href: "/dashboard", label: "Genel Bakış", icon: LayoutDashboard, minPlan: "BASIC", permKey: "dashboard" },
+  { href: "/patients", label: "Müşteriler", icon: Users, minPlan: "BASIC", permKey: "customers" },
+  { href: "/appointments", label: "Randevular", icon: Calendar, minPlan: "BASIC", permKey: "appointments" },
+  { href: "/finance", label: "Finans", icon: DollarSign, minPlan: "BASIC", permKey: "finance" },
+  { href: "/inventory", label: "Stok/Envanter", icon: Package, minPlan: "PRO", permKey: "inventory" },
+  { href: "/employees", label: "Çalışanlar", icon: UserCog, minPlan: "PRO", permKey: "employees" },
+  { href: "/hr", label: "İnsan Kaynakları", icon: ClipboardList, minPlan: "PRO", permKey: "hr" },
+  { href: "/marketing", label: "Pazarlama", icon: Megaphone, minPlan: "BUSINESS", permKey: "marketing" },
+  { href: "/messaging", label: "Mesajlaşma", icon: MessageCircle, minPlan: "PRO", permKey: "messaging" },
+  { href: "/ai-assistant", label: "AI Asistan", icon: Bot, minPlan: "PRO", permKey: "ai_assistant" },
+  { href: "/reports", label: "Raporlar", icon: BarChart3, minPlan: "BUSINESS", permKey: "reports" },
+  { href: "/alarmlar", label: "Alarmlar", icon: BellRing, minPlan: "PRO", permKey: "alarms" },
+  { href: "/reminders", label: "Hatırlatmalar", icon: Bell, minPlan: "PRO", permKey: "reminders" },
   { href: "/billing", label: "Abonelik", icon: CreditCard, minPlan: "BASIC" },
 ];
 
@@ -298,6 +299,20 @@ function Sidebar({
     isDemo ||
     userEmail === "admin@poby.ai";
 
+  // Employee permissions (for non-admin users who are linked as employees)
+  const [employeePerms, setEmployeePerms] = useState<Record<string, string> | null>(null);
+
+  useEffect(() => {
+    if (unlockAll) return;
+    // Fetch current user's employee record permissions
+    fetch("/api/employees/me/permissions")
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => {
+        if (d?.permissions) setEmployeePerms(d.permissions);
+      })
+      .catch(() => {});
+  }, [unlockAll]);
+
   // Unread alarm count
   const [unreadAlarmCount, setUnreadAlarmCount] = useState(0);
 
@@ -429,7 +444,13 @@ function Sidebar({
           >
             <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
               <div className="space-y-0.5">
-                {orderedItems.map((item) => {
+                {orderedItems.filter((item) => {
+                  // Hide items where employee has "none" permission
+                  if (!unlockAll && employeePerms && item.permKey && employeePerms[item.permKey] === "none") {
+                    return false;
+                  }
+                  return true;
+                }).map((item) => {
                   const isActive =
                     pathname === item.href ||
                     pathname.startsWith(item.href + "/");
