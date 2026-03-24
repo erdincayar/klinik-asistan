@@ -54,7 +54,8 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const parsed = treatmentSchema.safeParse(body);
+    const { customValues, ...treatmentBody } = body;
+    const parsed = treatmentSchema.safeParse(treatmentBody);
 
     if (!parsed.success) {
       return Response.json(
@@ -75,6 +76,33 @@ export async function POST(request: Request) {
         patient: { select: { name: true } },
       },
     });
+
+    // Save custom values if provided
+    if (Array.isArray(customValues) && customValues.length > 0) {
+      await Promise.all(
+        customValues.map((cv: { fieldKey: string; value: string }) =>
+          prisma.transactionCustomValue.create({
+            data: { treatmentId: treatment.id, fieldKey: cv.fieldKey, value: cv.value },
+          }),
+        ),
+      ).catch(() => {});
+    }
+
+    // Fire-and-forget: upsert service name and category for autocomplete
+    if (rest.name) {
+      prisma.clinicServiceName.upsert({
+        where: { clinicId_name: { clinicId, name: rest.name } },
+        update: { usageCount: { increment: 1 } },
+        create: { clinicId, name: rest.name },
+      }).catch(() => {});
+    }
+    if (rest.category) {
+      prisma.clinicCategory.upsert({
+        where: { clinicId_name: { clinicId, name: rest.category } },
+        update: { usageCount: { increment: 1 } },
+        create: { clinicId, name: rest.category },
+      }).catch(() => {});
+    }
 
     return Response.json(treatment, { status: 201 });
   } catch {

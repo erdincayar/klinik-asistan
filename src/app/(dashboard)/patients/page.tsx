@@ -22,12 +22,24 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+interface CustomValue {
+  columnKey: string;
+  value: string;
+}
+
+interface CustomColumn {
+  id: string;
+  columnName: string;
+  columnKey: string;
+}
+
 interface Patient {
   id: string;
   name: string;
   phone: string | null;
   email: string | null;
   _count?: { treatments: number };
+  customValues?: CustomValue[];
   createdAt: string;
 }
 
@@ -66,6 +78,11 @@ export default function PatientsPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [editingCell, setEditingCell] = useState<{ id: string; field: string } | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const [customColumns, setCustomColumns] = useState<CustomColumn[]>([]);
+  const [showAddColumn, setShowAddColumn] = useState(false);
+  const [newColumnName, setNewColumnName] = useState("");
 
   useEffect(() => {
     async function fetchPatients() {
@@ -86,6 +103,78 @@ export default function PatientsPage() {
     const timer = setTimeout(fetchPatients, 300);
     return () => clearTimeout(timer);
   }, [search]);
+
+  useEffect(() => {
+    fetch("/api/clinic/custom-columns")
+      .then((r) => r.ok ? r.json() : [])
+      .then(setCustomColumns)
+      .catch(() => {});
+  }, []);
+
+  async function handleAddColumn() {
+    if (!newColumnName.trim()) return;
+    try {
+      const res = await fetch("/api/clinic/custom-columns", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ columnName: newColumnName.trim() }),
+      });
+      if (res.ok) {
+        const col = await res.json();
+        setCustomColumns((prev) => [...prev, col]);
+        setNewColumnName("");
+        setShowAddColumn(false);
+      }
+    } catch {
+      // silent
+    }
+  }
+
+  async function handleCustomValueSave(patientId: string, columnKey: string, value: string) {
+    try {
+      await fetch(`/api/customers/${patientId}/custom-value`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ columnKey, value }),
+      });
+      setPatients((prev) =>
+        prev.map((p) => {
+          if (p.id !== patientId) return p;
+          const cvs = [...(p.customValues || [])];
+          const idx = cvs.findIndex((v) => v.columnKey === columnKey);
+          if (idx >= 0) cvs[idx] = { ...cvs[idx], value };
+          else cvs.push({ columnKey, value });
+          return { ...p, customValues: cvs };
+        }),
+      );
+    } catch {
+      // silent
+    }
+    setEditingCell(null);
+  }
+
+  async function handleInlineSave(patientId: string, field: string, value: string) {
+    try {
+      const res = await fetch(`/api/customers/${patientId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [field]: value }),
+      });
+      if (res.ok) {
+        setPatients((prev) =>
+          prev.map((p) => (p.id === patientId ? { ...p, [field]: value || null } : p)),
+        );
+      }
+    } catch {
+      // silent fail
+    }
+    setEditingCell(null);
+  }
+
+  function startEdit(patientId: string, field: string, currentValue: string | null) {
+    setEditingCell({ id: patientId, field });
+    setEditValue(currentValue || "");
+  }
 
   return (
     <div className="space-y-6">
@@ -226,7 +315,37 @@ export default function PatientsPage() {
                         <TableHead>Email</TableHead>
                         <TableHead>İşlem Sayısı</TableHead>
                         <TableHead>Kayıt Tarihi</TableHead>
-                        <TableHead></TableHead>
+                        {customColumns.map((col) => (
+                          <TableHead key={col.columnKey}>{col.columnName}</TableHead>
+                        ))}
+                        <TableHead>
+                          {showAddColumn ? (
+                            <div className="flex items-center gap-1">
+                              <Input
+                                autoFocus
+                                value={newColumnName}
+                                onChange={(e) => setNewColumnName(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") handleAddColumn();
+                                  if (e.key === "Escape") { setShowAddColumn(false); setNewColumnName(""); }
+                                }}
+                                placeholder="Sütun adı"
+                                className="h-7 w-28 text-xs"
+                              />
+                              <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={handleAddColumn}>
+                                Ekle
+                              </Button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setShowAddColumn(true)}
+                              className="flex h-6 w-6 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
+                              title="Özel sütun ekle"
+                            >
+                              <Plus className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -248,21 +367,79 @@ export default function PatientsPage() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            {patient.phone ? (
-                              <span className="text-sm text-gray-600">{patient.phone}</span>
+                            {editingCell?.id === patient.id && editingCell.field === "phone" ? (
+                              <Input
+                                autoFocus
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                onBlur={() => handleInlineSave(patient.id, "phone", editValue)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") handleInlineSave(patient.id, "phone", editValue);
+                                  if (e.key === "Escape") setEditingCell(null);
+                                }}
+                                className="h-8 w-36 text-sm"
+                              />
                             ) : (
-                              <span className="text-sm text-gray-300">&mdash;</span>
+                              <span
+                                className="cursor-pointer rounded px-1 py-0.5 text-sm text-gray-600 hover:bg-blue-50"
+                                onClick={() => startEdit(patient.id, "phone", patient.phone)}
+                              >
+                                {patient.phone || <span className="text-gray-300">&mdash;</span>}
+                              </span>
                             )}
                           </TableCell>
                           <TableCell>
-                            {patient.email ? (
-                              <span className="truncate text-sm text-gray-600">{patient.email}</span>
+                            {editingCell?.id === patient.id && editingCell.field === "email" ? (
+                              <Input
+                                autoFocus
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                onBlur={() => handleInlineSave(patient.id, "email", editValue)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") handleInlineSave(patient.id, "email", editValue);
+                                  if (e.key === "Escape") setEditingCell(null);
+                                }}
+                                className="h-8 w-44 text-sm"
+                              />
                             ) : (
-                              <span className="text-sm text-gray-300">&mdash;</span>
+                              <span
+                                className="cursor-pointer truncate rounded px-1 py-0.5 text-sm text-gray-600 hover:bg-blue-50"
+                                onClick={() => startEdit(patient.id, "email", patient.email)}
+                              >
+                                {patient.email || <span className="text-gray-300">&mdash;</span>}
+                              </span>
                             )}
                           </TableCell>
                           <TableCell>{patient._count?.treatments ?? 0}</TableCell>
                           <TableCell>{formatDate(patient.createdAt)}</TableCell>
+                          {customColumns.map((col) => {
+                            const cv = patient.customValues?.find((v) => v.columnKey === col.columnKey);
+                            const cellKey = `custom_${col.columnKey}`;
+                            return (
+                              <TableCell key={col.columnKey}>
+                                {editingCell?.id === patient.id && editingCell.field === cellKey ? (
+                                  <Input
+                                    autoFocus
+                                    value={editValue}
+                                    onChange={(e) => setEditValue(e.target.value)}
+                                    onBlur={() => handleCustomValueSave(patient.id, col.columnKey, editValue)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") handleCustomValueSave(patient.id, col.columnKey, editValue);
+                                      if (e.key === "Escape") setEditingCell(null);
+                                    }}
+                                    className="h-8 w-32 text-sm"
+                                  />
+                                ) : (
+                                  <span
+                                    className="cursor-pointer rounded px-1 py-0.5 text-sm text-gray-600 hover:bg-blue-50"
+                                    onClick={() => startEdit(patient.id, cellKey, cv?.value || "")}
+                                  >
+                                    {cv?.value || <span className="text-gray-300">&mdash;</span>}
+                                  </span>
+                                )}
+                              </TableCell>
+                            );
+                          })}
                           <TableCell>
                             <Link href={`/patients/${patient.id}`}>
                               <Button variant="outline" size="sm">

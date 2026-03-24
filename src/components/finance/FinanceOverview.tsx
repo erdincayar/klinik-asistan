@@ -15,6 +15,7 @@ import {
   Upload,
   Download,
   AlertTriangle,
+  Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -689,19 +690,30 @@ export default function FinanceOverview() {
                               <p className="text-[11px] text-gray-400">{row.sublabel}</p>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <span className="text-sm font-semibold text-emerald-700">{formatCurrency(row.amount)}</span>
-                            {row.type === "invoice" ? (
-                              <div className="flex items-center justify-end gap-1 mt-0.5">
-                                <span className={cn("text-[11px] font-medium", (row.grossProfit ?? 0) >= 0 ? "text-emerald-600" : "text-red-600")}>
-                                  Kâr: {formatCurrency(row.grossProfit ?? 0)}
-                                </span>
-                                {(row.unmatchedCount ?? 0) > 0 && (
-                                  <AlertTriangle className="h-3 w-3 text-yellow-500" />
-                                )}
-                              </div>
-                            ) : (
-                              <p className="text-[11px] text-gray-400 mt-0.5">—</p>
+                          <div className="flex items-center gap-2">
+                            <div className="text-right">
+                              <span className="text-sm font-semibold text-emerald-700">{formatCurrency(row.amount)}</span>
+                              {row.type === "invoice" ? (
+                                <div className="flex items-center justify-end gap-1 mt-0.5">
+                                  <span className={cn("text-[11px] font-medium", (row.grossProfit ?? 0) >= 0 ? "text-emerald-600" : "text-red-600")}>
+                                    Kâr: {formatCurrency(row.grossProfit ?? 0)}
+                                  </span>
+                                  {(row.unmatchedCount ?? 0) > 0 && (
+                                    <AlertTriangle className="h-3 w-3 text-yellow-500" />
+                                  )}
+                                </div>
+                              ) : (
+                                <p className="text-[11px] text-gray-400 mt-0.5">—</p>
+                              )}
+                            </div>
+                            {row.type === "treatment" && (
+                              <Link
+                                href={`/finance/new-income?edit=${row.id}`}
+                                className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
+                                title="Düzenle"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Link>
                             )}
                           </div>
                         </div>

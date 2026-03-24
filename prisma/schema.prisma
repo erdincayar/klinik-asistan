@@ -126,6 +126,10 @@ model Clinic {
   knowledgeBase         ClinicKnowledgeBase[]
   clinicConversations   ClinicConversation[]
   assistantAppointments AssistantAppointment[]
+  clinicServiceNames    ClinicServiceName[]
+  clinicCategories      ClinicCategory[]
+  customerCustomColumns CustomerCustomColumn[]
+  transactionCustomFields TransactionCustomField[]
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
 }
@@ -145,6 +149,7 @@ model Patient {
   reminderLogs ReminderLog[]
   invoices     Invoice[]
   photos       PatientPhoto[]
+  customValues CustomerCustomValue[]
   createdAt    DateTime             @default(now())
   updatedAt    DateTime             @updatedAt
 }
@@ -166,6 +171,7 @@ model Treatment {
   employeeId  String?
   employee    Employee? @relation(fields: [employeeId], references: [id])
   invoices    Invoice[]
+  customValues TransactionCustomValue[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
@@ -921,4 +927,76 @@ model FixedAsset {
   notes         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+}
+
+// ═══════════════════════════════════════════════════════════
+// Autocomplete & Custom Fields
+// ═══════════════════════════════════════════════════════════
+
+model ClinicServiceName {
+  id         String   @id @default(cuid())
+  clinicId   String
+  clinic     Clinic   @relation(fields: [clinicId], references: [id])
+  name       String
+  usageCount Int      @default(1)
+  createdAt  DateTime @default(now())
+
+  @@unique([clinicId, name])
+}
+
+model ClinicCategory {
+  id         String   @id @default(cuid())
+  clinicId   String
+  clinic     Clinic   @relation(fields: [clinicId], references: [id])
+  name       String
+  usageCount Int      @default(1)
+  createdAt  DateTime @default(now())
+
+  @@unique([clinicId, name])
+}
+
+model CustomerCustomColumn {
+  id         String   @id @default(cuid())
+  clinicId   String
+  clinic     Clinic   @relation(fields: [clinicId], references: [id])
+  columnName String
+  columnKey  String
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@unique([clinicId, columnKey])
+}
+
+model CustomerCustomValue {
+  id         String   @id @default(cuid())
+  customerId String
+  patient    Patient  @relation(fields: [customerId], references: [id])
+  columnKey  String
+  value      String   @default("")
+  updatedAt  DateTime @updatedAt
+
+  @@unique([customerId, columnKey])
+}
+
+model TransactionCustomField {
+  id        String   @id @default(cuid())
+  clinicId  String
+  clinic    Clinic   @relation(fields: [clinicId], references: [id])
+  fieldName String
+  fieldKey  String
+  fieldType String   @default("text") // text | number | date
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@unique([clinicId, fieldKey])
+}
+
+model TransactionCustomValue {
+  id          String    @id @default(cuid())
+  treatmentId String
+  treatment   Treatment @relation(fields: [treatmentId], references: [id])
+  fieldKey    String
+  value       String    @default("")
+
+  @@unique([treatmentId, fieldKey])
 }

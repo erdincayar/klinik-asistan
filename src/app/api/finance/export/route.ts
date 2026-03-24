@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { buildExcelBuffer, formatDateTR, formatAmountTR } from "@/lib/utils/export";
 
 export async function GET(req: NextRequest) {
   try {
@@ -21,7 +22,6 @@ export async function GET(req: NextRequest) {
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 1);
 
-    // Fetch income (treatments) and expenses
     const [treatments, expenses] = await Promise.all([
       prisma.treatment.findMany({
         where: { clinicId, date: { gte: startDate, lt: endDate } },
@@ -34,37 +34,33 @@ export async function GET(req: NextRequest) {
       }),
     ]);
 
-    // Build CSV
-    const header = "Tür,Tarih,Açıklama,Müşteri,Kategori,Tutar (TL)";
-    const incomeRows = treatments.map((t) => {
-      const type = "Gelir";
-      const date = new Date(t.date).toLocaleDateString("tr-TR");
-      const desc = `"${(t.name || "").replace(/"/g, '""')}"`;
-      const patient = `"${(t.patient?.name || "").replace(/"/g, '""')}"`;
-      const cat = t.category || "";
-      const amount = (t.amount / 100).toFixed(2);
-      return `${type},${date},${desc},${patient},${cat},${amount}`;
-    });
-
-    const expenseRows = expenses.map((e) => {
-      const type = "Gider";
-      const date = new Date(e.date).toLocaleDateString("tr-TR");
-      const desc = `"${(e.description || "").replace(/"/g, '""')}"`;
-      const patient = "";
-      const cat = e.category || "";
-      const amount = `-${(e.amount / 100).toFixed(2)}`;
-      return `${type},${date},${desc},${patient},${cat},${amount}`;
-    });
-
-    const csv = [header, ...incomeRows, ...expenseRows].join("\n");
-    const bom = "\uFEFF";
+    const rows: Record<string, unknown>[] = [
+      ...treatments.map((t) => ({
+        "Tür": "Gelir",
+        "Tarih": formatDateTR(t.date),
+        "Açıklama": t.name || "",
+        "Müşteri": t.patient?.name || "",
+        "Kategori": t.category || "",
+        "Tutar (TL)": formatAmountTR(t.amount),
+      })),
+      ...expenses.map((e) => ({
+        "Tür": "Gider",
+        "Tarih": formatDateTR(e.date),
+        "Açıklama": e.description || "",
+        "Müşteri": "",
+        "Kategori": e.category || "",
+        "Tutar (TL)": formatAmountTR(-e.amount),
+      })),
+    ];
 
     const monthNames = ["Ocak", "Subat", "Mart", "Nisan", "Mayis", "Haziran", "Temmuz", "Agustos", "Eylul", "Ekim", "Kasim", "Aralik"];
-    const filename = `finans-${monthNames[month - 1]}-${year}.csv`;
+    const filename = `finans-${monthNames[month - 1]}-${year}.xlsx`;
 
-    return new NextResponse(bom + csv, {
+    const buf = buildExcelBuffer(rows, "Finans");
+
+    return new NextResponse(buf, {
       headers: {
-        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "Content-Disposition": `attachment; filename="${filename}"`,
       },
     });

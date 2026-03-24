@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { buildExcelBuffer, formatDateTR } from "@/lib/utils/export";
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
@@ -19,28 +20,42 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: "desc" },
       include: {
         _count: { select: { treatments: true } },
+        customValues: true,
       },
     });
 
-    // Generate CSV as a simple export (ExcelJS would need npm install)
-    const header = "Ad Soyad,Telefon,Email,Notlar,İşlem Sayısı,Kayıt Tarihi";
-    const rows = patients.map((p) => {
-      const name = `"${(p.name || "").replace(/"/g, '""')}"`;
-      const phone = `"${(p.phone || "").replace(/"/g, '""')}"`;
-      const email = `"${(p.email || "").replace(/"/g, '""')}"`;
-      const notes = `"${(p.notes || "").replace(/"/g, '""')}"`;
-      const treatments = p._count?.treatments || 0;
-      const date = new Date(p.createdAt).toLocaleDateString("tr-TR");
-      return `${name},${phone},${email},${notes},${treatments},${date}`;
+    // Get custom columns for this clinic
+    const customColumns = await prisma.customerCustomColumn.findMany({
+      where: { clinicId },
+      orderBy: { sortOrder: "asc" },
     });
 
-    const csv = [header, ...rows].join("\n");
-    const bom = "\uFEFF";
+    const rows: Record<string, unknown>[] = patients.map((p) => {
+      const base: Record<string, unknown> = {
+        "Ad Soyad": p.name,
+        "Telefon": p.phone || "",
+        "Email": p.email || "",
+        "Notlar": p.notes || "",
+        "İşlem Sayısı": p._count?.treatments || 0,
+        "Kayıt Tarihi": formatDateTR(p.createdAt),
+      };
+      // Add custom column values
+      for (const col of customColumns) {
+        const cv = p.customValues.find((v) => v.columnKey === col.columnKey);
+        base[col.columnName] = cv?.value || "";
+      }
+      return base;
+    });
 
-    return new NextResponse(bom + csv, {
+    const dateStr = new Date().toISOString().split("T")[0];
+    const filename = `musteriler-${dateStr}.xlsx`;
+
+    const buf = buildExcelBuffer(rows, "Müşteriler");
+
+    return new NextResponse(buf, {
       headers: {
-        "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="musteriler-${new Date().toISOString().split("T")[0]}.csv"`,
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="${filename}"`,
       },
     });
   } catch (error) {

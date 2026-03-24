@@ -30,6 +30,7 @@ export async function GET(request: Request) {
       },
       include: {
         _count: { select: { treatments: true } },
+        customValues: true,
       },
       orderBy: { createdAt: "desc" },
     });
