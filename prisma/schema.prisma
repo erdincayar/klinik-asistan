@@ -154,6 +154,7 @@ model Patient {
   invoices     Invoice[]
   photos       PatientPhoto[]
   customValues CustomerCustomValue[]
+  alarms       Alarm[]
   createdAt    DateTime             @default(now())
   updatedAt    DateTime             @updatedAt
 }
@@ -734,10 +735,17 @@ model Alarm {
   type            String    // STOCK, CUSTOMER_VISIT, CUSTOMER_BIRTHDAY, FINANCE
   conditions      Json
   isActive        Boolean   @default(true)
+  isGroup         Boolean   @default(false)
+  groupName       String?
+  customerId      String?
+  customer        Patient?  @relation(fields: [customerId], references: [id], onDelete: SetNull)
   lastTriggeredAt DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   logs            AlarmLog[]
+
+  @@index([clinicId, groupName])
+  @@index([clinicId, customerId])
 }
 
 model AlarmLog {

@@ -7,6 +7,9 @@ const createSchema = z.object({
   type: z.enum(["STOCK", "CUSTOMER_VISIT", "CUSTOMER_BIRTHDAY", "FINANCE"]),
   conditions: z.record(z.string(), z.any()),
   isActive: z.boolean().optional(),
+  isGroup: z.boolean().optional(),
+  groupName: z.string().optional(),
+  customerId: z.string().optional(),
 });
 
 export async function GET() {
@@ -24,6 +27,7 @@ export async function GET() {
       where: { clinicId },
       include: {
         _count: { select: { logs: true } },
+        customer: { select: { id: true, name: true } },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -58,6 +62,9 @@ export async function POST(request: Request) {
         type: parsed.data.type,
         conditions: parsed.data.conditions,
         isActive: parsed.data.isActive ?? true,
+        isGroup: parsed.data.isGroup ?? false,
+        groupName: parsed.data.groupName,
+        customerId: parsed.data.customerId,
       },
     });
 

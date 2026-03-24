@@ -107,9 +107,14 @@ async function checkCustomerVisitAlarm(
 ): Promise<number> {
   const multiplier = conditions.multiplier ?? 2;
 
-  // Get patients with 3+ treatments
+  // Build patient query — if customerId is set, check only that patient
+  const patientWhere: any = { clinicId };
+  if (conditions.customerId) {
+    patientWhere.id = conditions.customerId;
+  }
+
   const patients = await prisma.patient.findMany({
-    where: { clinicId },
+    where: patientWhere,
     select: {
       id: true,
       name: true,
@@ -125,24 +130,32 @@ async function checkCustomerVisitAlarm(
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
   for (const patient of patients) {
-    if (patient.treatments.length < 3) continue;
-
-    // Calculate average interval
-    const intervals: number[] = [];
-    for (let i = 1; i < patient.treatments.length; i++) {
-      const diff =
-        new Date(patient.treatments[i].date).getTime() -
-        new Date(patient.treatments[i - 1].date).getTime();
-      intervals.push(diff / (1000 * 60 * 60 * 24));
+    // For bulk alarms with pre-computed thresholdDays, use it directly
+    let threshold: number;
+    if (conditions.thresholdDays) {
+      // Bulk alarm — threshold is pre-computed
+      if (patient.treatments.length < 1) continue;
+      threshold = conditions.thresholdDays;
+    } else {
+      // Generic alarm — calculate from avgInterval
+      if (patient.treatments.length < 3) continue;
+      const intervals: number[] = [];
+      for (let i = 1; i < patient.treatments.length; i++) {
+        const diff =
+          new Date(patient.treatments[i].date).getTime() -
+          new Date(patient.treatments[i - 1].date).getTime();
+        intervals.push(diff / (1000 * 60 * 60 * 24));
+      }
+      const avgInterval = intervals.reduce((s, d) => s + d, 0) / intervals.length;
+      threshold = avgInterval * multiplier;
     }
-    const avgInterval = intervals.reduce((s, d) => s + d, 0) / intervals.length;
 
     const lastVisit = patient.treatments[patient.treatments.length - 1].date;
     const daysSince = Math.floor(
       (now.getTime() - new Date(lastVisit).getTime()) / (1000 * 60 * 60 * 24),
     );
 
-    if (daysSince > avgInterval * multiplier) {
+    if (daysSince > threshold) {
       // Dedup: skip if log exists for same patient in last 7 days
       const existing = await prisma.alarmLog.findFirst({
         where: {
@@ -157,7 +170,7 @@ async function checkCustomerVisitAlarm(
         data: {
           alarmId,
           clinicId,
-          message: `${patient.name} ${daysSince} gündür ziyaret etmedi (ort. aralık: ${Math.round(avgInterval)} gün)`,
+          message: `${patient.name} ${daysSince} gündür ziyaret etmedi (eşik: ${Math.round(threshold)} gün)`,
           entityId: patient.id,
           entityName: patient.name,
         },
@@ -176,8 +189,13 @@ async function checkBirthdayAlarm(
 ): Promise<number> {
   const daysBefore = conditions.daysBefore ?? 3;
 
+  const patientWhere: any = { clinicId, dateOfBirth: { not: null } };
+  if (conditions.customerId) {
+    patientWhere.id = conditions.customerId;
+  }
+
   const patients = await prisma.patient.findMany({
-    where: { clinicId, dateOfBirth: { not: null } },
+    where: patientWhere,
     select: { id: true, name: true, dateOfBirth: true },
   });
 
