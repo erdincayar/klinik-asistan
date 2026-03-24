@@ -31,11 +31,45 @@ export async function GET(request: Request) {
       include: {
         _count: { select: { treatments: true } },
         customValues: true,
+        treatments: { orderBy: { date: "asc" as const }, select: { date: true } },
       },
       orderBy: { createdAt: "desc" },
     });
 
-    return Response.json(patients);
+    // Get alert rule threshold
+    const alertRule = await prisma.customerAlertRule.findFirst({
+      where: { clinicId, alertType: "no_visit", isActive: true },
+    });
+    const thresholdDays = alertRule?.thresholdDays ?? 60;
+
+    const result = patients.map((p) => {
+      const { treatments, ...rest } = p;
+      let riskStatus: "new" | "active" | "warning" | "risk" = "new";
+
+      if (treatments.length > 0) {
+        const last = treatments[treatments.length - 1].date;
+        const daysSince = Math.floor(
+          (Date.now() - new Date(last).getTime()) / (1000 * 60 * 60 * 24),
+        );
+        let expectedInterval = thresholdDays;
+        if (treatments.length >= 2) {
+          const intervals: number[] = [];
+          for (let i = 1; i < treatments.length; i++) {
+            const diff = new Date(treatments[i].date).getTime() - new Date(treatments[i - 1].date).getTime();
+            intervals.push(diff / (1000 * 60 * 60 * 24));
+          }
+          expectedInterval = Math.round(intervals.reduce((s, d) => s + d, 0) / intervals.length);
+        }
+
+        if (daysSince <= expectedInterval) riskStatus = "active";
+        else if (daysSince <= expectedInterval * 1.5) riskStatus = "warning";
+        else riskStatus = "risk";
+      }
+
+      return { ...rest, riskStatus };
+    });
+
+    return Response.json(result);
   } catch {
     return Response.json({ error: "Bir hata oluştu" }, { status: 500 });
   }

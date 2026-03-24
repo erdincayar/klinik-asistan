@@ -66,6 +66,13 @@ interface CrmStats {
   status: "new" | "active" | "warning" | "risk";
 }
 
+interface AlertRule {
+  id: string;
+  alertType: string;
+  thresholdDays: number;
+  isActive: boolean;
+}
+
 const DEFAULT_CATEGORIES = ["Genel"];
 
 const treatmentLabels: Record<string, string> = {
@@ -107,6 +114,11 @@ export default function PatientDetailPage() {
 
   // CRM stats
   const [crmStats, setCrmStats] = useState<CrmStats | null>(null);
+
+  // Alert rules
+  const [alertRules, setAlertRules] = useState<AlertRule[]>([]);
+  const [alertThreshold, setAlertThreshold] = useState(60);
+  const [savingAlert, setSavingAlert] = useState(false);
 
   // Photo states
   const [photoFilter, setPhotoFilter] = useState("ALL");
@@ -199,6 +211,46 @@ export default function PatientDetailPage() {
     }
   }, [params.id]);
 
+  const fetchAlertRules = useCallback(async () => {
+    try {
+      const res = await fetch("/api/clinic/alert-rules");
+      if (res.ok) {
+        const data = await res.json();
+        setAlertRules(data);
+        const noVisit = data.find((r: AlertRule) => r.alertType === "no_visit");
+        if (noVisit) setAlertThreshold(noVisit.thresholdDays);
+      }
+    } catch {
+      // silent
+    }
+  }, []);
+
+  async function handleSaveAlert() {
+    setSavingAlert(true);
+    try {
+      const existing = alertRules.find((r) => r.alertType === "no_visit");
+      if (existing) {
+        await fetch(`/api/clinic/alert-rules/${existing.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ thresholdDays: alertThreshold }),
+        });
+      } else {
+        await fetch("/api/clinic/alert-rules", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ alertType: "no_visit", thresholdDays: alertThreshold }),
+        });
+      }
+      await fetchAlertRules();
+      await fetchCrmStats();
+    } catch {
+      // silent
+    } finally {
+      setSavingAlert(false);
+    }
+  }
+
   useEffect(() => {
     async function fetchPatient() {
       try {
@@ -222,7 +274,8 @@ export default function PatientDetailPage() {
     fetchPhotos();
     fetchCategories();
     fetchCrmStats();
-  }, [params.id, fetchPhotos, fetchCategories, fetchCrmStats]);
+    fetchAlertRules();
+  }, [params.id, fetchPhotos, fetchCategories, fetchCrmStats, fetchAlertRules]);
 
   async function handleDeletePatient() {
     if (!confirm(`"${patient?.name}" müşterisini silmek istediğinize emin misiniz? Tüm tedavi kayıtları da silinecektir.`)) return;
@@ -501,8 +554,80 @@ export default function PatientDetailPage() {
               </p>
             </div>
           </div>
+
+          {/* Risk Durumu detay */}
+          {crmStats.daysSinceLastVisit != null && (
+            <div className="border-t border-gray-100 px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-gray-500">Son ziyaretten bu yana</p>
+                  <p className="text-lg font-bold text-gray-900">{crmStats.daysSinceLastVisit} gün</p>
+                </div>
+                <div className="space-y-1 text-right">
+                  <p className="text-xs font-medium text-gray-500">Beklenen aralık</p>
+                  <p className="text-sm font-semibold text-gray-600">
+                    {crmStats.avgIntervalDays ?? crmStats.thresholdDays ?? 60} gün
+                  </p>
+                </div>
+                <div className="space-y-1 text-right">
+                  <p className="text-xs font-medium text-gray-500">Durum</p>
+                  {sc && (
+                    <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${sc.color}`}>
+                      {crmStats.status === "active" && "🟢"}
+                      {crmStats.status === "warning" && "🟡"}
+                      {crmStats.status === "risk" && "🔴"}
+                      {sc.label}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </motion.div>
       )}
+
+      {/* Alarm Kuralları */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.04 }}
+        className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
+      >
+        <div className="flex items-center gap-2 border-b border-gray-100 px-6 py-4">
+          <AlertTriangle className="h-4 w-4 text-amber-500" />
+          <h2 className="text-sm font-semibold text-gray-900">Alarm Kuralları</h2>
+        </div>
+        <div className="p-6">
+          <div className="flex flex-wrap items-end gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-gray-600">
+                Müşteri kaç gün ziyaret etmezse uyar?
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min={1}
+                  value={alertThreshold}
+                  onChange={(e) => setAlertThreshold(Number(e.target.value) || 1)}
+                  className="w-20 rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                />
+                <span className="text-sm text-gray-500">gün</span>
+              </div>
+            </div>
+            <button
+              onClick={handleSaveAlert}
+              disabled={savingAlert}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+            >
+              {savingAlert ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+              {savingAlert ? "Kaydediliyor..." : "Kaydet"}
+            </button>
+          </div>
+          <p className="mt-3 text-[11px] text-gray-400">
+            Bu süre aşıldığında müşteri listesinde uyarı badge&apos;i gösterilir. Varsayılan: 60 gün.
+          </p>
+        </div>
+      </motion.div>
 
       {/* Photos Section */}
       <motion.div

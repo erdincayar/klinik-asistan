@@ -48,7 +48,15 @@ interface Patient {
   _count?: { treatments: number };
   customValues?: CustomValue[];
   createdAt: string;
+  riskStatus?: "new" | "active" | "warning" | "risk";
 }
+
+const riskBadge: Record<string, { label: string; color: string; emoji: string } | null> = {
+  new: null,
+  active: null,
+  warning: { label: "Dikkat", color: "bg-yellow-50 text-yellow-700 border-yellow-200", emoji: "🟡" },
+  risk: { label: "Kayıp Riski", color: "bg-red-50 text-red-700 border-red-200", emoji: "🔴" },
+};
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
@@ -450,7 +458,14 @@ export default function PatientsPage() {
                             .slice(0, 2)}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-gray-900">{patient.name}</p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="truncate text-sm font-medium text-gray-900">{patient.name}</p>
+                            {patient.riskStatus && riskBadge[patient.riskStatus] && (
+                              <span className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold ${riskBadge[patient.riskStatus]!.color}`}>
+                                {riskBadge[patient.riskStatus]!.emoji} {riskBadge[patient.riskStatus]!.label}
+                              </span>
+                            )}
+                          </div>
                           <div className="flex items-center gap-3 text-xs text-gray-500">
                             {patient.phone && (
                               <span className="flex items-center gap-1">
@@ -546,6 +561,11 @@ export default function PatientsPage() {
                               <span className="text-sm font-medium text-gray-900">
                                 {patient.name}
                               </span>
+                              {patient.riskStatus && riskBadge[patient.riskStatus] && (
+                                <span className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${riskBadge[patient.riskStatus]!.color}`}>
+                                  {riskBadge[patient.riskStatus]!.emoji} {riskBadge[patient.riskStatus]!.label}
+                                </span>
+                              )}
                             </div>
                           </TableCell>
                           <TableCell>
