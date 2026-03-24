@@ -597,23 +597,19 @@ export default function Home() {
     }
   }
 
-  async function handleSectorSelect(id: string) {
+  // Navigation is instant — no backend dependency for steps 0-2
+  function handleSectorSelect(id: string) {
     setObSector(id);
     setObError(null);
-    const sid = await startSession();
-    if (id !== "other" && sid) {
-      obFireUpdate({ sector: id });
+    if (id !== "other") {
       setObDirection(1);
       setObStep(1);
       heroRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }
 
-  async function handleSectorCustomSubmit() {
+  function handleSectorCustomSubmit() {
     if (!obSectorCustom.trim()) return;
-    const sid = await startSession();
-    if (!sid) return;
-    obFireUpdate({ sector: "other", sectorCustom: obSectorCustom.trim() });
     setObDirection(1);
     setObStep(1);
     heroRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -621,7 +617,6 @@ export default function Home() {
 
   function handleTeamSelect(id: string) {
     setObTeamSize(id);
-    obFireUpdate({ teamSize: id });
     obGoNext();
   }
 
@@ -636,23 +631,22 @@ export default function Home() {
   async function handleAnalyze() {
     if (obPainPoints.size === 0) return;
     setObError(null);
-
-    // Ensure session exists
-    let sid = obSessionIdRef.current;
-    if (!sid) {
-      sid = await startSession();
-      if (!sid) {
-        setObError("Oturum başlatılamadı. Lütfen sayfayı yenileyip tekrar deneyin.");
-        return;
-      }
-    }
-
-    // Stay on step 2 with loading state — only move to step 3 on success
     setObAnalyzing(true);
 
     try {
-      // Await painPoints update so DB has the data before analyze
-      await obFireUpdate({ painPoints: Array.from(obPainPoints) });
+      // Create session + save all collected data in one go
+      const sid = await startSession();
+      if (!sid) {
+        throw new Error("Oturum başlatılamadı. Lütfen sayfayı yenileyip tekrar deneyin.");
+      }
+
+      // Send all profile data before analyze
+      await obFireUpdate({
+        sector: obSector === "other" ? "other" : obSector,
+        sectorCustom: obSector === "other" ? obSectorCustom.trim() : undefined,
+        teamSize: obTeamSize,
+        painPoints: Array.from(obPainPoints),
+      });
 
       const res = await fetch("/api/onboarding/analyze", {
         method: "POST",
