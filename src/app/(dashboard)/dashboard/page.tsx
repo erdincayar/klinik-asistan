@@ -41,6 +41,7 @@ interface DashboardData {
   estimatedProfit: number;
   unmatchedItemCount: number;
   totalPatients: number;
+  unreadAlarmCount?: number;
   pendingReminders: number;
   recentTreatments: {
     id: string;
@@ -431,6 +432,23 @@ export default function DashboardPage() {
           </div>
           <ArrowRight className="ml-auto h-4 w-4 text-[#EF9F27]" />
         </motion.button>
+      )}
+
+      {/* ── ALARM WARNING ── */}
+      {data.unreadAlarmCount != null && data.unreadAlarmCount > 0 && (
+        <Link href="/alarmlar">
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 transition-colors hover:bg-amber-100 cursor-pointer"
+          >
+            <Bell className="h-5 w-5 text-amber-600" />
+            <span className="text-sm font-medium text-amber-800">
+              {data.unreadAlarmCount} okunmamış alarm
+            </span>
+            <ArrowRight className="ml-auto h-4 w-4 text-amber-500" />
+          </motion.div>
+        </Link>
       )}
 
       {/* ── STAT CARDS ── */}

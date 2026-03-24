@@ -36,37 +36,41 @@ export async function GET(request: Request) {
       orderBy: { createdAt: "desc" },
     });
 
-    // Get alert rule threshold
-    const alertRule = await prisma.customerAlertRule.findFirst({
-      where: { clinicId, alertType: "no_visit", isActive: true },
-    });
-    const thresholdDays = alertRule?.thresholdDays ?? 60;
-
     const result = patients.map((p) => {
       const { treatments, ...rest } = p;
       let riskStatus: "new" | "active" | "warning" | "risk" = "new";
+      let daysSinceLastVisit: number | null = null;
 
       if (treatments.length > 0) {
         const last = treatments[treatments.length - 1].date;
-        const daysSince = Math.floor(
+        daysSinceLastVisit = Math.floor(
           (Date.now() - new Date(last).getTime()) / (1000 * 60 * 60 * 24),
         );
-        let expectedInterval = thresholdDays;
-        if (treatments.length >= 2) {
+
+        if (treatments.length < 3) {
+          // Not enough data for ratio-based analysis
+          riskStatus = "new";
+        } else {
+          // Calculate average interval
           const intervals: number[] = [];
           for (let i = 1; i < treatments.length; i++) {
             const diff = new Date(treatments[i].date).getTime() - new Date(treatments[i - 1].date).getTime();
             intervals.push(diff / (1000 * 60 * 60 * 24));
           }
-          expectedInterval = Math.round(intervals.reduce((s, d) => s + d, 0) / intervals.length);
-        }
+          const avgInterval = Math.round(intervals.reduce((s, d) => s + d, 0) / intervals.length);
 
-        if (daysSince <= expectedInterval) riskStatus = "active";
-        else if (daysSince <= expectedInterval * 1.5) riskStatus = "warning";
-        else riskStatus = "risk";
+          if (avgInterval > 0) {
+            const ratio = daysSinceLastVisit / avgInterval;
+            if (ratio < 1.5) riskStatus = "active";
+            else if (ratio <= 2.0) riskStatus = "warning";
+            else riskStatus = "risk";
+          } else {
+            riskStatus = "active";
+          }
+        }
       }
 
-      return { ...rest, riskStatus };
+      return { ...rest, riskStatus, daysSinceLastVisit };
     });
 
     return Response.json(result);

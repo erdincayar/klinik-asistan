@@ -28,6 +28,7 @@ export async function GET() {
       recentTreatments,
       pendingReminders,
       todayAppointments,
+      unreadAlarmCount,
     ] = await Promise.all([
       prisma.patient.count({ where: { clinicId } }),
       prisma.treatment.findMany({
@@ -54,6 +55,7 @@ export async function GET() {
         include: { patient: { select: { name: true } } },
         orderBy: { startTime: "asc" },
       }),
+      prisma.alarmLog.count({ where: { clinicId, isRead: false } }),
     ]);
 
     const monthlyIncome = monthlyTreatments.reduce((sum, t) => sum + (t.amount ?? 0), 0)
@@ -95,6 +97,7 @@ export async function GET() {
       })),
       estimatedProfit,
       unmatchedItemCount,
+      unreadAlarmCount,
       pendingReminders,
       todayAppointments: todayAppointments.map((a) => ({
         id: a.id,

@@ -49,14 +49,21 @@ interface Patient {
   customValues?: CustomValue[];
   createdAt: string;
   riskStatus?: "new" | "active" | "warning" | "risk";
+  daysSinceLastVisit?: number | null;
 }
 
-const riskBadge: Record<string, { label: string; color: string; emoji: string } | null> = {
-  new: null,
-  active: null,
-  warning: { label: "Dikkat", color: "bg-yellow-50 text-yellow-700 border-yellow-200", emoji: "🟡" },
-  risk: { label: "Kayıp Riski", color: "bg-red-50 text-red-700 border-red-200", emoji: "🔴" },
-};
+function getRiskBadge(status?: string, daysSince?: number | null): { label: string; color: string; emoji: string } | null {
+  if (!status) return null;
+  if (status === "warning") {
+    const days = daysSince != null ? `${daysSince} gündür gelmedi` : "Dikkat";
+    return { label: days, color: "bg-yellow-50 text-yellow-700 border-yellow-200", emoji: "🟡" };
+  }
+  if (status === "risk") {
+    const days = daysSince != null ? `${daysSince} gündür gelmedi` : "Kayıp Riski";
+    return { label: days, color: "bg-red-50 text-red-700 border-red-200", emoji: "🔴" };
+  }
+  return null;
+}
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
@@ -100,6 +107,9 @@ export default function PatientsPage() {
   const [newColumnName, setNewColumnName] = useState("");
   const [columnEditMode, setColumnEditMode] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  // Risk filter
+  const [riskFilter, setRiskFilter] = useState<"all" | "active" | "warning" | "risk">("all");
 
   // Export modal state
   const [showExportModal, setShowExportModal] = useState(false);
@@ -252,6 +262,10 @@ export default function PatientsPage() {
     }
   }
 
+  const filteredPatients = riskFilter === "all"
+    ? patients
+    : patients.filter((p) => p.riskStatus === riskFilter);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -261,14 +275,26 @@ export default function PatientsPage() {
         transition={{ duration: 0.4 }}
         className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
       >
-        <div className="relative max-w-md flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <Input
-            placeholder="Müşteri ara..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="block w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-          />
+        <div className="flex items-center gap-3 max-w-xl flex-1">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Input
+              placeholder="Müşteri ara..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="block w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            />
+          </div>
+          <select
+            value={riskFilter}
+            onChange={(e) => setRiskFilter(e.target.value as any)}
+            className="rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+          >
+            <option value="all">Tümü</option>
+            <option value="active">Aktif</option>
+            <option value="warning">Dikkat</option>
+            <option value="risk">Kayıp Riski</option>
+          </select>
         </div>
         <div className="flex gap-2">
           <Link href="/customers/import">
@@ -384,9 +410,9 @@ export default function PatientsPage() {
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-blue-600" />
                 <CardTitle>Müşteri Listesi</CardTitle>
-                {!loading && patients.length > 0 && (
+                {!loading && filteredPatients.length > 0 && (
                   <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700">
-                    {patients.length}
+                    {filteredPatients.length}
                   </span>
                 )}
               </div>
@@ -421,7 +447,7 @@ export default function PatientsPage() {
                   </button>
                 </div>
               </div>
-            ) : patients.length === 0 ? (
+            ) : filteredPatients.length === 0 ? (
               <div className="flex min-h-[300px] items-center justify-center p-6">
                 <div className="text-center">
                   <Users className="mx-auto mb-3 h-10 w-10 text-gray-300" />
@@ -443,7 +469,7 @@ export default function PatientsPage() {
               <>
                 {/* Mobile card view */}
                 <div className="space-y-2 md:hidden">
-                  {patients.map((patient, i) => (
+                  {filteredPatients.map((patient, i) => (
                     <motion.div key={patient.id} variants={fadeUp} initial="hidden" animate="visible" custom={i}>
                       <Link
                         href={`/patients/${patient.id}`}
@@ -460,11 +486,14 @@ export default function PatientsPage() {
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
                             <p className="truncate text-sm font-medium text-gray-900">{patient.name}</p>
-                            {patient.riskStatus && riskBadge[patient.riskStatus] && (
-                              <span className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold ${riskBadge[patient.riskStatus]!.color}`}>
-                                {riskBadge[patient.riskStatus]!.emoji} {riskBadge[patient.riskStatus]!.label}
-                              </span>
-                            )}
+                            {(() => {
+                              const badge = getRiskBadge(patient.riskStatus, patient.daysSinceLastVisit);
+                              return badge ? (
+                                <span className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold ${badge.color}`}>
+                                  {badge.emoji} {badge.label}
+                                </span>
+                              ) : null;
+                            })()}
                           </div>
                           <div className="flex items-center gap-3 text-xs text-gray-500">
                             {patient.phone && (
@@ -546,7 +575,7 @@ export default function PatientsPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {patients.map((patient, i) => (
+                      {filteredPatients.map((patient, i) => (
                         <motion.tr key={patient.id} variants={fadeUp} initial="hidden" animate="visible" custom={i}>
                           <TableCell>
                             <div className="flex items-center gap-3">
@@ -561,11 +590,14 @@ export default function PatientsPage() {
                               <span className="text-sm font-medium text-gray-900">
                                 {patient.name}
                               </span>
-                              {patient.riskStatus && riskBadge[patient.riskStatus] && (
-                                <span className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${riskBadge[patient.riskStatus]!.color}`}>
-                                  {riskBadge[patient.riskStatus]!.emoji} {riskBadge[patient.riskStatus]!.label}
-                                </span>
-                              )}
+                              {(() => {
+                                const badge = getRiskBadge(patient.riskStatus, patient.daysSinceLastVisit);
+                                return badge ? (
+                                  <span className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${badge.color}`}>
+                                    {badge.emoji} {badge.label}
+                                  </span>
+                                ) : null;
+                              })()}
                             </div>
                           </TableCell>
                           <TableCell>

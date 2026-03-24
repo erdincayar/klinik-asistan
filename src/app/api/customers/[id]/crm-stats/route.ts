@@ -42,9 +42,9 @@ export async function GET(
     const firstVisit = treatments[0].date;
     const lastVisit = treatments[treatments.length - 1].date;
 
-    // Calculate average visit interval
+    // Calculate average visit interval (need 3+ visits for meaningful analysis)
     let avgIntervalDays: number | null = null;
-    if (treatments.length >= 2) {
+    if (treatments.length >= 3) {
       const intervals: number[] = [];
       for (let i = 1; i < treatments.length; i++) {
         const diff = new Date(treatments[i].date).getTime() - new Date(treatments[i - 1].date).getTime();
@@ -53,25 +53,25 @@ export async function GET(
       avgIntervalDays = Math.round(intervals.reduce((s, d) => s + d, 0) / intervals.length);
     }
 
-    // Get alert rule for threshold
-    const alertRule = await prisma.customerAlertRule.findFirst({
-      where: { clinicId, alertType: "no_visit", isActive: true },
-    });
-    const thresholdDays = alertRule?.thresholdDays ?? 60;
-
-    // Calculate status based on last visit
+    // Calculate status based on ratio of daysSince / avgInterval
     const daysSinceLastVisit = Math.floor(
       (Date.now() - new Date(lastVisit).getTime()) / (1000 * 60 * 60 * 24),
     );
-    const expectedInterval = avgIntervalDays ?? thresholdDays;
 
-    let status: "active" | "warning" | "risk";
-    if (daysSinceLastVisit <= expectedInterval) {
-      status = "active";
-    } else if (daysSinceLastVisit <= expectedInterval * 1.5) {
-      status = "warning";
+    let status: "new" | "active" | "warning" | "risk";
+    if (treatments.length < 3) {
+      status = "new";
+    } else if (avgIntervalDays && avgIntervalDays > 0) {
+      const ratio = daysSinceLastVisit / avgIntervalDays;
+      if (ratio < 1.5) {
+        status = "active";
+      } else if (ratio <= 2.0) {
+        status = "warning";
+      } else {
+        status = "risk";
+      }
     } else {
-      status = "risk";
+      status = "active";
     }
 
     return NextResponse.json({
@@ -81,8 +81,8 @@ export async function GET(
       firstVisit,
       lastVisit,
       avgIntervalDays,
+      averageVisitInterval: avgIntervalDays,
       daysSinceLastVisit,
-      thresholdDays,
       status,
     });
   } catch {

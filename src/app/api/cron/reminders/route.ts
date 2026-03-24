@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { processClinicReminders, getPendingRemindersSummary } from "@/lib/reminders/reminder-engine";
+import { checkAllAlarms } from "@/lib/alarms/alarm-checker";
 import { prisma } from "@/lib/prisma";
 
 // Vercel Cron configuration
@@ -73,10 +74,20 @@ export async function POST(req: NextRequest) {
       const result = await processClinicReminders(clinic.id);
       totalSent += result.sent;
       totalFailed += result.failed;
+
+      // Run alarm checks
+      let alarmResult = { checked: 0, triggered: 0, errors: 0 };
+      try {
+        alarmResult = await checkAllAlarms(clinic.id);
+      } catch (err) {
+        console.error(`[Cron/Alarms] Error for clinic ${clinic.id}:`, err);
+      }
+
       results.push({
         clinicId: clinic.id,
         clinicName: clinic.name,
         ...result,
+        alarms: alarmResult,
       });
     }
 

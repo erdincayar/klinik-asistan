@@ -116,6 +116,8 @@ model Clinic {
   tokenBalance          TokenBalance?
   tokenTransactions     TokenTransaction[]
   stockAlarms           StockAlarm[]
+  alarms                Alarm[]
+  alarmLogs             AlarmLog[]
   fixedAssets           FixedAsset[]
   inventoryColumnConfig InventoryColumnConfig?
   employeeRoles         EmployeeRole[]
@@ -141,6 +143,7 @@ model Patient {
   phone        String?
   email        String?
   notes        String?
+  dateOfBirth  DateTime?
   clinicId     String
   clinic       Clinic               @relation(fields: [clinicId], references: [id])
   treatments   Treatment[]
@@ -721,6 +724,36 @@ model StockAlarm {
   isActive      Boolean   @default(true)
   lastTriggered DateTime?
   createdAt     DateTime  @default(now())
+}
+
+model Alarm {
+  id              String    @id @default(cuid())
+  clinicId        String
+  clinic          Clinic    @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  name            String
+  type            String    // STOCK, CUSTOMER_VISIT, CUSTOMER_BIRTHDAY, FINANCE
+  conditions      Json
+  isActive        Boolean   @default(true)
+  lastTriggeredAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  logs            AlarmLog[]
+}
+
+model AlarmLog {
+  id         String   @id @default(cuid())
+  alarmId    String
+  alarm      Alarm    @relation(fields: [alarmId], references: [id], onDelete: Cascade)
+  clinicId   String
+  clinic     Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  message    String
+  entityId   String?
+  entityName String?
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([clinicId, isRead])
+  @@index([alarmId])
 }
 
 model InventoryColumnConfig {

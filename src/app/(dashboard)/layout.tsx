@@ -35,6 +35,7 @@ import {
   X,
   MessageCircle,
   Bell,
+  BellRing,
   BarChart3,
   UserCog,
   ChevronsLeft,
@@ -91,6 +92,7 @@ const navItems: NavItem[] = [
   { href: "/messaging", label: "Mesajlaşma", icon: MessageCircle, minPlan: "PRO" },
   { href: "/ai-assistant", label: "AI Asistan", icon: Bot, minPlan: "PRO" },
   { href: "/reports", label: "Raporlar", icon: BarChart3, minPlan: "BUSINESS" },
+  { href: "/alarmlar", label: "Alarmlar", icon: BellRing, minPlan: "PRO" },
   { href: "/reminders", label: "Hatırlatmalar", icon: Bell, minPlan: "PRO" },
   { href: "/billing", label: "Abonelik", icon: CreditCard, minPlan: "BASIC" },
 ];
@@ -125,6 +127,7 @@ const pageTitles: Record<string, string> = {
   "/reports": "Raporlar",
   "/employees": "Çalışanlar",
   "/hr": "İnsan Kaynakları",
+  "/alarmlar": "Alarmlar",
   "/reminders": "Hatırlatmalar",
   "/billing": "Abonelik",
   "/settings": "Ayarlar",
@@ -295,6 +298,16 @@ function Sidebar({
     isDemo ||
     userEmail === "admin@poby.ai";
 
+  // Unread alarm count
+  const [unreadAlarmCount, setUnreadAlarmCount] = useState(0);
+
+  useEffect(() => {
+    fetch("/api/alarms/logs/unread-count")
+      .then((r) => r.ok ? r.json() : { count: 0 })
+      .then((d) => setUnreadAlarmCount(d.count ?? 0))
+      .catch(() => {});
+  }, [pathname]);
+
   // Sortable order
   const [orderedItems, setOrderedItems] = useState<NavItem[]>(navItems);
 
@@ -426,14 +439,21 @@ function Sidebar({
                       {NAV_GROUP_BREAKS.has(item.href) && (
                         <div className="border-t border-gray-100 mt-3 pt-3" />
                       )}
-                      <SortableNavItem
-                        item={item}
-                        isActive={isActive}
-                        isLocked={isLocked}
-                        collapsed={collapsed}
-                        onClose={onClose}
-                        onLockedClick={handleLockedClick}
-                      />
+                      <div className="relative">
+                        <SortableNavItem
+                          item={item}
+                          isActive={isActive}
+                          isLocked={isLocked}
+                          collapsed={collapsed}
+                          onClose={onClose}
+                          onLockedClick={handleLockedClick}
+                        />
+                        {item.href === "/alarmlar" && unreadAlarmCount > 0 && !isLocked && (
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                            {unreadAlarmCount > 99 ? "99+" : unreadAlarmCount}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   );
                 })}

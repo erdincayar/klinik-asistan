@@ -515,12 +515,21 @@ export default function PatientDetailPage() {
               <TrendingUp className="h-4 w-4 text-blue-600" />
               <h2 className="text-sm font-semibold text-gray-900">CRM Özeti</h2>
             </div>
-            {crmStats.status === "risk" && (
+            {crmStats.totalVisits < 3 ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-[11px] font-semibold text-gray-600">
+                Yeni Müşteri
+              </span>
+            ) : crmStats.status === "risk" && crmStats.daysSinceLastVisit != null ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-[11px] font-semibold text-red-700">
                 <AlertTriangle className="h-3 w-3" />
-                Kayıp Riski
+                {crmStats.daysSinceLastVisit} gündür gelmedi
               </span>
-            )}
+            ) : crmStats.status === "warning" && crmStats.daysSinceLastVisit != null ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-yellow-50 px-2.5 py-0.5 text-[11px] font-semibold text-yellow-700">
+                <AlertTriangle className="h-3 w-3" />
+                {crmStats.daysSinceLastVisit} gündür gelmedi
+              </span>
+            ) : null}
           </div>
           <div className="grid grid-cols-2 gap-4 p-6 sm:grid-cols-3 lg:grid-cols-6">
             <div className="space-y-1">
@@ -571,12 +580,18 @@ export default function PatientDetailPage() {
                 </div>
                 <div className="space-y-1 text-right">
                   <p className="text-xs font-medium text-gray-500">Durum</p>
-                  {sc && (
+                  {crmStats.totalVisits < 3 ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold bg-gray-100 text-gray-700">
+                      ⚪ Yeni Müşteri
+                    </span>
+                  ) : sc && (
                     <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${sc.color}`}>
                       {crmStats.status === "active" && "🟢"}
                       {crmStats.status === "warning" && "🟡"}
                       {crmStats.status === "risk" && "🔴"}
-                      {sc.label}
+                      {(crmStats.status === "warning" || crmStats.status === "risk") && crmStats.daysSinceLastVisit != null
+                        ? `${crmStats.daysSinceLastVisit} gündür gelmedi`
+                        : sc.label}
                     </span>
                   )}
                 </div>
