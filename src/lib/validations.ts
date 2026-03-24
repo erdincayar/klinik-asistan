@@ -191,3 +191,23 @@ export const invoiceSchema = z.object({
 
 export type InvoiceInput = z.infer<typeof invoiceSchema>;
 export type InvoiceItemInput = z.infer<typeof invoiceItemSchema>;
+
+export const appointmentTransactionsSchema = z.object({
+  transactions: z.array(z.object({
+    patientId: z.string().min(1),
+    name: z.string().min(2, "İşlem adı girin"),
+    amount: z.number().min(1, "Tutar girin"),
+    date: z.string().min(1),
+    category: z.string().optional().default("GENEL"),
+    paymentMethod: z.string().optional(),
+    description: z.string().optional(),
+    employeeId: z.string().optional(),
+  })).min(1, "En az bir işlem ekleyin"),
+  markCompleted: z.boolean().optional().default(false),
+});
+
+export const inviteRegisterSchema = z.object({
+  name: z.string().min(2, "İsim en az 2 karakter olmalı"),
+  email: z.string().email("Geçerli bir email adresi girin"),
+  password: strongPasswordSchema,
+});

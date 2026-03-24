@@ -28,6 +28,9 @@ import {
   Zap,
   Crown,
   CreditCard,
+  Users,
+  Shield,
+  UserPlus,
 } from "lucide-react";
 import { TREATMENT_CATEGORIES } from "@/lib/types";
 import QRCode from "qrcode";
@@ -131,6 +134,14 @@ export default function SettingsPage() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState("");
 
+  // Team Management
+  const [teamEmployees, setTeamEmployees] = useState<any[]>([]);
+  const [teamLoading, setTeamLoading] = useState(true);
+  const [inviteLoading, setInviteLoading] = useState<string | null>(null);
+  const [showInviteLinkModal, setShowInviteLinkModal] = useState(false);
+  const [currentInviteLink, setCurrentInviteLink] = useState("");
+  const [linkCopied, setLinkCopied] = useState(false);
+
   // Telegram
   const [telegramConnected, setTelegramConnected] = useState(false);
   const [telegramLoading, setTelegramLoading] = useState(true);
@@ -189,7 +200,53 @@ export default function SettingsPage() {
       }
     }
     fetchData();
+    // Fetch team employees
+    fetch("/api/employees")
+      .then((res) => (res.ok ? res.json() : { employees: [] }))
+      .then((data) => setTeamEmployees(data.employees || []))
+      .catch(() => {})
+      .finally(() => setTeamLoading(false));
   }, []);
+
+  async function handleInviteEmployee(employeeId: string) {
+    setInviteLoading(employeeId);
+    try {
+      const res = await fetch(`/api/employees/${employeeId}/invite`, { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        setCurrentInviteLink(data.inviteLink);
+        setLinkCopied(false);
+        setShowInviteLinkModal(true);
+        // Refresh team list
+        const empRes = await fetch("/api/employees");
+        if (empRes.ok) {
+          const empData = await empRes.json();
+          setTeamEmployees(empData.employees || []);
+        }
+      }
+    } catch { /* silently handle */ }
+    finally { setInviteLoading(null); }
+  }
+
+  async function handleRevokeAccess(employeeId: string) {
+    if (!confirm("Bu çalışanın sistem erişimini kaldırmak istediğinize emin misiniz?")) return;
+    try {
+      const res = await fetch(`/api/employees/${employeeId}/access`, { method: "DELETE" });
+      if (res.ok) {
+        const empRes = await fetch("/api/employees");
+        if (empRes.ok) {
+          const empData = await empRes.json();
+          setTeamEmployees(empData.employees || []);
+        }
+      }
+    } catch { /* silently handle */ }
+  }
+
+  function copyInviteLink() {
+    navigator.clipboard.writeText(currentInviteLink);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
+  }
 
   // Check telegram status
   const checkTelegramStatus = useCallback(async () => {
@@ -1373,6 +1430,143 @@ export default function SettingsPage() {
           </form>
         </div>
       </motion.div>
+
+      {/* Team Management */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.16 }}
+        className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
+      >
+        <div className="border-b border-gray-100 px-6 py-4">
+          <h2 className="text-sm font-semibold text-gray-900">Ekip Yönetimi</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Çalışanlarınızı sisteme davet edin ve erişimlerini yönetin</p>
+        </div>
+        <div className="p-6 space-y-4">
+          {/* Stats */}
+          <div className="grid grid-cols-4 gap-3">
+            <div className="rounded-xl border border-gray-100 p-3 text-center">
+              <p className="text-lg font-bold text-gray-900">{teamEmployees.length}</p>
+              <p className="text-[11px] text-gray-500">Toplam</p>
+            </div>
+            <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-3 text-center">
+              <p className="text-lg font-bold text-emerald-600">{teamEmployees.filter((e: any) => e.inviteStatus === "active").length}</p>
+              <p className="text-[11px] text-gray-500">Aktif</p>
+            </div>
+            <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-3 text-center">
+              <p className="text-lg font-bold text-amber-600">{teamEmployees.filter((e: any) => e.inviteStatus === "invited").length}</p>
+              <p className="text-[11px] text-gray-500">Bekliyor</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 p-3 text-center">
+              <p className="text-lg font-bold text-gray-400">{teamEmployees.filter((e: any) => !e.inviteStatus || e.inviteStatus === "not_invited").length}</p>
+              <p className="text-[11px] text-gray-500">Davet Edilmedi</p>
+            </div>
+          </div>
+
+          {/* Employee list */}
+          {teamLoading ? (
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+            </div>
+          ) : teamEmployees.length === 0 ? (
+            <p className="text-center text-sm text-gray-500 py-4">Henüz çalışan eklenmemiş</p>
+          ) : (
+            <div className="divide-y divide-gray-100 rounded-xl border border-gray-100">
+              {teamEmployees.map((emp: any) => {
+                const status = emp.inviteStatus || "not_invited";
+                return (
+                  <div key={emp.id} className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white"
+                        style={{ backgroundColor: emp.color || "#3b82f6" }}
+                      >
+                        {emp.name?.charAt(0)?.toUpperCase() || "?"}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{emp.name}</p>
+                        <p className="text-xs text-gray-500">{emp.role}{emp.systemEmail ? ` · ${emp.systemEmail}` : ""}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {status === "active" && (
+                        <>
+                          <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-600">Aktif</span>
+                          <button
+                            onClick={() => handleRevokeAccess(emp.id)}
+                            className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors"
+                          >
+                            Erişimi Kaldır
+                          </button>
+                        </>
+                      )}
+                      {status === "invited" && (
+                        <>
+                          <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-600">Davet Bekliyor</span>
+                          <button
+                            onClick={() => {
+                              // Re-generate and copy existing invite link
+                              handleInviteEmployee(emp.id);
+                            }}
+                            disabled={inviteLoading === emp.id}
+                            className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50"
+                          >
+                            {inviteLoading === emp.id ? <Loader2 className="h-3 w-3 animate-spin" /> : "Yeniden Davet"}
+                          </button>
+                        </>
+                      )}
+                      {status === "not_invited" && (
+                        <button
+                          onClick={() => handleInviteEmployee(emp.id)}
+                          disabled={inviteLoading === emp.id}
+                          className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
+                        >
+                          {inviteLoading === emp.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <>
+                              <UserPlus className="h-3 w-3" /> Davet Et
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </motion.div>
+
+      {/* Invite Link Modal */}
+      <Dialog open={showInviteLinkModal} onOpenChange={setShowInviteLinkModal}>
+        <DialogContent className="max-w-md rounded-2xl">
+          <div className="space-y-4">
+            <div className="text-center">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-50">
+                <UserPlus className="h-6 w-6 text-blue-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">Davet Bağlantısı Oluşturuldu</h3>
+              <p className="mt-1 text-sm text-gray-500">Bu bağlantıyı çalışanınızla paylaşın. 7 gün geçerlidir.</p>
+            </div>
+            <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 p-3">
+              <input
+                type="text"
+                value={currentInviteLink}
+                readOnly
+                className="flex-1 bg-transparent text-sm text-gray-700 outline-none truncate"
+              />
+              <button
+                onClick={copyInviteLink}
+                className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition-colors"
+              >
+                {linkCopied ? <><Check className="h-3 w-3" /> Kopyalandı</> : <><Copy className="h-3 w-3" /> Kopyala</>}
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* PayTR iFrame Modal */}
       <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>

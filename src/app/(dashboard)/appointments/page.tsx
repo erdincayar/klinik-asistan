@@ -13,6 +13,8 @@ import {
   XCircle,
   AlertCircle,
   Loader2,
+  Receipt,
+  Trash2,
 } from "lucide-react";
 import {
   Dialog,
@@ -21,8 +23,14 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { APPOINTMENT_STATUSES, TREATMENT_CATEGORIES, DAY_NAMES } from "@/lib/types";
 
 interface Patient {
@@ -65,6 +73,15 @@ function formatDateTR(date: Date): string {
     month: "long",
     year: "numeric",
   }).format(date);
+}
+
+function formatDateDisplay(dateStr: string): string {
+  const d = new Date(dateStr);
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = d.getFullYear();
+  const dayName = DAY_NAMES[d.getDay()];
+  return `${day}.${month}.${year} ${dayName}`;
 }
 
 function getStatusInfo(status: string) {
@@ -156,6 +173,13 @@ export default function AppointmentsPage() {
   const [dialogNewEmployeeName, setDialogNewEmployeeName] = useState("");
   const [dialogNewEmployeeRole, setDialogNewEmployeeRole] = useState("");
   const [dialogSavingEmployee, setDialogSavingEmployee] = useState(false);
+
+  // Transaction tab state
+  const [appointmentTreatments, setAppointmentTreatments] = useState<any[]>([]);
+  const [transactionItems, setTransactionItems] = useState([{ name: "", amount: "", paymentMethod: "Nakit", notes: "" }]);
+  const [savingTransactions, setSavingTransactions] = useState(false);
+  const [markCompleted, setMarkCompleted] = useState(false);
+  const [detailTab, setDetailTab] = useState("detail");
 
   const dailyScrollRef = useRef<HTMLDivElement>(null);
   const weeklyScrollRef = useRef<HTMLDivElement>(null);
@@ -334,6 +358,54 @@ export default function AppointmentsPage() {
       }
     } catch { /* silently handle */ }
   }, []);
+
+  const fetchAppointmentTreatments = useCallback(async (id: string) => {
+    try {
+      const res = await fetch(`/api/appointments/${id}/transactions`);
+      if (res.ok) {
+        const data = await res.json();
+        setAppointmentTreatments(data.treatments || []);
+      }
+    } catch { /* silently handle */ }
+  }, []);
+
+  async function handleSaveTransactions() {
+    if (!selectedAppointment) return;
+    const valid = transactionItems.filter((t) => t.name.trim() && Number(t.amount) > 0);
+    if (valid.length === 0) return;
+
+    setSavingTransactions(true);
+    try {
+      const res = await fetch(`/api/appointments/${selectedAppointment.id}/transactions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          transactions: valid.map((t) => ({
+            patientId: selectedAppointment.patientId,
+            name: t.name.trim(),
+            amount: Math.round(Number(t.amount) * 100), // TL to kuruş
+            date: selectedAppointment.date,
+            paymentMethod: t.paymentMethod || "Nakit",
+            description: t.notes || undefined,
+            employeeId: selectedAppointment.employeeId || undefined,
+          })),
+          markCompleted,
+        }),
+      });
+      if (res.ok) {
+        await fetchAppointmentTreatments(selectedAppointment.id);
+        setTransactionItems([{ name: "", amount: "", paymentMethod: "Nakit", notes: "" }]);
+        setMarkCompleted(false);
+        // Refresh appointments list
+        if (viewMode === "daily") {
+          await fetchDayAppointments(selectedDate, selectedEmployee, selectedService);
+        } else {
+          await fetchWeekAppointments(selectedDate, selectedEmployee, selectedService);
+        }
+      }
+    } catch { /* silently handle */ }
+    finally { setSavingTransactions(false); }
+  }
 
   async function handleDialogNewCustomer() {
     if (!dialogNewCustomerName.trim()) return;
@@ -730,6 +802,11 @@ export default function AppointmentsPage() {
                                 key={appointment.id}
                                 onClick={() => {
                                   setSelectedAppointment(appointment);
+                                  setDetailTab("detail");
+                                  setAppointmentTreatments([]);
+                                  fetchAppointmentTreatments(appointment.id);
+                                  setTransactionItems([{ name: "", amount: "", paymentMethod: "Nakit", notes: "" }]);
+                                  setMarkCompleted(false);
                                   setDialogOpen(true);
                                 }}
                                 className={cn(
@@ -1087,63 +1164,206 @@ export default function AppointmentsPage() {
 
       {/* Detail Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="rounded-2xl">
+        <DialogContent className="rounded-2xl max-w-lg">
           {selectedAppointment && (
             <>
               <DialogHeader>
                 <DialogTitle className="text-lg">Randevu Detayı</DialogTitle>
               </DialogHeader>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">Müşteri</span>
-                  <Link
-                    href={`/patients/${selectedAppointment.patientId}`}
-                    className="font-medium text-blue-600 hover:underline"
-                  >
-                    {selectedAppointment.patientName}
-                  </Link>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">Tarih</span>
-                  <span className="font-medium">{selectedAppointment.date}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">Saat</span>
-                  <span className="font-medium">
-                    {selectedAppointment.startTime} - {selectedAppointment.endTime}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">İşlem</span>
-                  <Badge className="bg-gray-100 text-gray-700">
-                    {getTreatmentLabel(selectedAppointment.treatmentType)}
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">Durum</span>
-                  <span className={cn("rounded-lg px-2.5 py-1 text-[11px] font-semibold", getStatusInfo(selectedAppointment.status).color)}>
-                    {getStatusInfo(selectedAppointment.status).label}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">Çalışan</span>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="inline-block h-3 w-3 rounded-full"
-                      style={{ backgroundColor: selectedAppointment.employeeColor || "#9ca3af" }}
-                    />
-                    <span className="font-medium">
-                      {selectedAppointment.employeeName || "Atanmamış"}
-                    </span>
+              <Tabs value={detailTab} onValueChange={setDetailTab}>
+                <TabsList className="w-full">
+                  <TabsTrigger value="detail" className="flex-1">Detay</TabsTrigger>
+                  <TabsTrigger value="transactions" className="flex-1 gap-1.5">
+                    <Receipt className="h-3.5 w-3.5" /> İşlem & Ücret
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* Detail Tab */}
+                <TabsContent value="detail">
+                  <div className="space-y-3 pt-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-500">Müşteri</span>
+                      <Link
+                        href={`/patients/${selectedAppointment.patientId}`}
+                        className="font-medium text-blue-600 hover:underline"
+                      >
+                        {selectedAppointment.patientName}
+                      </Link>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-500">Tarih</span>
+                      <span className="font-medium">{formatDateDisplay(selectedAppointment.date)}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-500">Saat</span>
+                      <span className="font-medium">
+                        {selectedAppointment.startTime} - {selectedAppointment.endTime}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-500">İşlem</span>
+                      <Badge className="bg-gray-100 text-gray-700">
+                        {getTreatmentLabel(selectedAppointment.treatmentType)}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-500">Durum</span>
+                      <span className={cn("rounded-lg px-2.5 py-1 text-[11px] font-semibold", getStatusInfo(selectedAppointment.status).color)}>
+                        {getStatusInfo(selectedAppointment.status).label}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-500">Çalışan</span>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="inline-block h-3 w-3 rounded-full"
+                          style={{ backgroundColor: selectedAppointment.employeeColor || "#9ca3af" }}
+                        />
+                        <span className="font-medium">
+                          {selectedAppointment.employeeName || "Atanmamış"}
+                        </span>
+                      </div>
+                    </div>
+                    {selectedAppointment.notes && (
+                      <div>
+                        <span className="text-sm text-gray-500">Notlar</span>
+                        <p className="mt-1 text-sm text-gray-700">{selectedAppointment.notes}</p>
+                      </div>
+                    )}
                   </div>
-                </div>
-                {selectedAppointment.notes && (
-                  <div>
-                    <span className="text-sm text-gray-500">Notlar</span>
-                    <p className="mt-1 text-sm text-gray-700">{selectedAppointment.notes}</p>
+                </TabsContent>
+
+                {/* Transactions Tab */}
+                <TabsContent value="transactions">
+                  <div className="space-y-4 pt-2">
+                    {/* Existing treatments */}
+                    {appointmentTreatments.length > 0 && (
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-semibold text-gray-700">Mevcut İşlemler</h4>
+                        <div className="divide-y divide-gray-100 rounded-lg border border-gray-200">
+                          {appointmentTreatments.map((t: any) => (
+                            <div key={t.id} className="flex items-center justify-between px-3 py-2">
+                              <div>
+                                <p className="text-sm font-medium">{t.name}</p>
+                                <p className="text-xs text-gray-500">
+                                  {t.paymentMethod || "—"}{t.employee?.name ? ` · ${t.employee.name}` : ""}
+                                </p>
+                              </div>
+                              <span className="text-sm font-semibold text-emerald-600">
+                                {formatCurrency(t.amount)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* New transaction form */}
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-semibold text-gray-700">Yeni İşlem Ekle</h4>
+                      {transactionItems.map((item, idx) => (
+                        <div key={idx} className="space-y-2 rounded-lg border border-gray-200 p-3">
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1">
+                              <SmartSelect
+                                freetext
+                                items={serviceNames.map((s) => ({ id: s, label: s }))}
+                                value={item.name}
+                                onChange={(val) => {
+                                  const updated = [...transactionItems];
+                                  updated[idx] = { ...updated[idx], name: val };
+                                  setTransactionItems(updated);
+                                }}
+                                placeholder="İşlem adı..."
+                                filterLocally
+                              />
+                            </div>
+                            {transactionItems.length > 1 && (
+                              <button
+                                onClick={() => setTransactionItems(transactionItems.filter((_, i) => i !== idx))}
+                                className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <input
+                                type="number"
+                                value={item.amount}
+                                onChange={(e) => {
+                                  const updated = [...transactionItems];
+                                  updated[idx] = { ...updated[idx], amount: e.target.value };
+                                  setTransactionItems(updated);
+                                }}
+                                placeholder="Tutar (TL)"
+                                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                              />
+                            </div>
+                            <div>
+                              <select
+                                value={item.paymentMethod}
+                                onChange={(e) => {
+                                  const updated = [...transactionItems];
+                                  updated[idx] = { ...updated[idx], paymentMethod: e.target.value };
+                                  setTransactionItems(updated);
+                                }}
+                                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                              >
+                                <option value="Nakit">Nakit</option>
+                                <option value="Kart">Kart</option>
+                                <option value="Havale">Havale</option>
+                                <option value="Sigorta">Sigorta</option>
+                                <option value="Diger">Diğer</option>
+                              </select>
+                            </div>
+                          </div>
+                          <input
+                            type="text"
+                            value={item.notes}
+                            onChange={(e) => {
+                              const updated = [...transactionItems];
+                              updated[idx] = { ...updated[idx], notes: e.target.value };
+                              setTransactionItems(updated);
+                            }}
+                            placeholder="Notlar (opsiyonel)"
+                            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                          />
+                        </div>
+                      ))}
+                      <button
+                        onClick={() => setTransactionItems([...transactionItems, { name: "", amount: "", paymentMethod: "Nakit", notes: "" }])}
+                        className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700"
+                      >
+                        <Plus className="h-4 w-4" /> Başka İşlem Ekle
+                      </button>
+                    </div>
+
+                    {/* Mark completed checkbox */}
+                    {selectedAppointment.status === "SCHEDULED" && (
+                      <label className="flex items-center gap-2 rounded-lg border border-gray-200 p-3 cursor-pointer hover:bg-gray-50">
+                        <input
+                          type="checkbox"
+                          checked={markCompleted}
+                          onChange={(e) => setMarkCompleted(e.target.checked)}
+                          className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                        />
+                        <span className="text-sm text-gray-700">Randevuyu tamamlandı olarak işaretle</span>
+                      </label>
+                    )}
+
+                    <button
+                      onClick={handleSaveTransactions}
+                      disabled={savingTransactions || transactionItems.every((t) => !t.name.trim() || !Number(t.amount))}
+                      className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      {savingTransactions ? <><Loader2 className="h-4 w-4 animate-spin" /> Kaydediliyor...</> : "Kaydet"}
+                    </button>
                   </div>
-                )}
-              </div>
+                </TabsContent>
+              </Tabs>
+
               {selectedAppointment.status === "SCHEDULED" && (
                 <DialogFooter>
                   <div className="flex w-full gap-2">

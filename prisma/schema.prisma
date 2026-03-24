@@ -174,12 +174,15 @@ model Treatment {
   amount      Int // kuruş cinsinden
   date        DateTime  @default(now())
   category    String    @default("GENEL") // BOTOX, DOLGU, DIS_TEDAVI, GENEL
-  employeeId  String?
-  employee    Employee? @relation(fields: [employeeId], references: [id])
-  invoices    Invoice[]
-  customValues TransactionCustomValue[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  employeeId    String?
+  employee      Employee? @relation(fields: [employeeId], references: [id])
+  appointmentId String?
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+  paymentMethod String?      // Nakit, Kart, Havale, Sigorta, Diger
+  invoices      Invoice[]
+  customValues  TransactionCustomValue[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 // Expense type values: EXPENSE, INCOME
@@ -223,6 +226,7 @@ model Appointment {
   status        String    @default("SCHEDULED") // SCHEDULED, COMPLETED, CANCELLED, NO_SHOW
   treatmentType String    @default("GENEL") // BOTOX, DOLGU, DIS_TEDAVI, GENEL
   notes         String?
+  treatments    Treatment[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
