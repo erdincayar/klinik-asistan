@@ -18,6 +18,10 @@ import {
   Image as ImageIcon,
   Loader2,
   Trash2,
+  TrendingUp,
+  Clock,
+  DollarSign,
+  AlertTriangle,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -50,6 +54,18 @@ interface PatientPhoto {
   uploadedAt: string;
 }
 
+interface CrmStats {
+  totalVisits: number;
+  totalRevenue: number;
+  avgAmount: number;
+  firstVisit: string | null;
+  lastVisit: string | null;
+  avgIntervalDays: number | null;
+  daysSinceLastVisit?: number;
+  thresholdDays?: number;
+  status: "new" | "active" | "warning" | "risk";
+}
+
 const DEFAULT_CATEGORIES = ["Genel"];
 
 const treatmentLabels: Record<string, string> = {
@@ -64,6 +80,13 @@ const categoryColors: Record<string, string> = {
   DOLGU: "bg-pink-100 text-pink-700",
   DIS_TEDAVI: "bg-amber-100 text-amber-700",
   GENEL: "bg-gray-100 text-gray-700",
+};
+
+const statusConfig = {
+  new: { label: "Yeni", color: "bg-gray-100 text-gray-700", dot: "bg-gray-400" },
+  active: { label: "Aktif", color: "bg-emerald-50 text-emerald-700", dot: "bg-emerald-500" },
+  warning: { label: "Dikkat", color: "bg-yellow-50 text-yellow-700", dot: "bg-yellow-500" },
+  risk: { label: "Kayıp Riski", color: "bg-red-50 text-red-700", dot: "bg-red-500" },
 };
 
 function Skeleton({ className }: { className?: string }) {
@@ -81,6 +104,9 @@ export default function PatientDetailPage() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editForm, setEditForm] = useState({ name: "", phone: "", email: "", notes: "" });
+
+  // CRM stats
+  const [crmStats, setCrmStats] = useState<CrmStats | null>(null);
 
   // Photo states
   const [photoFilter, setPhotoFilter] = useState("ALL");
@@ -161,6 +187,18 @@ export default function PatientDetailPage() {
     }
   }, [params.id]);
 
+  const fetchCrmStats = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/customers/${params.id}/crm-stats`);
+      if (res.ok) {
+        const data = await res.json();
+        setCrmStats(data);
+      }
+    } catch {
+      // silent
+    }
+  }, [params.id]);
+
   useEffect(() => {
     async function fetchPatient() {
       try {
@@ -183,7 +221,8 @@ export default function PatientDetailPage() {
     fetchPatient();
     fetchPhotos();
     fetchCategories();
-  }, [params.id, fetchPhotos, fetchCategories]);
+    fetchCrmStats();
+  }, [params.id, fetchPhotos, fetchCategories, fetchCrmStats]);
 
   async function handleDeletePatient() {
     if (!confirm(`"${patient?.name}" müşterisini silmek istediğinize emin misiniz? Tüm tedavi kayıtları da silinecektir.`)) return;
@@ -218,6 +257,22 @@ export default function PatientDetailPage() {
       setError(err instanceof Error ? err.message : "Bir hata oluştu");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleDeleteTreatment(treatmentId: string) {
+    if (!confirm("Bu kaydı silmek istediğinize emin misiniz?")) return;
+    try {
+      const res = await fetch(`/api/treatments/${treatmentId}`, { method: "DELETE" });
+      if (res.ok && patient) {
+        setPatient({
+          ...patient,
+          treatments: patient.treatments.filter((t) => t.id !== treatmentId),
+        });
+        fetchCrmStats();
+      }
+    } catch {
+      // silent
     }
   }
 
@@ -270,6 +325,8 @@ export default function PatientDetailPage() {
     );
   }
 
+  const sc = crmStats ? statusConfig[crmStats.status] : null;
+
   return (
     <div className="space-y-6">
       {/* Patient Info */}
@@ -284,7 +341,15 @@ export default function PatientDetailPage() {
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white">
               {patient.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
             </div>
-            <h2 className="text-lg font-semibold text-gray-900">{patient.name}</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-gray-900">{patient.name}</h2>
+              {sc && (
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${sc.color}`}>
+                  <span className={`h-1.5 w-1.5 rounded-full ${sc.dot}`} />
+                  {sc.label}
+                </span>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -383,6 +448,61 @@ export default function PatientDetailPage() {
           )}
         </div>
       </motion.div>
+
+      {/* CRM Stats Panel */}
+      {crmStats && crmStats.totalVisits > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.03 }}
+          className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
+        >
+          <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-blue-600" />
+              <h2 className="text-sm font-semibold text-gray-900">CRM Özeti</h2>
+            </div>
+            {crmStats.status === "risk" && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-[11px] font-semibold text-red-700">
+                <AlertTriangle className="h-3 w-3" />
+                Kayıp Riski
+              </span>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-4 p-6 sm:grid-cols-3 lg:grid-cols-6">
+            <div className="space-y-1">
+              <p className="text-[11px] font-medium text-gray-400">Toplam Ziyaret</p>
+              <p className="text-lg font-bold text-gray-900">{crmStats.totalVisits}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[11px] font-medium text-gray-400">Toplam Ciro</p>
+              <p className="text-lg font-bold text-emerald-600">{formatCurrency(crmStats.totalRevenue)}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[11px] font-medium text-gray-400">Ort. İşlem Tutarı</p>
+              <p className="text-lg font-bold text-gray-900">{formatCurrency(crmStats.avgAmount)}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[11px] font-medium text-gray-400">İlk Ziyaret</p>
+              <p className="text-sm font-semibold text-gray-700">
+                {crmStats.firstVisit ? formatDate(crmStats.firstVisit) : "—"}
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[11px] font-medium text-gray-400">Son Ziyaret</p>
+              <p className="text-sm font-semibold text-gray-700">
+                {crmStats.lastVisit ? formatDate(crmStats.lastVisit) : "—"}
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[11px] font-medium text-gray-400">Ort. Ziyaret Aralığı</p>
+              <p className="text-lg font-bold text-gray-900">
+                {crmStats.avgIntervalDays != null ? `${crmStats.avgIntervalDays} gün` : "—"}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Photos Section */}
       <motion.div
@@ -677,9 +797,25 @@ export default function PatientDetailPage() {
                     )}
                     <p className="text-xs text-gray-400">{formatDate(treatment.date)}</p>
                   </div>
-                  <span className="text-sm font-semibold text-emerald-600">
-                    {formatCurrency(treatment.amount)}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-emerald-600">
+                      {formatCurrency(treatment.amount)}
+                    </span>
+                    <Link
+                      href={`/finance/new-income?edit=${treatment.id}`}
+                      className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
+                      title="Düzenle"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Link>
+                    <button
+                      onClick={() => handleDeleteTreatment(treatment.id)}
+                      className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                      title="Sil"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </motion.div>
               ))}
           </div>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Plus, Search, Users, ArrowRight, Phone, Upload, Download, ChevronRight } from "lucide-react";
+import { Plus, Search, Users, ArrowRight, Phone, Upload, Download, ChevronRight, X, Settings2 } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 interface CustomValue {
   columnKey: string;
@@ -83,6 +90,20 @@ export default function PatientsPage() {
   const [customColumns, setCustomColumns] = useState<CustomColumn[]>([]);
   const [showAddColumn, setShowAddColumn] = useState(false);
   const [newColumnName, setNewColumnName] = useState("");
+  const [columnEditMode, setColumnEditMode] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  // Export modal state
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportColumns, setExportColumns] = useState<Record<string, boolean>>({
+    phone: true,
+    email: true,
+    date: true,
+    treatments: true,
+    count: false,
+    revenue: false,
+  });
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     async function fetchPatients() {
@@ -124,6 +145,22 @@ export default function PatientsPage() {
         setCustomColumns((prev) => [...prev, col]);
         setNewColumnName("");
         setShowAddColumn(false);
+      }
+    } catch {
+      // silent
+    }
+  }
+
+  async function handleDeleteColumn(columnKey: string) {
+    try {
+      const res = await fetch("/api/clinic/custom-columns", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ columnKey }),
+      });
+      if (res.ok) {
+        setCustomColumns((prev) => prev.filter((c) => c.columnKey !== columnKey));
+        setDeleteConfirm(null);
       }
     } catch {
       // silent
@@ -172,8 +209,39 @@ export default function PatientsPage() {
   }
 
   function startEdit(patientId: string, field: string, currentValue: string | null) {
+    if (columnEditMode) return;
     setEditingCell({ id: patientId, field });
     setEditValue(currentValue || "");
+  }
+
+  async function handleExport() {
+    setExporting(true);
+    try {
+      const selected = Object.entries(exportColumns)
+        .filter(([, v]) => v)
+        .map(([k]) => k);
+
+      const res = await fetch("/api/customers/export", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ columns: selected }),
+      });
+
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `musteriler-${new Date().toISOString().split("T")[0]}.xlsx`;
+        a.click();
+        URL.revokeObjectURL(url);
+        setShowExportModal(false);
+      }
+    } catch {
+      // silent
+    } finally {
+      setExporting(false);
+    }
   }
 
   return (
@@ -201,12 +269,15 @@ export default function PatientsPage() {
               <span className="hidden sm:inline">İçe Aktar</span>
             </Button>
           </Link>
-          <a href="/api/customers/export" download>
-            <Button variant="outline" size="sm" className="gap-1">
-              <Download className="h-4 w-4" />
-              <span className="hidden sm:inline">Dışa Aktar</span>
-            </Button>
-          </a>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1"
+            onClick={() => setShowExportModal(true)}
+          >
+            <Download className="h-4 w-4" />
+            <span className="hidden sm:inline">Dışa Aktar</span>
+          </Button>
           <Link href="/patients/new">
             <Button>
               <Plus className="mr-2 h-4 w-4" />
@@ -215,6 +286,83 @@ export default function PatientsPage() {
           </Link>
         </div>
       </motion.div>
+
+      {/* Export Modal */}
+      <Dialog open={showExportModal} onOpenChange={setShowExportModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Dışa Aktarılacak Verileri Seçin</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <label className="flex items-center gap-2 text-sm text-gray-500">
+              <input type="checkbox" checked disabled className="rounded" />
+              Müşteri Adı (zorunlu)
+            </label>
+            {[
+              { key: "phone", label: "Telefon" },
+              { key: "email", label: "Email" },
+              { key: "date", label: "Kayıt Tarihi" },
+              { key: "treatments", label: "Tedavi Geçmişi (işlem adı, kategori, tutar, tarih)" },
+              { key: "count", label: "İşlem Sayısı" },
+              { key: "revenue", label: "Toplam Ciro" },
+            ].map(({ key, label }) => (
+              <label key={key} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={exportColumns[key] ?? false}
+                  onChange={(e) => setExportColumns((prev) => ({ ...prev, [key]: e.target.checked }))}
+                  className="rounded"
+                />
+                {label}
+              </label>
+            ))}
+            {customColumns.map((col) => (
+              <label key={col.columnKey} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={exportColumns[`custom_${col.columnKey}`] ?? false}
+                  onChange={(e) =>
+                    setExportColumns((prev) => ({ ...prev, [`custom_${col.columnKey}`]: e.target.checked }))
+                  }
+                  className="rounded"
+                />
+                {col.columnName}
+              </label>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowExportModal(false)}>
+              İptal
+            </Button>
+            <Button onClick={handleExport} disabled={exporting}>
+              {exporting ? "İndiriliyor..." : "Excel İndir"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete column confirm dialog */}
+      <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Sütunu Sil</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-gray-600">
+            Bu sütunu ve tüm verileri silmek istediğinize emin misiniz?
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>
+              İptal
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deleteConfirm && handleDeleteColumn(deleteConfirm)}
+            >
+              Sil
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Müşteri list */}
       <motion.div
@@ -234,6 +382,20 @@ export default function PatientsPage() {
                   </span>
                 )}
               </div>
+              {customColumns.length > 0 && (
+                <button
+                  onClick={() => setColumnEditMode(!columnEditMode)}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+                    columnEditMode
+                      ? "bg-blue-600 text-white"
+                      : "border border-gray-200 text-gray-600 hover:bg-gray-50",
+                  )}
+                >
+                  <Settings2 className="h-3.5 w-3.5" />
+                  {columnEditMode ? "Tamam" : "Düzenle"}
+                </button>
+              )}
             </div>
           </CardHeader>
           <CardContent>
@@ -316,7 +478,20 @@ export default function PatientsPage() {
                         <TableHead>İşlem Sayısı</TableHead>
                         <TableHead>Kayıt Tarihi</TableHead>
                         {customColumns.map((col) => (
-                          <TableHead key={col.columnKey}>{col.columnName}</TableHead>
+                          <TableHead key={col.columnKey}>
+                            <div className="flex items-center gap-1">
+                              {col.columnName}
+                              {columnEditMode && (
+                                <button
+                                  onClick={() => setDeleteConfirm(col.columnKey)}
+                                  className="ml-1 rounded-full p-0.5 text-red-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                                  title="Sütunu sil"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          </TableHead>
                         ))}
                         <TableHead>
                           {showAddColumn ? (
@@ -335,6 +510,13 @@ export default function PatientsPage() {
                               <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={handleAddColumn}>
                                 Ekle
                               </Button>
+                              <button
+                                onClick={() => { setShowAddColumn(false); setNewColumnName(""); }}
+                                className="flex h-6 w-6 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
+                                title="İptal"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </button>
                             </div>
                           ) : (
                             <button

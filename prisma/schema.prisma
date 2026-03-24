@@ -130,6 +130,7 @@ model Clinic {
   clinicCategories      ClinicCategory[]
   customerCustomColumns CustomerCustomColumn[]
   transactionCustomFields TransactionCustomField[]
+  alertRules            CustomerAlertRule[]
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
 }
@@ -999,4 +1000,14 @@ model TransactionCustomValue {
   treatment   Treatment @relation(fields: [treatmentId], references: [id], onDelete: Cascade)
 
   @@unique([treatmentId, fieldKey])
+}
+
+model CustomerAlertRule {
+  id            String   @id @default(cuid())
+  clinicId      String
+  alertType     String   @default("no_visit")
+  thresholdDays Int      @default(60)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  clinic        Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
 }
