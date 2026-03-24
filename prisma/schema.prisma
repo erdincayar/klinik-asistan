@@ -121,6 +121,7 @@ model Clinic {
   fixedAssets           FixedAsset[]
   inventoryColumnConfig InventoryColumnConfig?
   employeeRoles         EmployeeRole[]
+  employeeCustomFields  EmployeeCustomField[]
   hrDocuments           HrDocument[]
   styleProfile          ClinicStyleProfile?
   aiGeneratedContents   AiGeneratedContent[]
@@ -295,11 +296,18 @@ model Employee {
   salaryNet             Int?                   // Net maaş (kuruş)
   salarySSI             Int?                   // SGK işveren payı (kuruş)
   salaryPayDay          Int?                   // Maaş ödeme günü (1-28)
+  manualSalaryEntry     Boolean                @default(false)
+  hasSystemAccess       Boolean                @default(false)
+  systemEmail           String?
+  inviteStatus          String?                // not_invited, invited, active
+  inviteToken           String?
+  invitedAt             DateTime?
   clinicId              String
   clinic                Clinic                 @relation(fields: [clinicId], references: [id])
   treatments            Treatment[]
   appointments          Appointment[]
   recurringTransactions RecurringTransaction[]
+  customValues          EmployeeCustomValue[]
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
 }
@@ -312,6 +320,30 @@ model EmployeeRole {
   createdAt DateTime @default(now())
 
   @@unique([clinicId, name])
+}
+
+model EmployeeCustomField {
+  id        String   @id @default(cuid())
+  clinicId  String
+  clinic    Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  fieldName String
+  fieldKey  String
+  fieldType String   @default("text") // text, number, date
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@unique([clinicId, fieldKey])
+}
+
+model EmployeeCustomValue {
+  id         String   @id @default(cuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  fieldKey   String
+  value      String?
+  updatedAt  DateTime @updatedAt
+
+  @@unique([employeeId, fieldKey])
 }
 
 // ProductCategory values: KOZMETIK, MEDIKAL, SARF_MALZEME, DIGER

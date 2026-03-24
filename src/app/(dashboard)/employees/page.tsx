@@ -17,6 +17,11 @@ import {
   Calculator,
   ChevronDown,
   ChevronUp,
+  Shield,
+  Send,
+  AlertTriangle,
+  Zap,
+  X,
 } from "lucide-react";
 import { brutToNet, netToBrut, yillikFromBrut, yillikFromNet, type SalaryResult } from "@/lib/salary-calculator";
 import { Button } from "@/components/ui/button";
@@ -44,28 +49,46 @@ const AY_ISIMLERI = [
 ];
 
 const PERMISSION_LABELS: Record<string, string> = {
-  canViewFinance: "Finans Görüntüleme",
-  canEditPatients: "Müşteri Düzenleme",
-  canManageAppointments: "Randevu Yönetimi",
-  canViewReports: "Rapor Görüntüleme",
-  canManageInventory: "Stok Yönetimi",
+  canViewDashboard: "Dashboard görüntüle",
+  canViewAppointments: "Randevular (görüntüle)",
+  canManageAppointments: "Randevular (düzenle)",
+  canViewPatients: "Müşteriler (görüntüle)",
+  canEditPatients: "Müşteriler (düzenle)",
+  canViewFinance: "Finans (görüntüle)",
+  canEditFinance: "Finans (düzenle)",
+  canManageMarketing: "Pazarlama & Meta Ads",
+  canManageAIStudio: "AI İçerik Stüdyosu",
+  canManageMessaging: "Mesajlaşma (WhatsApp/Telegram)",
+  canManageAssistant: "Poby Asistan yönetimi",
+  canManageInventory: "Stok & Envanter",
+  canViewEmployees: "Çalışanlar (görüntüle)",
+  canEditEmployees: "Çalışanlar (düzenle)",
+  canManageAlarms: "Alarmlar",
+  canViewReports: "Raporlar",
+  canManageSettings: "Ayarlar",
 };
 
 interface PermissionsMap {
-  canViewFinance: boolean;
-  canEditPatients: boolean;
-  canManageAppointments: boolean;
-  canViewReports: boolean;
-  canManageInventory: boolean;
+  [key: string]: boolean;
 }
 
-const defaultPermissions: PermissionsMap = {
-  canViewFinance: false,
-  canEditPatients: false,
-  canManageAppointments: false,
-  canViewReports: false,
-  canManageInventory: false,
-};
+const defaultPermissions: PermissionsMap = Object.fromEntries(
+  Object.keys(PERMISSION_LABELS).map((k) => [k, false])
+);
+
+interface EmployeeCustomValueItem {
+  id: string;
+  fieldKey: string;
+  value: string | null;
+}
+
+interface CustomFieldDef {
+  id: string;
+  fieldName: string;
+  fieldKey: string;
+  fieldType: string;
+  sortOrder: number;
+}
 
 interface Employee {
   id: string;
@@ -81,6 +104,12 @@ interface Employee {
   salaryNet: number | null;
   salarySSI: number | null;
   salaryPayDay: number | null;
+  manualSalaryEntry: boolean;
+  hasSystemAccess: boolean;
+  systemEmail: string | null;
+  inviteStatus: string | null;
+  invitedAt: string | null;
+  customValues: EmployeeCustomValueItem[];
   createdAt: string;
   totalRevenue: number;
   totalTreatmentCount: number;
@@ -88,6 +117,8 @@ interface Employee {
   monthlyTreatmentCount: number;
   totalCommission: number;
   monthlyCommission: number;
+  monthlyAppointmentCount: number;
+  appointmentTypes: string[];
 }
 
 interface EmployeeForm {
@@ -98,9 +129,12 @@ interface EmployeeForm {
   commissionRate: string;
   color: string;
   permissions: PermissionsMap;
-  salaryType: string; // "NET" or "BRUT"
-  salaryAmount: string; // TL cinsinden
+  salaryType: string;
+  salaryAmount: string;
   salaryPayDay: string;
+  manualSalaryEntry: boolean;
+  salaryGross: string;
+  salaryNet: string;
 }
 
 interface RoleItem {
@@ -119,6 +153,9 @@ const emptyForm: EmployeeForm = {
   salaryType: "NET",
   salaryAmount: "",
   salaryPayDay: "",
+  manualSalaryEntry: false,
+  salaryGross: "",
+  salaryNet: "",
 };
 
 function formatTL(amount: number): string {
@@ -163,6 +200,22 @@ export default function EmployeesPage() {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [showMonthlyTable, setShowMonthlyTable] = useState(false);
 
+  // Salary update mode
+  const [showSalaryUpdateModal, setShowSalaryUpdateModal] = useState(false);
+  const [salaryUpdateMode, setSalaryUpdateMode] = useState<"forward_only" | "all_history" | "correction">("forward_only");
+  const [pendingSalaryUpdate, setPendingSalaryUpdate] = useState<any>(null);
+
+  // System access & invite
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteTarget, setInviteTarget] = useState<Employee | null>(null);
+
+  // Custom fields
+  const [customFields, setCustomFields] = useState<CustomFieldDef[]>([]);
+  const [showAddFieldDialog, setShowAddFieldDialog] = useState(false);
+  const [newFieldName, setNewFieldName] = useState("");
+  const [newFieldType, setNewFieldType] = useState("text");
+
   // Form state
   const [form, setForm] = useState<EmployeeForm>(emptyForm);
 
@@ -184,12 +237,13 @@ export default function EmployeesPage() {
 
   // Form salary preview
   const formPreview = useMemo(() => {
+    if (form.manualSalaryEntry) return null;
     const amount = parseFloat(form.salaryAmount);
     if (!form.salaryAmount || isNaN(amount) || amount <= 0) return null;
     const type = form.salaryType as "NET" | "BRUT";
     const result = type === "BRUT" ? brutToNet(amount) : netToBrut(amount);
     return result;
-  }, [form.salaryAmount, form.salaryType]);
+  }, [form.salaryAmount, form.salaryType, form.manualSalaryEntry]);
 
   async function fetchRoles() {
     try {
@@ -216,9 +270,22 @@ export default function EmployeesPage() {
     }
   }
 
+  async function fetchCustomFields() {
+    try {
+      const res = await fetch("/api/clinic/employee-custom-fields");
+      if (res.ok) {
+        const data = await res.json();
+        setCustomFields(data.fields || []);
+      }
+    } catch {
+      // silent
+    }
+  }
+
   useEffect(() => {
     fetchEmployees();
     fetchRoles();
+    fetchCustomFields();
   }, []);
 
   async function handleAddRole() {
@@ -247,24 +314,36 @@ export default function EmployeesPage() {
   }
 
   function buildSalaryPayload() {
+    if (form.manualSalaryEntry) {
+      const grossVal = parseFloat(form.salaryGross);
+      const netVal = parseFloat(form.salaryNet);
+      return {
+        salaryGross: grossVal > 0 ? Math.round(grossVal * 100) : null,
+        salaryNet: netVal > 0 ? Math.round(netVal * 100) : null,
+        salarySSI: null,
+        manualSalaryEntry: true,
+      };
+    }
     const amount = parseFloat(form.salaryAmount);
     if (!form.salaryAmount || isNaN(amount) || amount <= 0) {
-      return { salaryGross: null, salaryNet: null, salarySSI: null };
+      return { salaryGross: null, salaryNet: null, salarySSI: null, manualSalaryEntry: false };
     }
     const amountKurus = Math.round(amount * 100);
     if (form.salaryType === "BRUT") {
       const result = brutToNet(amount);
       return {
         salaryGross: amountKurus,
-        salaryNet: null, // null = brüt anlaşma
+        salaryNet: null,
         salarySSI: Math.round((result.sgkIsveren + result.issizlikIsveren) * 100),
+        manualSalaryEntry: false,
       };
     } else {
       const result = netToBrut(amount);
       return {
         salaryNet: amountKurus,
-        salaryGross: null, // null = net anlaşma
+        salaryGross: null,
         salarySSI: Math.round((result.sgkIsveren + result.issizlikIsveren) * 100),
+        manualSalaryEntry: false,
       };
     }
   }
@@ -301,11 +380,40 @@ export default function EmployeesPage() {
     }
   }
 
-  async function handleUpdate() {
+  async function handleUpdate(overrideUpdateMode?: string) {
     if (!editingEmployee) return;
     try {
       setSaving(true);
       const salary = buildSalaryPayload();
+
+      // Detect salary change
+      const oldInfo = getSalaryTypeAndAmount(editingEmployee);
+      const newAmount = parseFloat(form.salaryAmount);
+      const salaryChanged = form.manualSalaryEntry
+        ? (parseFloat(form.salaryGross) * 100 !== (editingEmployee.salaryGross || 0) ||
+           parseFloat(form.salaryNet) * 100 !== (editingEmployee.salaryNet || 0))
+        : oldInfo ? oldInfo.amount !== newAmount : newAmount > 0;
+
+      // If salary changed and no override, show modal
+      if (salaryChanged && !overrideUpdateMode) {
+        setPendingSalaryUpdate({
+          action: "update",
+          id: editingEmployee.id,
+          name: form.name,
+          role: form.role,
+          phone: form.phone,
+          email: form.email,
+          commissionRate: form.commissionRate,
+          color: form.color,
+          permissions: form.permissions,
+          ...salary,
+          salaryPayDay: form.salaryPayDay || null,
+        });
+        setShowSalaryUpdateModal(true);
+        setSaving(false);
+        return;
+      }
+
       const res = await fetch("/api/employees", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -321,17 +429,24 @@ export default function EmployeesPage() {
           permissions: form.permissions,
           ...salary,
           salaryPayDay: form.salaryPayDay || null,
+          updateMode: overrideUpdateMode || undefined,
         }),
       });
       if (!res.ok) throw new Error("Çalışan güncellenemedi");
       setEditingEmployee(null);
       setForm(emptyForm);
+      setShowSalaryUpdateModal(false);
+      setPendingSalaryUpdate(null);
       await fetchEmployees();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Bir hata oluştu");
     } finally {
       setSaving(false);
     }
+  }
+
+  async function handleSalaryUpdateConfirm() {
+    await handleUpdate(salaryUpdateMode);
   }
 
   async function handleToggleActive(emp: Employee) {
@@ -383,7 +498,87 @@ export default function EmployeesPage() {
       salaryType: info?.type || "NET",
       salaryAmount: info ? String(info.amount) : "",
       salaryPayDay: emp.salaryPayDay ? String(emp.salaryPayDay) : "",
+      manualSalaryEntry: emp.manualSalaryEntry || false,
+      salaryGross: emp.salaryGross ? String(emp.salaryGross / 100) : "",
+      salaryNet: emp.salaryNet ? String(emp.salaryNet / 100) : "",
     });
+  }
+
+  async function handleToggleSystemAccess(emp: Employee) {
+    try {
+      if (!emp.hasSystemAccess) {
+        setInviteTarget(emp);
+        setInviteEmail(emp.email || "");
+        setShowInviteDialog(true);
+      } else {
+        await fetch(`/api/employees/${emp.id}/system-access`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ hasSystemAccess: false }),
+        });
+        await fetchEmployees();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
+    }
+  }
+
+  async function handleSendInvite() {
+    if (!inviteTarget) return;
+    try {
+      setSaving(true);
+      await fetch(`/api/employees/${inviteTarget.id}/system-access`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          hasSystemAccess: true,
+          systemEmail: inviteEmail || null,
+          inviteStatus: "invited",
+          permissions: form.permissions,
+        }),
+      });
+      setShowInviteDialog(false);
+      setInviteTarget(null);
+      await fetchEmployees();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleAddCustomField() {
+    if (!newFieldName.trim()) return;
+    try {
+      const res = await fetch("/api/clinic/employee-custom-fields", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fieldName: newFieldName.trim(), fieldType: newFieldType }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || "Alan eklenemedi");
+        return;
+      }
+      setShowAddFieldDialog(false);
+      setNewFieldName("");
+      setNewFieldType("text");
+      await fetchCustomFields();
+    } catch {
+      setError("Alan eklenemedi");
+    }
+  }
+
+  async function handleCustomValueChange(employeeId: string, fieldKey: string, value: string) {
+    try {
+      await fetch(`/api/employees/${employeeId}/custom-value`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fieldKey, value }),
+      });
+    } catch {
+      // silent
+    }
   }
 
   // Stats
@@ -497,56 +692,147 @@ export default function EmployeesPage() {
 
         {/* Salary Section */}
         <div className="space-y-3 rounded-lg border p-4">
-          <h4 className="text-sm font-semibold flex items-center gap-2">
-            <Calculator className="h-4 w-4" />
-            Maaş Bilgileri
-            <span className="text-xs font-normal text-muted-foreground ml-auto">2026 oranları</span>
-          </h4>
-
-          {/* NET / BRÜT Toggle */}
-          <div className="flex rounded-lg border overflow-hidden">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-semibold flex items-center gap-2">
+              <Calculator className="h-4 w-4" />
+              Maaş Bilgileri
+            </h4>
             <button
               type="button"
-              onClick={() => setForm({ ...form, salaryType: "NET", salaryAmount: "" })}
-              className={`flex-1 py-2 text-sm font-medium transition-colors ${
-                form.salaryType === "NET"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted/30 text-muted-foreground hover:bg-muted/50"
+              onClick={() => setForm({ ...form, manualSalaryEntry: !form.manualSalaryEntry })}
+              className={`flex items-center gap-1.5 text-xs font-medium rounded-full px-3 py-1 transition-colors ${
+                form.manualSalaryEntry
+                  ? "bg-gray-200 text-gray-700"
+                  : "bg-blue-100 text-blue-700"
               }`}
             >
-              Net Maaş
-            </button>
-            <button
-              type="button"
-              onClick={() => setForm({ ...form, salaryType: "BRUT", salaryAmount: "" })}
-              className={`flex-1 py-2 text-sm font-medium transition-colors ${
-                form.salaryType === "BRUT"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted/30 text-muted-foreground hover:bg-muted/50"
-              }`}
-            >
-              Brüt Maaş
+              <Zap className="h-3 w-3" />
+              {form.manualSalaryEntry ? "Manuel Giriş" : "Otomatik Hesapla"}
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          {form.manualSalaryEntry ? (
+            <>
+              <div className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                Otomatik hesaplama devre dışı, değerler manuel girilecek
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label htmlFor={`${idPrefix}-manualGross`} className="text-xs">Brüt Maaş (₺)</Label>
+                  <Input
+                    id={`${idPrefix}-manualGross`}
+                    type="number"
+                    min="0"
+                    placeholder="Brüt tutar"
+                    value={form.salaryGross}
+                    onChange={(e) => setForm({ ...form, salaryGross: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor={`${idPrefix}-manualNet`} className="text-xs">Net Maaş (₺)</Label>
+                  <Input
+                    id={`${idPrefix}-manualNet`}
+                    type="number"
+                    min="0"
+                    placeholder="Net tutar"
+                    value={form.salaryNet}
+                    onChange={(e) => setForm({ ...form, salaryNet: e.target.value })}
+                  />
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* NET / BRÜT Toggle */}
+              <div className="flex rounded-lg border overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, salaryType: "NET", salaryAmount: "" })}
+                  className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                    form.salaryType === "NET"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted/30 text-muted-foreground hover:bg-muted/50"
+                  }`}
+                >
+                  Net Maaş
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, salaryType: "BRUT", salaryAmount: "" })}
+                  className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                    form.salaryType === "BRUT"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted/30 text-muted-foreground hover:bg-muted/50"
+                  }`}
+                >
+                  Brüt Maaş
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label htmlFor={`${idPrefix}-salaryAmount`} className="text-xs">
+                    {form.salaryType === "NET" ? "Net Maaş (₺)" : "Brüt Maaş (₺)"}
+                  </Label>
+                  <Input
+                    id={`${idPrefix}-salaryAmount`}
+                    type="number"
+                    min="0"
+                    placeholder={form.salaryType === "NET" ? "Anlaşılan net tutar" : "Anlaşılan brüt tutar"}
+                    value={form.salaryAmount}
+                    onChange={(e) => setForm({ ...form, salaryAmount: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor={`${idPrefix}-salaryPayDay`} className="text-xs">Ödeme Günü</Label>
+                  <Select
+                    id={`${idPrefix}-salaryPayDay`}
+                    value={form.salaryPayDay}
+                    onChange={(e) => setForm({ ...form, salaryPayDay: e.target.value })}
+                  >
+                    <option value="">Seçin</option>
+                    {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
+                      <option key={d} value={String(d)}>
+                        {d}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+              </div>
+
+              {/* Preview */}
+              {formPreview && (
+                <div className="text-xs bg-accent/30 rounded-md p-3 space-y-1.5">
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Brüt</span>
+                      <span className="font-medium">{formatTL(formPreview.brut)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Net</span>
+                      <span className="font-medium">{formatTL(formPreview.net)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">SGK İşveren</span>
+                      <span className="font-medium">{formatTL(formPreview.sgkIsveren + formPreview.issizlikIsveren)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground font-medium">Toplam Maliyet</span>
+                      <span className="font-bold">{formatTL(formPreview.toplamIsverenMaliyet)}</span>
+                    </div>
+                  </div>
+                  <p className="text-[10px] opacity-70">* Ocak ayı hesabı. Detay panel yıllık tabloyu gösterir.</p>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Ödeme günü (for manual mode too) */}
+          {form.manualSalaryEntry && (
             <div className="space-y-1">
-              <Label htmlFor={`${idPrefix}-salaryAmount`} className="text-xs">
-                {form.salaryType === "NET" ? "Net Maaş (₺)" : "Brüt Maaş (₺)"}
-              </Label>
-              <Input
-                id={`${idPrefix}-salaryAmount`}
-                type="number"
-                min="0"
-                placeholder={form.salaryType === "NET" ? "Anlaşılan net tutar" : "Anlaşılan brüt tutar"}
-                value={form.salaryAmount}
-                onChange={(e) => setForm({ ...form, salaryAmount: e.target.value })}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor={`${idPrefix}-salaryPayDay`} className="text-xs">Ödeme Günü</Label>
+              <Label htmlFor={`${idPrefix}-salaryPayDay-manual`} className="text-xs">Ödeme Günü</Label>
               <Select
-                id={`${idPrefix}-salaryPayDay`}
+                id={`${idPrefix}-salaryPayDay-manual`}
                 value={form.salaryPayDay}
                 onChange={(e) => setForm({ ...form, salaryPayDay: e.target.value })}
               >
@@ -558,37 +844,40 @@ export default function EmployeesPage() {
                 ))}
               </Select>
             </div>
-          </div>
-
-          {/* Preview */}
-          {formPreview && (
-            <div className="text-xs bg-accent/30 rounded-md p-3 space-y-1.5">
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Brüt</span>
-                  <span className="font-medium">{formatTL(formPreview.brut)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Net</span>
-                  <span className="font-medium">{formatTL(formPreview.net)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">SGK İşveren</span>
-                  <span className="font-medium">{formatTL(formPreview.sgkIsveren + formPreview.issizlikIsveren)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground font-medium">Toplam Maliyet</span>
-                  <span className="font-bold">{formatTL(formPreview.toplamIsverenMaliyet)}</span>
-                </div>
-              </div>
-              <p className="text-[10px] opacity-70">* Ocak ayı hesabı. Detay panel yıllık tabloyu gösterir.</p>
-            </div>
           )}
         </div>
 
+        {/* Custom fields */}
+        {customFields.length > 0 && (
+          <div className="space-y-2">
+            <Label>Özel Alanlar</Label>
+            <div className="space-y-2 rounded-md border p-3">
+              {customFields.map((field) => (
+                <div key={field.id} className="space-y-1">
+                  <Label className="text-xs">{field.fieldName}</Label>
+                  <Input
+                    type={field.fieldType === "number" ? "number" : field.fieldType === "date" ? "date" : "text"}
+                    placeholder={field.fieldName}
+                    defaultValue={
+                      editingEmployee?.customValues?.find((v) => v.fieldKey === field.fieldKey)?.value || ""
+                    }
+                    onBlur={(e) => {
+                      if (editingEmployee) {
+                        handleCustomValueChange(editingEmployee.id, field.fieldKey, e.target.value);
+                      }
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="space-y-2">
-          <Label>İzinler</Label>
-          <div className="space-y-2 rounded-md border p-3">
+          <div className="flex items-center justify-between">
+            <Label>Modül Erişim İzinleri</Label>
+          </div>
+          <div className="space-y-2 rounded-md border p-3 max-h-[200px] overflow-y-auto">
             {Object.entries(PERMISSION_LABELS).map(([key, label]) => (
               <label
                 key={key}
@@ -596,7 +885,7 @@ export default function EmployeesPage() {
               >
                 <input
                   type="checkbox"
-                  checked={form.permissions[key as keyof PermissionsMap]}
+                  checked={form.permissions[key] || false}
                   onChange={(e) =>
                     setForm({
                       ...form,
@@ -625,10 +914,16 @@ export default function EmployeesPage() {
           <UserCog className="h-7 w-7 text-primary" />
           <h1 className="text-2xl font-bold tracking-tight">Çalışanlar</h1>
         </div>
-        <Button onClick={() => { setForm(emptyForm); setShowAddDialog(true); }}>
-          <Plus className="mr-2 h-4 w-4" />
-          Yeni Çalışan Ekle
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowAddFieldDialog(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Alan Ekle
+          </Button>
+          <Button onClick={() => { setForm(emptyForm); setShowAddDialog(true); }}>
+            <Plus className="mr-2 h-4 w-4" />
+            Yeni Çalışan Ekle
+          </Button>
+        </div>
       </div>
 
       {/* Stats Row */}
@@ -738,10 +1033,17 @@ export default function EmployeesPage() {
                             <span>{emp.phone}</span>
                           </div>
                         )}
+                        {emp.hasSystemAccess && (
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <Badge className={emp.inviteStatus === "active" ? "bg-green-100 text-green-700" : emp.inviteStatus === "invited" ? "bg-yellow-100 text-yellow-700" : "bg-gray-100 text-gray-600"} variant="outline">
+                              {emp.inviteStatus === "active" ? "Aktif" : emp.inviteStatus === "invited" ? "Davet Bekliyor" : "Davet Edilmedi"}
+                            </Badge>
+                          </div>
+                        )}
                       </div>
 
-                      {/* Commission & Revenue */}
-                      <div className="flex items-center gap-4 text-sm">
+                      {/* Commission, Revenue & Salary */}
+                      <div className="flex items-center gap-4 text-sm flex-wrap">
                         <div className="text-right">
                           <p className="text-muted-foreground">Komisyon</p>
                           <p className="font-medium">%{emp.commissionRate}</p>
@@ -753,6 +1055,15 @@ export default function EmployeesPage() {
                         <div className="text-right">
                           <p className="text-muted-foreground">Aylık Komisyon</p>
                           <p className="font-medium text-green-600">{formatTL(emp.monthlyCommission)}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-muted-foreground">Maaş</p>
+                          <p className="font-medium">
+                            {(() => {
+                              const info = getSalaryTypeAndAmount(emp);
+                              return info ? formatTL(info.amount) : "-";
+                            })()}
+                          </p>
                         </div>
                       </div>
 
@@ -952,6 +1263,62 @@ export default function EmployeesPage() {
                   </button>
                 </div>
 
+                {/* System Access Toggle */}
+                <div className="flex items-center justify-between p-3 rounded-lg bg-accent/30">
+                  <span className="text-sm font-medium flex items-center gap-2">
+                    <Shield className="h-4 w-4" />
+                    Sistem Erişimi
+                  </span>
+                  <button
+                    onClick={() => handleToggleSystemAccess(selectedEmployee)}
+                    className="flex items-center gap-2"
+                  >
+                    {selectedEmployee.hasSystemAccess ? (
+                      <>
+                        <span className="text-sm text-green-600 font-medium">Aktif</span>
+                        <ToggleRight className="h-6 w-6 text-green-600" />
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-sm text-gray-500 font-medium">Pasif</span>
+                        <ToggleLeft className="h-6 w-6 text-gray-400" />
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Appointment Types (Görev Listesi) */}
+                {selectedEmployee.appointmentTypes && selectedEmployee.appointmentTypes.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold">Atanan İşlem Türleri</h4>
+                    <div className="flex flex-wrap gap-1.5">
+                      {selectedEmployee.appointmentTypes.map((type) => (
+                        <Badge key={type} variant="outline" className="text-xs">
+                          {type}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Custom Fields */}
+                {customFields.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold">Özel Alanlar</h4>
+                    <div className="space-y-1.5">
+                      {customFields.map((field) => {
+                        const cv = selectedEmployee.customValues?.find((v) => v.fieldKey === field.fieldKey);
+                        return (
+                          <div key={field.id} className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">{field.fieldName}</span>
+                            <span className="font-medium">{cv?.value || "-"}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Performance Summary */}
                 <div className="space-y-3">
                   <h3 className="text-sm font-semibold flex items-center gap-2">
@@ -1058,8 +1425,141 @@ export default function EmployeesPage() {
             <Button variant="outline" onClick={() => setEditingEmployee(null)}>
               İptal
             </Button>
-            <Button onClick={handleUpdate} disabled={saving || !form.name.trim()}>
+            <Button onClick={() => handleUpdate()} disabled={saving || !form.name.trim()}>
               {saving ? "Kaydediliyor..." : "Güncelle"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Salary Update Mode Dialog */}
+      <Dialog open={showSalaryUpdateModal} onOpenChange={setShowSalaryUpdateModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Maaş Değişikliği</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-amber-700 bg-amber-50 rounded-lg p-3">
+              <AlertTriangle className="h-5 w-5 shrink-0" />
+              <span className="text-sm font-medium">Maaş değişikliği nasıl uygulanacak?</span>
+            </div>
+            <div className="space-y-3">
+              <label className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${salaryUpdateMode === "forward_only" ? "border-blue-300 bg-blue-50/50" : "border-gray-200"}`}>
+                <input type="radio" name="salaryUpdateMode" checked={salaryUpdateMode === "forward_only"} onChange={() => setSalaryUpdateMode("forward_only")} className="mt-0.5" />
+                <div>
+                  <span className="text-sm font-medium text-gray-800">Sadece ileriye dönük güncelle</span>
+                  <p className="text-xs text-gray-500 mt-0.5">Geçmiş maaş kayıtları değişmez. Yeni aydan itibaren yeni maaş uygulanır.</p>
+                </div>
+              </label>
+              <label className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${salaryUpdateMode === "all_history" ? "border-red-300 bg-red-50/50" : "border-gray-200"}`}>
+                <input type="radio" name="salaryUpdateMode" checked={salaryUpdateMode === "all_history"} onChange={() => setSalaryUpdateMode("all_history")} className="mt-0.5" />
+                <div>
+                  <span className="text-sm font-medium text-gray-800">Tüm geçmiş kayıtları güncelle</span>
+                  <p className="text-xs text-red-500 mt-0.5 font-medium">Tüm geçmiş maaş kayıtları değişir (geri alınamaz)</p>
+                </div>
+              </label>
+              <label className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${salaryUpdateMode === "correction" ? "border-amber-300 bg-amber-50/50" : "border-gray-200"}`}>
+                <input type="radio" name="salaryUpdateMode" checked={salaryUpdateMode === "correction"} onChange={() => setSalaryUpdateMode("correction")} className="mt-0.5" />
+                <div>
+                  <span className="text-sm font-medium text-gray-800">Yanlış giriş düzeltmesi</span>
+                  <p className="text-xs text-gray-500 mt-0.5">Geçmişi düzelt, audit log&apos;a işaretle</p>
+                </div>
+              </label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setShowSalaryUpdateModal(false); setPendingSalaryUpdate(null); }}>
+              İptal
+            </Button>
+            <Button onClick={handleSalaryUpdateConfirm} disabled={saving}>
+              {saving ? "Kaydediliyor..." : "Uygula"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Invite Dialog */}
+      <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="h-5 w-5" />
+              Çalışanı Sisteme Davet Et
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input
+                type="email"
+                placeholder="calisan@email.com"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+              />
+            </div>
+            <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-600">
+              <p className="font-medium mb-1">Davet mesajı:</p>
+              <p className="text-xs italic">&quot;İşletmeniz sizi Poby platformuna davet ediyor. Kayıt için bir bağlantı gönderilecek.&quot;</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Erişim İzinleri</Label>
+              <div className="space-y-2 rounded-md border p-3 max-h-[200px] overflow-y-auto">
+                {Object.entries(PERMISSION_LABELS).map(([key, label]) => (
+                  <label key={key} className="flex items-center gap-2 cursor-pointer text-sm">
+                    <input
+                      type="checkbox"
+                      checked={form.permissions[key] || false}
+                      onChange={(e) => setForm({ ...form, permissions: { ...form.permissions, [key]: e.target.checked } })}
+                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                    <span>{label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowInviteDialog(false)}>
+              İptal
+            </Button>
+            <Button onClick={handleSendInvite} disabled={saving}>
+              {saving ? "Kaydediliyor..." : "Daveti Gönder"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Custom Field Dialog */}
+      <Dialog open={showAddFieldDialog} onOpenChange={setShowAddFieldDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Özel Alan Ekle</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Alan Adı</Label>
+              <Input
+                placeholder="örn. TC Kimlik, Adres"
+                value={newFieldName}
+                onChange={(e) => setNewFieldName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Alan Tipi</Label>
+              <Select value={newFieldType} onChange={(e) => setNewFieldType(e.target.value)}>
+                <option value="text">Metin</option>
+                <option value="number">Sayı</option>
+                <option value="date">Tarih</option>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddFieldDialog(false)}>
+              İptal
+            </Button>
+            <Button onClick={handleAddCustomField} disabled={!newFieldName.trim()}>
+              Ekle
             </Button>
           </DialogFooter>
         </DialogContent>

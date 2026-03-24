@@ -12,6 +12,9 @@ export async function GET() {
     const employees = await prisma.employee.findMany({
       where: { clinicId },
       orderBy: { createdAt: "desc" },
+      include: {
+        customValues: true,
+      },
     });
 
     // Get performance data for each employee
@@ -21,7 +24,7 @@ export async function GET() {
 
     const employeesWithStats = await Promise.all(
       employees.map(async (emp) => {
-        const [totalTreatments, monthlyTreatments] = await Promise.all([
+        const [totalTreatments, monthlyTreatments, monthlyAppointments] = await Promise.all([
           prisma.treatment.aggregate({
             where: { clinicId, employeeId: emp.id },
             _sum: { amount: true },
@@ -32,10 +35,17 @@ export async function GET() {
             _sum: { amount: true },
             _count: { id: true },
           }),
+          prisma.appointment.findMany({
+            where: { clinicId, employeeId: emp.id, date: { gte: monthStart, lt: monthEnd } },
+            select: { id: true, treatmentType: true, date: true, status: true },
+          }),
         ]);
 
         const totalRevenue = (totalTreatments._sum.amount || 0) / 100;
         const monthlyRevenue = (monthlyTreatments._sum.amount || 0) / 100;
+
+        // Collect distinct treatment types from appointments
+        const appointmentTypes = Array.from(new Set(monthlyAppointments.map((a) => a.treatmentType)));
 
         return {
           ...emp,
@@ -45,6 +55,8 @@ export async function GET() {
           monthlyTreatmentCount: monthlyTreatments._count.id || 0,
           totalCommission: Math.round(totalRevenue * emp.commissionRate / 100),
           monthlyCommission: Math.round(monthlyRevenue * emp.commissionRate / 100),
+          monthlyAppointmentCount: monthlyAppointments.length,
+          appointmentTypes,
         };
       })
     );
@@ -120,7 +132,7 @@ export async function POST(req: NextRequest) {
       case "create": {
         const {
           name, role, phone, email, commissionRate, color, permissions,
-          salaryGross, salaryNet, salarySSI, salaryPayDay,
+          salaryGross, salaryNet, salarySSI, salaryPayDay, manualSalaryEntry,
         } = body;
         if (!name) return Response.json({ error: "Name required" }, { status: 400 });
 
@@ -143,6 +155,7 @@ export async function POST(req: NextRequest) {
             salaryNet: netVal,
             salarySSI: ssiVal,
             salaryPayDay: payDayVal,
+            manualSalaryEntry: manualSalaryEntry || false,
             clinicId,
           },
         });
@@ -154,7 +167,7 @@ export async function POST(req: NextRequest) {
       case "update": {
         const {
           id, name, role, phone, email, commissionRate, isActive, color, permissions,
-          salaryGross, salaryNet, salarySSI, salaryPayDay,
+          salaryGross, salaryNet, salarySSI, salaryPayDay, manualSalaryEntry, updateMode,
         } = body;
         if (!id) return Response.json({ error: "ID required" }, { status: 400 });
 
@@ -174,6 +187,7 @@ export async function POST(req: NextRequest) {
         if (isActive !== undefined) updateData.isActive = isActive;
         if (color !== undefined) updateData.color = color;
         if (permissions !== undefined) updateData.permissions = permissions;
+        if (manualSalaryEntry !== undefined) updateData.manualSalaryEntry = manualSalaryEntry;
 
         if (salaryGross !== undefined) updateData.salaryGross = salaryGross ? parseInt(salaryGross) : null;
         if (salaryNet !== undefined) updateData.salaryNet = salaryNet ? parseInt(salaryNet) : null;
@@ -196,6 +210,20 @@ export async function POST(req: NextRequest) {
             employee.salarySSI,
             employee.salaryPayDay
           );
+
+          // If updateMode is all_history or correction, update all past recurring payments
+          if (updateMode === "all_history" || updateMode === "correction") {
+            const recurringTx = await prisma.recurringTransaction.findFirst({
+              where: { clinicId, employeeId: id },
+            });
+            if (recurringTx) {
+              const newAmount = employee.salaryGross ? employee.salaryGross / 100 : 0;
+              await prisma.recurringPayment.updateMany({
+                where: { recurringTransactionId: recurringTx.id },
+                data: { amount: newAmount },
+              });
+            }
+          }
         }
 
         return Response.json({ success: true, employee });
