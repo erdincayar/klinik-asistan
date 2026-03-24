@@ -46,6 +46,11 @@ export async function GET(request: Request) {
       where.employeeId = employeeId;
     }
 
+    const service = searchParams.get("service");
+    if (service) {
+      where.treatmentType = service;
+    }
+
     const raw = await prisma.appointment.findMany({
       where,
       include: {

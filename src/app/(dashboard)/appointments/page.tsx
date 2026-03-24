@@ -121,6 +121,14 @@ export default function AppointmentsPage() {
   const [selectedEmployee, setSelectedEmployee] = useState<string>("all");
   const [workStartTime, setWorkStartTime] = useState("09:00");
   const [workEndTime, setWorkEndTime] = useState("17:30");
+  const [serviceNames, setServiceNames] = useState<string[]>([]);
+  const [selectedService, setSelectedService] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return new URLSearchParams(window.location.search).get("service") || "all";
+    }
+    return "all";
+  });
+  const [showAllServices, setShowAllServices] = useState(false);
 
   // New appointment dialog state
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -152,12 +160,15 @@ export default function AppointmentsPage() {
   const dailyScrollRef = useRef<HTMLDivElement>(null);
   const weeklyScrollRef = useRef<HTMLDivElement>(null);
 
-  const fetchDayAppointments = useCallback(async (date: Date, employeeId?: string) => {
+  const fetchDayAppointments = useCallback(async (date: Date, employeeId?: string, service?: string) => {
     setLoading(true);
     try {
       let url = `/api/appointments?date=${formatDateISO(date)}`;
       if (employeeId && employeeId !== "all") {
         url += `&employeeId=${employeeId}`;
+      }
+      if (service && service !== "all") {
+        url += `&service=${encodeURIComponent(service)}`;
       }
       const res = await fetch(url);
       if (res.ok) {
@@ -171,19 +182,20 @@ export default function AppointmentsPage() {
     }
   }, []);
 
-  const fetchWeekAppointments = useCallback(async (date: Date, employeeId?: string) => {
+  const fetchWeekAppointments = useCallback(async (date: Date, employeeId?: string, service?: string) => {
     setLoading(true);
     const monday = getMonday(date);
     const weekData: Record<string, Appointment[]> = {};
 
     const employeeParam = employeeId && employeeId !== "all" ? `&employeeId=${employeeId}` : "";
+    const serviceParam = service && service !== "all" ? `&service=${encodeURIComponent(service)}` : "";
 
     try {
       const promises = Array.from({ length: 7 }, (_, i) => {
         const d = new Date(monday);
         d.setDate(monday.getDate() + i);
         const dateStr = formatDateISO(d);
-        return fetch(`/api/appointments?date=${dateStr}${employeeParam}`)
+        return fetch(`/api/appointments?date=${dateStr}${employeeParam}${serviceParam}`)
           .then((res) => (res.ok ? res.json() : { appointments: [] }))
           .then((data) => {
             weekData[dateStr] = data.appointments || data || [];
@@ -218,6 +230,10 @@ export default function AppointmentsPage() {
         if (data?.workEndTime) setWorkEndTime(data.workEndTime);
       })
       .catch(() => {});
+    fetch("/api/clinic/service-names")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setServiceNames(Array.isArray(data) ? data : []))
+      .catch(() => {});
   }, []);
 
   // Treatment type autocomplete for dialog
@@ -242,11 +258,22 @@ export default function AppointmentsPage() {
 
   useEffect(() => {
     if (viewMode === "daily") {
-      fetchDayAppointments(selectedDate, selectedEmployee);
+      fetchDayAppointments(selectedDate, selectedEmployee, selectedService);
     } else {
-      fetchWeekAppointments(selectedDate, selectedEmployee);
+      fetchWeekAppointments(selectedDate, selectedEmployee, selectedService);
     }
-  }, [selectedDate, viewMode, selectedEmployee, fetchDayAppointments, fetchWeekAppointments]);
+  }, [selectedDate, viewMode, selectedEmployee, selectedService, fetchDayAppointments, fetchWeekAppointments]);
+
+  // Sync selectedService to URL
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (selectedService && selectedService !== "all") {
+      url.searchParams.set("service", selectedService);
+    } else {
+      url.searchParams.delete("service");
+    }
+    window.history.replaceState({}, "", url.toString());
+  }, [selectedService]);
 
   function goToday() { setSelectedDate(new Date()); }
   function goPrev() {
@@ -274,9 +301,9 @@ export default function AppointmentsPage() {
       });
       if (res.ok) {
         if (viewMode === "daily") {
-          await fetchDayAppointments(selectedDate, selectedEmployee);
+          await fetchDayAppointments(selectedDate, selectedEmployee, selectedService);
         } else {
-          await fetchWeekAppointments(selectedDate, selectedEmployee);
+          await fetchWeekAppointments(selectedDate, selectedEmployee, selectedService);
         }
         setDialogOpen(false);
         setSelectedAppointment(null);
@@ -409,9 +436,9 @@ export default function AppointmentsPage() {
       }
       setCreateDialogOpen(false);
       if (viewMode === "daily") {
-        await fetchDayAppointments(selectedDate, selectedEmployee);
+        await fetchDayAppointments(selectedDate, selectedEmployee, selectedService);
       } else {
-        await fetchWeekAppointments(selectedDate, selectedEmployee);
+        await fetchWeekAppointments(selectedDate, selectedEmployee, selectedService);
       }
     } catch (err) {
       setCreateError(err instanceof Error ? err.message : "Bir hata oluştu");
@@ -597,6 +624,54 @@ export default function AppointmentsPage() {
               {emp.name}
             </button>
           ))}
+        </div>
+      )}
+
+      {/* Service filter pills */}
+      {serviceNames.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-medium text-gray-500">İşlem:</span>
+          <button
+            onClick={() => setSelectedService("all")}
+            className={cn(
+              "inline-flex items-center rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+              selectedService === "all"
+                ? "bg-gray-900 text-white"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            )}
+          >
+            Tümü
+          </button>
+          {(showAllServices ? serviceNames : serviceNames.slice(0, 5)).map((name) => (
+            <button
+              key={name}
+              onClick={() => setSelectedService(name)}
+              className={cn(
+                "inline-flex items-center rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+                selectedService === name
+                  ? "bg-gray-900 text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              )}
+            >
+              {name}
+            </button>
+          ))}
+          {!showAllServices && serviceNames.length > 5 && (
+            <button
+              onClick={() => setShowAllServices(true)}
+              className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200"
+            >
+              +{serviceNames.length - 5} daha
+            </button>
+          )}
+          {showAllServices && serviceNames.length > 5 && (
+            <button
+              onClick={() => setShowAllServices(false)}
+              className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200"
+            >
+              Daralt
+            </button>
+          )}
         </div>
       )}
 
