@@ -16,6 +16,8 @@ import {
   Download,
   AlertTriangle,
   Pencil,
+  Trash2,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,6 +43,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -122,6 +125,7 @@ interface RecurringTransaction {
   isActive: boolean;
   remindBefore: number;
   notes: string | null;
+  _count?: { payments: number };
 }
 
 /* ──────────────────────── HELPERS ──────────────────────── */
@@ -208,6 +212,31 @@ export default function FinanceOverview() {
     remindBefore: "3",
     notes: "",
   });
+
+  // Edit recurring state
+  const [editTarget, setEditTarget] = useState<RecurringTransaction | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    type: "EXPENSE",
+    category: "FIXED",
+    amount: "",
+    dayOfMonth: "1",
+    remindBefore: "3",
+    notes: "",
+  });
+  const [editUpdateMode, setEditUpdateMode] = useState<"forward_only" | "all_history" | "correction">("forward_only");
+  const [editSaving, setEditSaving] = useState(false);
+  const [editAmountChanged, setEditAmountChanged] = useState(false);
+
+  // Delete recurring state
+  const [deleteTarget, setDeleteTarget] = useState<RecurringTransaction | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteMode, setDeleteMode] = useState<"record_only" | "with_history">("record_only");
+  const [deleting, setDeleting] = useState(false);
+
+  // Alarm module flag
+  const [isAlarmsModuleActive] = useState(true);
 
   // Upcoming payments state
   const [upcomingPayments, setUpcomingPayments] = useState<RecurringTransaction[]>([]);
@@ -352,6 +381,94 @@ export default function FinanceOverview() {
       // silent fail
     } finally {
       setPayingId(null);
+    }
+  }
+
+  function openEditDialog(rt: RecurringTransaction) {
+    setEditTarget(rt);
+    setEditForm({
+      name: rt.name,
+      type: rt.type,
+      category: rt.category,
+      amount: rt.amount?.toString() || "",
+      dayOfMonth: rt.dayOfMonth.toString(),
+      remindBefore: rt.remindBefore.toString(),
+      notes: rt.notes || "",
+    });
+    setEditAmountChanged(false);
+    setEditUpdateMode("forward_only");
+    setShowEditDialog(true);
+  }
+
+  function handleEditFormChange(field: string, value: string) {
+    setEditForm((prev) => ({ ...prev, [field]: value }));
+    if (field === "amount") {
+      const originalAmount = editTarget?.amount?.toString() || "";
+      setEditAmountChanged(value !== originalAmount);
+    }
+  }
+
+  async function handleEditSave() {
+    if (!editTarget || !editForm.name) return;
+    setEditSaving(true);
+    try {
+      const payload: any = {
+        id: editTarget.id,
+        name: editForm.name,
+        type: editForm.type,
+        category: editForm.category,
+        amount: editForm.amount || null,
+        dayOfMonth: editForm.dayOfMonth,
+        remindBefore: editForm.remindBefore,
+        notes: editForm.notes || null,
+      };
+      if (editAmountChanged) {
+        payload.updateMode = editUpdateMode;
+      }
+
+      const res = await fetch("/api/finance/recurring", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        setShowEditDialog(false);
+        setEditTarget(null);
+        fetchRecurringTransactions();
+      }
+    } catch {
+      // silent fail
+    } finally {
+      setEditSaving(false);
+    }
+  }
+
+  function openDeleteDialog(rt: RecurringTransaction) {
+    setDeleteTarget(rt);
+    setDeleteMode("record_only");
+    setShowDeleteDialog(true);
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const res = await fetch("/api/finance/recurring", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: deleteTarget.id, deleteMode: deleteMode }),
+      });
+
+      if (res.ok) {
+        setShowDeleteDialog(false);
+        setDeleteTarget(null);
+        fetchRecurringTransactions();
+      }
+    } catch {
+      // silent fail
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -815,6 +932,7 @@ export default function FinanceOverview() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-[80px]"></TableHead>
                         <TableHead>İşlem Adı</TableHead>
                         <TableHead>Tür</TableHead>
                         <TableHead>Kategori</TableHead>
@@ -827,6 +945,24 @@ export default function FinanceOverview() {
                     <TableBody>
                       {recurringTransactions.map((rt) => (
                         <TableRow key={rt.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => openEditDialog(rt)}
+                                title="Düzenle"
+                                className="inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => openDeleteDialog(rt)}
+                                title="Sil"
+                                className="inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </TableCell>
                           <TableCell className="font-medium">{rt.name}</TableCell>
                           <TableCell>
                             <Badge
@@ -1094,18 +1230,36 @@ export default function FinanceOverview() {
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 relative">
               <Label htmlFor="recurring-remind">Hatırlatma (gün önce)</Label>
-              <Input
-                id="recurring-remind"
-                type="number"
-                min="0"
-                max="30"
-                value={recurringForm.remindBefore}
-                onChange={(e) =>
-                  setRecurringForm({ ...recurringForm, remindBefore: e.target.value })
-                }
-              />
+              {isAlarmsModuleActive ? (
+                <Input
+                  id="recurring-remind"
+                  type="number"
+                  min="0"
+                  max="30"
+                  value={recurringForm.remindBefore}
+                  onChange={(e) =>
+                    setRecurringForm({ ...recurringForm, remindBefore: e.target.value })
+                  }
+                />
+              ) : (
+                <div className="relative">
+                  <Input
+                    id="recurring-remind"
+                    type="number"
+                    disabled
+                    value={recurringForm.remindBefore}
+                    className="opacity-50"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center rounded-md bg-gray-50/80 backdrop-blur-[1px]">
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <Lock className="h-3.5 w-3.5" />
+                      <span>Alarmlar modülü gerekli</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -1126,6 +1280,239 @@ export default function FinanceOverview() {
             </Button>
             <Button onClick={handleCreateRecurring} disabled={!recurringForm.name}>
               Kaydet
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Recurring Transaction Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Sabit İşlemi Düzenle</DialogTitle>
+            <DialogDescription>
+              {editTarget?.name} işlemini düzenleyin.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">İşlem Adı</Label>
+              <Input
+                id="edit-name"
+                value={editForm.name}
+                onChange={(e) => handleEditFormChange("name", e.target.value)}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-type">Tür</Label>
+                <select
+                  id="edit-type"
+                  value={editForm.type}
+                  onChange={(e) => handleEditFormChange("type", e.target.value)}
+                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
+                >
+                  <option value="EXPENSE">Gider</option>
+                  <option value="INCOME">Gelir</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-category">Kategori</Label>
+                <select
+                  id="edit-category"
+                  value={editForm.category}
+                  onChange={(e) => handleEditFormChange("category", e.target.value)}
+                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
+                >
+                  <option value="FIXED">Sabit</option>
+                  <option value="VARIABLE">Değişken</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-amount">Tutar (TL)</Label>
+                <Input
+                  id="edit-amount"
+                  type="number"
+                  placeholder="Opsiyonel"
+                  value={editForm.amount}
+                  onChange={(e) => handleEditFormChange("amount", e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-day">Ödeme Günü (1-31)</Label>
+                <Input
+                  id="edit-day"
+                  type="number"
+                  min="1"
+                  max="31"
+                  value={editForm.dayOfMonth}
+                  onChange={(e) => handleEditFormChange("dayOfMonth", e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2 relative">
+              <Label htmlFor="edit-remind">Hatırlatma (gün önce)</Label>
+              {isAlarmsModuleActive ? (
+                <Input
+                  id="edit-remind"
+                  type="number"
+                  min="0"
+                  max="30"
+                  value={editForm.remindBefore}
+                  onChange={(e) => handleEditFormChange("remindBefore", e.target.value)}
+                />
+              ) : (
+                <div className="relative">
+                  <Input
+                    id="edit-remind"
+                    type="number"
+                    disabled
+                    value={editForm.remindBefore}
+                    className="opacity-50"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center rounded-md bg-gray-50/80 backdrop-blur-[1px]">
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <Lock className="h-3.5 w-3.5" />
+                      <span>Alarmlar modülü gerekli</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-notes">Notlar</Label>
+              <Input
+                id="edit-notes"
+                placeholder="Opsiyonel"
+                value={editForm.notes}
+                onChange={(e) => handleEditFormChange("notes", e.target.value)}
+              />
+            </div>
+
+            {editAmountChanged && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-600" />
+                  <span className="text-sm font-medium text-amber-800">Tutar değişikliği algılandı</span>
+                </div>
+                <div className="space-y-2">
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="updateMode"
+                      value="forward_only"
+                      checked={editUpdateMode === "forward_only"}
+                      onChange={() => setEditUpdateMode("forward_only")}
+                      className="mt-0.5"
+                    />
+                    <span className="text-sm text-gray-700">Sadece ileriye dönük güncelle <span className="text-gray-400">(geçmiş kayıtlar korunur)</span></span>
+                  </label>
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="updateMode"
+                      value="all_history"
+                      checked={editUpdateMode === "all_history"}
+                      onChange={() => setEditUpdateMode("all_history")}
+                      className="mt-0.5"
+                    />
+                    <span className="text-sm text-gray-700">Tüm geçmiş kayıtları da güncelle <span className="text-red-500 text-xs font-medium">(geri alınamaz)</span></span>
+                  </label>
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="updateMode"
+                      value="correction"
+                      checked={editUpdateMode === "correction"}
+                      onChange={() => setEditUpdateMode("correction")}
+                      className="mt-0.5"
+                    />
+                    <span className="text-sm text-gray-700">Yanlış giriş düzeltmesi <span className="text-gray-400">(geçmişi de düzelt)</span></span>
+                  </label>
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+              İptal
+            </Button>
+            <Button onClick={handleEditSave} disabled={editSaving || !editForm.name}>
+              {editSaving ? "Kaydediliyor..." : "Kaydet"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Recurring Transaction Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Sabit İşlemi Sil</DialogTitle>
+            <DialogDescription>
+              &ldquo;{deleteTarget?.name}&rdquo; işlemini silmek istediğinize emin misiniz?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <label
+              className={cn(
+                "flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors",
+                deleteMode === "record_only" ? "border-blue-300 bg-blue-50/50" : "border-gray-200"
+              )}
+            >
+              <input
+                type="radio"
+                name="deleteMode"
+                value="record_only"
+                checked={deleteMode === "record_only"}
+                onChange={() => setDeleteMode("record_only")}
+                className="mt-0.5"
+              />
+              <div>
+                <span className="text-sm font-medium text-gray-800">Sadece sabit işlemi sil</span>
+                <p className="text-xs text-gray-500 mt-0.5">Geçmiş ödeme kayıtları korunur</p>
+              </div>
+            </label>
+            <label
+              className={cn(
+                "flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors",
+                deleteMode === "with_history" ? "border-red-300 bg-red-50/50" : "border-gray-200"
+              )}
+            >
+              <input
+                type="radio"
+                name="deleteMode"
+                value="with_history"
+                checked={deleteMode === "with_history"}
+                onChange={() => setDeleteMode("with_history")}
+                className="mt-0.5"
+              />
+              <div>
+                <span className="text-sm font-medium text-gray-800">Sabit işlemi ve tüm geçmiş kayıtları sil</span>
+                {deleteTarget?._count?.payments ? (
+                  <p className="text-xs text-red-500 mt-0.5 font-medium">
+                    {deleteTarget._count.payments} ödeme kaydı da silinecek (geri alınamaz)
+                  </p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-0.5">Tüm ilişkili kayıtlar silinir (geri alınamaz)</p>
+                )}
+              </div>
+            </label>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+              İptal
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+              {deleting ? "Siliniyor..." : "Sil"}
             </Button>
           </DialogFooter>
         </DialogContent>
