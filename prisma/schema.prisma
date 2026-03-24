@@ -936,10 +936,10 @@ model FixedAsset {
 model ClinicServiceName {
   id         String   @id @default(cuid())
   clinicId   String
-  clinic     Clinic   @relation(fields: [clinicId], references: [id])
   name       String
-  usageCount Int      @default(1)
+  usageCount Int      @default(0)
   createdAt  DateTime @default(now())
+  clinic     Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
 
   @@unique([clinicId, name])
 }
@@ -947,10 +947,10 @@ model ClinicServiceName {
 model ClinicCategory {
   id         String   @id @default(cuid())
   clinicId   String
-  clinic     Clinic   @relation(fields: [clinicId], references: [id])
   name       String
-  usageCount Int      @default(1)
+  usageCount Int      @default(0)
   createdAt  DateTime @default(now())
+  clinic     Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
 
   @@unique([clinicId, name])
 }
@@ -958,11 +958,11 @@ model ClinicCategory {
 model CustomerCustomColumn {
   id         String   @id @default(cuid())
   clinicId   String
-  clinic     Clinic   @relation(fields: [clinicId], references: [id])
   columnName String
   columnKey  String
   sortOrder  Int      @default(0)
   createdAt  DateTime @default(now())
+  clinic     Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
 
   @@unique([clinicId, columnKey])
 }
@@ -970,10 +970,10 @@ model CustomerCustomColumn {
 model CustomerCustomValue {
   id         String   @id @default(cuid())
   customerId String
-  patient    Patient  @relation(fields: [customerId], references: [id])
   columnKey  String
-  value      String   @default("")
+  value      String?
   updatedAt  DateTime @updatedAt
+  patient    Patient  @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   @@unique([customerId, columnKey])
 }
@@ -981,12 +981,12 @@ model CustomerCustomValue {
 model TransactionCustomField {
   id        String   @id @default(cuid())
   clinicId  String
-  clinic    Clinic   @relation(fields: [clinicId], references: [id])
   fieldName String
   fieldKey  String
-  fieldType String   @default("text") // text | number | date
+  fieldType String   @default("text")
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
+  clinic    Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
 
   @@unique([clinicId, fieldKey])
 }
@@ -994,9 +994,9 @@ model TransactionCustomField {
 model TransactionCustomValue {
   id          String    @id @default(cuid())
   treatmentId String
-  treatment   Treatment @relation(fields: [treatmentId], references: [id])
   fieldKey    String
-  value       String    @default("")
+  value       String?
+  treatment   Treatment @relation(fields: [treatmentId], references: [id], onDelete: Cascade)
 
   @@unique([treatmentId, fieldKey])
 }
