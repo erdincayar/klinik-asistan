@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Bell,
@@ -90,7 +91,18 @@ function Skeleton({ className }: { className?: string }) {
 
 /* ──────────────────────── MAIN ──────────────────────── */
 
-export default function AlarmsPage() {
+export default function AlarmsPageWrapper() {
+  return (
+    <Suspense fallback={<div className="space-y-6"><div className="animate-pulse rounded-xl bg-gray-100 h-24" /><div className="animate-pulse rounded-xl bg-gray-100 h-96" /></div>}>
+      <AlarmsPage />
+    </Suspense>
+  );
+}
+
+function AlarmsPage() {
+  const searchParams = useSearchParams();
+  const prefillHandled = useRef(false);
+
   const [tab, setTab] = useState<"alarms" | "logs">("alarms");
   const [alarms, setAlarms] = useState<Alarm[]>([]);
   const [logs, setLogs] = useState<AlarmLog[]>([]);
@@ -115,6 +127,10 @@ export default function AlarmsPage() {
   // Log filters
   const [logTypeFilter, setLogTypeFilter] = useState("all");
   const [logUnreadOnly, setLogUnreadOnly] = useState(false);
+
+  // Pre-fill from URL params (customer detail → alarm creation)
+  const [prefillCustomerId, setPrefillCustomerId] = useState<string | null>(null);
+  const [prefillCustomerName, setPrefillCustomerName] = useState<string | null>(null);
 
   const fetchAlarms = useCallback(async () => {
     try {
@@ -151,6 +167,24 @@ export default function AlarmsPage() {
     }
     init();
   }, [fetchAlarms, fetchLogs, fetchUnreadCount]);
+
+  // Handle URL prefill after loading
+  useEffect(() => {
+    if (loading || prefillHandled.current) return;
+    const newAlarm = searchParams.get("newAlarm");
+    if (newAlarm === "customer_visit") {
+      prefillHandled.current = true;
+      const customerId = searchParams.get("customerId");
+      const customerName = searchParams.get("customerName");
+      setPrefillCustomerId(customerId);
+      setPrefillCustomerName(customerName);
+      setEditingAlarm(null);
+      setFormName(customerName ? `${customerName} - Ziyaret Alarmı` : "Müşteri Ziyaret Alarmı");
+      setFormType("CUSTOMER_VISIT");
+      setFormConditions({ multiplier: 2, customerId: customerId || undefined });
+      setShowDialog(true);
+    }
+  }, [loading, searchParams]);
 
   useEffect(() => {
     // Calculate today triggered
@@ -626,20 +660,31 @@ export default function AlarmsPage() {
             )}
 
             {formType === "CUSTOMER_VISIT" && (
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-600">Sıklık Katı</label>
-                <Input
-                  type="number"
-                  min={1}
-                  step={0.5}
-                  value={formConditions.multiplier ?? 2}
-                  onChange={(e) =>
-                    setFormConditions((prev) => ({ ...prev, multiplier: Number(e.target.value) }))
-                  }
-                />
-                <p className="mt-1 text-[11px] text-gray-400">
-                  Ortalama ziyaret aralığının kaç katı geçince uyarılsın
-                </p>
+              <div className="space-y-3">
+                {prefillCustomerName && formConditions.customerId && (
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-gray-600">Müşteri</label>
+                    <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5">
+                      <Users className="h-4 w-4 text-gray-400" />
+                      <span className="text-sm text-gray-700">{prefillCustomerName}</span>
+                    </div>
+                  </div>
+                )}
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-gray-600">Sıklık Katı</label>
+                  <Input
+                    type="number"
+                    min={1}
+                    step={0.5}
+                    value={formConditions.multiplier ?? 2}
+                    onChange={(e) =>
+                      setFormConditions((prev) => ({ ...prev, multiplier: Number(e.target.value) }))
+                    }
+                  />
+                  <p className="mt-1 text-[11px] text-gray-400">
+                    Ortalama ziyaret aralığının kaç katı geçince uyarılsın
+                  </p>
+                </div>
               </div>
             )}
 

@@ -22,6 +22,9 @@ import {
   Clock,
   DollarSign,
   AlertTriangle,
+  BellRing,
+  Lock,
+  ArrowRight,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -61,16 +64,9 @@ interface CrmStats {
   firstVisit: string | null;
   lastVisit: string | null;
   avgIntervalDays: number | null;
+  averageVisitInterval: number | null;
   daysSinceLastVisit?: number;
-  thresholdDays?: number;
   status: "new" | "active" | "warning" | "risk";
-}
-
-interface AlertRule {
-  id: string;
-  alertType: string;
-  thresholdDays: number;
-  isActive: boolean;
 }
 
 const DEFAULT_CATEGORIES = ["Genel"];
@@ -115,10 +111,8 @@ export default function PatientDetailPage() {
   // CRM stats
   const [crmStats, setCrmStats] = useState<CrmStats | null>(null);
 
-  // Alert rules
-  const [alertRules, setAlertRules] = useState<AlertRule[]>([]);
-  const [alertThreshold, setAlertThreshold] = useState(60);
-  const [savingAlert, setSavingAlert] = useState(false);
+  // Alarms module access flag (şimdilik herkese açık, ileride modül sistemiyle kilitlenecek)
+  const [isAlarmsModuleActive] = useState(true);
 
   // Photo states
   const [photoFilter, setPhotoFilter] = useState("ALL");
@@ -211,46 +205,6 @@ export default function PatientDetailPage() {
     }
   }, [params.id]);
 
-  const fetchAlertRules = useCallback(async () => {
-    try {
-      const res = await fetch("/api/clinic/alert-rules");
-      if (res.ok) {
-        const data = await res.json();
-        setAlertRules(data);
-        const noVisit = data.find((r: AlertRule) => r.alertType === "no_visit");
-        if (noVisit) setAlertThreshold(noVisit.thresholdDays);
-      }
-    } catch {
-      // silent
-    }
-  }, []);
-
-  async function handleSaveAlert() {
-    setSavingAlert(true);
-    try {
-      const existing = alertRules.find((r) => r.alertType === "no_visit");
-      if (existing) {
-        await fetch(`/api/clinic/alert-rules/${existing.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ thresholdDays: alertThreshold }),
-        });
-      } else {
-        await fetch("/api/clinic/alert-rules", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ alertType: "no_visit", thresholdDays: alertThreshold }),
-        });
-      }
-      await fetchAlertRules();
-      await fetchCrmStats();
-    } catch {
-      // silent
-    } finally {
-      setSavingAlert(false);
-    }
-  }
-
   useEffect(() => {
     async function fetchPatient() {
       try {
@@ -274,8 +228,7 @@ export default function PatientDetailPage() {
     fetchPhotos();
     fetchCategories();
     fetchCrmStats();
-    fetchAlertRules();
-  }, [params.id, fetchPhotos, fetchCategories, fetchCrmStats, fetchAlertRules]);
+  }, [params.id, fetchPhotos, fetchCategories, fetchCrmStats]);
 
   async function handleDeletePatient() {
     if (!confirm(`"${patient?.name}" müşterisini silmek istediğinize emin misiniz? Tüm tedavi kayıtları da silinecektir.`)) return;
@@ -558,9 +511,11 @@ export default function PatientDetailPage() {
             </div>
             <div className="space-y-1">
               <p className="text-[11px] font-medium text-gray-400">Ort. Ziyaret Aralığı</p>
-              <p className="text-lg font-bold text-gray-900">
-                {crmStats.avgIntervalDays != null ? `${crmStats.avgIntervalDays} gün` : "—"}
-              </p>
+              {crmStats.avgIntervalDays != null ? (
+                <p className="text-lg font-bold text-gray-900">{crmStats.avgIntervalDays} gün</p>
+              ) : (
+                <p className="text-lg font-bold text-gray-300" title="En az 3 ziyaret gerekli">—</p>
+              )}
             </div>
           </div>
 
@@ -574,9 +529,11 @@ export default function PatientDetailPage() {
                 </div>
                 <div className="space-y-1 text-right">
                   <p className="text-xs font-medium text-gray-500">Beklenen aralık</p>
-                  <p className="text-sm font-semibold text-gray-600">
-                    {crmStats.avgIntervalDays ?? crmStats.thresholdDays ?? 60} gün
-                  </p>
+                  {crmStats.avgIntervalDays != null ? (
+                    <p className="text-sm font-semibold text-gray-600">{crmStats.avgIntervalDays} gün</p>
+                  ) : (
+                    <p className="text-sm font-semibold text-gray-300" title="En az 3 ziyaret gerekli">—</p>
+                  )}
                 </div>
                 <div className="space-y-1 text-right">
                   <p className="text-xs font-medium text-gray-500">Durum</p>
@@ -601,7 +558,7 @@ export default function PatientDetailPage() {
         </motion.div>
       )}
 
-      {/* Alarm Kuralları */}
+      {/* Alarmlar Modülü */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -609,38 +566,44 @@ export default function PatientDetailPage() {
         className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
       >
         <div className="flex items-center gap-2 border-b border-gray-100 px-6 py-4">
-          <AlertTriangle className="h-4 w-4 text-amber-500" />
-          <h2 className="text-sm font-semibold text-gray-900">Alarm Kuralları</h2>
+          <BellRing className="h-4 w-4 text-amber-500" />
+          <h2 className="text-sm font-semibold text-gray-900">Alarmlar</h2>
         </div>
         <div className="p-6">
-          <div className="flex flex-wrap items-end gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-gray-600">
-                Müşteri kaç gün ziyaret etmezse uyar?
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  min={1}
-                  value={alertThreshold}
-                  onChange={(e) => setAlertThreshold(Number(e.target.value) || 1)}
-                  className="w-20 rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
-                />
-                <span className="text-sm text-gray-500">gün</span>
-              </div>
+          {isAlarmsModuleActive ? (
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-gray-600">
+                Bu müşteri için ziyaret alarmı oluşturarak takip edin.
+              </p>
+              <Link
+                href={`/alarmlar?newAlarm=customer_visit&customerId=${patient.id}&customerName=${encodeURIComponent(patient.name)}`}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-700"
+              >
+                Alarm Oluştur
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
             </div>
-            <button
-              onClick={handleSaveAlert}
-              disabled={savingAlert}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
-            >
-              {savingAlert ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-              {savingAlert ? "Kaydediliyor..." : "Kaydet"}
-            </button>
-          </div>
-          <p className="mt-3 text-[11px] text-gray-400">
-            Bu süre aşıldığında müşteri listesinde uyarı badge&apos;i gösterilir. Varsayılan: 60 gün.
-          </p>
+          ) : (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100">
+                  <Lock className="h-5 w-5 text-gray-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Alarmlar Modülü</p>
+                  <p className="text-xs text-gray-400">Müşterileriniz için özel alarmlar oluşturun</p>
+                </div>
+              </div>
+              <button
+                disabled
+                className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-400 cursor-not-allowed opacity-60"
+              >
+                <Lock className="h-3 w-3" />
+                Modülü Aktif Et
+                <ArrowRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
         </div>
       </motion.div>
 
