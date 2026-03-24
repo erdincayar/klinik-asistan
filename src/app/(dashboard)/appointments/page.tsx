@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import { SmartSelect } from "@/components/ui/smart-select";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -135,10 +136,19 @@ export default function AppointmentsPage() {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
   // Treatment autocomplete
-  const [treatmentSuggestions, setTreatmentSuggestions] = useState<string[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const treatmentInputRef = useRef<HTMLInputElement>(null);
-  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const [dialogServiceSuggestions, setDialogServiceSuggestions] = useState<string[]>([]);
+  const [dialogLoadingSuggestions, setDialogLoadingSuggestions] = useState(false);
+  // New customer inline form (dialog)
+  const [dialogNewCustomer, setDialogNewCustomer] = useState(false);
+  const [dialogNewCustomerName, setDialogNewCustomerName] = useState("");
+  const [dialogNewCustomerPhone, setDialogNewCustomerPhone] = useState("");
+  const [dialogSavingCustomer, setDialogSavingCustomer] = useState(false);
+  // New employee inline form (dialog)
+  const [dialogNewEmployee, setDialogNewEmployee] = useState(false);
+  const [dialogNewEmployeeName, setDialogNewEmployeeName] = useState("");
+  const [dialogNewEmployeeRole, setDialogNewEmployeeRole] = useState("");
+  const [dialogSavingEmployee, setDialogSavingEmployee] = useState(false);
+
   const dailyScrollRef = useRef<HTMLDivElement>(null);
   const weeklyScrollRef = useRef<HTMLDivElement>(null);
 
@@ -210,39 +220,25 @@ export default function AppointmentsPage() {
       .catch(() => {});
   }, []);
 
-  // Treatment type autocomplete
+  // Treatment type autocomplete for dialog
   useEffect(() => {
     if (newAppt.treatmentType.length < 2) {
-      setTreatmentSuggestions([]);
-      setShowSuggestions(false);
+      setDialogServiceSuggestions([]);
       return;
     }
     const timer = setTimeout(async () => {
+      setDialogLoadingSuggestions(true);
       try {
         const res = await fetch(`/api/appointments/types?q=${encodeURIComponent(newAppt.treatmentType)}`);
         if (res.ok) {
           const data = await res.json();
-          setTreatmentSuggestions(data.types || []);
-          setShowSuggestions(true);
+          setDialogServiceSuggestions(data.types || []);
         }
       } catch { /* silently handle */ }
+      finally { setDialogLoadingSuggestions(false); }
     }, 300);
     return () => clearTimeout(timer);
   }, [newAppt.treatmentType]);
-
-  // Close suggestions on outside click
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (
-        suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node) &&
-        treatmentInputRef.current && !treatmentInputRef.current.contains(e.target as Node)
-      ) {
-        setShowSuggestions(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   useEffect(() => {
     if (viewMode === "daily") {
@@ -292,6 +288,77 @@ export default function AppointmentsPage() {
     }
   }
 
+  const refetchPatients = useCallback(async () => {
+    try {
+      const res = await fetch("/api/patients");
+      if (res.ok) {
+        const data = await res.json();
+        setPatients(data.patients || data || []);
+      }
+    } catch { /* silently handle */ }
+  }, []);
+
+  const refetchEmployees = useCallback(async () => {
+    try {
+      const res = await fetch("/api/employees");
+      if (res.ok) {
+        const data = await res.json();
+        setEmployees(data.employees || data || []);
+      }
+    } catch { /* silently handle */ }
+  }, []);
+
+  async function handleDialogNewCustomer() {
+    if (!dialogNewCustomerName.trim()) return;
+    setDialogSavingCustomer(true);
+    try {
+      const res = await fetch("/api/patients", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: dialogNewCustomerName.trim(),
+          phone: dialogNewCustomerPhone.trim() || undefined,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const newId = data.id || data.patient?.id;
+        await refetchPatients();
+        if (newId) setNewAppt((prev) => ({ ...prev, patientId: newId }));
+        setDialogNewCustomer(false);
+        setDialogNewCustomerName("");
+        setDialogNewCustomerPhone("");
+      }
+    } catch { /* silently handle */ }
+    finally { setDialogSavingCustomer(false); }
+  }
+
+  async function handleDialogNewEmployee() {
+    if (!dialogNewEmployeeName.trim()) return;
+    setDialogSavingEmployee(true);
+    try {
+      const res = await fetch("/api/employees", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "create",
+          name: dialogNewEmployeeName.trim(),
+          role: dialogNewEmployeeRole.trim() || undefined,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const newId = data.id || data.employee?.id;
+        await refetchEmployees();
+        if (newId) setNewAppt((prev) => ({ ...prev, employeeId: newId }));
+        setDialogNewEmployee(false);
+        setDialogNewEmployeeName("");
+        setDialogNewEmployeeRole("");
+      }
+    } catch { /* silently handle */ }
+    finally { setDialogSavingEmployee(false); }
+  }
+
   function openCreateDialog() {
     setNewAppt({
       patientId: "",
@@ -302,6 +369,8 @@ export default function AppointmentsPage() {
       notes: "",
     });
     setCreateError("");
+    setDialogNewCustomer(false);
+    setDialogNewEmployee(false);
     setCreateDialogOpen(true);
   }
 
@@ -774,40 +843,98 @@ export default function AppointmentsPage() {
             {/* Müşteri */}
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-gray-700">Müşteri *</label>
-              <select
+              <SmartSelect
+                items={patients.map((p) => ({ id: p.id, label: p.name }))}
                 value={newAppt.patientId}
-                onChange={(e) => setNewAppt({ ...newAppt, patientId: e.target.value })}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-              >
-                <option value="">Müşteri seçin...</option>
-                {patients.map((p) => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
+                onChange={(val) => setNewAppt({ ...newAppt, patientId: val })}
+                displayValue={patients.find((p) => p.id === newAppt.patientId)?.name}
+                placeholder="Müşteri ara veya seç..."
+                required
+                createLabel="Yeni Müşteri Ekle"
+                showCreateForm={dialogNewCustomer}
+                onCreateFormToggle={setDialogNewCustomer}
+                createForm={
+                  <>
+                    <p className="text-sm font-medium text-blue-700">Yeni Müşteri Ekle</p>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-gray-600">Ad Soyad *</label>
+                        <input
+                          value={dialogNewCustomerName}
+                          onChange={(e) => setDialogNewCustomerName(e.target.value)}
+                          placeholder="Müşteri adı"
+                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-gray-600">Telefon</label>
+                        <input
+                          value={dialogNewCustomerPhone}
+                          onChange={(e) => setDialogNewCustomerPhone(e.target.value)}
+                          placeholder="05XX XXX XX XX"
+                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleDialogNewCustomer}
+                      disabled={dialogSavingCustomer || !dialogNewCustomerName.trim()}
+                      className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      {dialogSavingCustomer ? "Kaydediliyor..." : "Kaydet ve Seç"}
+                    </button>
+                  </>
+                }
+              />
             </div>
 
             {/* Çalışan */}
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-gray-700">Çalışan</label>
-              <select
+              <SmartSelect
+                items={employees.map((e) => ({ id: e.id, label: e.name }))}
                 value={newAppt.employeeId}
-                onChange={(e) => setNewAppt({ ...newAppt, employeeId: e.target.value })}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-              >
-                <option value="">Çalışan seçin (opsiyonel)</option>
-                {employees.map((emp) => (
-                  <option key={emp.id} value={emp.id}>{emp.name}</option>
-                ))}
-              </select>
-              {newAppt.employeeId && employees.find((e) => e.id === newAppt.employeeId) && (
-                <div className="flex items-center gap-2 text-xs text-gray-500">
-                  <span
-                    className="inline-block h-3 w-3 rounded-full"
-                    style={{ backgroundColor: employees.find((e) => e.id === newAppt.employeeId)!.color }}
-                  />
-                  {employees.find((e) => e.id === newAppt.employeeId)!.name}
-                </div>
-              )}
+                onChange={(val) => setNewAppt({ ...newAppt, employeeId: val })}
+                displayValue={employees.find((e) => e.id === newAppt.employeeId)?.name}
+                placeholder="Çalışan seçin (opsiyonel)"
+                createLabel="Yeni Çalışan Ekle"
+                showCreateForm={dialogNewEmployee}
+                onCreateFormToggle={setDialogNewEmployee}
+                createForm={
+                  <>
+                    <p className="text-sm font-medium text-blue-700">Yeni Çalışan Ekle</p>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-gray-600">Ad Soyad *</label>
+                        <input
+                          value={dialogNewEmployeeName}
+                          onChange={(e) => setDialogNewEmployeeName(e.target.value)}
+                          placeholder="Çalışan adı"
+                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-gray-600">Unvan</label>
+                        <input
+                          value={dialogNewEmployeeRole}
+                          onChange={(e) => setDialogNewEmployeeRole(e.target.value)}
+                          placeholder="Örn: Doktor, Hemşire"
+                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleDialogNewEmployee}
+                      disabled={dialogSavingEmployee || !dialogNewEmployeeName.trim()}
+                      className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      {dialogSavingEmployee ? "Kaydediliyor..." : "Kaydet ve Seç"}
+                    </button>
+                  </>
+                }
+              />
             </div>
 
             {/* Tarih */}
@@ -837,42 +964,18 @@ export default function AppointmentsPage() {
             </div>
 
             {/* İşlem Türü */}
-            <div className="relative space-y-1.5">
+            <div className="space-y-1.5">
               <label className="text-sm font-medium text-gray-700">İşlem Türü *</label>
-              <input
-                ref={treatmentInputRef}
+              <SmartSelect
+                freetext
+                items={dialogServiceSuggestions.map((s) => ({ id: s, label: s }))}
                 value={newAppt.treatmentType}
-                onChange={(e) => setNewAppt({ ...newAppt, treatmentType: e.target.value })}
-                onFocus={() => { if (treatmentSuggestions.length > 0) setShowSuggestions(true); }}
+                onChange={(val) => setNewAppt({ ...newAppt, treatmentType: val })}
+                loading={dialogLoadingSuggestions}
                 placeholder="İşlem türünü yazın..."
-                autoComplete="off"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                required
+                filterLocally={false}
               />
-              <AnimatePresence>
-                {showSuggestions && treatmentSuggestions.length > 0 && (
-                  <motion.div
-                    ref={suggestionsRef}
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    className="absolute left-0 right-0 top-full z-50 mt-1 max-h-40 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg"
-                  >
-                    {treatmentSuggestions.map((s) => (
-                      <button
-                        key={s}
-                        type="button"
-                        onClick={() => {
-                          setNewAppt({ ...newAppt, treatmentType: s });
-                          setShowSuggestions(false);
-                        }}
-                        className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 hover:text-blue-700 transition-colors"
-                      >
-                        {s}
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
 
             {/* Notlar */}
