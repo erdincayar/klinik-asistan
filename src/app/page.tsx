@@ -647,8 +647,8 @@ export default function Home() {
       }
     }
 
+    // Stay on step 2 with loading state — only move to step 3 on success
     setObAnalyzing(true);
-    obGoNext(); // move to step 3 to show loading spinner
 
     try {
       // Await painPoints update so DB has the data before analyze
@@ -673,13 +673,13 @@ export default function Home() {
 
       setObAnalysis(data);
       setObSelected(new Set(data.recommendedModules.map((m) => m.slug)));
+      // Success — now move to step 3
+      setObDirection(1);
+      setObStep(3);
     } catch (err) {
       console.error("[handleAnalyze]", err);
       const msg = err instanceof Error ? err.message : "Analiz sırasında bir hata oluştu.";
       setObError(msg);
-      // Go back to step 2 so user can retry
-      setObDirection(-1);
-      setObStep(2);
     } finally {
       setObAnalyzing(false);
     }
@@ -1052,7 +1052,8 @@ export default function Home() {
                       <button
                         key={p.id}
                         onClick={() => togglePain(p.id)}
-                        className={`inline-flex items-center gap-2 rounded-full border-2 bg-white/80 px-5 py-3 text-sm font-medium backdrop-blur-sm transition-all ${
+                        disabled={obAnalyzing}
+                        className={`inline-flex items-center gap-2 rounded-full border-2 bg-white/80 px-5 py-3 text-sm font-medium backdrop-blur-sm transition-all disabled:opacity-50 ${
                           obPainPoints.has(p.id)
                             ? "border-[#EF9F27] bg-[#FDF3E3]/80 text-[#BA7517] shadow-md shadow-[#EF9F27]/10"
                             : "border-gray-200/80 text-gray-600 hover:border-gray-300"
@@ -1106,13 +1107,7 @@ export default function Home() {
                 transition={{ duration: 0.35 }}
                 className="mx-auto max-w-[600px] text-left"
               >
-                {obAnalyzing ? (
-                  <div className="flex flex-col items-center py-16 text-center">
-                    <Loader2 className="mb-4 h-10 w-10 animate-spin text-[#EF9F27]" />
-                    <p className="text-base font-medium text-gray-600">Profiliniz analiz ediliyor...</p>
-                    <p className="mt-1 text-sm text-gray-400">Bu birkaç saniye sürebilir</p>
-                  </div>
-                ) : obAnalysis ? (
+                {obAnalysis ? (
                   <>
                     <div className="mb-5 rounded-2xl border border-[#F5B940]/40 bg-[#FDF3E3]/80 p-5 backdrop-blur-sm">
                       <p className="text-sm leading-relaxed text-[#8C5811]">{obAnalysis.customMessage}</p>
