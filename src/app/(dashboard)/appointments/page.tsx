@@ -125,12 +125,27 @@ const fadeUp = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" as const } },
 };
 
+const PREFS_KEY = "appointment-prefs";
+
+function loadPrefs(): Record<string, any> {
+  if (typeof window === "undefined") return {};
+  try { return JSON.parse(localStorage.getItem(PREFS_KEY) || "{}"); } catch { return {}; }
+}
+
+function savePrefs(update: Record<string, any>) {
+  if (typeof window === "undefined") return;
+  const current = loadPrefs();
+  localStorage.setItem(PREFS_KEY, JSON.stringify({ ...current, ...update }));
+}
+
 export default function AppointmentsPage() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [weekAppointments, setWeekAppointments] = useState<Record<string, Appointment[]>>({});
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState("daily");
+  const [viewMode, setViewMode] = useState(() => loadPrefs().viewMode || "daily");
+  const [compactMode, setCompactMode] = useState(() => loadPrefs().compactMode ?? false);
+  const [hideEmpty, setHideEmpty] = useState(() => loadPrefs().hideEmpty ?? false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
@@ -173,6 +188,14 @@ export default function AppointmentsPage() {
   const [dialogNewEmployeeName, setDialogNewEmployeeName] = useState("");
   const [dialogNewEmployeeRole, setDialogNewEmployeeRole] = useState("");
   const [dialogSavingEmployee, setDialogSavingEmployee] = useState(false);
+
+  // Inline add form states (filter row)
+  const [showInlineEmployee, setShowInlineEmployee] = useState(false);
+  const [inlineEmployeeName, setInlineEmployeeName] = useState("");
+  const [savingInlineEmployee, setSavingInlineEmployee] = useState(false);
+  const [showInlineService, setShowInlineService] = useState(false);
+  const [inlineServiceName, setInlineServiceName] = useState("");
+  const [savingInlineService, setSavingInlineService] = useState(false);
 
   // Transaction tab state
   const [appointmentTreatments, setAppointmentTreatments] = useState<any[]>([]);
@@ -234,6 +257,16 @@ export default function AppointmentsPage() {
     }
   }, []);
 
+  const refetchServiceNames = useCallback(async () => {
+    try {
+      const res = await fetch("/api/clinic/service-names");
+      if (res.ok) {
+        const data = await res.json();
+        setServiceNames(Array.isArray(data) ? data : []);
+      }
+    } catch { /* silently handle */ }
+  }, []);
+
   useEffect(() => {
     fetch("/api/employees")
       .then((res) => (res.ok ? res.json() : { employees: [] }))
@@ -254,11 +287,8 @@ export default function AppointmentsPage() {
         if (data?.workEndTime) setWorkEndTime(data.workEndTime);
       })
       .catch(() => {});
-    fetch("/api/clinic/service-names")
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data) => setServiceNames(Array.isArray(data) ? data : []))
-      .catch(() => {});
-  }, []);
+    refetchServiceNames();
+  }, [refetchServiceNames]);
 
   // Treatment type autocomplete for dialog
   useEffect(() => {
@@ -578,11 +608,14 @@ export default function AppointmentsPage() {
     }
 
     return ALL_TIME_SLOTS.filter((time, idx) => {
-      if (idx >= startIdx && idx <= endIdx) return true;
+      if (idx >= startIdx && idx <= endIdx) {
+        if (hideEmpty && !appointmentTimes.has(time)) return false;
+        return true;
+      }
       if (appointmentTimes.has(time)) return true;
       return false;
     });
-  }, [workStartTime, workEndTime, appointments, weekAppointments, viewMode]);
+  }, [workStartTime, workEndTime, appointments, weekAppointments, viewMode, hideEmpty]);
 
   const isToday = formatDateISO(selectedDate) === formatDateISO(new Date());
   const nowTime = new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit", hour12: false });
@@ -651,7 +684,7 @@ export default function AppointmentsPage() {
         ].map((tab) => (
           <button
             key={tab.value}
-            onClick={() => setViewMode(tab.value)}
+            onClick={() => { setViewMode(tab.value); savePrefs({ viewMode: tab.value }); }}
             className={cn(
               "flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all",
               viewMode === tab.value
@@ -664,9 +697,11 @@ export default function AppointmentsPage() {
         ))}
       </motion.div>
 
-      {/* Employee filter pills */}
-      {employees.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+      {/* Filter block */}
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" className="space-y-2 rounded-xl border border-gray-100 bg-white p-3">
+        {/* Employee filter row */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-medium text-gray-500">Çalışan:</span>
           <button
             onClick={() => setSelectedEmployee("all")}
             className={cn(
@@ -696,11 +731,68 @@ export default function AppointmentsPage() {
               {emp.name}
             </button>
           ))}
+          {showInlineEmployee ? (
+            <div className="inline-flex items-center gap-1.5">
+              <input
+                autoFocus
+                value={inlineEmployeeName}
+                onChange={(e) => setInlineEmployeeName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    if (!inlineEmployeeName.trim() || savingInlineEmployee) return;
+                    setSavingInlineEmployee(true);
+                    fetch("/api/employees", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ action: "create", name: inlineEmployeeName.trim(), role: "Çalışan" }),
+                    })
+                      .then((res) => { if (res.ok) { refetchEmployees(); setShowInlineEmployee(false); setInlineEmployeeName(""); } })
+                      .catch(() => {})
+                      .finally(() => setSavingInlineEmployee(false));
+                  }
+                  if (e.key === "Escape") { setShowInlineEmployee(false); setInlineEmployeeName(""); }
+                }}
+                placeholder="Çalışan adı..."
+                className="w-28 rounded-full border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+              <button
+                disabled={savingInlineEmployee || !inlineEmployeeName.trim()}
+                onClick={async () => {
+                  if (!inlineEmployeeName.trim()) return;
+                  setSavingInlineEmployee(true);
+                  try {
+                    const res = await fetch("/api/employees", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ action: "create", name: inlineEmployeeName.trim(), role: "Çalışan" }),
+                    });
+                    if (res.ok) { await refetchEmployees(); setShowInlineEmployee(false); setInlineEmployeeName(""); }
+                  } catch { /* silently handle */ }
+                  finally { setSavingInlineEmployee(false); }
+                }}
+                className="rounded-full bg-blue-600 px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+              >
+                {savingInlineEmployee ? <Loader2 className="h-3 w-3 animate-spin" /> : "Kaydet"}
+              </button>
+              <button
+                onClick={() => { setShowInlineEmployee(false); setInlineEmployeeName(""); }}
+                className="rounded-full bg-gray-100 px-2.5 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-200"
+              >
+                İptal
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowInlineEmployee(true)}
+              className="inline-flex items-center gap-1 rounded-full border border-dashed border-gray-300 px-3 py-1.5 text-sm text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-colors"
+            >
+              <Plus className="h-3 w-3" /> Ekle
+            </button>
+          )}
         </div>
-      )}
 
-      {/* Service filter pills */}
-      {serviceNames.length > 0 && (
+        {/* Service filter row */}
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium text-gray-500">İşlem:</span>
           <button
@@ -728,6 +820,65 @@ export default function AppointmentsPage() {
               {name}
             </button>
           ))}
+          {showInlineService ? (
+            <div className="inline-flex items-center gap-1.5">
+              <input
+                autoFocus
+                value={inlineServiceName}
+                onChange={(e) => setInlineServiceName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    if (!inlineServiceName.trim() || savingInlineService) return;
+                    setSavingInlineService(true);
+                    fetch("/api/clinic/service-names", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ name: inlineServiceName.trim() }),
+                    })
+                      .then((res) => { if (res.ok) { refetchServiceNames(); setShowInlineService(false); setInlineServiceName(""); } })
+                      .catch(() => {})
+                      .finally(() => setSavingInlineService(false));
+                  }
+                  if (e.key === "Escape") { setShowInlineService(false); setInlineServiceName(""); }
+                }}
+                placeholder="İşlem adı..."
+                className="w-28 rounded-full border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+              <button
+                disabled={savingInlineService || !inlineServiceName.trim()}
+                onClick={async () => {
+                  if (!inlineServiceName.trim()) return;
+                  setSavingInlineService(true);
+                  try {
+                    const res = await fetch("/api/clinic/service-names", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ name: inlineServiceName.trim() }),
+                    });
+                    if (res.ok) { await refetchServiceNames(); setShowInlineService(false); setInlineServiceName(""); }
+                  } catch { /* silently handle */ }
+                  finally { setSavingInlineService(false); }
+                }}
+                className="rounded-full bg-blue-600 px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+              >
+                {savingInlineService ? <Loader2 className="h-3 w-3 animate-spin" /> : "Kaydet"}
+              </button>
+              <button
+                onClick={() => { setShowInlineService(false); setInlineServiceName(""); }}
+                className="rounded-full bg-gray-100 px-2.5 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-200"
+              >
+                İptal
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowInlineService(true)}
+              className="inline-flex items-center gap-1 rounded-full border border-dashed border-gray-300 px-3 py-1.5 text-sm text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-colors"
+            >
+              <Plus className="h-3 w-3" /> Ekle
+            </button>
+          )}
           {!showAllServices && serviceNames.length > 5 && (
             <button
               onClick={() => setShowAllServices(true)}
@@ -744,8 +895,30 @@ export default function AppointmentsPage() {
               Daralt
             </button>
           )}
+
+          {/* Compact & Hide empty toggles */}
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              onClick={() => { const v = !compactMode; setCompactMode(v); savePrefs({ compactMode: v }); }}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                compactMode ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+              )}
+            >
+              Kompakt
+            </button>
+            <button
+              onClick={() => { const v = !hideEmpty; setHideEmpty(v); savePrefs({ hideEmpty: v }); }}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                hideEmpty ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+              )}
+            >
+              Boş Gizle
+            </button>
+          </div>
         </div>
-      )}
+      </motion.div>
 
       {/* Content */}
       <motion.div
@@ -778,7 +951,8 @@ export default function AppointmentsPage() {
                       key={time}
                       data-time={time}
                       className={cn(
-                        "flex min-h-[56px] items-stretch",
+                        "flex items-stretch",
+                        compactMode ? "min-h-[40px]" : "min-h-[56px]",
                         isCurrentSlot && "bg-blue-50/50",
                         isOffHours && !isCurrentSlot && "bg-gray-50/70"
                       )}
@@ -792,7 +966,7 @@ export default function AppointmentsPage() {
                       </div>
 
                       {/* Slot content */}
-                      <div className="flex flex-1 flex-col gap-1 px-3 py-3">
+                      <div className={cn("flex flex-1 flex-col gap-1 px-3", compactMode ? "py-1.5" : "py-3")}>
                         {slotAppointments.length > 0 ? (
                           slotAppointments.map((appointment) => {
                             const statusInfo = getStatusInfo(appointment.status);
@@ -810,7 +984,8 @@ export default function AppointmentsPage() {
                                   setDialogOpen(true);
                                 }}
                                 className={cn(
-                                  "flex w-full items-center justify-between rounded-lg border px-4 py-2 text-left transition-colors hover:bg-gray-50",
+                                  "flex w-full items-center justify-between rounded-lg border text-left transition-colors hover:bg-gray-50",
+                                  compactMode ? "px-4 py-1" : "px-4 py-2",
                                   isCancelled && "opacity-60"
                                 )}
                               >
@@ -915,7 +1090,7 @@ export default function AppointmentsPage() {
                           const isTodayCol = dateStr === formatDateISO(new Date());
 
                           return (
-                            <td key={i} className={cn("px-1 py-1 align-top", isTodayCol && "bg-blue-50/30")}>
+                            <td key={i} className={cn("align-top", compactMode ? "px-0.5 py-0.5" : "px-1 py-1", isTodayCol && "bg-blue-50/30")}>
                               <div className="flex flex-col gap-0.5">
                                 {slotAppts.map((appt) => {
                                   const statusInfo = getStatusInfo(appt.status);
@@ -924,7 +1099,8 @@ export default function AppointmentsPage() {
                                       key={appt.id}
                                       onClick={() => { setSelectedAppointment(appt); setDialogOpen(true); }}
                                       className={cn(
-                                        "w-full rounded-lg border border-gray-100 px-1.5 py-1 text-left text-xs transition-colors hover:border-blue-200",
+                                        "w-full rounded-lg border border-gray-100 text-left text-xs transition-colors hover:border-blue-200",
+                                        compactMode ? "px-1 py-0.5" : "px-1.5 py-1",
                                         appt.status === "CANCELLED" && "opacity-50"
                                       )}
                                     >
