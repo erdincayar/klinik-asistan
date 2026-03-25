@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Geçersiz paket" }, { status: 400 });
     }
 
-    const merchantOid = randomUUID().replace(/-/g, "").slice(0, 20);
+    const merchantOid = randomUUID().replace(/[^a-zA-Z0-9]/g, "").slice(0, 20);
     const userBasket = Buffer.from(
       JSON.stringify([[pkg.name, pkg.price, 1]])
     ).toString("base64");

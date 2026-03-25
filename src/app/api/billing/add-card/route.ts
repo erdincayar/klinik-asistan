@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Klinik bulunamadı" }, { status: 400 });
     }
 
-    const merchantOid = `card_${randomUUID().replace(/-/g, "").slice(0, 16)}`;
+    const merchantOid = `card${randomUUID().replace(/[^a-zA-Z0-9]/g, "").slice(0, 16)}`;
     const userBasket = Buffer.from(
       JSON.stringify([["Kart Kayıt", 100, 1]])
     ).toString("base64");
