@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { TOKEN_COSTS } from "@/lib/token-costs";
-import { checkBalance, deductTokens } from "@/lib/token-service";
+// TOKEN_SYSTEM_DISABLED - import { TOKEN_COSTS } from "@/lib/token-costs";
+// TOKEN_SYSTEM_DISABLED - import { checkBalance, deductTokens } from "@/lib/token-service";
 import { analyzeInstagramStyle } from "@/lib/ai-studio/instagram-analyzer";
 
 export async function POST() {
@@ -13,22 +13,24 @@ export async function POST() {
   if (!clinicId) return NextResponse.json({ error: "No clinic" }, { status: 400 });
 
   const isDemo = user.isDemo || user.role === "ADMIN";
-  if (!isDemo) {
-    const hasBalance = await checkBalance(clinicId, TOKEN_COSTS.AI_STUDIO_ANALYZE);
-    if (!hasBalance) {
-      return NextResponse.json(
-        { error: "Token bakiyeniz yetersiz." },
-        { status: 402 }
-      );
-    }
-  }
+  // TOKEN_SYSTEM_DISABLED
+  // if (!isDemo) {
+  //   const hasBalance = await checkBalance(clinicId, TOKEN_COSTS.AI_STUDIO_ANALYZE);
+  //   if (!hasBalance) {
+  //     return NextResponse.json(
+  //       { error: "Token bakiyeniz yetersiz." },
+  //       { status: 402 }
+  //     );
+  //   }
+  // }
 
   try {
     const profile = await analyzeInstagramStyle(clinicId);
 
-    if (!isDemo) {
-      await deductTokens(clinicId, "AI_STUDIO_ANALYZE", TOKEN_COSTS.AI_STUDIO_ANALYZE, "Instagram stil analizi");
-    }
+    // TOKEN_SYSTEM_DISABLED
+    // if (!isDemo) {
+    //   await deductTokens(clinicId, "AI_STUDIO_ANALYZE", TOKEN_COSTS.AI_STUDIO_ANALYZE, "Instagram stil analizi");
+    // }
 
     return NextResponse.json(profile);
   } catch (error) {

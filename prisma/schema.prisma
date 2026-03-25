@@ -134,6 +134,7 @@ model Clinic {
   customerCustomColumns CustomerCustomColumn[]
   transactionCustomFields TransactionCustomField[]
   alertRules            CustomerAlertRule[]
+  subscriptionPlan      SubscriptionPlan?
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
 }
@@ -1088,4 +1089,42 @@ model CustomerAlertRule {
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
   clinic        Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+}
+
+// ═══════════════════════════════════════════════════════════
+// Modül Tabanlı Abonelik Planı
+// ═══════════════════════════════════════════════════════════
+
+model SubscriptionPlan {
+  id              String           @id @default(cuid())
+  clinicId        String           @unique
+  clinic          Clinic           @relation(fields: [clinicId], references: [id])
+  status          String           @default("trial") // trial | active | suspended | cancelled
+  trialEnd        DateTime?
+  activeModules   Json             @default("[\"base\",\"messaging\"]") // string[]
+  extraUsers      Int              @default(0)
+  storagePlan     String           @default("free")
+  storageUsedMb   Int              @default(0)
+  monthlyTotal    Int              @default(0) // kuruş
+  discountRate    Int              @default(0)
+  paytrUtoken     String?          // PayTR kart user token
+  paytrCtoken     String?          // PayTR kart card token
+  cardLast4       String?
+  cardBrand       String?
+  nextBillingDate DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  billingHistory  BillingHistory[]
+}
+
+model BillingHistory {
+  id                 String           @id @default(cuid())
+  subscriptionPlanId String
+  subscriptionPlan   SubscriptionPlan @relation(fields: [subscriptionPlanId], references: [id])
+  clinicId           String
+  amount             Int
+  description        String
+  status             String           // success | failed | pending
+  paytrRef           String?
+  createdAt          DateTime         @default(now())
 }

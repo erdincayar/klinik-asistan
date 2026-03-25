@@ -4,8 +4,8 @@ import { prisma } from "@/lib/prisma";
 import Anthropic from "@anthropic-ai/sdk";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
-import { TOKEN_COSTS } from "@/lib/token-costs";
-import { checkBalance, deductTokens } from "@/lib/token-service";
+// TOKEN_SYSTEM_DISABLED - import { TOKEN_COSTS } from "@/lib/token-costs";
+// TOKEN_SYSTEM_DISABLED - import { checkBalance, deductTokens } from "@/lib/token-service";
 
 const OCR_PROMPT = `Bu bir faturadır. Lütfen şu bilgileri JSON formatında çıkar:
 {
@@ -43,15 +43,16 @@ export async function POST(req: NextRequest) {
     }
 
     const isDemo = user.isDemo || user.role === "ADMIN";
-    if (!isDemo) {
-      const hasBalance = await checkBalance(clinicId, TOKEN_COSTS.INVOICE_OCR);
-      if (!hasBalance) {
-        return NextResponse.json(
-          { error: "Token bakiyeniz yetersiz. Ayarlar sayfasından token satın alabilirsiniz." },
-          { status: 402 }
-        );
-      }
-    }
+    // TOKEN_SYSTEM_DISABLED
+    // if (!isDemo) {
+    //   const hasBalance = await checkBalance(clinicId, TOKEN_COSTS.INVOICE_OCR);
+    //   if (!hasBalance) {
+    //     return NextResponse.json(
+    //       { error: "Token bakiyeniz yetersiz. Ayarlar sayfasından token satın alabilirsiniz." },
+    //       { status: 402 }
+    //     );
+    //   }
+    // }
 
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
@@ -172,9 +173,10 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      if (!isDemo) {
-        await deductTokens(clinicId, "INVOICE_OCR", TOKEN_COSTS.INVOICE_OCR);
-      }
+      // TOKEN_SYSTEM_DISABLED
+      // if (!isDemo) {
+      //   await deductTokens(clinicId, "INVOICE_OCR", TOKEN_COSTS.INVOICE_OCR);
+      // }
 
       return NextResponse.json({ ...invoice, ocrData, status: "COMPLETED", invoiceType });
     } else {

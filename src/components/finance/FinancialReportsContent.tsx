@@ -296,7 +296,8 @@ export default function FinancialReportsContent() {
             <div className="border-b border-gray-100 px-6 py-4">
               <h3 className="text-sm font-semibold text-gray-900">Aylık Detay</h3>
             </div>
-            <div className="overflow-x-auto">
+            {/* Desktop table */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50/50">
@@ -319,6 +320,28 @@ export default function FinancialReportsContent() {
                   ))}
                 </tbody>
               </table>
+            </div>
+            {/* Mobile card view */}
+            <div className="md:hidden divide-y divide-gray-50 px-4">
+              {data.monthlyData.map((m) => (
+                <div key={m.month} className="py-3 space-y-1">
+                  <p className="font-medium text-gray-800">{m.monthName}</p>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-500">Gelir</span>
+                    <span className="text-emerald-600">{formatCurrency(m.income)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-500">Gider</span>
+                    <span className="text-red-600">{formatCurrency(m.expense)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-500">Net Kar</span>
+                    <span className={`font-semibold ${m.profit >= 0 ? "text-blue-600" : "text-red-600"}`}>
+                      {formatCurrency(m.profit)}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           </motion.div>
         </>

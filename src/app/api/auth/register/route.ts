@@ -25,6 +25,9 @@ export async function POST(request: Request) {
       data: { name: clinicName, storageLimitMB: 100 },
     });
 
+    const trialEnd = new Date();
+    trialEnd.setDate(trialEnd.getDate() + 7);
+
     const promises: Promise<any>[] = [
       prisma.user.create({
         data: {
@@ -37,8 +40,18 @@ export async function POST(request: Request) {
           emailVerifyExpires: verifyExpires,
         },
       }),
-      prisma.tokenBalance.create({
-        data: { clinicId: clinic.id, balance: 50000 },
+      // TOKEN_SYSTEM_DISABLED - TokenBalance oluşturma devre dışı
+      // prisma.tokenBalance.create({
+      //   data: { clinicId: clinic.id, balance: 50000 },
+      // }),
+      prisma.subscriptionPlan.create({
+        data: {
+          clinicId: clinic.id,
+          status: "trial",
+          trialEnd,
+          activeModules: ["base", "messaging"],
+          monthlyTotal: 9900,
+        },
       }),
     ];
 

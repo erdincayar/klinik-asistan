@@ -14,10 +14,10 @@ import {
   ArrowRight,
   Bell,
   Clock,
-  Coins,
   AlertTriangle,
   Sparkles,
   Bot,
+  HardDrive,
 } from "lucide-react";
 import type { ModuleRecommendation } from "@/lib/onboarding/onboarding-agent";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
@@ -174,7 +174,9 @@ export default function DashboardPage() {
   const [chartData, setChartData] = useState<MonthlySummary[]>([]);
   const [lowStockCount, setLowStockCount] = useState(0);
   const [upcomingPayments, setUpcomingPayments] = useState<UpcomingPayment[]>([]);
+  // TOKEN_SYSTEM_DISABLED
   const [tokenBalance, setTokenBalance] = useState<number | null>(null);
+  const [storageUsage, setStorageUsage] = useState<{ usedMb: number; limitMb: number; plan: string } | null>(null);
   const [onboardingProfile, setOnboardingProfile] = useState<{
     customMessage?: string;
     selectedModules?: ModuleRecommendation[];
@@ -222,10 +224,19 @@ export default function DashboardPage() {
           setUpcomingPayments(Array.isArray(upcomingData) ? upcomingData : []);
         }
 
-        if (tokenRes.ok) {
-          const tokenData = await tokenRes.json();
-          setTokenBalance(tokenData.balance?.balance ?? null);
-        }
+        // TOKEN_SYSTEM_DISABLED
+        // if (tokenRes.ok) {
+        //   const tokenData = await tokenRes.json();
+        //   setTokenBalance(tokenData.balance?.balance ?? null);
+        // }
+
+        // Storage usage
+        try {
+          const storageRes = await fetch("/api/billing/storage-usage");
+          if (storageRes.ok) {
+            setStorageUsage(await storageRes.json());
+          }
+        } catch {}
 
         if (onbRes.ok) {
           const onbData = await onbRes.json();
@@ -347,26 +358,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* ── TOKEN BADGE ── */}
-      {tokenBalance !== null && (
-        <Link href="/settings">
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={cn(
-              "inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-colors cursor-pointer hover:opacity-80",
-              tokenBalance < 5000
-                ? "bg-red-50 text-red-700 border border-red-200"
-                : tokenBalance < 20000
-                ? "bg-amber-50 text-amber-700 border border-amber-200"
-                : "bg-gray-50 text-gray-700 border border-gray-200"
-            )}
-          >
-            <Coins className="h-4 w-4" />
-            {tokenBalance.toLocaleString("tr-TR")} token
-          </motion.div>
-        </Link>
-      )}
+      {/* TOKEN_SYSTEM_DISABLED — Token badge kaldırıldı */}
 
       {/* ── ONBOARDING PERSONALIZATION ── */}
       {onboardingProfile?.selectedModules && onboardingProfile.selectedModules.length > 0 && (
@@ -537,6 +529,43 @@ export default function DashboardPage() {
           );
         })}
       </div>
+
+      {/* ── STORAGE INDICATOR ── */}
+      {storageUsage && (() => {
+        const pct = storageUsage.limitMb > 0 ? Math.min(100, Math.round((storageUsage.usedMb / storageUsage.limitMb) * 100)) : 0;
+        const isWarning = pct >= 90;
+        const isFull = pct >= 100;
+        return (
+          <motion.div
+            variants={fadeUp} initial="hidden" animate="visible" custom={5}
+            className={cn(
+              "rounded-2xl border p-4",
+              isFull ? "border-red-200 bg-red-50" : isWarning ? "border-amber-200 bg-amber-50" : "border-gray-100 bg-white"
+            )}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <HardDrive className={cn("h-4 w-4", isFull ? "text-red-500" : isWarning ? "text-amber-500" : "text-gray-400")} />
+                <span className="text-sm font-medium text-gray-700">Depolama</span>
+                <span className="text-xs text-gray-500">
+                  {storageUsage.usedMb} / {storageUsage.limitMb >= 1024 ? `${(storageUsage.limitMb / 1024).toFixed(0)} GB` : `${storageUsage.limitMb} MB`}
+                </span>
+              </div>
+              {(isWarning || isFull) && (
+                <Link href="/billing/moduller" className="text-xs font-medium text-blue-600 hover:text-blue-700">
+                  {isFull ? "Depolama doldu! Yükselt" : "Dolmak üzere — Yükselt"}
+                </Link>
+              )}
+            </div>
+            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-200">
+              <div
+                className={cn("h-full rounded-full transition-all", isFull ? "bg-red-500" : isWarning ? "bg-amber-500" : "bg-blue-500")}
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+          </motion.div>
+        );
+      })()}
 
       {/* ── REVENUE CHART ── */}
       <motion.div

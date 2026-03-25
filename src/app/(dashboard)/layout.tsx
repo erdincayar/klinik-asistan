@@ -51,51 +51,35 @@ import {
 } from "lucide-react";
 import { ToastProvider, Toaster, useToast } from "@/components/ui/toast";
 
-/* ──────────────────────── PLAN CONFIG ──────────────────────── */
+/* ──────────────────────── MODULE CONFIG ──────────────────────── */
 
-type PlanTier = "BASIC" | "PRO" | "BUSINESS";
+const LOCKED_MODULES = ["marketing", "ai_assistant"];
 
 interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
-  minPlan: PlanTier;
-  permKey?: string; // maps to module permission key
-}
-
-const PLAN_LEVELS: Record<PlanTier, number> = {
-  BASIC: 0,
-  PRO: 1,
-  BUSINESS: 2,
-};
-
-const PLAN_LABELS: Record<PlanTier, string> = {
-  BASIC: "Başlangıç",
-  PRO: "Pro",
-  BUSINESS: "İşletme",
-};
-
-function hasAccess(userPlan: PlanTier, requiredPlan: PlanTier): boolean {
-  return PLAN_LEVELS[userPlan] >= PLAN_LEVELS[requiredPlan];
+  moduleSlug?: string;
+  permKey?: string;
 }
 
 /* ──────────────────────── DATA ──────────────────────── */
 
 const navItems: NavItem[] = [
-  { href: "/dashboard", label: "Genel Bakış", icon: LayoutDashboard, minPlan: "BASIC", permKey: "dashboard" },
-  { href: "/patients", label: "Müşteriler", icon: Users, minPlan: "BASIC", permKey: "customers" },
-  { href: "/appointments", label: "Randevular", icon: Calendar, minPlan: "BASIC", permKey: "appointments" },
-  { href: "/finance", label: "Finans", icon: DollarSign, minPlan: "BASIC", permKey: "finance" },
-  { href: "/inventory", label: "Stok/Envanter", icon: Package, minPlan: "PRO", permKey: "inventory" },
-  { href: "/employees", label: "Çalışanlar", icon: UserCog, minPlan: "PRO", permKey: "employees" },
-  { href: "/hr", label: "İnsan Kaynakları", icon: ClipboardList, minPlan: "PRO", permKey: "hr" },
-  { href: "/marketing", label: "Pazarlama", icon: Megaphone, minPlan: "BUSINESS", permKey: "marketing" },
-  { href: "/messaging", label: "Mesajlaşma", icon: MessageCircle, minPlan: "PRO", permKey: "messaging" },
-  { href: "/ai-assistant", label: "AI Asistan", icon: Bot, minPlan: "PRO", permKey: "ai_assistant" },
-  { href: "/reports", label: "Raporlar", icon: BarChart3, minPlan: "BUSINESS", permKey: "reports" },
-  { href: "/alarmlar", label: "Alarmlar", icon: BellRing, minPlan: "PRO", permKey: "alarms" },
-  { href: "/reminders", label: "Hatırlatmalar", icon: Bell, minPlan: "PRO", permKey: "reminders" },
-  { href: "/billing", label: "Abonelik", icon: CreditCard, minPlan: "BASIC" },
+  { href: "/dashboard",    label: "Genel Bakış",      icon: LayoutDashboard, moduleSlug: "base",         permKey: "dashboard" },
+  { href: "/patients",     label: "Müşteriler",       icon: Users,           moduleSlug: "customers",    permKey: "customers" },
+  { href: "/appointments", label: "Randevular",       icon: Calendar,        moduleSlug: "appointments", permKey: "appointments" },
+  { href: "/finance",      label: "Finans",           icon: DollarSign,      moduleSlug: "finance",      permKey: "finance" },
+  { href: "/inventory",    label: "Stok/Envanter",    icon: Package,         moduleSlug: "inventory",    permKey: "inventory" },
+  { href: "/employees",    label: "Çalışanlar",       icon: UserCog,         moduleSlug: "employees",    permKey: "employees" },
+  { href: "/hr",           label: "İnsan Kaynakları", icon: ClipboardList,   moduleSlug: "employees",    permKey: "hr" },
+  { href: "/marketing",    label: "Pazarlama",        icon: Megaphone,       moduleSlug: "marketing",    permKey: "marketing" },
+  { href: "/messaging",    label: "Mesajlaşma",       icon: MessageCircle,   moduleSlug: "messaging",    permKey: "messaging" },
+  { href: "/ai-assistant", label: "AI Asistan",       icon: Bot,             moduleSlug: "ai_assistant", permKey: "ai_assistant" },
+  { href: "/reports",      label: "Raporlar",         icon: BarChart3,       moduleSlug: "reports",      permKey: "reports" },
+  { href: "/alarmlar",     label: "Alarmlar",         icon: BellRing,        moduleSlug: "alarms",       permKey: "alarms" },
+  { href: "/reminders",    label: "Hatırlatmalar",    icon: Bell,            moduleSlug: "alarms",       permKey: "reminders" },
+  { href: "/billing",      label: "Abonelik",         icon: CreditCard },
 ];
 
 // Nav group boundaries for visual separation
@@ -131,6 +115,7 @@ const pageTitles: Record<string, string> = {
   "/alarmlar": "Alarmlar",
   "/reminders": "Hatırlatmalar",
   "/billing": "Abonelik",
+  "/billing/moduller": "Modüllerim",
   "/settings": "Ayarlar",
   "/admin": "Admin Panel",
   "/admin/users": "Kullanıcı Yönetimi",
@@ -172,6 +157,7 @@ function SortableNavItem({
   item,
   isActive,
   isLocked,
+  isYakinda,
   collapsed,
   onClose,
   onLockedClick,
@@ -179,6 +165,7 @@ function SortableNavItem({
   item: NavItem;
   isActive: boolean;
   isLocked: boolean;
+  isYakinda?: boolean;
   collapsed: boolean;
   onClose: () => void;
   onLockedClick: () => void;
@@ -212,7 +199,7 @@ function SortableNavItem({
         <button
           type="button"
           onClick={onLockedClick}
-          title={collapsed ? `${item.label} (Kilitli)` : undefined}
+          title={collapsed ? `${item.label} (${isYakinda ? "Yakında" : "Kilitli"})` : undefined}
           className={`group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium opacity-40 cursor-not-allowed ${
             collapsed ? "lg:justify-center lg:px-0" : ""
           }`}
@@ -224,6 +211,11 @@ function SortableNavItem({
           <span className={collapsed ? "lg:hidden" : "text-gray-400"}>
             {item.label}
           </span>
+          {isYakinda && !collapsed && (
+            <span className="ml-auto rounded-full bg-gray-100 px-1.5 py-0.5 text-[9px] font-semibold text-gray-500">
+              Yakında
+            </span>
+          )}
         </button>
       </div>
     );
@@ -285,7 +277,6 @@ function Sidebar({
   const { data: session, status } = useSession();
   const { toast } = useToast();
 
-  const clinicPlan = ((session?.user as any)?.clinicPlan || "PRO") as PlanTier;
   const userRole = (session?.user as any)?.role || "";
   const userEmail = session?.user?.email || "";
   const isDemo = (session?.user as any)?.isDemo || false;
@@ -298,6 +289,22 @@ function Sidebar({
     userRole === "DEMO" ||
     isDemo ||
     userEmail === "admin@poby.ai";
+
+  // Active modules from billing
+  const [activeModules, setActiveModules] = useState<string[]>([]);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string>("active");
+  const [trialEnd, setTrialEnd] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/billing/modules")
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => {
+        if (d?.activeModules) setActiveModules(d.activeModules);
+        if (d?.status) setSubscriptionStatus(d.status);
+        if (d?.trialEnd) setTrialEnd(d.trialEnd);
+      })
+      .catch(() => {});
+  }, []);
 
   // Employee permissions (for non-admin users who are linked as employees)
   const [employeePerms, setEmployeePerms] = useState<Record<string, string> | null>(null);
@@ -364,12 +371,20 @@ function Sidebar({
     }
   }, []);
 
-  const handleLockedClick = useCallback(() => {
-    toast({
-      title: "Erişim kısıtlı",
-      description: "Bu özellik planınıza dahil değil. Yükseltmek için iletişime geçin.",
-      variant: "destructive",
-    });
+  const handleLockedClick = useCallback((item: NavItem) => {
+    const isYakinda = item.moduleSlug && LOCKED_MODULES.includes(item.moduleSlug);
+    if (isYakinda) {
+      toast({
+        title: "Yakında",
+        description: `${item.label} modülü yakında kullanıma açılacak.`,
+      });
+    } else {
+      toast({
+        title: "Modül aktif değil",
+        description: "Bu modül planınıza dahil değil. Abonelik sayfasından ekleyebilirsiniz.",
+        variant: "destructive",
+      });
+    }
   }, [toast]);
 
   const itemIds = useMemo(() => orderedItems.map((i) => i.href), [orderedItems]);
@@ -454,7 +469,9 @@ function Sidebar({
                   const isActive =
                     pathname === item.href ||
                     pathname.startsWith(item.href + "/");
-                  const isLocked = !unlockAll && !hasAccess(clinicPlan, item.minPlan);
+                  const isYakinda = !!item.moduleSlug && LOCKED_MODULES.includes(item.moduleSlug);
+                  const isNotSubscribed = !unlockAll && !!item.moduleSlug && !activeModules.includes(item.moduleSlug);
+                  const isLocked = isYakinda || isNotSubscribed;
                   return (
                     <div key={item.href}>
                       {NAV_GROUP_BREAKS.has(item.href) && (
@@ -465,9 +482,10 @@ function Sidebar({
                           item={item}
                           isActive={isActive}
                           isLocked={isLocked}
+                          isYakinda={isYakinda}
                           collapsed={collapsed}
                           onClose={onClose}
-                          onLockedClick={handleLockedClick}
+                          onLockedClick={() => handleLockedClick(item)}
                         />
                         {item.href === "/alarmlar" && unreadAlarmCount > 0 && !isLocked && (
                           <span className="absolute right-2 top-1/2 -translate-y-1/2 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
@@ -570,21 +588,21 @@ function Sidebar({
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-[#EF9F27]" />
                 <span className="text-xs font-semibold text-[#BA7517]">
-                  {PLAN_LABELS[clinicPlan] || "Pro"} Plan
+                  {activeModules.length} modül aktif
                 </span>
               </div>
               <p className="mt-0.5 text-[11px] text-[#D88A1B]">
-                {clinicPlan === "BUSINESS"
-                  ? "Tüm özellikler aktif"
-                  : clinicPlan === "PRO"
-                    ? "Pro özellikler aktif"
-                    : "Temel özellikler aktif"}
+                {subscriptionStatus === "trial" && trialEnd
+                  ? `Deneme: ${Math.max(0, Math.ceil((new Date(trialEnd).getTime() - Date.now()) / 86400000))} gün kaldı`
+                  : subscriptionStatus === "suspended"
+                    ? "Abonelik askıda"
+                    : "Abonelik aktif"}
               </p>
             </div>
           )}
           {collapsed && (
             <div className="mb-3 flex justify-center">
-              <div className="rounded-lg bg-[#FDF3E3] p-2" title={`${PLAN_LABELS[clinicPlan] || "Pro"} Plan`}>
+              <div className="rounded-lg bg-[#FDF3E3] p-2" title={`${activeModules.length} modül aktif`}>
                 <Sparkles className="h-4 w-4 text-[#EF9F27]" />
               </div>
             </div>
@@ -632,12 +650,63 @@ function Sidebar({
 
 /* ──────────────────────── MAIN CONTENT ──────────────────────── */
 
+/* ──────────────────────── TRIAL BANNER ──────────────────────── */
+
+function TrialBanner({ status, trialEnd }: { status: string; trialEnd?: string | null }) {
+  if (status === "active") return null;
+
+  if (status === "suspended") {
+    return (
+      <div className="bg-red-50 border-b border-red-200 px-4 py-3 flex items-center justify-between text-sm">
+        <span className="text-red-700 font-medium">Aboneliğiniz askıya alındı. Hizmetlerin devam etmesi için ödeme yöntemini güncelleyin.</span>
+        <Link href="/billing" className="rounded-lg bg-red-600 px-3 py-1 text-xs font-semibold text-white hover:bg-red-700">
+          Ödeme Yöntemini Güncelle
+        </Link>
+      </div>
+    );
+  }
+
+  if (status === "trial" && trialEnd) {
+    const daysLeft = Math.max(0, Math.ceil((new Date(trialEnd).getTime() - Date.now()) / 86400000));
+    const isUrgent = daysLeft <= 3;
+    return (
+      <div className={`border-b px-4 py-2.5 flex items-center justify-between text-sm ${
+        isUrgent ? "bg-red-50 border-red-200" : "bg-blue-50 border-blue-100"
+      }`}>
+        <span className={isUrgent ? "text-red-700 font-medium" : "text-blue-700"}>
+          {isUrgent ? "🔴" : "⏱"} Deneme süreniz: {daysLeft} gün kaldı
+        </span>
+        <Link href="/billing" className={`rounded-lg px-3 py-1 text-xs font-semibold text-white ${
+          isUrgent ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"
+        }`}>
+          {isUrgent ? "Hemen Aktif Et" : "Planımı Aktif Et"}
+        </Link>
+      </div>
+    );
+  }
+  return null;
+}
+
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
   const pageTitle = getPageTitle(pathname);
   const { data: session } = useSession();
+
+  // Subscription status for trial banner
+  const [subStatus, setSubStatus] = useState("active");
+  const [subTrialEnd, setSubTrialEnd] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/billing/modules")
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => {
+        if (d?.status) setSubStatus(d.status);
+        if (d?.trialEnd) setSubTrialEnd(d.trialEnd);
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <div className="flex h-screen bg-[#F8F7F4]">
@@ -649,6 +718,9 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       />
 
       <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Trial / Subscription Banner */}
+        <TrialBanner status={subStatus} trialEnd={subTrialEnd} />
+
         {/* Top header */}
         <header className="flex h-16 shrink-0 items-center justify-between border-b border-[#F0EDE8] bg-white px-6">
           {/* Left side */}

@@ -3,8 +3,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { processWhatsAppMessage } from "@/lib/whatsapp/message-parser";
-import { TOKEN_COSTS } from "@/lib/token-costs";
-import { checkBalance, deductTokens } from "@/lib/token-service";
+// TOKEN_SYSTEM_DISABLED - import { TOKEN_COSTS } from "@/lib/token-costs";
+// TOKEN_SYSTEM_DISABLED - import { checkBalance, deductTokens } from "@/lib/token-service";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -688,15 +688,16 @@ export async function POST(req: NextRequest) {
   const user = session.user as any;
   const isDemo = user.isDemo || user.role === "ADMIN";
 
-  if (!isDemo) {
-    const hasBalance = await checkBalance(clinicId, TOKEN_COSTS.AI_CHAT);
-    if (!hasBalance) {
-      return Response.json(
-        { error: "Token bakiyeniz yetersiz. Ayarlar sayfasından token satın alabilirsiniz." },
-        { status: 402 }
-      );
-    }
-  }
+  // TOKEN_SYSTEM_DISABLED
+  // if (!isDemo) {
+  //   const hasBalance = await checkBalance(clinicId, TOKEN_COSTS.AI_CHAT);
+  //   if (!hasBalance) {
+  //     return Response.json(
+  //       { error: "Token bakiyeniz yetersiz. Ayarlar sayfasından token satın alabilirsiniz." },
+  //       { status: 402 }
+  //     );
+  //   }
+  // }
 
   const { messages } = await req.json();
 
@@ -775,9 +776,10 @@ Kurallar:
       (block): block is Anthropic.TextBlock => block.type === "text"
     );
 
-    if (!isDemo) {
-      await deductTokens(clinicId, "AI_CHAT", TOKEN_COSTS.AI_CHAT);
-    }
+    // TOKEN_SYSTEM_DISABLED
+    // if (!isDemo) {
+    //   await deductTokens(clinicId, "AI_CHAT", TOKEN_COSTS.AI_CHAT);
+    // }
 
     return Response.json({
       message: textBlock?.text || "Yanıt oluşturulamadı.",

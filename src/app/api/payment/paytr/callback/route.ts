@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyPaytrCallback, SUBSCRIPTION_PLANS, TOKEN_PACKAGES, STORAGE_PACKAGES } from "@/lib/paytr";
-import { addTokens } from "@/lib/token-service";
+// TOKEN_SYSTEM_DISABLED - import { addTokens } from "@/lib/token-service";
 
 export async function POST(req: NextRequest) {
   try {
@@ -74,17 +74,18 @@ export async function POST(req: NextRequest) {
               },
             });
 
-            // Abonelik token hediyesi
-            await addTokens(clinicId, plan.tokens, `${plan.name} abonelik planı token hediyesi`);
+            // TOKEN_SYSTEM_DISABLED - // Abonelik token hediyesi
+            // TOKEN_SYSTEM_DISABLED - await addTokens(clinicId, plan.tokens, `${plan.name} abonelik planı token hediyesi`);
           }
           break;
         }
 
         case "TOKEN_PACKAGE": {
           const pkg = TOKEN_PACKAGES[payment.packageId as keyof typeof TOKEN_PACKAGES];
-          if (pkg) {
-            await addTokens(clinicId, pkg.tokens, `${pkg.name} paketi satın alındı`);
-          }
+          // TOKEN_SYSTEM_DISABLED
+          // if (pkg) {
+          //   await addTokens(clinicId, pkg.tokens, `${pkg.name} paketi satın alındı`);
+          // }
           break;
         }
 

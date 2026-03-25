@@ -1,3 +1,4 @@
+// TOKEN_SYSTEM_DISABLED — Bu dosya ileride tekrar aktif edilecek. Şu anda token sistemi devre dışıdır.
 export const TOKEN_COSTS: Record<string, number> = {
   AI_CHAT: 1000,
   INVOICE_OCR: 3000,

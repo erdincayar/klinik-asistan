@@ -1,3 +1,4 @@
+// TOKEN_SYSTEM_DISABLED — Bu dosya ileride tekrar aktif edilecek. Şu anda token sistemi devre dışıdır.
 import { prisma } from "./prisma";
 
 const DEFAULT_BALANCE = 50000;

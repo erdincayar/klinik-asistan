@@ -1,162 +1,73 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { motion } from "framer-motion";
 import {
   CreditCard,
-  Check,
-  Crown,
-  Zap,
-  Building2,
   Loader2,
-  AlertCircle,
+  ArrowRight,
+  Settings,
+  Clock,
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
-interface Subscription {
+interface PlanData {
   id: string;
-  plan: string;
-  price: number;
   status: string;
-  trialEndsAt: string | null;
-  currentPeriodStart: string;
-  currentPeriodEnd: string;
-  payments: Payment[];
+  trialEnd: string | null;
+  activeModules: string[];
+  extraUsers: number;
+  storagePlan: string;
+  monthlyTotal: number;
+  discountRate: number;
+  cardLast4: string | null;
+  cardBrand: string | null;
+  nextBillingDate: string | null;
+  pricing: {
+    subtotal: number;
+    discount: number;
+    discountRate: number;
+    total: number;
+  };
 }
 
-interface Payment {
+interface BillingRecord {
   id: string;
   amount: number;
+  description: string;
   status: string;
-  paidAt: string | null;
   createdAt: string;
 }
 
-const PLANS = [
-  {
-    key: "STARTER",
-    name: "Baslangic",
-    price: 299,
-    icon: Zap,
-    features: [
-      "100 musteri kaydi",
-      "Temel randevu yonetimi",
-      "Gelir-gider takibi",
-      "1 kullanici",
-      "E-posta destegi",
-    ],
-  },
-  {
-    key: "PROFESSIONAL",
-    name: "Profesyonel",
-    price: 499,
-    icon: Crown,
-    popular: true,
-    features: [
-      "Sinirsiz musteri",
-      "Gelismis randevu sistemi",
-      "Calisan yonetimi",
-      "AI Asistan",
-      "WhatsApp entegrasyonu",
-      "5 kullanici",
-      "Oncelikli destek",
-    ],
-  },
-  {
-    key: "BUSINESS",
-    name: "Isletme",
-    price: 799,
-    icon: Building2,
-    features: [
-      "Profesyonel tum ozellikler",
-      "Sinirsiz kullanici",
-      "Stok yonetimi",
-      "e-Fatura / e-Arsiv",
-      "Gelismis raporlama",
-      "API erisimi",
-      "7/24 destek",
-    ],
-  },
-];
-
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  ACTIVE: { label: "Aktif", color: "bg-green-100 text-green-800" },
-  TRIAL: { label: "Deneme", color: "bg-blue-100 text-blue-800" },
-  CANCELLED: { label: "Iptal", color: "bg-red-100 text-red-800" },
-  PAST_DUE: { label: "Gecikmis", color: "bg-orange-100 text-orange-800" },
+const STATUS_CONFIG: Record<string, { label: string; icon: any; color: string; bg: string }> = {
+  trial: { label: "Deneme Süresi", icon: Clock, color: "text-blue-700", bg: "bg-blue-50 border-blue-200" },
+  active: { label: "Aktif", icon: CheckCircle2, color: "text-green-700", bg: "bg-green-50 border-green-200" },
+  suspended: { label: "Askıda", icon: AlertTriangle, color: "text-red-700", bg: "bg-red-50 border-red-200" },
+  cancelled: { label: "İptal", icon: XCircle, color: "text-gray-700", bg: "bg-gray-50 border-gray-200" },
 };
 
+function fmt(kurus: number): string {
+  return (kurus / 100).toLocaleString("tr-TR");
+}
+
 export default function BillingPage() {
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [plan, setPlan] = useState<PlanData | null>(null);
+  const [history, setHistory] = useState<BillingRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [subscribing, setSubscribing] = useState<string | null>(null);
-  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
-    fetchStatus();
-  }, []);
-
-  async function fetchStatus() {
-    try {
-      const res = await fetch("/api/billing/status");
-      if (res.ok) {
-        const data = await res.json();
-        setSubscription(data.subscription);
-      }
-    } catch {
-      // silently handle
-    } finally {
+    Promise.all([
+      fetch("/api/billing/modules").then((r) => r.ok ? r.json() : null),
+      fetch("/api/billing/history").then((r) => r.ok ? r.json() : null).catch(() => null),
+    ]).then(([planData, histData]) => {
+      if (planData) setPlan(planData);
+      if (Array.isArray(histData)) setHistory(histData);
       setLoading(false);
-    }
-  }
-
-  async function handleSubscribe(plan: string) {
-    setSubscribing(plan);
-    try {
-      const res = await fetch("/api/billing/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan }),
-      });
-      if (res.ok) {
-        await fetchStatus();
-      }
-    } catch {
-      // silently handle
-    } finally {
-      setSubscribing(null);
-    }
-  }
-
-  async function handleCancel() {
-    if (!confirm("Aboneliginizi iptal etmek istediginizden emin misiniz?")) return;
-    setCancelling(true);
-    try {
-      const res = await fetch("/api/billing/cancel", { method: "POST" });
-      if (res.ok) {
-        await fetchStatus();
-      }
-    } catch {
-      // silently handle
-    } finally {
-      setCancelling(false);
-    }
-  }
+    }).catch(() => setLoading(false));
+  }, []);
 
   if (loading) {
     return (
@@ -166,163 +77,205 @@ export default function BillingPage() {
     );
   }
 
-  const currentPlan = subscription?.plan;
-  const isTrial = subscription?.status === "TRIAL";
-  const isActive = subscription?.status === "ACTIVE" || isTrial;
+  if (!plan) {
+    return (
+      <div className="text-center py-20 text-gray-500">
+        Plan bilgisi yüklenemedi.
+      </div>
+    );
+  }
+
+  const statusCfg = STATUS_CONFIG[plan.status] || STATUS_CONFIG.active;
+  const StatusIcon = statusCfg.icon;
+  const trialDaysLeft = plan.trialEnd
+    ? Math.max(0, Math.ceil((new Date(plan.trialEnd).getTime() - Date.now()) / 86400000))
+    : 0;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Abonelik Yonetimi</h1>
-        <p className="text-sm text-gray-500">
-          Planinizi yonetin ve odeme gecmisinizi goruntuleyin
-        </p>
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Abonelik Yönetimi</h1>
+        <p className="text-sm text-gray-500">Planınızı yönetin ve ödeme geçmişinizi görüntüleyin</p>
       </div>
 
-      {/* Current Status */}
-      {subscription && (
-        <Card className={isTrial ? "border-blue-200 bg-blue-50" : ""}>
-          <CardContent className="flex items-center justify-between p-6">
-            <div className="flex items-center gap-4">
-              <CreditCard className="h-8 w-8 text-blue-600" />
-              <div>
-                <p className="font-semibold">
-                  {PLANS.find((p) => p.key === currentPlan)?.name || currentPlan} Plani
-                </p>
-                <p className="text-sm text-gray-500">
-                  {isTrial && subscription.trialEndsAt && (
-                    <>Deneme suresi: {new Date(subscription.trialEndsAt).toLocaleDateString("tr-TR")} tarihine kadar</>
-                  )}
-                  {!isTrial && (
-                    <>Sonraki odeme: {new Date(subscription.currentPeriodEnd).toLocaleDateString("tr-TR")}</>
-                  )}
-                </p>
-              </div>
+      {/* Status Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={`rounded-2xl border p-6 ${statusCfg.bg}`}
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm`}>
+              <StatusIcon className={`h-6 w-6 ${statusCfg.color}`} />
             </div>
-            <div className="flex items-center gap-3">
-              <Badge className={STATUS_LABELS[subscription.status]?.color || "bg-gray-100"}>
-                {STATUS_LABELS[subscription.status]?.label || subscription.status}
-              </Badge>
-              {isActive && (
-                <Button variant="outline" size="sm" onClick={handleCancel} disabled={cancelling}>
-                  {cancelling ? "Iptal ediliyor..." : "Iptal Et"}
-                </Button>
+            <div>
+              <p className={`text-lg font-semibold ${statusCfg.color}`}>{statusCfg.label}</p>
+              {plan.status === "trial" && (
+                <p className="text-sm text-gray-600">{trialDaysLeft} gün kaldı</p>
+              )}
+              {plan.status === "active" && plan.nextBillingDate && (
+                <p className="text-sm text-gray-600">
+                  Sonraki ödeme: {new Date(plan.nextBillingDate).toLocaleDateString("tr-TR")}
+                </p>
+              )}
+              {plan.status === "suspended" && (
+                <p className="text-sm text-red-600">Ödeme yönteminizi güncelleyin</p>
               )}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+          <div className="text-right">
+            <p className="text-2xl font-bold text-gray-900">₺{fmt(plan.pricing.total)}<span className="text-sm font-normal text-gray-500">/ay</span></p>
+            {plan.pricing.discountRate > 0 && (
+              <p className="text-xs text-green-600">%{plan.pricing.discountRate} indirim uygulandı</p>
+            )}
+          </div>
+        </div>
+      </motion.div>
 
-      {isTrial && (
-        <Card className="border-amber-200 bg-amber-50">
-          <CardContent className="flex items-center gap-3 p-4">
-            <AlertCircle className="h-5 w-5 text-amber-600" />
-            <p className="text-sm text-amber-800">
-              14 gunluk ucretsiz deneme sureniz devam ediyor. Deneme suresi sonunda bir plan secmeniz gerekmektedir.
-            </p>
-          </CardContent>
-        </Card>
-      )}
+      {/* Quick Info Cards */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        {/* Active Modules */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="rounded-2xl border border-gray-100 bg-white p-5"
+        >
+          <p className="text-sm font-medium text-gray-500">Aktif Modüller</p>
+          <p className="mt-1 text-2xl font-bold text-gray-900">{plan.activeModules.length}</p>
+          <Link
+            href="/billing/moduller"
+            className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700"
+          >
+            Modülleri Yönet <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </motion.div>
 
-      {/* Plan Cards */}
-      <div className="grid gap-6 md:grid-cols-3">
-        {PLANS.map((plan) => {
-          const isCurrentPlan = currentPlan === plan.key;
-          const Icon = plan.icon;
-          return (
-            <Card
-              key={plan.key}
-              className={`relative ${plan.popular ? "border-blue-400 shadow-md" : ""} ${
-                isCurrentPlan ? "ring-2 ring-blue-500" : ""
-              }`}
-            >
-              {plan.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-blue-600 text-white">En Populer</Badge>
-                </div>
+        {/* Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="rounded-2xl border border-gray-100 bg-white p-5"
+        >
+          <p className="text-sm font-medium text-gray-500">Ödeme Yöntemi</p>
+          {plan.cardLast4 ? (
+            <div className="mt-1 flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-gray-400" />
+              <span className="text-lg font-bold text-gray-900">
+                **** {plan.cardLast4}
+              </span>
+              {plan.cardBrand && (
+                <span className="text-xs text-gray-400">{plan.cardBrand}</span>
               )}
-              <CardHeader className="text-center pt-8">
-                <div className="mx-auto rounded-full bg-blue-50 p-3 mb-2">
-                  <Icon className="h-6 w-6 text-blue-600" />
-                </div>
-                <CardTitle>{plan.name}</CardTitle>
-                <CardDescription>
-                  <span className="text-3xl font-bold text-gray-900">{plan.price} TL</span>
-                  <span className="text-gray-500">/ay</span>
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <ul className="space-y-2">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-center gap-2 text-sm">
-                      <Check className="h-4 w-4 text-green-500 shrink-0" />
-                      {feature}
-                    </li>
+            </div>
+          ) : (
+            <p className="mt-1 text-lg font-bold text-gray-400">Kart eklenmedi</p>
+          )}
+          <button className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700">
+            <Settings className="h-3.5 w-3.5" />
+            {plan.cardLast4 ? "Değiştir" : "Kart Ekle"}
+          </button>
+        </motion.div>
+
+        {/* Extra Users */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="rounded-2xl border border-gray-100 bg-white p-5"
+        >
+          <p className="text-sm font-medium text-gray-500">Ek Kullanıcılar</p>
+          <p className="mt-1 text-2xl font-bold text-gray-900">{plan.extraUsers}</p>
+          <Link
+            href="/billing/moduller"
+            className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700"
+          >
+            Değiştir <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </motion.div>
+      </div>
+
+      {/* Billing History */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="rounded-2xl border border-gray-100 bg-white"
+      >
+        <div className="border-b border-gray-100 px-6 py-4">
+          <h2 className="text-sm font-semibold text-gray-900">Fatura Geçmişi</h2>
+        </div>
+        <div className="p-6">
+          {history.length === 0 ? (
+            <p className="text-center text-sm text-gray-400 py-8">Henüz fatura bulunmuyor.</p>
+          ) : (
+            <>
+            {/* Desktop table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100">
+                    <th className="pb-3 font-medium text-gray-500">Tarih</th>
+                    <th className="pb-3 font-medium text-gray-500">Açıklama</th>
+                    <th className="pb-3 font-medium text-gray-500 text-right">Tutar</th>
+                    <th className="pb-3 font-medium text-gray-500 text-right">Durum</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {history.map((item) => (
+                    <tr key={item.id} className="border-b border-gray-50">
+                      <td className="py-3 text-gray-600">
+                        {new Date(item.createdAt).toLocaleDateString("tr-TR")}
+                      </td>
+                      <td className="py-3 text-gray-700">{item.description}</td>
+                      <td className="py-3 text-right font-medium text-gray-900">
+                        ₺{fmt(item.amount)}
+                      </td>
+                      <td className="py-3 text-right">
+                        <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                          item.status === "success"
+                            ? "bg-green-50 text-green-700"
+                            : item.status === "failed"
+                            ? "bg-red-50 text-red-700"
+                            : "bg-yellow-50 text-yellow-700"
+                        }`}>
+                          {item.status === "success" ? "Başarılı" : item.status === "failed" ? "Başarısız" : "Bekliyor"}
+                        </span>
+                      </td>
+                    </tr>
                   ))}
-                </ul>
-                <Button
-                  className="w-full"
-                  variant={isCurrentPlan ? "outline" : plan.popular ? "default" : "outline"}
-                  disabled={isCurrentPlan || subscribing !== null}
-                  onClick={() => handleSubscribe(plan.key)}
-                >
-                  {subscribing === plan.key ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : null}
-                  {isCurrentPlan ? "Mevcut Plan" : "Plani Sec"}
-                </Button>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {/* Payment History */}
-      {subscription?.payments && subscription.payments.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Odeme Gecmisi</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tarih</TableHead>
-                  <TableHead>Tutar</TableHead>
-                  <TableHead>Durum</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {subscription.payments.map((payment) => (
-                  <TableRow key={payment.id}>
-                    <TableCell>
-                      {new Date(payment.createdAt).toLocaleDateString("tr-TR")}
-                    </TableCell>
-                    <TableCell className="font-medium">{payment.amount} TL</TableCell>
-                    <TableCell>
-                      <Badge
-                        className={
-                          payment.status === "SUCCESS"
-                            ? "bg-green-100 text-green-800"
-                            : payment.status === "FAILED"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }
-                      >
-                        {payment.status === "SUCCESS"
-                          ? "Basarili"
-                          : payment.status === "FAILED"
-                          ? "Basarisiz"
-                          : "Bekliyor"}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
+                </tbody>
+              </table>
+            </div>
+            {/* Mobile card view */}
+            <div className="md:hidden divide-y divide-gray-50">
+              {history.map((item) => (
+                <div key={item.id} className="py-3 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">
+                      {new Date(item.createdAt).toLocaleDateString("tr-TR")}
+                    </span>
+                    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                      item.status === "success"
+                        ? "bg-green-50 text-green-700"
+                        : item.status === "failed"
+                        ? "bg-red-50 text-red-700"
+                        : "bg-yellow-50 text-yellow-700"
+                    }`}>
+                      {item.status === "success" ? "Başarılı" : item.status === "failed" ? "Başarısız" : "Bekliyor"}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-700">{item.description}</p>
+                  <p className="text-sm font-medium text-gray-900">₺{fmt(item.amount)}</p>
+                </div>
+              ))}
+            </div>
+            </>
+          )}
+        </div>
+      </motion.div>
     </div>
   );
 }

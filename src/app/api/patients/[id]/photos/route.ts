@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { STORAGE_PLANS } from "@/lib/billing/plans";
 import { writeFile, mkdir, unlink } from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
@@ -61,12 +62,14 @@ export async function POST(
 
     const fileSizeMB = Math.ceil(file.size / (1024 * 1024));
 
-    // Kota kontrolü
-    const clinic = await prisma.clinic.findUnique({
-      where: { id: patient.clinicId },
-      select: { storageUsedMB: true, storageLimitMB: true },
+    // Kota kontrolü — SubscriptionPlan üzerinden
+    const subPlan = await prisma.subscriptionPlan.findUnique({
+      where: { clinicId: patient.clinicId },
+      select: { storagePlan: true, storageUsedMb: true },
     });
-    if (clinic && (clinic.storageUsedMB + fileSizeMB) > clinic.storageLimitMB) {
+    const storageLimitMB = STORAGE_PLANS[subPlan?.storagePlan || "free"]?.sizeMB ?? 100;
+    const storageUsedMB = subPlan?.storageUsedMb ?? 0;
+    if ((storageUsedMB + fileSizeMB) > storageLimitMB) {
       return NextResponse.json(
         { error: "Depolama kotası doldu. Lütfen depolama paketinizi yükseltin." },
         { status: 413 }
@@ -95,11 +98,13 @@ export async function POST(
       },
     });
 
-    // storageUsedMB güncelle
-    await prisma.clinic.update({
-      where: { id: patient.clinicId },
-      data: { storageUsedMB: { increment: fileSizeMB } },
-    });
+    // storageUsedMb güncelle (SubscriptionPlan)
+    if (subPlan) {
+      await prisma.subscriptionPlan.update({
+        where: { clinicId: patient.clinicId },
+        data: { storageUsedMb: { increment: fileSizeMB } },
+      });
+    }
 
     return NextResponse.json(photo, { status: 201 });
   } catch (error) {
@@ -154,17 +159,19 @@ export async function DELETE(
     // Delete DB record
     await prisma.patientPhoto.delete({ where: { id: photoId } });
 
-    // storageUsedMB güncelle
+    // storageUsedMb güncelle (SubscriptionPlan)
     if (patient && fileSizeMB > 0) {
-      const clinic = await prisma.clinic.findUnique({
-        where: { id: patient.clinicId },
-        select: { storageUsedMB: true },
+      const sp = await prisma.subscriptionPlan.findUnique({
+        where: { clinicId: patient.clinicId },
+        select: { storageUsedMb: true },
       });
-      const newUsed = Math.max(0, (clinic?.storageUsedMB || 0) - fileSizeMB);
-      await prisma.clinic.update({
-        where: { id: patient.clinicId },
-        data: { storageUsedMB: newUsed },
-      });
+      if (sp) {
+        const newUsed = Math.max(0, (sp.storageUsedMb || 0) - fileSizeMB);
+        await prisma.subscriptionPlan.update({
+          where: { clinicId: patient.clinicId },
+          data: { storageUsedMb: newUsed },
+        });
+      }
     }
 
     return NextResponse.json({ success: true });

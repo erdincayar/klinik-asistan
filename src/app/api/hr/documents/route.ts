@@ -91,17 +91,19 @@ export async function POST(req: NextRequest) {
           const fileSizeMB = Math.ceil(stats.size / (1024 * 1024));
           await unlink(filePath);
 
-          // Update storage
+          // Update storage (SubscriptionPlan)
           if (fileSizeMB > 0) {
-            const clinic = await prisma.clinic.findUnique({
-              where: { id: clinicId },
-              select: { storageUsedMB: true },
+            const sp = await prisma.subscriptionPlan.findUnique({
+              where: { clinicId },
+              select: { storageUsedMb: true },
             });
-            const newUsed = Math.max(0, (clinic?.storageUsedMB || 0) - fileSizeMB);
-            await prisma.clinic.update({
-              where: { id: clinicId },
-              data: { storageUsedMB: newUsed },
-            });
+            if (sp) {
+              const newUsed = Math.max(0, (sp.storageUsedMb || 0) - fileSizeMB);
+              await prisma.subscriptionPlan.update({
+                where: { clinicId },
+                data: { storageUsedMb: newUsed },
+              });
+            }
           }
         }
       }

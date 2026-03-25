@@ -1,8 +1,8 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/prisma";
 import { searchKnowledge } from "./embeddings";
-import { TOKEN_COSTS } from "@/lib/token-costs";
-import { checkBalance, deductTokens } from "@/lib/token-service";
+// TOKEN_SYSTEM_DISABLED - import { TOKEN_COSTS } from "@/lib/token-costs";
+// TOKEN_SYSTEM_DISABLED - import { checkBalance, deductTokens } from "@/lib/token-service";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -355,13 +355,14 @@ export async function processMessage(
     throw new Error("ASSISTANT_INACTIVE");
   }
 
-  // 2. Check token balance
-  const user = await prisma.user.findFirst({ where: { clinicId } });
-  const isDemo = user?.isDemo || user?.role === "ADMIN";
-  if (!isDemo) {
-    const hasBalance = await checkBalance(clinicId, TOKEN_COSTS.ASSISTANT_MESSAGE);
-    if (!hasBalance) throw new Error("TOKEN_INSUFFICIENT");
-  }
+  // TOKEN_SYSTEM_DISABLED
+  // // 2. Check token balance
+  // const user = await prisma.user.findFirst({ where: { clinicId } });
+  // const isDemo = user?.isDemo || user?.role === "ADMIN";
+  // if (!isDemo) {
+  //   const hasBalance = await checkBalance(clinicId, TOKEN_COSTS.ASSISTANT_MESSAGE);
+  //   if (!hasBalance) throw new Error("TOKEN_INSUFFICIENT");
+  // }
 
   // 3. Get or create conversation
   const isPhone = channel === "whatsapp";
@@ -486,10 +487,11 @@ export async function processMessage(
     },
   });
 
-  // 12. Deduct tokens
-  if (!isDemo) {
-    await deductTokens(clinicId, "ASSISTANT_MESSAGE", TOKEN_COSTS.ASSISTANT_MESSAGE, "Poby Asistan mesajı");
-  }
+  // TOKEN_SYSTEM_DISABLED
+  // // 12. Deduct tokens
+  // if (!isDemo) {
+  //   await deductTokens(clinicId, "ASSISTANT_MESSAGE", TOKEN_COSTS.ASSISTANT_MESSAGE, "Poby Asistan mesajı");
+  // }
 
   return { response: assistantResponse, conversationId: conversation.id };
 }

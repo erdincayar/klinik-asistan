@@ -31,8 +31,8 @@ import {
   type ConversationState,
   type PendingAppointmentData,
 } from "./bot-conversation-state";
-import { TOKEN_COSTS } from "./token-costs";
-import { checkBalance, deductTokens } from "./token-service";
+// TOKEN_SYSTEM_DISABLED - import { TOKEN_COSTS } from "./token-costs";
+// TOKEN_SYSTEM_DISABLED - import { checkBalance, deductTokens } from "./token-service";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -1157,17 +1157,18 @@ export async function handleBotMessage(
       }
     }
 
-    // Free-text AI — check token balance
-    const tokenAction = senderId.startsWith("telegram:") ? "TELEGRAM_BOT_AI" : "WHATSAPP_BOT_AI";
-    const tokenCost = TOKEN_COSTS[tokenAction];
-
-    const hasBalance = await checkBalance(clinicId, tokenCost);
-    if (!hasBalance) {
-      return {
-        response: "⚠️ Token bakiyeniz yetersiz. Komutları kullanmak için / ile başlayın.\n\nÖrnek: /randevu, /gelir, /stok, /yardım",
-        intent: "SERBEST_SORU",
-      };
-    }
+    // TOKEN_SYSTEM_DISABLED
+    // // Free-text AI — check token balance
+    // const tokenAction = senderId.startsWith("telegram:") ? "TELEGRAM_BOT_AI" : "WHATSAPP_BOT_AI";
+    // const tokenCost = TOKEN_COSTS[tokenAction];
+    //
+    // const hasBalance = await checkBalance(clinicId, tokenCost);
+    // if (!hasBalance) {
+    //   return {
+    //     response: "⚠️ Token bakiyeniz yetersiz. Komutları kullanmak için / ile başlayın.\n\nÖrnek: /randevu, /gelir, /stok, /yardım",
+    //     intent: "SERBEST_SORU",
+    //   };
+    // }
 
     // Normal intent classification
     const intent = await classifyIntent(message);
@@ -1178,11 +1179,11 @@ export async function handleBotMessage(
     if (intent.action === "HASTA_FOTO") {
       const patientName = intent.param || message.replace(/foto(ğ|g)?raf(lar)?(ı|i|ını|ini)?/gi, "").replace(/getir|göster|goster/gi, "").trim();
       if (!patientName) {
-        await deductTokens(clinicId, tokenAction, tokenCost);
+        // TOKEN_SYSTEM_DISABLED - await deductTokens(clinicId, tokenAction, tokenCost);
         return { response: "⚠️ Müşteri adı belirtmelisiniz. Örnek: \"Ahmet fotoğrafları\"", intent: "HASTA_FOTO" };
       }
       const result = await getPatientPhotos(clinicId, patientName);
-      await deductTokens(clinicId, tokenAction, tokenCost);
+      // TOKEN_SYSTEM_DISABLED - await deductTokens(clinicId, tokenAction, tokenCost);
       return { response: result.text, intent: "HASTA_FOTO", photos: result.photoUrls };
     }
 
@@ -1190,18 +1191,18 @@ export async function handleBotMessage(
     if (intent.action === "HASTA_FOTO_SIL") {
       const patientName = intent.param || message.replace(/foto(ğ|g)?raf(lar)?(ı|i|ını|ini)?/gi, "").replace(/sil|kaldır|kaldir/gi, "").trim();
       if (!patientName) {
-        await deductTokens(clinicId, tokenAction, tokenCost);
+        // TOKEN_SYSTEM_DISABLED - await deductTokens(clinicId, tokenAction, tokenCost);
         return { response: "⚠️ Müşteri adı belirtmelisiniz. Örnek: \"Ahmet fotoğraflarını sil\"", intent: "HASTA_FOTO_SIL" };
       }
       const result = await deletePatientPhotos(clinicId, patientName);
-      await deductTokens(clinicId, tokenAction, tokenCost);
+      // TOKEN_SYSTEM_DISABLED - await deductTokens(clinicId, tokenAction, tokenCost);
       return { response: result, intent: "HASTA_FOTO_SIL" };
     }
 
     const response = await executeIntent(intent, clinicId, message, senderId);
 
-    // Deduct tokens after successful AI response
-    await deductTokens(clinicId, tokenAction, tokenCost);
+    // TOKEN_SYSTEM_DISABLED - // Deduct tokens after successful AI response
+    // TOKEN_SYSTEM_DISABLED - await deductTokens(clinicId, tokenAction, tokenCost);
 
     return { response, intent: intent.action };
   } catch (error) {

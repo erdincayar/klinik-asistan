@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import Anthropic from "@anthropic-ai/sdk";
-import { TOKEN_COSTS } from "@/lib/token-costs";
-import { checkBalance, deductTokens } from "@/lib/token-service";
+// TOKEN_SYSTEM_DISABLED - import { TOKEN_COSTS } from "@/lib/token-costs";
+// TOKEN_SYSTEM_DISABLED - import { checkBalance, deductTokens } from "@/lib/token-service";
 
 const EXTRACT_PROMPT = `Bu fotoğrafta ürünler veya ürün faturası/listesi görünüyor. Lütfen tespit ettiğin ürünleri JSON formatında çıkar:
 {
@@ -41,15 +41,16 @@ export async function POST(req: NextRequest) {
     }
 
     const isDemo = user.isDemo || user.role === "ADMIN";
-    if (!isDemo) {
-      const hasBalance = await checkBalance(clinicId, TOKEN_COSTS.PRODUCT_AI_EXTRACT);
-      if (!hasBalance) {
-        return NextResponse.json(
-          { error: "Token bakiyeniz yetersiz. Ayarlar sayfasından token satın alabilirsiniz." },
-          { status: 402 }
-        );
-      }
-    }
+    // TOKEN_SYSTEM_DISABLED
+    // if (!isDemo) {
+    //   const hasBalance = await checkBalance(clinicId, TOKEN_COSTS.PRODUCT_AI_EXTRACT);
+    //   if (!hasBalance) {
+    //     return NextResponse.json(
+    //       { error: "Token bakiyeniz yetersiz. Ayarlar sayfasından token satın alabilirsiniz." },
+    //       { status: 402 }
+    //     );
+    //   }
+    // }
 
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
@@ -109,9 +110,10 @@ export async function POST(req: NextRequest) {
 
     const extracted = JSON.parse(jsonMatch[0]);
 
-    if (!isDemo) {
-      await deductTokens(clinicId, "PRODUCT_AI_EXTRACT", TOKEN_COSTS.PRODUCT_AI_EXTRACT);
-    }
+    // TOKEN_SYSTEM_DISABLED
+    // if (!isDemo) {
+    //   await deductTokens(clinicId, "PRODUCT_AI_EXTRACT", TOKEN_COSTS.PRODUCT_AI_EXTRACT);
+    // }
 
     return NextResponse.json(extracted);
   } catch (error) {

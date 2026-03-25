@@ -65,15 +65,17 @@ function TelegramStatus() {
 
 export default function MessagingPage() {
   return (
-    <Tabs defaultValue="whatsapp">
+    <Tabs defaultValue="telegram">
       <TabsList>
-        <TabsTrigger value="whatsapp">
-          <MessageCircle className="mr-1.5 h-4 w-4" />
-          WhatsApp
-        </TabsTrigger>
         <TabsTrigger value="telegram">
           <Send className="mr-1.5 h-4 w-4" />
           Telegram
+          <span className="ml-1.5 rounded-full bg-green-100 px-1.5 py-0.5 text-[9px] font-semibold text-green-700">Ücretsiz</span>
+        </TabsTrigger>
+        <TabsTrigger value="whatsapp">
+          <MessageCircle className="mr-1.5 h-4 w-4" />
+          WhatsApp
+          <span className="ml-1.5 rounded-full bg-gray-100 px-1.5 py-0.5 text-[9px] font-semibold text-gray-500">Yakında</span>
         </TabsTrigger>
         <TabsTrigger value="assistant">
           <Bot className="mr-1.5 h-4 w-4" />
@@ -81,12 +83,19 @@ export default function MessagingPage() {
         </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="whatsapp">
-        <WhatsAppContent />
-      </TabsContent>
-
       <TabsContent value="telegram">
         <TelegramStatus />
+      </TabsContent>
+
+      <TabsContent value="whatsapp">
+        <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
+            <MessageCircle className="h-8 w-8 text-gray-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900">WhatsApp Entegrasyonu</h3>
+          <p className="mt-2 text-sm text-gray-500">WhatsApp Business API entegrasyonu yakında kullanıma açılacak.</p>
+          <span className="mt-4 inline-block rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">Yakında</span>
+        </div>
       </TabsContent>
 
       <TabsContent value="assistant">

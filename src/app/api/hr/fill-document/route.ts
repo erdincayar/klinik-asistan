@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { checkBalance, deductTokens } from "@/lib/token-service";
-import { TOKEN_COSTS } from "@/lib/token-costs";
+// TOKEN_SYSTEM_DISABLED - import { checkBalance, deductTokens } from "@/lib/token-service";
+// TOKEN_SYSTEM_DISABLED - import { TOKEN_COSTS } from "@/lib/token-costs";
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 
@@ -32,16 +32,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Klinik bulunamadı" }, { status: 400 });
     }
 
-    // Token check
-    if (!isDemo) {
-      const hasBalance = await checkBalance(clinicId, TOKEN_COSTS.HR_DOCUMENT);
-      if (!hasBalance) {
-        return NextResponse.json(
-          { error: "Token bakiyeniz yetersiz. Belge doldurmak için en az 3.000 token gereklidir." },
-          { status: 402 }
-        );
-      }
-    }
+    // TOKEN_SYSTEM_DISABLED
+    // // Token check
+    // if (!isDemo) {
+    //   const hasBalance = await checkBalance(clinicId, TOKEN_COSTS.HR_DOCUMENT);
+    //   if (!hasBalance) {
+    //     return NextResponse.json(
+    //       { error: "Token bakiyeniz yetersiz. Belge doldurmak için en az 3.000 token gereklidir." },
+    //       { status: 402 }
+    //     );
+    //   }
+    // }
 
     const body = await req.json();
     const parsed = requestSchema.safeParse(body);
@@ -113,15 +114,16 @@ Markdown formatında dön.`;
     const content =
       message.content[0].type === "text" ? message.content[0].text : "";
 
-    // Deduct tokens
-    if (!isDemo) {
-      await deductTokens(
-        clinicId,
-        "HR_DOCUMENT",
-        TOKEN_COSTS.HR_DOCUMENT,
-        `İK Belge Doldurma: ${doc.name}`
-      );
-    }
+    // TOKEN_SYSTEM_DISABLED
+    // // Deduct tokens
+    // if (!isDemo) {
+    //   await deductTokens(
+    //     clinicId,
+    //     "HR_DOCUMENT",
+    //     TOKEN_COSTS.HR_DOCUMENT,
+    //     `İK Belge Doldurma: ${doc.name}`
+    //   );
+    // }
 
     return NextResponse.json({
       success: true,

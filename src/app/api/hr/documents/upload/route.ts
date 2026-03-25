@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { STORAGE_PLANS } from "@/lib/billing/plans";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
@@ -51,13 +52,14 @@ export async function POST(req: NextRequest) {
 
     const fileSizeMB = Math.ceil(file.size / (1024 * 1024));
 
-    // Storage quota check
-    const clinic = await prisma.clinic.findUnique({
-      where: { id: clinicId },
-      select: { storageUsedMB: true, storageLimitMB: true },
+    // Storage quota check — SubscriptionPlan üzerinden
+    const subPlan = await prisma.subscriptionPlan.findUnique({
+      where: { clinicId },
+      select: { storagePlan: true, storageUsedMb: true },
     });
-
-    if (clinic && (clinic.storageUsedMB + fileSizeMB) > clinic.storageLimitMB) {
+    const storageLimitMB = STORAGE_PLANS[subPlan?.storagePlan || "free"]?.sizeMB ?? 100;
+    const storageUsedMB = subPlan?.storageUsedMb ?? 0;
+    if ((storageUsedMB + fileSizeMB) > storageLimitMB) {
       return NextResponse.json(
         { error: "Depolama kotası doldu. Lütfen depolama paketinizi yükseltin." },
         { status: 413 }
@@ -90,11 +92,13 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Update storage usage
-    await prisma.clinic.update({
-      where: { id: clinicId },
-      data: { storageUsedMB: { increment: fileSizeMB } },
-    });
+    // Update storage usage (SubscriptionPlan)
+    if (subPlan) {
+      await prisma.subscriptionPlan.update({
+        where: { clinicId },
+        data: { storageUsedMb: { increment: fileSizeMB } },
+      });
+    }
 
     return NextResponse.json(doc, { status: 201 });
   } catch (error) {

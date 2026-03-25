@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { TOKEN_COSTS } from "@/lib/token-costs";
-import { checkBalance, deductTokens } from "@/lib/token-service";
+// TOKEN_SYSTEM_DISABLED - import { TOKEN_COSTS } from "@/lib/token-costs";
+// TOKEN_SYSTEM_DISABLED - import { checkBalance, deductTokens } from "@/lib/token-service";
 import { runContentAgent } from "@/lib/ai-studio/content-agent";
 import { generateImage } from "@/lib/ai-studio/image-generator";
 
@@ -20,15 +20,16 @@ export async function POST(req: NextRequest) {
   if (!clinicId) return NextResponse.json({ error: "No clinic" }, { status: 400 });
 
   const isDemo = user.isDemo || user.role === "ADMIN";
-  if (!isDemo) {
-    const hasBalance = await checkBalance(clinicId, TOKEN_COSTS.AI_STUDIO_GENERATE);
-    if (!hasBalance) {
-      return NextResponse.json(
-        { error: "Token bakiyeniz yetersiz." },
-        { status: 402 }
-      );
-    }
-  }
+  // TOKEN_SYSTEM_DISABLED
+  // if (!isDemo) {
+  //   const hasBalance = await checkBalance(clinicId, TOKEN_COSTS.AI_STUDIO_GENERATE);
+  //   if (!hasBalance) {
+  //     return NextResponse.json(
+  //       { error: "Token bakiyeniz yetersiz." },
+  //       { status: 402 }
+  //     );
+  //   }
+  // }
 
   const body = await req.json();
   const parsed = schema.safeParse(body);
@@ -42,7 +43,8 @@ export async function POST(req: NextRequest) {
       clinicId,
       userPrompt: parsed.data.prompt,
       status: "PENDING",
-      tokensCost: TOKEN_COSTS.AI_STUDIO_GENERATE,
+      // TOKEN_SYSTEM_DISABLED - tokensCost: TOKEN_COSTS.AI_STUDIO_GENERATE,
+      tokensCost: 0,
     },
   });
 
@@ -53,9 +55,10 @@ export async function POST(req: NextRequest) {
     // Step 2: Generate image
     const { imageUrl } = await generateImage(content.id, clinicId, dallePrompt);
 
-    if (!isDemo) {
-      await deductTokens(clinicId, "AI_STUDIO_GENERATE", TOKEN_COSTS.AI_STUDIO_GENERATE, "AI görsel üretimi");
-    }
+    // TOKEN_SYSTEM_DISABLED
+    // if (!isDemo) {
+    //   await deductTokens(clinicId, "AI_STUDIO_GENERATE", TOKEN_COSTS.AI_STUDIO_GENERATE, "AI görsel üretimi");
+    // }
 
     return NextResponse.json({
       id: content.id,

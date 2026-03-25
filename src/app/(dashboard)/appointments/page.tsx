@@ -1049,7 +1049,7 @@ export default function AppointmentsPage() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[800px] table-fixed">
+                <table className="w-full table-fixed">
                   <thead>
                     <tr className="border-b border-gray-100">
                       <th className="w-20 border-r border-gray-50 px-2 py-3 text-left text-xs font-medium text-gray-500">Saat</th>

@@ -47,7 +47,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email as string },
-          include: { clinic: true },
+          include: { clinic: { include: { subscriptionPlan: true } } },
         });
 
         if (!user || !user.password) return null;
@@ -72,6 +72,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           clinicId: user.clinicId,
           role: user.role,
           clinicPlan: user.clinic?.plan || "PRO",
+          activeModules: (user.clinic?.subscriptionPlan?.activeModules as string[]) || ["base", "messaging"],
           isDemo: user.isDemo || user.role === "DEMO",
           rememberMe: credentials.rememberMe === "true",
         };
@@ -121,6 +122,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.clinicId = (user as any).clinicId;
         token.role = (user as any).role;
         token.clinicPlan = (user as any).clinicPlan ?? "PRO";
+        token.activeModules = (user as any).activeModules || ["base", "messaging"];
         token.isDemo = (user as any).isDemo ?? false;
         token.rememberMe = (user as any).rememberMe ?? false;
         token.loginAt = Math.floor(Date.now() / 1000);
@@ -135,7 +137,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             role: true,
             clinicId: true,
             isDemo: true,
-            clinic: { select: { plan: true } },
+            clinic: { select: { plan: true, subscriptionPlan: { select: { activeModules: true } } } },
           },
         });
         if (dbUser) {
@@ -143,6 +145,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.role = dbUser.role;
           token.clinicId = dbUser.clinicId;
           token.clinicPlan = dbUser.clinic?.plan || "PRO";
+          token.activeModules = (dbUser.clinic?.subscriptionPlan?.activeModules as string[]) || ["base", "messaging"];
           token.isDemo = dbUser.isDemo || dbUser.role === "DEMO";
         }
         token.rememberMe = true;
@@ -157,13 +160,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             clinicId: true,
             role: true,
             isDemo: true,
-            clinic: { select: { plan: true } },
+            clinic: { select: { plan: true, subscriptionPlan: { select: { activeModules: true } } } },
           },
         });
         if (dbUser?.clinicId) {
           token.clinicId = dbUser.clinicId;
           token.role = dbUser.role;
           token.clinicPlan = dbUser.clinic?.plan || "PRO";
+          token.activeModules = (dbUser.clinic?.subscriptionPlan?.activeModules as string[]) || ["base", "messaging"];
           token.isDemo = dbUser.isDemo || dbUser.role === "DEMO";
         }
       }
@@ -184,6 +188,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         (session.user as any).clinicId = token.clinicId;
         (session.user as any).role = token.role;
         (session.user as any).clinicPlan = token.clinicPlan ?? "PRO";
+        (session.user as any).activeModules = token.activeModules || ["base", "messaging"];
         (session.user as any).isDemo = token.isDemo ?? false;
       }
       return session;

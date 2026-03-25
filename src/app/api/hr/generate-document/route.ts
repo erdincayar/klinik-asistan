@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { checkBalance, deductTokens } from "@/lib/token-service";
-import { TOKEN_COSTS } from "@/lib/token-costs";
+// TOKEN_SYSTEM_DISABLED - import { checkBalance, deductTokens } from "@/lib/token-service";
+// TOKEN_SYSTEM_DISABLED - import { TOKEN_COSTS } from "@/lib/token-costs";
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 
@@ -232,16 +232,17 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "Klinik bulunamadı" }, { status: 400 });
     }
 
-    // Token kontrolü
-    if (!isDemo) {
-      const hasBalance = await checkBalance(clinicId, TOKEN_COSTS.HR_DOCUMENT);
-      if (!hasBalance) {
-        return Response.json(
-          { error: "Token bakiyeniz yetersiz. Belge oluşturmak için en az 3.000 token gereklidir." },
-          { status: 402 }
-        );
-      }
-    }
+    // TOKEN_SYSTEM_DISABLED
+    // // Token kontrolü
+    // if (!isDemo) {
+    //   const hasBalance = await checkBalance(clinicId, TOKEN_COSTS.HR_DOCUMENT);
+    //   if (!hasBalance) {
+    //     return Response.json(
+    //       { error: "Token bakiyeniz yetersiz. Belge oluşturmak için en az 3.000 token gereklidir." },
+    //       { status: 402 }
+    //     );
+    //   }
+    // }
 
     const body = await req.json();
     const parsed = requestSchema.safeParse(body);
@@ -301,15 +302,16 @@ Resmi ve profesyonel bir dil kullan. Markdown formatında hazırla.`;
     const content =
       message.content[0].type === "text" ? message.content[0].text : "";
 
-    // Token düş
-    if (!isDemo) {
-      await deductTokens(
-        clinicId,
-        "HR_DOCUMENT",
-        TOKEN_COSTS.HR_DOCUMENT,
-        `İK Belgesi: ${docLabel}`
-      );
-    }
+    // TOKEN_SYSTEM_DISABLED
+    // // Token düş
+    // if (!isDemo) {
+    //   await deductTokens(
+    //     clinicId,
+    //     "HR_DOCUMENT",
+    //     TOKEN_COSTS.HR_DOCUMENT,
+    //     `İK Belgesi: ${docLabel}`
+    //   );
+    // }
 
     // Save to DB
     const savedDoc = await prisma.hrDocument.create({

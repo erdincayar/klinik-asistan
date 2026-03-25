@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { processWhatsAppExport } from "@/lib/assistant/whatsapp-learner";
-import { TOKEN_COSTS } from "@/lib/token-costs";
-import { checkBalance, deductTokens } from "@/lib/token-service";
+// TOKEN_SYSTEM_DISABLED - import { TOKEN_COSTS } from "@/lib/token-costs";
+// TOKEN_SYSTEM_DISABLED - import { checkBalance, deductTokens } from "@/lib/token-service";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -13,12 +13,13 @@ export async function POST(req: NextRequest) {
   if (!clinicId) return NextResponse.json({ error: "No clinic" }, { status: 400 });
 
   const isDemo = user.isDemo || user.role === "ADMIN";
-  if (!isDemo) {
-    const hasBalance = await checkBalance(clinicId, TOKEN_COSTS.ASSISTANT_LEARN);
-    if (!hasBalance) {
-      return NextResponse.json({ error: "Token bakiyeniz yetersiz." }, { status: 402 });
-    }
-  }
+  // TOKEN_SYSTEM_DISABLED
+  // if (!isDemo) {
+  //   const hasBalance = await checkBalance(clinicId, TOKEN_COSTS.ASSISTANT_LEARN);
+  //   if (!hasBalance) {
+  //     return NextResponse.json({ error: "Token bakiyeniz yetersiz." }, { status: 402 });
+  //   }
+  // }
 
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
@@ -39,9 +40,10 @@ export async function POST(req: NextRequest) {
 
     const result = await processWhatsAppExport(clinicId, text);
 
-    if (!isDemo) {
-      await deductTokens(clinicId, "ASSISTANT_LEARN", TOKEN_COSTS.ASSISTANT_LEARN, "WhatsApp geçmişi öğrenme");
-    }
+    // TOKEN_SYSTEM_DISABLED
+    // if (!isDemo) {
+    //   await deductTokens(clinicId, "ASSISTANT_LEARN", TOKEN_COSTS.ASSISTANT_LEARN, "WhatsApp geçmişi öğrenme");
+    // }
 
     return NextResponse.json({
       success: true,
