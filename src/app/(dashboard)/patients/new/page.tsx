@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+interface CustomColumn {
+  id: string;
+  columnName: string;
+  columnKey: string;
+}
+
 export default function NewPatientPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -24,6 +30,15 @@ export default function NewPatientPage() {
     email: "",
     notes: "",
   });
+  const [customColumns, setCustomColumns] = useState<CustomColumn[]>([]);
+  const [customValues, setCustomValues] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    fetch("/api/clinic/custom-columns")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((cols: CustomColumn[]) => setCustomColumns(cols))
+      .catch(() => {});
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -41,6 +56,22 @@ export default function NewPatientPage() {
         const data = await res.json();
         throw new Error(data.error || "Müşteri kaydedilemedi");
       }
+
+      const patient = await res.json();
+
+      // Save custom values
+      const filledValues = Object.entries(customValues).filter(
+        ([, v]) => v.trim() !== "",
+      );
+      await Promise.all(
+        filledValues.map(([columnKey, value]) =>
+          fetch(`/api/customers/${patient.id}/custom-value`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ columnKey, value }),
+          }),
+        ),
+      );
 
       router.push("/patients");
     } catch (err) {
@@ -100,6 +131,28 @@ export default function NewPatientPage() {
                 rows={4}
               />
             </div>
+
+            {customColumns.length > 0 && (
+              <div className="space-y-3 border-t pt-4">
+                <p className="text-sm font-medium text-gray-700">Özel Alanlar</p>
+                {customColumns.map((col) => (
+                  <div key={col.columnKey} className="space-y-2">
+                    <Label htmlFor={`custom-${col.columnKey}`}>{col.columnName}</Label>
+                    <Input
+                      id={`custom-${col.columnKey}`}
+                      value={customValues[col.columnKey] || ""}
+                      onChange={(e) =>
+                        setCustomValues((prev) => ({
+                          ...prev,
+                          [col.columnKey]: e.target.value,
+                        }))
+                      }
+                      placeholder={col.columnName}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
 
             {error && <p className="text-sm text-red-500">{error}</p>}
 

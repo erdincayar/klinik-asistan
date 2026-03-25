@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Plus, Search, Users, ArrowRight, Phone, Upload, Download, ChevronRight, X, Settings2 } from "lucide-react";
+import { Plus, Search, Users, ArrowRight, Phone, Upload, Download, ChevronRight, X, Settings2, Pencil } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -107,6 +108,12 @@ export default function PatientsPage() {
   const [newColumnName, setNewColumnName] = useState("");
   const [columnEditMode, setColumnEditMode] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  // Edit modal
+  const [editPatient, setEditPatient] = useState<Patient | null>(null);
+  const [editForm, setEditForm] = useState({ name: "", phone: "", email: "" });
+  const [editCustomValues, setEditCustomValues] = useState<Record<string, string>>({});
+  const [editSaving, setEditSaving] = useState(false);
 
   // Risk filter
   const [riskFilter, setRiskFilter] = useState<"all" | "active" | "warning" | "risk">("all");
@@ -262,6 +269,90 @@ export default function PatientsPage() {
     }
   }
 
+  function openEditModal(patient: Patient) {
+    setEditPatient(patient);
+    setEditForm({
+      name: patient.name,
+      phone: patient.phone || "",
+      email: patient.email || "",
+    });
+    const cvMap: Record<string, string> = {};
+    for (const cv of patient.customValues || []) {
+      cvMap[cv.columnKey] = cv.value;
+    }
+    setEditCustomValues(cvMap);
+  }
+
+  async function handleEditSave() {
+    if (!editPatient) return;
+    setEditSaving(true);
+    try {
+      // Save basic fields if changed
+      const basicChanged =
+        editForm.name !== editPatient.name ||
+        editForm.phone !== (editPatient.phone || "") ||
+        editForm.email !== (editPatient.email || "");
+
+      if (basicChanged) {
+        const res = await fetch(`/api/customers/${editPatient.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(editForm),
+        });
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || "Güncelleme başarısız");
+        }
+      }
+
+      // Save changed custom values
+      const oldCvMap: Record<string, string> = {};
+      for (const cv of editPatient.customValues || []) {
+        oldCvMap[cv.columnKey] = cv.value;
+      }
+
+      const changedCustom = Object.entries(editCustomValues).filter(
+        ([key, val]) => val !== (oldCvMap[key] || ""),
+      );
+
+      await Promise.all(
+        changedCustom.map(([columnKey, value]) =>
+          fetch(`/api/customers/${editPatient.id}/custom-value`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ columnKey, value }),
+          }),
+        ),
+      );
+
+      // Update local state
+      setPatients((prev) =>
+        prev.map((p) => {
+          if (p.id !== editPatient.id) return p;
+          const updatedCustomValues = [...(p.customValues || [])];
+          for (const [key, val] of changedCustom) {
+            const idx = updatedCustomValues.findIndex((v) => v.columnKey === key);
+            if (idx >= 0) updatedCustomValues[idx] = { ...updatedCustomValues[idx], value: val };
+            else updatedCustomValues.push({ columnKey: key, value: val });
+          }
+          return {
+            ...p,
+            name: editForm.name,
+            phone: editForm.phone || null,
+            email: editForm.email || null,
+            customValues: updatedCustomValues,
+          };
+        }),
+      );
+
+      setEditPatient(null);
+    } catch {
+      // silent
+    } finally {
+      setEditSaving(false);
+    }
+  }
+
   const filteredPatients = riskFilter === "all"
     ? patients
     : patients.filter((p) => p.riskStatus === riskFilter);
@@ -398,6 +489,70 @@ export default function PatientsPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Edit Patient Modal */}
+      <Dialog open={!!editPatient} onOpenChange={(open) => !open && setEditPatient(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Müşteri Düzenle</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Ad Soyad</Label>
+              <Input
+                id="edit-name"
+                value={editForm.name}
+                onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-phone">Telefon</Label>
+              <Input
+                id="edit-phone"
+                value={editForm.phone}
+                onChange={(e) => setEditForm((f) => ({ ...f, phone: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-email">Email</Label>
+              <Input
+                id="edit-email"
+                type="email"
+                value={editForm.email}
+                onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
+              />
+            </div>
+            {customColumns.length > 0 && (
+              <div className="space-y-3 border-t pt-3">
+                <p className="text-sm font-medium text-gray-700">Özel Alanlar</p>
+                {customColumns.map((col) => (
+                  <div key={col.columnKey} className="space-y-2">
+                    <Label htmlFor={`edit-custom-${col.columnKey}`}>{col.columnName}</Label>
+                    <Input
+                      id={`edit-custom-${col.columnKey}`}
+                      value={editCustomValues[col.columnKey] || ""}
+                      onChange={(e) =>
+                        setEditCustomValues((prev) => ({
+                          ...prev,
+                          [col.columnKey]: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditPatient(null)}>
+              İptal
+            </Button>
+            <Button onClick={handleEditSave} disabled={editSaving}>
+              {editSaving ? "Kaydediliyor..." : "Kaydet"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Müşteri list */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -471,10 +626,7 @@ export default function PatientsPage() {
                 <div className="space-y-2 md:hidden">
                   {filteredPatients.map((patient, i) => (
                     <motion.div key={patient.id} variants={fadeUp} initial="hidden" animate="visible" custom={i}>
-                      <Link
-                        href={`/patients/${patient.id}`}
-                        className="flex items-center gap-3 rounded-xl border border-gray-100 px-4 py-3 transition-colors hover:bg-gray-50 active:scale-[0.99]"
-                      >
+                      <div className="flex items-center gap-3 rounded-xl border border-gray-100 px-4 py-3">
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-sm font-semibold text-blue-700">
                           {patient.name
                             .split(" ")
@@ -483,7 +635,10 @@ export default function PatientsPage() {
                             .toUpperCase()
                             .slice(0, 2)}
                         </div>
-                        <div className="min-w-0 flex-1">
+                        <Link
+                          href={`/patients/${patient.id}`}
+                          className="min-w-0 flex-1 transition-colors hover:bg-gray-50 active:scale-[0.99]"
+                        >
                           <div className="flex items-center gap-1.5">
                             <p className="truncate text-sm font-medium text-gray-900">{patient.name}</p>
                             {(() => {
@@ -504,9 +659,18 @@ export default function PatientsPage() {
                             )}
                             <span>{patient._count?.treatments ?? 0} işlem</span>
                           </div>
-                        </div>
-                        <ChevronRight className="h-4 w-4 shrink-0 text-gray-400" />
-                      </Link>
+                        </Link>
+                        <button
+                          onClick={() => openEditModal(patient)}
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition-colors hover:bg-gray-50 hover:text-blue-600"
+                          title="Düzenle"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <Link href={`/patients/${patient.id}`}>
+                          <ChevronRight className="h-4 w-4 shrink-0 text-gray-400" />
+                        </Link>
+                      </div>
                     </motion.div>
                   ))}
                 </div>
@@ -675,11 +839,22 @@ export default function PatientsPage() {
                             );
                           })}
                           <TableCell>
-                            <Link href={`/patients/${patient.id}`}>
-                              <Button variant="outline" size="sm">
-                                Detay
+                            <div className="flex items-center gap-1.5">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={() => openEditModal(patient)}
+                                title="Düzenle"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
                               </Button>
-                            </Link>
+                              <Link href={`/patients/${patient.id}`}>
+                                <Button variant="outline" size="sm">
+                                  Detay
+                                </Button>
+                              </Link>
+                            </div>
                           </TableCell>
                         </motion.tr>
                       ))}
