@@ -173,6 +173,38 @@ export function middleware(req: NextRequest) {
     }
   }
 
+  // ── Auth redirect logic ──
+  const sessionCookie =
+    req.cookies.get("next-auth.session-token") ||
+    req.cookies.get("__Secure-next-auth.session-token");
+  const hasSession = !!sessionCookie;
+
+  // Auth pages that logged-in users should NOT see (redirect → dashboard)
+  const authPages = ["/login", "/register", "/forgot-password", "/reset-password", "/verify-email"];
+  const isAuthPage = authPages.some((p) => pathname === p || pathname.startsWith(p + "/"));
+
+  // Dashboard pages (route group) that require auth
+  const dashboardPages = [
+    "/dashboard", "/patients", "/appointments", "/finance", "/invoices",
+    "/inventory", "/settings", "/employees", "/reports", "/reminders",
+    "/ads", "/marketing", "/messaging", "/whatsapp", "/social-media",
+    "/ai-assistant", "/alarmlar", "/billing", "/customers", "/hr",
+    "/financial-reports", "/invoice-upload", "/admin",
+  ];
+  const isDashboardPage = dashboardPages.some((p) => pathname === p || pathname.startsWith(p + "/"));
+
+  // Logged-in user on auth page or root → redirect to dashboard
+  if (hasSession && (isAuthPage || pathname === "/")) {
+    const dashboardUrl = new URL("/dashboard", req.url);
+    return addSecurityHeaders(NextResponse.redirect(dashboardUrl));
+  }
+
+  // Not logged in on dashboard page → redirect to login
+  if (!hasSession && isDashboardPage) {
+    const loginUrl = new URL("/login", req.url);
+    return addSecurityHeaders(NextResponse.redirect(loginUrl));
+  }
+
   const response = NextResponse.next();
   return addSecurityHeaders(response);
 }
