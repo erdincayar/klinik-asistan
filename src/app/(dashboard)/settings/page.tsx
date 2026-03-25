@@ -30,6 +30,7 @@ import {
   Users,
   Shield,
   UserPlus,
+  AlertTriangle,
 } from "lucide-react";
 import { TREATMENT_CATEGORIES } from "@/lib/types";
 import QRCode from "qrcode";
@@ -140,6 +141,13 @@ export default function SettingsPage() {
   const [showInviteLinkModal, setShowInviteLinkModal] = useState(false);
   const [currentInviteLink, setCurrentInviteLink] = useState("");
   const [linkCopied, setLinkCopied] = useState(false);
+
+  // Data Reset
+  const [resetModules, setResetModules] = useState<string[]>([]);
+  const [showResetDialog, setShowResetDialog] = useState(false);
+  const [resetConfirmText, setResetConfirmText] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetSuccess, setResetSuccess] = useState("");
 
   // Telegram
   const [telegramConnected, setTelegramConnected] = useState(false);
@@ -1429,6 +1437,189 @@ export default function SettingsPage() {
                 className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition-colors"
               >
                 {linkCopied ? <><Check className="h-3 w-3" /> Kopyalandı</> : <><Copy className="h-3 w-3" /> Kopyala</>}
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Data Reset */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.18 }}
+        className="overflow-hidden rounded-2xl border border-red-100 bg-white"
+      >
+        <div className="flex items-center gap-2 border-b border-red-100 bg-red-50 px-6 py-4">
+          <AlertTriangle className="h-4 w-4 text-red-600" />
+          <h2 className="text-sm font-semibold text-red-900">Veri Sıfırlama</h2>
+        </div>
+        <div className="p-6 space-y-4">
+          <p className="text-xs text-gray-500">
+            Seçtiğiniz modüllere ait tüm veriler kalıcı olarak silinir. Bu işlem geri alınamaz.
+          </p>
+
+          {/* Select All */}
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={resetModules.length === 8}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setResetModules(["patients", "appointments", "finance", "inventory", "employees", "messaging", "marketing", "ai_assistant"]);
+                } else {
+                  setResetModules([]);
+                }
+              }}
+              className="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+            />
+            <span className="text-sm font-medium text-gray-800">Tümünü Seç / Kaldır</span>
+          </label>
+
+          <div className="h-px bg-gray-100" />
+
+          {/* Module checkboxes */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            {[
+              { key: "patients", label: "Müşteriler & İşlemler", desc: "Müşteri kayıtları, işlemler, fotoğraflar, faturalar" },
+              { key: "appointments", label: "Randevular", desc: "Randevu kayıtları ve çalışma takvimi" },
+              { key: "finance", label: "Finans", desc: "Gelir-gider, tekrarlayan ödemeler, mali raporlar" },
+              { key: "inventory", label: "Stok & Envanter", desc: "Ürünler, stok hareketleri, demirbaşlar" },
+              { key: "employees", label: "Çalışanlar", desc: "Çalışan kayıtları, roller, İK belgeleri" },
+              { key: "messaging", label: "Mesajlaşma", desc: "Hatırlatmalar, Telegram bağlantıları, sohbetler" },
+              { key: "marketing", label: "Pazarlama", desc: "Reklam kampanyaları, sosyal medya içerikleri" },
+              { key: "ai_assistant", label: "AI Asistan", desc: "Bilgi tabanı, asistan ayarları" },
+            ].map((mod) => (
+              <label
+                key={mod.key}
+                className={`flex items-start gap-3 rounded-xl border p-3 cursor-pointer transition-colors ${
+                  resetModules.includes(mod.key)
+                    ? "border-red-200 bg-red-50/50"
+                    : "border-gray-100 hover:bg-gray-50"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={resetModules.includes(mod.key)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setResetModules([...resetModules, mod.key]);
+                    } else {
+                      setResetModules(resetModules.filter((m) => m !== mod.key));
+                    }
+                  }}
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                />
+                <div>
+                  <p className="text-sm font-medium text-gray-800">{mod.label}</p>
+                  <p className="text-xs text-gray-500">{mod.desc}</p>
+                </div>
+              </label>
+            ))}
+          </div>
+
+          {resetSuccess && (
+            <div className="flex items-center gap-2 rounded-xl bg-green-50 px-4 py-3 text-sm text-green-700">
+              <CheckCircle className="h-4 w-4" />
+              {resetSuccess}
+            </div>
+          )}
+
+          <button
+            onClick={() => {
+              setResetConfirmText("");
+              setShowResetDialog(true);
+            }}
+            disabled={resetModules.length === 0}
+            className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Trash2 className="h-4 w-4" />
+            Verileri Sil
+          </button>
+        </div>
+      </motion.div>
+
+      {/* Reset Confirm Dialog */}
+      <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+        <DialogContent className="max-w-md rounded-2xl">
+          <div className="space-y-4">
+            <div className="text-center">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
+                <AlertTriangle className="h-6 w-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">Veri Sıfırlama Onayı</h3>
+              <p className="mt-1 text-sm text-gray-500">Bu işlem geri alınamaz. Seçili modüllerin tüm verileri kalıcı olarak silinecektir.</p>
+            </div>
+
+            <div className="rounded-xl bg-red-50 p-3 space-y-1">
+              <p className="text-xs font-medium text-red-800">Silinecek modüller:</p>
+              {resetModules.map((key) => {
+                const labels: Record<string, string> = {
+                  patients: "Müşteriler & İşlemler",
+                  appointments: "Randevular",
+                  finance: "Finans",
+                  inventory: "Stok & Envanter",
+                  employees: "Çalışanlar",
+                  messaging: "Mesajlaşma",
+                  marketing: "Pazarlama",
+                  ai_assistant: "AI Asistan",
+                };
+                return (
+                  <p key={key} className="text-xs text-red-700">• {labels[key] || key}</p>
+                );
+              })}
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-gray-600">
+                Onaylamak için <span className="font-bold text-red-600">TÜM VERİLERİ SİL</span> yazın
+              </label>
+              <input
+                value={resetConfirmText}
+                onChange={(e) => setResetConfirmText(e.target.value)}
+                placeholder="TÜM VERİLERİ SİL"
+                className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-400/20"
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowResetDialog(false)}
+                className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+              >
+                İptal
+              </button>
+              <button
+                onClick={async () => {
+                  setResetLoading(true);
+                  try {
+                    const res = await fetch("/api/settings/reset-data", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        modules: resetModules,
+                        confirmText: resetConfirmText,
+                      }),
+                    });
+                    if (!res.ok) {
+                      const data = await res.json();
+                      throw new Error(data.error || "Sıfırlama başarısız");
+                    }
+                    setShowResetDialog(false);
+                    setResetModules([]);
+                    setResetSuccess("Seçili modüllerin verileri başarıyla silindi.");
+                    setTimeout(() => setResetSuccess(""), 5000);
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : "Sıfırlama başarısız");
+                  } finally {
+                    setResetLoading(false);
+                  }
+                }}
+                disabled={resetConfirmText !== "TÜM VERİLERİ SİL" || resetLoading}
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {resetLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                {resetLoading ? "Siliniyor..." : "Kalıcı Olarak Sil"}
               </button>
             </div>
           </div>
