@@ -47,6 +47,37 @@ export async function POST(req: NextRequest) {
       });
 
       switch (payment.paymentType) {
+        case "CARD_SAVE": {
+          // Kart kaydetme — utoken/ctoken'ı sakla
+          const utoken = formData.get("utoken") as string | null;
+          const ctoken = formData.get("ctoken") as string | null;
+          const cardLast4 = formData.get("masked_pan") as string | null;
+          const cardBrand = formData.get("payment_type") as string | null;
+
+          if (utoken && ctoken) {
+            await prisma.subscriptionPlan.upsert({
+              where: { clinicId },
+              update: {
+                paytrUtoken: utoken,
+                paytrCtoken: ctoken,
+                cardLast4: cardLast4 ? cardLast4.slice(-4) : null,
+                cardBrand: cardBrand || null,
+              },
+              create: {
+                clinicId,
+                status: "active",
+                activeModules: ["base", "messaging"],
+                monthlyTotal: 9900,
+                paytrUtoken: utoken,
+                paytrCtoken: ctoken,
+                cardLast4: cardLast4 ? cardLast4.slice(-4) : null,
+                cardBrand: cardBrand || null,
+              },
+            });
+          }
+          break;
+        }
+
         case "SUBSCRIPTION": {
           const plan = SUBSCRIPTION_PLANS[payment.packageId as keyof typeof SUBSCRIPTION_PLANS];
           if (plan) {

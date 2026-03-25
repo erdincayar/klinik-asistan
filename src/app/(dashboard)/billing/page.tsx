@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   XCircle,
+  X,
 } from "lucide-react";
 
 interface PlanData {
@@ -59,8 +60,11 @@ export default function BillingPage() {
   const [plan, setPlan] = useState<PlanData | null>(null);
   const [history, setHistory] = useState<BillingRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cardModalOpen, setCardModalOpen] = useState(false);
+  const [cardToken, setCardToken] = useState<string | null>(null);
+  const [cardLoading, setCardLoading] = useState(false);
 
-  useEffect(() => {
+  const fetchPlan = useCallback(() => {
     Promise.all([
       fetch("/api/billing/modules").then((r) => r.ok ? r.json() : null),
       fetch("/api/billing/history").then((r) => r.ok ? r.json() : null).catch(() => null),
@@ -70,6 +74,33 @@ export default function BillingPage() {
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
+
+  useEffect(() => { fetchPlan(); }, [fetchPlan]);
+
+  async function handleAddCard() {
+    setCardLoading(true);
+    try {
+      const res = await fetch("/api/billing/add-card", { method: "POST" });
+      const data = await res.json();
+      if (data.token) {
+        setCardToken(data.token);
+        setCardModalOpen(true);
+      } else {
+        alert(data.error || "Kart ekleme başlatılamadı");
+      }
+    } catch {
+      alert("Bir hata oluştu");
+    } finally {
+      setCardLoading(false);
+    }
+  }
+
+  function handleCardModalClose() {
+    setCardModalOpen(false);
+    setCardToken(null);
+    // Refresh plan data to pick up new card info
+    fetchPlan();
+  }
 
   if (loading) {
     return (
@@ -176,8 +207,16 @@ export default function BillingPage() {
           ) : (
             <p className="mt-1 text-lg font-bold text-gray-400">Kart eklenmedi</p>
           )}
-          <button className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700">
-            <Settings className="h-3.5 w-3.5" />
+          <button
+            onClick={handleAddCard}
+            disabled={cardLoading}
+            className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700 disabled:opacity-50"
+          >
+            {cardLoading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Settings className="h-3.5 w-3.5" />
+            )}
             {plan.cardLast4 ? "Değiştir" : "Kart Ekle"}
           </button>
         </motion.div>
@@ -279,6 +318,33 @@ export default function BillingPage() {
           )}
         </div>
       </motion.div>
+
+      {/* PayTR Iframe Modal */}
+      {cardModalOpen && cardToken && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="relative w-full max-w-lg rounded-2xl bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+              <h3 className="text-lg font-semibold text-gray-900">Kart Bilgileri</h3>
+              <button
+                onClick={handleCardModalClose}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-6">
+              <p className="mb-4 text-sm text-gray-500">
+                Kart doğrulama için ₺1 çekim yapılacak ve otomatik iade edilecektir.
+              </p>
+              <iframe
+                src={`https://www.paytr.com/odeme/guvenli/${cardToken}`}
+                className="h-[420px] w-full rounded-xl border border-gray-200"
+                frameBorder="0"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

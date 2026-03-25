@@ -120,6 +120,7 @@ interface PaytrTokenParams {
   userBasket: string; // base64
   userIp: string;
   userName: string;
+  storeCard?: boolean;
 }
 
 export function generatePaytrHash(params: PaytrTokenParams): string {
@@ -130,7 +131,7 @@ export function generatePaytrHash(params: PaytrTokenParams): string {
   const noInstallment = "1";
   const maxInstallment = "0";
   const currency = "TL";
-  const testMode = process.env.PAYTR_TEST_MODE === "1" ? "1" : "0";
+  const testMode = process.env.PAYTR_TEST_MODE === "0" ? "0" : "1";
 
   const hashStr =
     merchantId +
@@ -151,11 +152,11 @@ export function generatePaytrHash(params: PaytrTokenParams): string {
 
 export async function getPaytrIframeToken(params: PaytrTokenParams): Promise<{ token: string } | { error: string }> {
   const merchantId = getMerchantId();
-  const testMode = process.env.PAYTR_TEST_MODE === "1" ? "1" : "0";
+  const testMode = process.env.PAYTR_TEST_MODE === "0" ? "0" : "1";
 
   const paytrToken = generatePaytrHash(params);
 
-  const body = new URLSearchParams({
+  const bodyParams: Record<string, string> = {
     merchant_id: merchantId,
     user_ip: params.userIp,
     merchant_oid: params.merchantOid,
@@ -175,7 +176,13 @@ export async function getPaytrIframeToken(params: PaytrTokenParams): Promise<{ t
     currency: "TL",
     test_mode: testMode,
     lang: "tr",
-  });
+  };
+
+  if (params.storeCard) {
+    bodyParams.store_card = "1";
+  }
+
+  const body = new URLSearchParams(bodyParams);
 
   const res = await fetch("https://www.paytr.com/odeme/api/get-token", {
     method: "POST",
