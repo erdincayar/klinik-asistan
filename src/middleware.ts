@@ -174,28 +174,6 @@ export function middleware(req: NextRequest) {
   }
 
   const response = NextResponse.next();
-
-  // ── Remember-me: upgrade session cookie to persistent for remember-me users ──
-  if (!pathname.startsWith("/api/auth")) {
-    const isSecure = process.env.NODE_ENV === "production";
-    const sessionCookieName = isSecure
-      ? "__Secure-next-auth.session-token"
-      : "next-auth.session-token";
-    const sessionToken = req.cookies.get(sessionCookieName);
-    const rememberMe = req.cookies.get("poby-remember")?.value === "1";
-
-    if (sessionToken && rememberMe) {
-      // Re-set session token with maxAge so it survives browser close
-      response.cookies.set(sessionCookieName, sessionToken.value, {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: isSecure,
-        maxAge: 30 * 24 * 60 * 60,
-      });
-    }
-  }
-
   return addSecurityHeaders(response);
 }
 

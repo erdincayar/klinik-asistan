@@ -20,8 +20,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         sameSite: "lax",
         path: "/",
         secure: process.env.NODE_ENV === "production",
-        // maxAge intentionally omitted → session cookie by default
-        // Persistent cookie (30 days) is set via middleware for remember-me users
+        maxAge: 30 * 24 * 60 * 60,
       },
     },
   },

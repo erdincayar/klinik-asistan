@@ -54,12 +54,6 @@ export default function LoginPage() {
         }
         setError("Email veya şifre hatalı");
       } else {
-        // Set remember-me cookie so middleware upgrades session to persistent
-        if (rememberMe) {
-          document.cookie = "poby-remember=1; path=/; max-age=2592000; SameSite=Lax";
-        } else {
-          document.cookie = "poby-remember=; path=/; max-age=0";
-        }
         router.push("/dashboard");
       }
     } catch {
