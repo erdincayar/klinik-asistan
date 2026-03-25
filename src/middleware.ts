@@ -174,6 +174,61 @@ export function middleware(req: NextRequest) {
   }
 
   const response = NextResponse.next();
+
+  // ── Remember-me / session-alive cookie logic ──
+  const isSecure = process.env.NODE_ENV === "production";
+  const sessionCookieName = isSecure
+    ? "__Secure-next-auth.session-token"
+    : "next-auth.session-token";
+  const sessionToken = req.cookies.get(sessionCookieName);
+  const sessionAlive = req.cookies.get("poby-session-alive");
+  const rememberMe = req.cookies.get("poby-remember")?.value === "1";
+
+  if (sessionToken) {
+    if (rememberMe) {
+      // Keep session token persistent (30 days) for remember-me users
+      response.cookies.set(sessionCookieName, sessionToken.value, {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: isSecure,
+        maxAge: 30 * 24 * 60 * 60,
+      });
+      // Re-set sentinel if missing (browser reopened)
+      if (!sessionAlive) {
+        response.cookies.set("poby-session-alive", "1", {
+          path: "/",
+          sameSite: "lax",
+          secure: isSecure,
+        });
+      }
+    } else if (!sessionAlive) {
+      // Non-remember user whose browser was closed → clear session
+      // Skip for auth routes and public pages
+      const isPublic =
+        pathname.startsWith("/api/auth") ||
+        pathname.startsWith("/login") ||
+        pathname.startsWith("/register") ||
+        pathname.startsWith("/invite") ||
+        pathname.startsWith("/forgot-password") ||
+        pathname.startsWith("/reset-password") ||
+        pathname.startsWith("/verify-email") ||
+        pathname === "/";
+      if (!isPublic) {
+        response.cookies.delete(sessionCookieName);
+        if (!pathname.startsWith("/api/")) {
+          const loginUrl = new URL("/login", req.url);
+          const redirectResponse = NextResponse.redirect(loginUrl);
+          addSecurityHeaders(redirectResponse);
+          redirectResponse.cookies.delete(sessionCookieName);
+          redirectResponse.cookies.delete("poby-session-alive");
+          redirectResponse.cookies.delete("poby-remember");
+          return redirectResponse;
+        }
+      }
+    }
+  }
+
   return addSecurityHeaders(response);
 }
 
