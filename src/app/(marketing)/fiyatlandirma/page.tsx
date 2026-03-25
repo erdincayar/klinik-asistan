@@ -243,10 +243,10 @@ export default function FiyatlandirmaPage() {
                   <span className="text-4xl font-bold text-indigo-600">
                     ₺{formatPrice(MODULE_PRICES.base.price)}
                   </span>
-                  <span className="text-sm text-gray-500">/ay</span>
+                  <span className="text-sm text-gray-500">/ay + KDV</span>
                 </div>
                 <p className="mt-1 text-xs text-gray-400">
-                  1 kullanici dahil &middot; Ek kullanici ₺49/ay
+                  1 kullanici dahil &middot; Ek kullanici ₺49/ay + KDV
                 </p>
               </div>
             </div>
@@ -292,18 +292,23 @@ export default function FiyatlandirmaPage() {
                 </div>
 
                 {/* Price */}
-                <div className="mt-4 flex items-baseline gap-1">
-                  {mod.price === 0 ? (
-                    <span className="text-2xl font-bold text-green-600">
-                      Ücretsiz
-                    </span>
-                  ) : (
-                    <>
-                      <span className="text-2xl font-bold text-gray-900">
-                        ₺{formatPrice(mod.price)}
+                <div className="mt-4">
+                  <div className="flex items-baseline gap-1">
+                    {mod.price === 0 ? (
+                      <span className="text-2xl font-bold text-green-600">
+                        Ücretsiz
                       </span>
-                      <span className="text-sm text-gray-500">/ay</span>
-                    </>
+                    ) : (
+                      <>
+                        <span className="text-2xl font-bold text-gray-900">
+                          ₺{formatPrice(mod.price)}
+                        </span>
+                        <span className="text-sm text-gray-500">/ay</span>
+                      </>
+                    )}
+                  </div>
+                  {mod.price > 0 && (
+                    <p className="mt-0.5 text-xs text-gray-400">+ KDV (%20)</p>
                   )}
                 </div>
 
@@ -464,6 +469,9 @@ export default function FiyatlandirmaPage() {
                       </>
                     )}
                   </div>
+                  {!isFree && (
+                    <p className="mt-1 text-xs text-gray-400 text-center">+ KDV (%20)</p>
+                  )}
                   {isFree && (
                     <p className="mt-2 text-xs text-gray-400">
                       Her abonelige dahil

@@ -31,6 +31,8 @@ interface PlanData {
     discount: number;
     discountRate: number;
     total: number;
+    kdv: number;
+    totalWithKdv: number;
   };
 }
 
@@ -125,7 +127,8 @@ export default function BillingPage() {
             </div>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold text-gray-900">₺{fmt(plan.pricing.total)}<span className="text-sm font-normal text-gray-500">/ay</span></p>
+            <p className="text-2xl font-bold text-gray-900">₺{fmt(plan.pricing.totalWithKdv)}<span className="text-sm font-normal text-gray-500">/ay</span></p>
+            <p className="text-xs text-gray-400">KDV Dahil</p>
             {plan.pricing.discountRate > 0 && (
               <p className="text-xs text-green-600">%{plan.pricing.discountRate} indirim uygulandı</p>
             )}

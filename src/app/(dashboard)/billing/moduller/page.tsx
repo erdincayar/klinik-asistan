@@ -59,6 +59,8 @@ interface PlanData {
     discount: number;
     discountRate: number;
     total: number;
+    kdv: number;
+    totalWithKdv: number;
   };
   modulePrices: Record<string, ModulePrice>;
   storagePlans: Record<string, StoragePlan>;
@@ -140,8 +142,10 @@ function calculateTotal(
 
   const discount = Math.round(subtotal * (discountRate / 100));
   const total = subtotal - discount;
+  const kdv = Math.round(total * 20 / 100);
+  const totalWithKdv = total + kdv;
 
-  return { subtotal, discount, discountRate, total };
+  return { subtotal, discount, discountRate, total, kdv, totalWithKdv };
 }
 
 function fmt(amount: number) {
@@ -191,7 +195,7 @@ export default function ModullerPage() {
 
   /* ---- derived pricing ---- */
   const pricing = useMemo(() => {
-    if (!plan) return { subtotal: 0, discount: 0, discountRate: 0, total: 0 };
+    if (!plan) return { subtotal: 0, discount: 0, discountRate: 0, total: 0, kdv: 0, totalWithKdv: 0 };
     return calculateTotal(
       activeModules,
       extraUsers,
@@ -315,7 +319,7 @@ export default function ModullerPage() {
                       <div>
                         <p className="text-sm font-medium">{mod.name}</p>
                         <p className="text-xs text-gray-500">
-                          {mod.price > 0 ? `${fmt(mod.price)} TL/ay` : "Dahil"}
+                          {mod.price > 0 ? `${fmt(mod.price)} TL/ay + KDV` : "Dahil"}
                         </p>
                       </div>
                     </div>
@@ -368,7 +372,7 @@ export default function ModullerPage() {
                           <p className="text-sm font-medium">{mod.name}</p>
                           <p className="text-xs text-gray-500">
                             {mod.price > 0
-                              ? `${fmt(mod.price)} TL/ay`
+                              ? `${fmt(mod.price)} TL/ay + KDV`
                               : "Ücretsiz"}
                           </p>
                         </div>
@@ -440,7 +444,7 @@ export default function ModullerPage() {
               <div className="flex-1">
                 <p className="text-sm font-medium">Ek Kullanıcı Sayısı</p>
                 <p className="text-xs text-gray-500">
-                  Her ek kullanıcı {fmt(EXTRA_USER_PRICE)} TL/ay
+                  Her ek kullanıcı {fmt(EXTRA_USER_PRICE)} TL/ay + KDV
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -496,7 +500,7 @@ export default function ModullerPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold">
-                        {sp.price > 0 ? `${fmt(sp.price)} TL` : "Ücretsiz"}
+                        {sp.price > 0 ? `${fmt(sp.price)} TL/ay + KDV` : "Ücretsiz"}
                       </span>
                       {isSelected && (
                         <Check className="h-4 w-4 text-blue-600" />
@@ -561,7 +565,7 @@ export default function ModullerPage() {
 
             {/* Subtotal */}
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Ara Toplam</span>
+              <span className="text-gray-500">Ara Toplam (KDV Hariç)</span>
               <span>{fmt(pricing.subtotal)} TL</span>
             </div>
 
@@ -575,11 +579,25 @@ export default function ModullerPage() {
 
             <hr className="border-gray-100" />
 
-            {/* Total */}
+            {/* KDV Hariç Toplam */}
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">KDV Hariç Toplam</span>
+              <span>{fmt(pricing.total)} TL</span>
+            </div>
+
+            {/* KDV */}
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">KDV (%20)</span>
+              <span>+{fmt(pricing.kdv)} TL</span>
+            </div>
+
+            <hr className="border-gray-200" />
+
+            {/* Genel Toplam */}
             <div className="flex justify-between">
-              <span className="font-semibold">Toplam</span>
+              <span className="font-semibold">Genel Toplam (KDV Dahil)</span>
               <span className="text-xl font-bold text-blue-600">
-                {fmt(pricing.total)} TL
+                {fmt(pricing.totalWithKdv)} TL/ay
               </span>
             </div>
 

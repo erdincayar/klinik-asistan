@@ -54,11 +54,13 @@ export const STORAGE_PLANS: Record<string, StoragePlan> = {
   enterprise:   { name: "Kurumsal",    sizeMB: 102400, price: 89900, desc: "100 GB" },
 } as const;
 
+export const KDV_RATE = 20;
+
 export function calculateTotal(
   modules: string[],
   extraUsers: number,
   storagePlan?: string
-): { subtotal: number; discount: number; discountRate: number; total: number } {
+): { subtotal: number; discount: number; discountRate: number; total: number; kdv: number; totalWithKdv: number } {
   // Module costs
   let subtotal = 0;
   for (const mod of modules) {
@@ -87,6 +89,8 @@ export function calculateTotal(
 
   const discount = Math.round(subtotal * (discountRate / 100));
   const total = subtotal - discount;
+  const kdv = Math.round(total * (KDV_RATE / 100));
+  const totalWithKdv = total + kdv;
 
-  return { subtotal, discount, discountRate, total };
+  return { subtotal, discount, discountRate, total, kdv, totalWithKdv };
 }
