@@ -6,7 +6,6 @@ import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
 const ALLOWED_EXTENSIONS = [".pdf", ".docx", ".doc", ".jpg", ".jpeg", ".png"];
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,14 +37,6 @@ export async function POST(req: NextRequest) {
     if (!ALLOWED_EXTENSIONS.includes(ext)) {
       return NextResponse.json(
         { error: `Desteklenmeyen dosya formatı. Desteklenen: ${ALLOWED_EXTENSIONS.join(", ")}` },
-        { status: 400 }
-      );
-    }
-
-    // Size check
-    if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json(
-        { error: "Dosya boyutu 10 MB'den büyük olamaz" },
         { status: 400 }
       );
     }
