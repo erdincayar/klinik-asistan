@@ -192,40 +192,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   events: {
     async signIn({ user, account }) {
-      const cookieStore = cookies();
-      const isSecure = process.env.NODE_ENV === "production";
-
-      // Session sentinel cookie (always set, dies on browser close)
-      cookieStore.set("poby-session-alive", "1", {
-        path: "/",
-        sameSite: "lax",
-        secure: isSecure,
-      });
-
-      if (account?.provider === "credentials") {
-        if ((user as any).rememberMe) {
-          cookieStore.set("poby-remember", "1", {
-            path: "/",
-            maxAge: 30 * 24 * 60 * 60,
-            sameSite: "lax",
-            secure: isSecure,
-          });
-        } else {
-          // Clear any stale remember cookie from a previous login
-          cookieStore.set("poby-remember", "", { path: "/", maxAge: 0 });
-        }
-      }
-
-      // Google users are always "remembered"
-      if (account?.provider === "google") {
-        cookieStore.set("poby-remember", "1", {
-          path: "/",
-          maxAge: 30 * 24 * 60 * 60,
-          sameSite: "lax",
-          secure: isSecure,
-        });
-      }
-
       if (account?.provider === "google" && user.email) {
         // Look up by email since user.id is Google's ID (no adapter)
         const dbUser = await prisma.user.findUnique({

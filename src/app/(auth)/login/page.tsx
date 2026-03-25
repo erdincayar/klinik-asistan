@@ -54,8 +54,7 @@ export default function LoginPage() {
         }
         setError("Email veya şifre hatalı");
       } else {
-        // Set session sentinel + remember-me cookies client-side
-        document.cookie = "poby-session-alive=1; path=/; SameSite=Lax";
+        // Set remember-me cookie so middleware upgrades session to persistent
         if (rememberMe) {
           document.cookie = "poby-remember=1; path=/; max-age=2592000; SameSite=Lax";
         } else {
