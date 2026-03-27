@@ -399,8 +399,8 @@ function AlarmsPage() {
           className="rounded-2xl border border-gray-100 bg-white p-5"
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50">
-              <Bell className="h-5 w-5 text-amber-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50">
+              <Bell className="h-5 w-5 text-orange-600" />
             </div>
             <div>
               <p className="text-[11px] font-medium text-gray-400">Bugün Tetiklenen</p>
@@ -564,7 +564,7 @@ function AlarmsPage() {
                                     </span>
                                     <span className={cn(
                                       "rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                                      allActive ? "bg-green-50 text-green-600" : "bg-amber-50 text-amber-600",
+                                      allActive ? "bg-green-50 text-green-600" : "bg-orange-50 text-orange-600",
                                     )}>
                                       {activeCount} aktif
                                     </span>
@@ -577,7 +577,7 @@ function AlarmsPage() {
                                   className={cn(
                                     "rounded-lg p-1.5 transition-colors",
                                     allActive
-                                      ? "text-amber-500 hover:bg-amber-50"
+                                      ? "text-orange-500 hover:bg-orange-50"
                                       : "text-green-500 hover:bg-green-50",
                                   )}
                                   title={allActive ? "Duraklat" : "Aktifleştir"}
@@ -614,7 +614,7 @@ function AlarmsPage() {
                                           alarm.conditions.mode === "smart"
                                             ? "bg-purple-50 text-purple-600"
                                             : alarm.conditions.mode === "default"
-                                            ? "bg-amber-50 text-amber-600"
+                                            ? "bg-orange-50 text-orange-600"
                                             : "bg-gray-100 text-gray-500",
                                         )}>
                                           {alarm.conditions.mode === "smart" ? "Akıllı" : alarm.conditions.mode === "default" ? "Varsayılan" : "Manuel"}
@@ -910,9 +910,9 @@ function AlarmsPage() {
             )}
 
             {formType === "FINANCE" && (
-              <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-3">
-                <Bell className="h-4 w-4 text-amber-600" />
-                <span className="text-sm text-amber-700">Finans alarmları yakında eklenecek</span>
+              <div className="flex items-center gap-2 rounded-xl bg-orange-50 px-4 py-3">
+                <Bell className="h-4 w-4 text-orange-600" />
+                <span className="text-sm text-orange-700">Finans alarmları yakında eklenecek</span>
               </div>
             )}
           </div>

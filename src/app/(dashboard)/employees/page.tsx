@@ -777,7 +777,7 @@ export default function EmployeesPage() {
 
           {form.manualSalaryEntry ? (
             <>
-              <div className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-700">
+              <div className="rounded-md bg-orange-50 px-3 py-2 text-xs text-orange-700">
                 Otomatik hesaplama devre dışı, değerler manuel girilecek
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -1612,7 +1612,7 @@ export default function EmployeesPage() {
             <DialogTitle>Maaş Değişikliği</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-amber-700 bg-amber-50 rounded-lg p-3">
+            <div className="flex items-center gap-2 text-orange-700 bg-orange-50 rounded-lg p-3">
               <AlertTriangle className="h-5 w-5 shrink-0" />
               <span className="text-sm font-medium">Maaş değişikliği nasıl uygulanacak?</span>
             </div>
@@ -1631,7 +1631,7 @@ export default function EmployeesPage() {
                   <p className="text-xs text-red-500 mt-0.5 font-medium">Tüm geçmiş maaş kayıtları değişir (geri alınamaz)</p>
                 </div>
               </label>
-              <label className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${salaryUpdateMode === "correction" ? "border-amber-300 bg-amber-50/50" : "border-gray-200"}`}>
+              <label className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${salaryUpdateMode === "correction" ? "border-orange-300 bg-orange-50/50" : "border-gray-200"}`}>
                 <input type="radio" name="salaryUpdateMode" checked={salaryUpdateMode === "correction"} onChange={() => setSalaryUpdateMode("correction")} className="mt-0.5" />
                 <div>
                   <span className="text-sm font-medium text-gray-800">Yanlış giriş düzeltmesi</span>

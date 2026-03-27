@@ -90,11 +90,11 @@ export default function KlinikPage() {
       <nav className="border-b border-gray-100 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/" className="text-xl font-bold text-gray-900">
-            Poby<span className="text-indigo-600">.ai</span>
+            Poby<span className="text-[#c75b12]">.ai</span>
           </Link>
           <Link
             href="/login"
-            className="rounded-xl bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+            className="rounded-xl bg-[#c75b12] px-5 py-2 text-sm font-semibold text-white hover:bg-[#9e4a0f]"
           >
             Giriş Yap
           </Link>
@@ -136,7 +136,7 @@ export default function KlinikPage() {
         </section>
 
         {/* Testimonial Placeholder */}
-        <section className="mb-20 rounded-2xl bg-indigo-50 p-10 text-center">
+        <section className="mb-20 rounded-2xl bg-[#fef4ec] p-10 text-center">
           <blockquote className="text-lg italic text-gray-700 max-w-2xl mx-auto">
             &ldquo;Poby.ai sayesinde hasta takibimiz çok kolaylaştı. WhatsApp
             asistan randevu hatırlatmalarını otomatik yapıyor.&rdquo;
@@ -166,7 +166,7 @@ export default function KlinikPage() {
         <div className="text-center">
           <Link
             href="/register"
-            className="inline-block rounded-xl bg-indigo-600 px-8 py-3 text-base font-semibold text-white hover:bg-indigo-700 transition-colors"
+            className="inline-block rounded-xl bg-[#c75b12] px-8 py-3 text-base font-semibold text-white hover:bg-[#9e4a0f] transition-colors"
           >
             Ücretsiz Deneyin
           </Link>

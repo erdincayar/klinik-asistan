@@ -1460,13 +1460,13 @@ function ImportDialog({
               </div>
 
               {selectedCurrency !== "TRY" && (
-                <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-amber-800">
+                <div className="rounded-lg bg-orange-50 border border-orange-200 p-3 space-y-2">
+                  <div className="flex items-center gap-2 text-sm text-orange-800">
                     <AlertTriangle className="h-4 w-4 flex-shrink-0" />
                     <span>
                       Fiyatlar {selectedCurrency} olarak okunup güncel kurla TL&apos;ye çevrilecek.
                       {rateLoading ? (
-                        <span className="ml-1 text-amber-600">Kur yükleniyor...</span>
+                        <span className="ml-1 text-orange-600">Kur yükleniyor...</span>
                       ) : exchangeRate ? (
                         <span className="ml-1 font-semibold">1 {selectedCurrency} = ₺{formatTRY(exchangeRate)}</span>
                       ) : (
@@ -1478,8 +1478,8 @@ function ImportDialog({
                   {/* Live conversion preview */}
                   {exchangeRate && mapping.purchasePrice && (
                     <div className="space-y-1">
-                      <p className="text-xs font-semibold text-amber-700 uppercase">Alış Fiyatı Önizleme</p>
-                      <div className="rounded bg-white border border-amber-100 divide-y divide-amber-50">
+                      <p className="text-xs font-semibold text-orange-700 uppercase">Alış Fiyatı Önizleme</p>
+                      <div className="rounded bg-white border border-orange-100 divide-y divide-orange-50">
                         {preview.preview.map((row, i) => {
                           const rawVal = parseFloat(String(row[mapping.purchasePrice] || "0").replace(",", ".")) || 0;
                           if (rawVal <= 0) return null;
@@ -1488,7 +1488,7 @@ function ImportDialog({
                           return (
                             <div key={i} className="flex items-center justify-between px-3 py-1.5 text-xs">
                               <span className="text-gray-600 truncate max-w-[200px]">{String(row[mapping.name] || `Satır ${i + 1}`)}</span>
-                              <span className="text-amber-800 font-medium whitespace-nowrap">
+                              <span className="text-orange-800 font-medium whitespace-nowrap">
                                 {sym}{rawVal.toFixed(2)} {selectedCurrency} = ₺{formatTRY(tryVal)}
                               </span>
                             </div>

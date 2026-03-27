@@ -153,7 +153,7 @@ function formatPrice(priceInKurus: number): string {
 function CheckIcon() {
   return (
     <svg
-      className="h-4 w-4 shrink-0 text-indigo-600"
+      className="h-4 w-4 shrink-0 text-[#c75b12]"
       fill="none"
       viewBox="0 0 24 24"
       stroke="currentColor"
@@ -194,11 +194,11 @@ export default function FiyatlandirmaPage() {
       <nav className="border-b border-gray-100 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/" className="text-xl font-bold text-gray-900">
-            Poby<span className="text-indigo-600">.ai</span>
+            Poby<span className="text-[#c75b12]">.ai</span>
           </Link>
           <Link
             href="/login"
-            className="rounded-xl bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+            className="rounded-xl bg-[#c75b12] px-5 py-2 text-sm font-semibold text-white hover:bg-[#9e4a0f]"
           >
             Giris Yap
           </Link>
@@ -222,11 +222,11 @@ export default function FiyatlandirmaPage() {
 
         {/* ── Baslangic Platformu Callout ── */}
         <section className="mb-16">
-          <div className="relative overflow-hidden rounded-2xl border-2 border-indigo-600 bg-gradient-to-br from-indigo-50 to-white p-8 sm:p-10">
+          <div className="relative overflow-hidden rounded-2xl border-2 border-[#c75b12] bg-gradient-to-br from-[#fef4ec] to-white p-8 sm:p-10">
             <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-indigo-100/60" />
             <div className="relative flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-indigo-600 text-white">
+                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#c75b12] text-white">
                   {MODULE_ICONS.LayoutDashboard}
                 </div>
                 <div>
@@ -240,7 +240,7 @@ export default function FiyatlandirmaPage() {
               </div>
               <div className="text-left sm:text-right">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold text-indigo-600">
+                  <span className="text-4xl font-bold text-[#c75b12]">
                     ₺{formatPrice(MODULE_PRICES.base.price)}
                   </span>
                   <span className="text-sm text-gray-500">/ay + KDV</span>
@@ -282,7 +282,7 @@ export default function FiyatlandirmaPage() {
               >
                 {/* Icon + Name */}
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 transition-colors group-hover:bg-indigo-100">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#fef4ec] text-[#c75b12] transition-colors group-hover:bg-[#fde5d0]">
                     {MODULE_ICONS[mod.icon] ?? MODULE_ICONS.LayoutDashboard}
                   </div>
                   <div>
@@ -345,7 +345,7 @@ export default function FiyatlandirmaPage() {
                 className="relative rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-6 opacity-75"
               >
                 {/* Yakinda badge */}
-                <span className="absolute -top-3 right-4 rounded-full bg-amber-100 px-3 py-0.5 text-xs font-semibold text-amber-700">
+                <span className="absolute -top-3 right-4 rounded-full bg-orange-100 px-3 py-0.5 text-xs font-semibold text-orange-700">
                   Yakinda
                 </span>
 
@@ -440,12 +440,12 @@ export default function FiyatlandirmaPage() {
                   key={key}
                   className={`rounded-2xl border p-6 text-center transition-shadow hover:shadow-lg ${
                     key === "professional"
-                      ? "border-indigo-600 ring-2 ring-indigo-600"
+                      ? "border-[#c75b12] ring-2 ring-[#c75b12]"
                       : "border-gray-200"
                   }`}
                 >
                   {key === "professional" && (
-                    <span className="mb-3 inline-block rounded-full bg-indigo-600 px-3 py-0.5 text-xs font-semibold text-white">
+                    <span className="mb-3 inline-block rounded-full bg-[#c75b12] px-3 py-0.5 text-xs font-semibold text-white">
                       Populer
                     </span>
                   )}
@@ -485,7 +485,7 @@ export default function FiyatlandirmaPage() {
 
         {/* ── CTA Section ── */}
         <section className="mb-20">
-          <div className="rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-700 px-8 py-14 text-center sm:px-12">
+          <div className="rounded-2xl bg-gradient-to-r from-[#c75b12] to-[#9e4a0f] px-8 py-14 text-center sm:px-12">
             <h2 className="text-3xl font-bold text-white sm:text-4xl">
               7 Gün Ücretsiz Deneyin
             </h2>
@@ -495,7 +495,7 @@ export default function FiyatlandirmaPage() {
             </p>
             <Link
               href="/register"
-              className="mt-8 inline-flex items-center gap-2 rounded-xl bg-white px-8 py-3.5 text-base font-semibold text-indigo-600 shadow-lg transition-all hover:bg-indigo-50 hover:shadow-xl"
+              className="mt-8 inline-flex items-center gap-2 rounded-xl bg-white px-8 py-3.5 text-base font-semibold text-[#c75b12] shadow-lg transition-all hover:bg-[#fef4ec] hover:shadow-xl"
             >
               Hemen Baslayin
               <svg

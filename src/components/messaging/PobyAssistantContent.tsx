@@ -111,7 +111,7 @@ const CHANNEL_COLORS: Record<string, string> = {
 };
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  pending: { label: "Bekliyor", color: "bg-amber-100 text-amber-700" },
+  pending: { label: "Bekliyor", color: "bg-orange-100 text-orange-700" },
   confirmed: { label: "Onaylandı", color: "bg-green-100 text-green-700" },
   cancelled: { label: "İptal", color: "bg-red-100 text-red-700" },
 };

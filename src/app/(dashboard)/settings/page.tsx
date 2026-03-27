@@ -586,16 +586,16 @@ export default function SettingsPage() {
                 }
 
                 return (
-                  <div className={`flex items-center justify-between rounded-xl px-5 py-4 ${isExpired ? "bg-red-50" : "bg-amber-50"}`}>
+                  <div className={`flex items-center justify-between rounded-xl px-5 py-4 ${isExpired ? "bg-red-50" : "bg-orange-50"}`}>
                     <div className="flex items-center gap-3">
-                      <AlertCircle className={`h-5 w-5 ${isExpired ? "text-red-600" : "text-amber-600"}`} />
+                      <AlertCircle className={`h-5 w-5 ${isExpired ? "text-red-600" : "text-orange-600"}`} />
                       <div>
-                        <p className={`text-sm font-semibold ${isExpired ? "text-red-800" : "text-amber-800"}`}>
+                        <p className={`text-sm font-semibold ${isExpired ? "text-red-800" : "text-orange-800"}`}>
                           {isExpired
                             ? "Meta token suresi dolmus!"
                             : `Meta token ${daysLeft} gun sonra dolacak`}
                         </p>
-                        <p className={`text-xs ${isExpired ? "text-red-600" : "text-amber-600"}`}>
+                        <p className={`text-xs ${isExpired ? "text-red-600" : "text-orange-600"}`}>
                           {isExpired
                             ? "Yeni token ile tekrar baglanti kurun"
                             : "Yenilemek icin baglantiyi kesip tekrar baglayin"}
@@ -614,7 +614,7 @@ export default function SettingsPage() {
                       className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition-colors ${
                         isExpired
                           ? "bg-red-600 text-white hover:bg-red-700"
-                          : "border border-amber-300 bg-white text-amber-700 hover:bg-amber-50"
+                          : "border border-orange-300 bg-white text-orange-700 hover:bg-orange-50"
                       }`}
                     >
                       <RefreshCw className="h-3.5 w-3.5" />
@@ -1049,7 +1049,7 @@ export default function SettingsPage() {
         className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
       >
         <div className="flex items-center gap-2 border-b border-gray-100 px-6 py-4">
-          <Crown className="h-4 w-4 text-amber-500" />
+          <Crown className="h-4 w-4 text-orange-500" />
           <h2 className="text-sm font-semibold text-gray-900">Abonelik Planları</h2>
         </div>
         <div className="p-6">
@@ -1144,7 +1144,7 @@ export default function SettingsPage() {
             const used = settings.storageUsedMB || 0;
             const limit = settings.storageLimitMB || 100;
             const pct = Math.min(100, (used / limit) * 100);
-            const barColor = pct >= 100 ? "bg-red-500" : pct >= 95 ? "bg-red-400" : pct >= 80 ? "bg-amber-500" : "bg-blue-500";
+            const barColor = pct >= 100 ? "bg-red-500" : pct >= 95 ? "bg-red-400" : pct >= 80 ? "bg-orange-500" : "bg-blue-500";
             const formatSize = (mb: number) => mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${mb} MB`;
             return (
               <div className="rounded-xl bg-gray-50 p-5">
@@ -1328,8 +1328,8 @@ export default function SettingsPage() {
               <p className="text-lg font-bold text-emerald-600">{teamEmployees.filter((e: any) => e.inviteStatus === "active").length}</p>
               <p className="text-[11px] text-gray-500">Aktif</p>
             </div>
-            <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-3 text-center">
-              <p className="text-lg font-bold text-amber-600">{teamEmployees.filter((e: any) => e.inviteStatus === "invited").length}</p>
+            <div className="rounded-xl border border-orange-100 bg-orange-50/50 p-3 text-center">
+              <p className="text-lg font-bold text-orange-600">{teamEmployees.filter((e: any) => e.inviteStatus === "invited").length}</p>
               <p className="text-[11px] text-gray-500">Bekliyor</p>
             </div>
             <div className="rounded-xl border border-gray-100 p-3 text-center">
@@ -1377,7 +1377,7 @@ export default function SettingsPage() {
                       )}
                       {status === "invited" && (
                         <>
-                          <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-600">Davet Bekliyor</span>
+                          <span className="rounded-full bg-orange-50 px-2.5 py-0.5 text-[11px] font-semibold text-orange-600">Davet Bekliyor</span>
                           <button
                             onClick={() => {
                               // Re-generate and copy existing invite link

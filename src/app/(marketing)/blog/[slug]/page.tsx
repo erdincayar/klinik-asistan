@@ -64,11 +64,11 @@ export default async function BlogPostPage({ params }: Props) {
       <nav className="border-b border-gray-100 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/" className="text-xl font-bold text-gray-900">
-            Poby<span className="text-indigo-600">.ai</span>
+            Poby<span className="text-[#c75b12]">.ai</span>
           </Link>
           <Link
             href="/login"
-            className="rounded-xl bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+            className="rounded-xl bg-[#c75b12] px-5 py-2 text-sm font-semibold text-white hover:bg-[#9e4a0f]"
           >
             Giriş Yap
           </Link>
@@ -81,12 +81,12 @@ export default async function BlogPostPage({ params }: Props) {
             <div className="flex items-center gap-3 mb-4">
               <Link
                 href="/blog"
-                className="text-sm text-indigo-600 hover:text-indigo-700"
+                className="text-sm text-[#c75b12] hover:text-[#9e4a0f]"
               >
                 Blog
               </Link>
               <span className="text-gray-300">/</span>
-              <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-600">
+              <span className="rounded-full bg-[#fef4ec] px-3 py-1 text-xs font-medium text-[#c75b12]">
                 {post.category}
               </span>
             </div>
@@ -108,7 +108,7 @@ export default async function BlogPostPage({ params }: Props) {
             </div>
           </header>
 
-          <div className="prose prose-gray max-w-none prose-headings:text-gray-900 prose-a:text-indigo-600">
+          <div className="prose prose-gray max-w-none prose-headings:text-gray-900 prose-a:text-[#c75b12]">
             {post.content.split("\n\n").map((paragraph, i) => {
               if (paragraph.startsWith("## ")) {
                 return (

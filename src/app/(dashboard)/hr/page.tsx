@@ -473,7 +473,7 @@ export default function HRPage() {
                     onClick={() => setActiveCategory(cat.id)}
                     className={`w-full flex items-center gap-3 px-4 py-3 text-left font-semibold transition-colors ${
                       isActive
-                        ? "bg-amber-50 text-amber-700 border-l-4 border-amber-600"
+                        ? "bg-orange-50 text-orange-700 border-l-4 border-orange-600"
                         : "text-gray-700 hover:bg-gray-50 border-l-4 border-transparent"
                     }`}
                   >
@@ -494,7 +494,7 @@ export default function HRPage() {
                             onClick={() => handleSelectBuiltinDoc(doc)}
                             className={`w-full flex items-center gap-2 px-4 py-2.5 pl-8 text-sm text-left transition-colors ${
                               isSelected
-                                ? "bg-amber-100 text-amber-800 font-medium"
+                                ? "bg-orange-100 text-orange-800 font-medium"
                                 : "text-gray-600 hover:bg-gray-50"
                             }`}
                           >
@@ -547,12 +547,12 @@ export default function HRPage() {
                         key={doc.id}
                         className={`flex items-center gap-2 px-3 py-2 mx-1 rounded-lg cursor-pointer group transition-colors ${
                           selectedDbDoc?.id === doc.id
-                            ? "bg-amber-100 text-amber-800"
+                            ? "bg-orange-100 text-orange-800"
                             : "hover:bg-gray-50 text-gray-700"
                         }`}
                         onClick={() => handleSelectDbDoc(doc)}
                       >
-                        <Sparkles className="w-3.5 h-3.5 flex-shrink-0 text-amber-500" />
+                        <Sparkles className="w-3.5 h-3.5 flex-shrink-0 text-orange-500" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">{doc.name}</p>
                           <span className="text-xs text-gray-400">{categoryLabels[doc.category] || doc.category}</span>
@@ -589,7 +589,7 @@ export default function HRPage() {
                         key={doc.id}
                         className={`flex items-center gap-2 px-3 py-2 mx-1 rounded-lg cursor-pointer group transition-colors ${
                           selectedDbDoc?.id === doc.id
-                            ? "bg-amber-100 text-amber-800"
+                            ? "bg-orange-100 text-orange-800"
                             : "hover:bg-gray-50 text-gray-700"
                         }`}
                         onClick={() => handleSelectDbDoc(doc)}
@@ -622,7 +622,7 @@ export default function HRPage() {
             <div className="px-3 pb-3 flex gap-2">
               <button
                 onClick={() => setCreateDialogOpen(true)}
-                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 transition-colors border border-amber-200"
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium bg-orange-50 text-orange-700 rounded-lg hover:bg-orange-100 transition-colors border border-orange-200"
               >
                 <Plus className="w-3.5 h-3.5" />
                 AI ile Oluştur
@@ -638,8 +638,8 @@ export default function HRPage() {
           </div>
 
           {/* Token bilgisi */}
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-            <p className="text-sm text-amber-800">
+          <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
+            <p className="text-sm text-orange-800">
               <strong>Token Kullanımı:</strong> Her belge oluşturma/doldurma işlemi 3.000 token harcar.
             </p>
           </div>
@@ -692,7 +692,7 @@ export default function HRPage() {
                     <select
                       value={selectedEmployeeId}
                       onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none text-sm bg-white"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none text-sm bg-white"
                     >
                       <option value="">-- Manuel giriş --</option>
                       {employees.map((emp) => (
@@ -714,7 +714,7 @@ export default function HRPage() {
                       value={employeeName}
                       onChange={(e) => setEmployeeName(e.target.value)}
                       placeholder="Çalışanın adı soyadı"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none text-sm"
                     />
                   </div>
                   <div>
@@ -730,7 +730,7 @@ export default function HRPage() {
                       }}
                       placeholder="11 haneli TC Kimlik No"
                       maxLength={11}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none text-sm"
                     />
                   </div>
                   <div>
@@ -741,7 +741,7 @@ export default function HRPage() {
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none text-sm"
                     />
                   </div>
                   <div>
@@ -753,7 +753,7 @@ export default function HRPage() {
                       value={position}
                       onChange={(e) => setPosition(e.target.value)}
                       placeholder="Örn: Yazılım Geliştirici"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none text-sm"
                     />
                   </div>
                   <div className="md:col-span-2">
@@ -768,7 +768,7 @@ export default function HRPage() {
                         setSalary(val);
                       }}
                       placeholder="Örn: 35000"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none text-sm"
                     />
                   </div>
                 </div>
@@ -784,7 +784,7 @@ export default function HRPage() {
                     <button
                       onClick={handleGenerate}
                       disabled={loading}
-                      className="flex items-center gap-2 px-5 py-2.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm"
+                      className="flex items-center gap-2 px-5 py-2.5 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm"
                     >
                       {loading ? (
                         <>
@@ -803,7 +803,7 @@ export default function HRPage() {
                     <button
                       onClick={handleFillDocument}
                       disabled={loading}
-                      className="flex items-center gap-2 px-5 py-2.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm"
+                      className="flex items-center gap-2 px-5 py-2.5 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm"
                     >
                       {loading ? (
                         <>
@@ -897,7 +897,7 @@ export default function HRPage() {
                 value={newDocName}
                 onChange={(e) => setNewDocName(e.target.value)}
                 placeholder="Örn: Zimmet Tutanağı"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none text-sm"
               />
             </div>
             <div>
@@ -907,7 +907,7 @@ export default function HRPage() {
               <select
                 value={newDocCategory}
                 onChange={(e) => setNewDocCategory(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none text-sm bg-white"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none text-sm bg-white"
               >
                 <option value="hire">İşe Alış</option>
                 <option value="terminate">İşten Çıkarma</option>
@@ -923,7 +923,7 @@ export default function HRPage() {
                 onChange={(e) => setNewDocDescription(e.target.value)}
                 placeholder="AI'ya ne tür bir belge istediğinizi anlatın..."
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none text-sm resize-none"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none text-sm resize-none"
               />
             </div>
           </div>
@@ -937,7 +937,7 @@ export default function HRPage() {
             <button
               onClick={handleCreateDocument}
               disabled={creating || !newDocName.trim()}
-              className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 transition-colors text-sm font-medium"
+              className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors text-sm font-medium"
             >
               {creating ? (
                 <>
@@ -977,7 +977,7 @@ export default function HRPage() {
                     setUploadName(file.name.replace(/\.[^.]+$/, ""));
                   }
                 }}
-                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
+                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
               />
               <p className="text-xs text-gray-400 mt-1">
                 PDF, DOCX, DOC, JPG, PNG — Maks. 10 MB
@@ -992,7 +992,7 @@ export default function HRPage() {
                 value={uploadName}
                 onChange={(e) => setUploadName(e.target.value)}
                 placeholder="Örn: Şirket İş Sözleşmesi"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none text-sm"
               />
             </div>
             <div>
@@ -1002,7 +1002,7 @@ export default function HRPage() {
               <select
                 value={uploadCategory}
                 onChange={(e) => setUploadCategory(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none text-sm bg-white"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none text-sm bg-white"
               >
                 <option value="hire">İşe Alış</option>
                 <option value="terminate">İşten Çıkarma</option>

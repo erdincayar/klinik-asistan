@@ -139,7 +139,7 @@ const EXPENSE_BADGE: Record<string, string> = {
   KIRA: "bg-purple-50 text-purple-700",
   MAAS: "bg-blue-50 text-blue-700",
   MALZEME: "bg-orange-50 text-orange-700",
-  FATURA: "bg-amber-50 text-amber-700",
+  FATURA: "bg-orange-50 text-orange-700",
   DIGER: "bg-gray-100 text-gray-700",
 };
 
@@ -147,7 +147,7 @@ const EXPENSE_CATEGORY_COLORS: Record<string, string> = {
   KIRA: "bg-purple-100 text-purple-800",
   MAAS: "bg-blue-100 text-blue-800",
   MALZEME: "bg-orange-100 text-orange-800",
-  FATURA: "bg-amber-100 text-amber-800",
+  FATURA: "bg-orange-100 text-orange-800",
   DIGER: "bg-gray-100 text-gray-800",
 };
 
@@ -1398,10 +1398,10 @@ export default function FinanceOverview() {
             </div>
 
             {editAmountChanged && (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-3">
+              <div className="rounded-lg border border-orange-200 bg-orange-50 p-4 space-y-3">
                 <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-amber-600" />
-                  <span className="text-sm font-medium text-amber-800">Tutar değişikliği algılandı</span>
+                  <AlertTriangle className="h-4 w-4 text-orange-600" />
+                  <span className="text-sm font-medium text-orange-800">Tutar değişikliği algılandı</span>
                 </div>
                 <div className="space-y-2">
                   <label className="flex items-start gap-2 cursor-pointer">

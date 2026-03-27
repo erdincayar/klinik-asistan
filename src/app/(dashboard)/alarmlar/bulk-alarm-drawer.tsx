@@ -437,7 +437,7 @@ export default function BulkAlarmDrawer({ open, onOpenChange, onComplete }: Bulk
                                   c.mode === "smart"
                                     ? "bg-purple-50 text-purple-600"
                                     : c.mode === "default"
-                                    ? "bg-amber-50 text-amber-600"
+                                    ? "bg-orange-50 text-orange-600"
                                     : "bg-gray-100 text-gray-500",
                                 )}>
                                   {c.mode === "smart" ? "Akıllı" : c.mode === "default" ? "Varsayılan" : "Manuel"}

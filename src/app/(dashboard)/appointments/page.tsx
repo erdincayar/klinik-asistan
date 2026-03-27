@@ -1560,7 +1560,7 @@ export default function AppointmentsPage() {
                     <button
                       disabled={updating}
                       onClick={() => updateAppointmentStatus(selectedAppointment.id, "NO_SHOW")}
-                      className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-amber-200 px-3 py-2.5 text-sm font-semibold text-amber-600 transition-colors hover:bg-amber-50 disabled:opacity-50"
+                      className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-orange-200 px-3 py-2.5 text-sm font-semibold text-orange-600 transition-colors hover:bg-orange-50 disabled:opacity-50"
                     >
                       <AlertCircle className="h-4 w-4" /> Gelmedi
                     </button>

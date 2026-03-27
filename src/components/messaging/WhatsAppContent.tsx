@@ -325,7 +325,7 @@ export default function WhatsAppContent() {
                     <div className="flex items-center gap-2 mb-1">
                       {getTypeBadge(msg)}
                       {msg.patientIsNew && (
-                        <span className="text-xs text-amber-600 flex items-center gap-1">
+                        <span className="text-xs text-orange-600 flex items-center gap-1">
                           <AlertTriangle className="h-3 w-3" /> Yeni müşteri
                         </span>
                       )}

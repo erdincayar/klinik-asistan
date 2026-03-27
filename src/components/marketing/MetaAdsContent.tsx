@@ -131,7 +131,7 @@ const STATUS_FILTERS = [
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; icon: any }> = {
   ACTIVE: { label: "Aktif", bg: "bg-emerald-100", text: "text-emerald-700", icon: Play },
-  PAUSED: { label: "Duraklatildi", bg: "bg-amber-100", text: "text-amber-700", icon: Pause },
+  PAUSED: { label: "Duraklatildi", bg: "bg-orange-100", text: "text-orange-700", icon: Pause },
   DELETED: { label: "Tamamlandi", bg: "bg-red-100", text: "text-red-700", icon: X },
   ARCHIVED: { label: "Arsivlenmis", bg: "bg-gray-100", text: "text-gray-600", icon: Archive },
 };
@@ -488,7 +488,7 @@ export default function MetaAdsContent() {
               { label: "Toplam Tiklama", value: formatNum(campaignStats.totalClicks), icon: MousePointerClick, color: "text-indigo-600", bg: "bg-indigo-50" },
               { label: "Ort. CTR", value: `%${campaignStats.avgCtr.toFixed(2)}`, icon: TrendingUp, color: "text-emerald-600", bg: "bg-emerald-50" },
               { label: "Toplam Kampanya", value: campaignStats.total.toString(), icon: Megaphone, color: "text-purple-600", bg: "bg-purple-50" },
-              { label: "Aktif Kampanya", value: campaignStats.activeCount.toString(), icon: Target, color: "text-amber-600", bg: "bg-amber-50" },
+              { label: "Aktif Kampanya", value: campaignStats.activeCount.toString(), icon: Target, color: "text-orange-600", bg: "bg-orange-50" },
             ].map((stat) => {
               const Icon = stat.icon;
               return (
@@ -665,7 +665,7 @@ export default function MetaAdsContent() {
                 { label: "Tiklama", value: formatNum(insightsStats.totalClicks), icon: MousePointerClick, color: "text-indigo-600", bg: "bg-indigo-50" },
                 { label: "Harcama", value: formatTL(insightsStats.totalSpend), icon: DollarSign, color: "text-red-600", bg: "bg-red-50" },
                 { label: "Ort. CTR", value: `%${insightsStats.avgCtr.toFixed(2)}`, icon: TrendingUp, color: "text-emerald-600", bg: "bg-emerald-50" },
-                { label: "Ort. CPC", value: formatTL(insightsStats.avgCpc), icon: Target, color: "text-amber-600", bg: "bg-amber-50" },
+                { label: "Ort. CPC", value: formatTL(insightsStats.avgCpc), icon: Target, color: "text-orange-600", bg: "bg-orange-50" },
                 { label: "Donusum", value: formatNum(insightsStats.totalConversions), icon: Megaphone, color: "text-purple-600", bg: "bg-purple-50" },
               ].map((stat) => {
                 const Icon = stat.icon;

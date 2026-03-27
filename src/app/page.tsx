@@ -239,7 +239,7 @@ function HeroModuleCard({
       onClick={onToggle}
       className={`flex w-full items-center gap-3 rounded-xl border-2 p-4 text-left backdrop-blur-sm transition-all ${
         selected
-          ? "border-[#EF9F27] bg-[#FDF3E3]/80 shadow-md shadow-[#EF9F27]/10"
+          ? "border-[#c75b12] bg-[#fef4ec]/80 shadow-md shadow-[#c75b12]/10"
           : muted
           ? "border-gray-200/60 bg-white/50 opacity-70 hover:opacity-100"
           : "border-gray-200/80 bg-white/80 hover:border-gray-300"
@@ -255,14 +255,14 @@ function HeroModuleCard({
         <p className="text-sm font-semibold text-gray-900">{mod.name}</p>
         <p className="text-xs text-gray-500 line-clamp-1">{mod.shortDescription}</p>
         {mod.reasoning && (
-          <p className="mt-0.5 text-[11px] italic text-[#BA7517] line-clamp-1">{mod.reasoning}</p>
+          <p className="mt-0.5 text-[11px] italic text-[#9e4a0f] line-clamp-1">{mod.reasoning}</p>
         )}
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <span className="text-xs font-bold text-gray-600">₺{mod.basePrice}/ay</span>
         <div
           className={`flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all ${
-            selected ? "border-[#EF9F27] bg-[#EF9F27]" : "border-gray-300"
+            selected ? "border-[#c75b12] bg-[#c75b12]" : "border-gray-300"
           }`}
         >
           {selected && <Check className="h-3 w-3 text-white" />}
@@ -309,9 +309,9 @@ function DashboardOverview() {
     <div>
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
-          { label: "Toplam Müşteri", target: 247, prefix: "", icon: Users, change: "+18", up: true, color: "text-[#EF9F27]", bg: "bg-[#FDF3E3]" },
+          { label: "Toplam Müşteri", target: 247, prefix: "", icon: Users, change: "+18", up: true, color: "text-[#c75b12]", bg: "bg-[#fef4ec]" },
           { label: "Bugünün Randevuları", target: 12, prefix: "", icon: Calendar, change: "+3", up: true, color: "text-emerald-600", bg: "bg-emerald-50" },
-          { label: "Aylık Gelir", target: 48500, prefix: "₺", icon: TrendingUp, change: "+22%", up: true, color: "text-amber-600", bg: "bg-amber-50" },
+          { label: "Aylık Gelir", target: 48500, prefix: "₺", icon: TrendingUp, change: "+22%", up: true, color: "text-orange-600", bg: "bg-orange-50" },
           { label: "Stok Uyarısı", target: 3, prefix: "", icon: AlertTriangle, change: "Kritik", up: false, color: "text-red-600", bg: "bg-red-50" },
         ].map((s) => {
           const Icon = s.icon;
@@ -337,7 +337,7 @@ function DashboardOverview() {
         <p className="mb-3 text-xs font-semibold text-gray-500">Aylık Gelir Trendi</p>
         <div className="flex h-[100px] items-end gap-2">
           {[35, 50, 40, 65, 55, 80, 60, 75, 90, 70, 85, 95].map((h, i) => (
-            <div key={i} className="flex-1 rounded-t bg-gradient-to-t from-[#EF9F27] to-[#F5B940]" style={{ height: `${h}%` }} />
+            <div key={i} className="flex-1 rounded-t bg-gradient-to-t from-[#c75b12] to-[#e8843a]" style={{ height: `${h}%` }} />
           ))}
         </div>
         <div className="mt-2 flex justify-between text-[10px] text-gray-400">
@@ -352,9 +352,9 @@ function DashboardOverview() {
 function DashboardAppointments() {
   const appointments = [
     { name: "Ahmet Yılmaz", time: "10:00", service: "Diş Dolgusu", status: "Onaylandı", statusColor: "bg-emerald-100 text-emerald-700" },
-    { name: "Fatma Kaya", time: "11:30", service: "Kontrol", status: "Bekliyor", statusColor: "bg-amber-100 text-amber-700" },
+    { name: "Fatma Kaya", time: "11:30", service: "Kontrol", status: "Bekliyor", statusColor: "bg-orange-100 text-orange-700" },
     { name: "Mehmet Demir", time: "14:00", service: "Kanal Tedavisi", status: "Onaylandı", statusColor: "bg-emerald-100 text-emerald-700" },
-    { name: "Ayşe Çelik", time: "15:30", service: "Diş Temizliği", status: "Bekliyor", statusColor: "bg-amber-100 text-amber-700" },
+    { name: "Ayşe Çelik", time: "15:30", service: "Diş Temizliği", status: "Bekliyor", statusColor: "bg-orange-100 text-orange-700" },
     { name: "Ali Kılıç", time: "16:00", service: "İmplant Konsültasyon", status: "Onaylandı", statusColor: "bg-emerald-100 text-emerald-700" },
   ];
   return (
@@ -366,7 +366,7 @@ function DashboardAppointments() {
         {appointments.map((a) => (
           <div key={a.name} className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FDF3E3] text-xs font-bold text-[#EF9F27]">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#fef4ec] text-xs font-bold text-[#c75b12]">
                 {a.name.split(" ").map(n => n[0]).join("")}
               </div>
               <div>
@@ -394,7 +394,7 @@ function DashboardFinance() {
         {[
           { label: "Gelir", target: 48500, color: "text-emerald-600", bg: "bg-emerald-50", icon: TrendingUp },
           { label: "Gider", target: 12300, color: "text-red-600", bg: "bg-red-50", icon: TrendingDown },
-          { label: "Net Kâr", target: 36200, color: "text-[#EF9F27]", bg: "bg-[#FDF3E3]", icon: DollarSign },
+          { label: "Net Kâr", target: 36200, color: "text-[#c75b12]", bg: "bg-[#fef4ec]", icon: DollarSign },
         ].map((s) => {
           const Icon = s.icon;
           return (
@@ -474,10 +474,10 @@ function DashboardStock() {
 
 function DashboardCustomers() {
   const customers = [
-    { name: "Ahmet Yılmaz", lastVisit: "10 Mar 2026", total: "₺4.800", visits: 12, color: "bg-[#EF9F27]" },
+    { name: "Ahmet Yılmaz", lastVisit: "10 Mar 2026", total: "₺4.800", visits: 12, color: "bg-[#c75b12]" },
     { name: "Fatma Kaya", lastVisit: "8 Mar 2026", total: "₺3.200", visits: 8, color: "bg-emerald-500" },
     { name: "Mehmet Demir", lastVisit: "5 Mar 2026", total: "₺6.100", visits: 15, color: "bg-purple-500" },
-    { name: "Ayşe Çelik", lastVisit: "3 Mar 2026", total: "₺2.400", visits: 6, color: "bg-amber-500" },
+    { name: "Ayşe Çelik", lastVisit: "3 Mar 2026", total: "₺2.400", visits: 6, color: "bg-orange-500" },
   ];
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -504,10 +504,10 @@ function DashboardCustomers() {
 
 function DashboardEmployees() {
   const employees = [
-    { name: "Dr. Elif Şahin", role: "Diş Hekimi", commission: "₺12.400", color: "bg-[#EF9F27]" },
+    { name: "Dr. Elif Şahin", role: "Diş Hekimi", commission: "₺12.400", color: "bg-[#c75b12]" },
     { name: "Selin Aydın", role: "Hijyenist", commission: "₺4.200", color: "bg-emerald-500" },
     { name: "Burak Erdoğan", role: "Asistan", commission: "₺2.800", color: "bg-purple-500" },
-    { name: "Derya Yılmaz", role: "Sekreter", commission: "₺1.500", color: "bg-amber-500" },
+    { name: "Derya Yılmaz", role: "Sekreter", commission: "₺1.500", color: "bg-orange-500" },
   ];
   return (
     <div className="rounded-xl border border-gray-100 bg-white">
@@ -750,7 +750,7 @@ export default function Home() {
       >
         <div className="mx-auto flex max-w-[1200px] items-center justify-between px-6 py-4">
           <Link href="/" className="text-2xl font-extrabold tracking-tight">
-            <span className="text-[#EF9F27]">Po</span>
+            <span className="text-[#c75b12]">Po</span>
             <span className="text-gray-800">by</span>
           </Link>
 
@@ -772,7 +772,7 @@ export default function Home() {
             </Link>
             <Link
               href="/register"
-              className="rounded-[10px] bg-[#EF9F27] px-5 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-[#D88A1B] hover:shadow-lg hover:shadow-[#EF9F27]/30"
+              className="rounded-[10px] bg-[#c75b12] px-5 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-[#a84d0f] hover:shadow-lg hover:shadow-[#c75b12]/30"
             >
               Kayıt Ol
             </Link>
@@ -808,7 +808,7 @@ export default function Home() {
               </Link>
               <Link
                 href="/register"
-                className="inline-flex items-center justify-center rounded-[10px] bg-[#EF9F27] px-6 py-2.5 text-sm font-semibold text-white"
+                className="inline-flex items-center justify-center rounded-[10px] bg-[#c75b12] px-6 py-2.5 text-sm font-semibold text-white"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Kayıt Ol
@@ -824,14 +824,14 @@ export default function Home() {
         <div
           className="animate-gradient pointer-events-none absolute inset-0"
           style={{
-            background: "linear-gradient(135deg, #FDF3E3 0%, #FFF8F0 25%, #FCE7C7 50%, #FDF3E3 75%, #FFF8F0 100%)",
+            background: "linear-gradient(135deg, #fef4ec 0%, #fff9f5 25%, #fde5d0 50%, #fef4ec 75%, #fff9f5 100%)",
           }}
         />
         <div
           className="pointer-events-none absolute inset-0"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(239,159,39,0.06) 1px,transparent 1px),linear-gradient(90deg,rgba(239,159,39,0.06) 1px,transparent 1px)",
+              "linear-gradient(rgba(199,91,18,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(199,91,18,0.05) 1px,transparent 1px)",
             backgroundSize: "60px 60px",
           }}
         />
@@ -847,9 +847,9 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#F5B940] bg-white/80 px-4 py-1.5 text-[13px] font-medium text-[#BA7517] backdrop-blur-sm"
+              className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#e8843a] bg-white/80 px-4 py-1.5 text-[13px] font-medium text-[#9e4a0f] backdrop-blur-sm"
             >
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#EF9F27]" />
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#c75b12]" />
               AI destekli yeni nesil işletme yönetimi
             </motion.div>
 
@@ -863,7 +863,7 @@ export default function Home() {
               className="mb-4 font-extrabold leading-[1.1] tracking-[-2px] text-gray-900"
             >
               Kişisel AI Asistanınız{" "}
-              <span className="bg-gradient-to-r from-[#EF9F27] to-[#F5B940] bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[#c75b12] to-[#e8843a] bg-clip-text text-transparent">
                 Poby
               </span>
               {!obStarted && (
@@ -912,7 +912,7 @@ export default function Home() {
                   <div
                     key={i}
                     className={`h-2 rounded-full transition-all duration-300 ${
-                      i === obStep ? "w-7 bg-[#EF9F27]" : i < obStep ? "w-2 bg-[#F5B940]" : "w-2 bg-gray-300/60"
+                      i === obStep ? "w-7 bg-[#c75b12]" : i < obStep ? "w-2 bg-[#e8843a]" : "w-2 bg-gray-300/60"
                     }`}
                   />
                 ))}
@@ -942,8 +942,8 @@ export default function Home() {
                       whileHover={{ scale: 1.03, y: -2 }}
                       whileTap={{ scale: 0.97 }}
                       onClick={() => handleSectorSelect(s.id)}
-                      className={`flex flex-col items-center gap-2 rounded-2xl border-2 bg-white/80 p-5 backdrop-blur-sm transition-all hover:border-[#F5B940] hover:shadow-lg hover:shadow-[#EF9F27]/10 ${
-                        obSector === s.id ? "border-[#EF9F27] bg-[#FDF3E3]/80 shadow-lg shadow-[#EF9F27]/10" : "border-gray-200/80"
+                      className={`flex flex-col items-center gap-2 rounded-2xl border-2 bg-white/80 p-5 backdrop-blur-sm transition-all hover:border-[#e8843a] hover:shadow-lg hover:shadow-[#c75b12]/10 ${
+                        obSector === s.id ? "border-[#c75b12] bg-[#fef4ec]/80 shadow-lg shadow-[#c75b12]/10" : "border-gray-200/80"
                       }`}
                     >
                       <span className="text-3xl">{s.emoji}</span>
@@ -958,8 +958,8 @@ export default function Home() {
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
                     onClick={() => handleSectorSelect("other")}
-                    className={`flex w-full items-center justify-center gap-2 rounded-2xl border-2 bg-white/80 p-4 backdrop-blur-sm transition-all hover:border-[#F5B940] ${
-                      obSector === "other" ? "border-[#EF9F27] bg-[#FDF3E3]/80" : "border-gray-200/80"
+                    className={`flex w-full items-center justify-center gap-2 rounded-2xl border-2 bg-white/80 p-4 backdrop-blur-sm transition-all hover:border-[#e8843a] ${
+                      obSector === "other" ? "border-[#c75b12] bg-[#fef4ec]/80" : "border-gray-200/80"
                     }`}
                   >
                     <span className="text-xl">✏️</span>
@@ -979,13 +979,13 @@ export default function Home() {
                           onChange={(e) => setObSectorCustom(e.target.value)}
                           onKeyDown={(e) => e.key === "Enter" && handleSectorCustomSubmit()}
                           placeholder="Sektörünüzü yazın..."
-                          className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm focus:border-[#EF9F27] focus:outline-none focus:ring-2 focus:ring-[#EF9F27]/20"
+                          className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
                           autoFocus
                         />
                         <button
                           onClick={handleSectorCustomSubmit}
                           disabled={!obSectorCustom.trim()}
-                          className="rounded-xl bg-[#EF9F27] px-5 py-3 text-sm font-semibold text-white transition-all hover:bg-[#D88A1B] disabled:opacity-40"
+                          className="rounded-xl bg-[#c75b12] px-5 py-3 text-sm font-semibold text-white transition-all hover:bg-[#a84d0f] disabled:opacity-40"
                         >
                           <ArrowRight className="h-4 w-4" />
                         </button>
@@ -1015,8 +1015,8 @@ export default function Home() {
                       whileHover={{ scale: 1.03, y: -2 }}
                       whileTap={{ scale: 0.97 }}
                       onClick={() => handleTeamSelect(t.id)}
-                      className={`flex flex-1 flex-col items-center gap-2 rounded-2xl border-2 bg-white/80 p-6 backdrop-blur-sm transition-all hover:border-[#F5B940] hover:shadow-lg hover:shadow-[#EF9F27]/10 ${
-                        obTeamSize === t.id ? "border-[#EF9F27] bg-[#FDF3E3]/80" : "border-gray-200/80"
+                      className={`flex flex-1 flex-col items-center gap-2 rounded-2xl border-2 bg-white/80 p-6 backdrop-blur-sm transition-all hover:border-[#e8843a] hover:shadow-lg hover:shadow-[#c75b12]/10 ${
+                        obTeamSize === t.id ? "border-[#c75b12] bg-[#fef4ec]/80" : "border-gray-200/80"
                       }`}
                     >
                       <span className="text-4xl">{t.emoji}</span>
@@ -1049,7 +1049,7 @@ export default function Home() {
                         disabled={obAnalyzing}
                         className={`inline-flex items-center gap-2 rounded-full border-2 bg-white/80 px-5 py-3 text-sm font-medium backdrop-blur-sm transition-all disabled:opacity-50 ${
                           obPainPoints.has(p.id)
-                            ? "border-[#EF9F27] bg-[#FDF3E3]/80 text-[#BA7517] shadow-md shadow-[#EF9F27]/10"
+                            ? "border-[#c75b12] bg-[#fef4ec]/80 text-[#9e4a0f] shadow-md shadow-[#c75b12]/10"
                             : "border-gray-200/80 text-gray-600 hover:border-gray-300"
                         }`}
                       >
@@ -1073,7 +1073,7 @@ export default function Home() {
                   whileTap={!obAnalyzing ? { scale: 0.98 } : {}}
                   onClick={handleAnalyze}
                   disabled={obPainPoints.size === 0 || obAnalyzing}
-                  className="mt-8 inline-flex items-center gap-2 rounded-xl bg-[#EF9F27] px-10 py-4 text-[15px] font-semibold text-white transition-all hover:bg-[#D88A1B] hover:shadow-xl hover:shadow-[#EF9F27]/30 disabled:opacity-40"
+                  className="mt-8 inline-flex items-center gap-2 rounded-xl bg-[#c75b12] px-10 py-4 text-[15px] font-semibold text-white transition-all hover:bg-[#a84d0f] hover:shadow-xl hover:shadow-[#c75b12]/30 disabled:opacity-40"
                 >
                   {obAnalyzing ? (
                     <>
@@ -1103,8 +1103,8 @@ export default function Home() {
               >
                 {obAnalysis ? (
                   <>
-                    <div className="mb-5 rounded-2xl border border-[#F5B940]/40 bg-[#FDF3E3]/80 p-5 backdrop-blur-sm">
-                      <p className="text-sm leading-relaxed text-[#8C5811]">{obAnalysis.customMessage}</p>
+                    <div className="mb-5 rounded-2xl border border-[#e8843a]/40 bg-[#fef4ec]/80 p-5 backdrop-blur-sm">
+                      <p className="text-sm leading-relaxed text-[#652e09]">{obAnalysis.customMessage}</p>
                     </div>
                     <div className="mb-3 flex items-center gap-2">
                       <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">Sizin için önerildi</span>
@@ -1129,7 +1129,7 @@ export default function Home() {
                       whileTap={{ scale: 0.98 }}
                       onClick={() => { setObDirection(1); setObStep(4); }}
                       disabled={obSelected.size === 0}
-                      className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#EF9F27] py-4 text-[15px] font-semibold text-white transition-all hover:bg-[#D88A1B] disabled:opacity-40"
+                      className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#c75b12] py-4 text-[15px] font-semibold text-white transition-all hover:bg-[#a84d0f] disabled:opacity-40"
                     >
                       Paketimi Oluştur
                       <ArrowRight className="h-4 w-4" />
@@ -1138,7 +1138,7 @@ export default function Home() {
                 ) : (
                   <div className="py-16 text-center">
                     <p className="text-sm text-red-600">{obError || "Bir hata oluştu. Lütfen tekrar deneyin."}</p>
-                    <button onClick={() => { setObError(null); obGoBack(); }} className="mt-3 text-sm font-medium text-[#EF9F27] hover:underline">Geri Dön</button>
+                    <button onClick={() => { setObError(null); obGoBack(); }} className="mt-3 text-sm font-medium text-[#c75b12] hover:underline">Geri Dön</button>
                   </div>
                 )}
               </motion.div>
@@ -1182,7 +1182,7 @@ export default function Home() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleComplete}
-                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#EF9F27] py-4 text-[15px] font-semibold text-white transition-all hover:bg-[#D88A1B] hover:shadow-xl hover:shadow-[#EF9F27]/30"
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#c75b12] py-4 text-[15px] font-semibold text-white transition-all hover:bg-[#a84d0f] hover:shadow-xl hover:shadow-[#c75b12]/30"
                 >
                   Hemen Başla — Ücretsiz Dene
                   <ArrowRight className="h-4 w-4" />
@@ -1203,7 +1203,7 @@ export default function Home() {
             viewport={{ once: true }}
             className="mb-4 text-center"
           >
-            <span className="mb-3 inline-block text-[13px] font-semibold uppercase tracking-widest text-[#EF9F27]">
+            <span className="mb-3 inline-block text-[13px] font-semibold uppercase tracking-widest text-[#c75b12]">
               Dashboard
             </span>
             <h2 className="mb-4 text-[clamp(28px,4vw,42px)] font-extrabold leading-tight tracking-tight text-gray-900">
@@ -1246,7 +1246,7 @@ export default function Home() {
                       onClick={() => setActiveTab(i)}
                       className={`relative whitespace-nowrap px-4 py-3 text-[13px] font-medium transition-colors ${
                         activeTab === i
-                          ? "text-[#EF9F27]"
+                          ? "text-[#c75b12]"
                           : "text-gray-500 hover:text-gray-700"
                       }`}
                     >
@@ -1254,7 +1254,7 @@ export default function Home() {
                       {activeTab === i && (
                         <motion.div
                           layoutId="activeTab"
-                          className="absolute inset-x-0 bottom-0 h-0.5 bg-[#EF9F27]"
+                          className="absolute inset-x-0 bottom-0 h-0.5 bg-[#c75b12]"
                           transition={{ type: "spring", stiffness: 400, damping: 30 }}
                         />
                       )}
@@ -1295,7 +1295,7 @@ export default function Home() {
           viewport={{ once: true }}
           className="mb-12 text-center px-6"
         >
-          <span className="mb-3 inline-block text-[13px] font-semibold uppercase tracking-widest text-[#EF9F27]">
+          <span className="mb-3 inline-block text-[13px] font-semibold uppercase tracking-widest text-[#c75b12]">
             Yorumlar
           </span>
           <h2 className="mb-4 text-[clamp(28px,4vw,42px)] font-extrabold leading-tight tracking-tight text-gray-900">
@@ -1324,7 +1324,7 @@ export default function Home() {
             viewport={{ once: true }}
             className="mb-14 text-center"
           >
-            <span className="mb-3 inline-block text-[13px] font-semibold uppercase tracking-widest text-[#EF9F27]">
+            <span className="mb-3 inline-block text-[13px] font-semibold uppercase tracking-widest text-[#c75b12]">
               Modüller
             </span>
             <h2 className="mb-4 text-[clamp(28px,4vw,42px)] font-extrabold leading-tight tracking-tight text-gray-900">
@@ -1347,7 +1347,7 @@ export default function Home() {
                 key={mod.title}
                 variants={fadeUp}
                 custom={i}
-                className="group cursor-default rounded-2xl border border-gray-200 bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[#F5B940] hover:shadow-lg hover:shadow-[#EF9F27]/[0.06]"
+                className="group cursor-default rounded-2xl border border-gray-200 bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[#e8843a] hover:shadow-lg hover:shadow-[#c75b12]/[0.06]"
               >
                 <span className="mb-4 block text-3xl">{mod.icon}</span>
                 <h3 className="mb-2 text-[15px] font-bold text-gray-900">{mod.title}</h3>
@@ -1363,7 +1363,7 @@ export default function Home() {
         <div
           className="animate-gradient pointer-events-none absolute inset-0"
           style={{
-            background: "linear-gradient(135deg, #EF9F27 0%, #D88A1B 25%, #F5B940 50%, #EF9F27 75%, #D88A1B 100%)",
+            background: "linear-gradient(135deg, #c75b12 0%, #9e4a0f 25%, #e8843a 50%, #c75b12 75%, #9e4a0f 100%)",
           }}
         />
         <div
@@ -1389,7 +1389,7 @@ export default function Home() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="mx-auto mb-10 max-w-[480px] text-[17px] leading-relaxed text-amber-100"
+            className="mx-auto mb-10 max-w-[480px] text-[17px] leading-relaxed text-orange-100"
           >
             İlk ay ücretsiz, kredi kartı gerekmez. Hemen başlayın ve farkı görün.
           </motion.p>
@@ -1401,7 +1401,7 @@ export default function Home() {
           >
             <Link
               href="/register"
-              className="inline-flex items-center gap-2 rounded-[14px] bg-white px-10 py-4 text-base font-semibold text-[#EF9F27] transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-black/20"
+              className="inline-flex items-center gap-2 rounded-[14px] bg-white px-10 py-4 text-base font-semibold text-[#c75b12] transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-black/20"
             >
               Ücretsiz Hesap Oluştur
               <ArrowRight className="h-4 w-4" />
@@ -1416,7 +1416,7 @@ export default function Home() {
           <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr]">
             <div>
               <Link href="/" className="text-xl font-extrabold">
-                <span className="text-[#EF9F27]">Po</span>
+                <span className="text-[#c75b12]">Po</span>
                 <span className="text-gray-800">by</span>
               </Link>
               <p className="mt-3 max-w-[280px] text-[13px] leading-relaxed text-gray-500">
@@ -1432,7 +1432,7 @@ export default function Home() {
                 <ul className="space-y-2.5">
                   {links.map((link) => (
                     <li key={link}>
-                      <Link href="#" className="text-[13px] text-gray-500 transition-colors hover:text-[#EF9F27]">
+                      <Link href="#" className="text-[13px] text-gray-500 transition-colors hover:text-[#c75b12]">
                         {link}
                       </Link>
                     </li>

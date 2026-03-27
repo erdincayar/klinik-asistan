@@ -81,7 +81,7 @@ const treatmentLabels: Record<string, string> = {
 const categoryColors: Record<string, string> = {
   BOTOX: "bg-purple-100 text-purple-700",
   DOLGU: "bg-pink-100 text-pink-700",
-  DIS_TEDAVI: "bg-amber-100 text-amber-700",
+  DIS_TEDAVI: "bg-orange-100 text-orange-700",
   GENEL: "bg-gray-100 text-gray-700",
 };
 
@@ -566,7 +566,7 @@ export default function PatientDetailPage() {
         className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
       >
         <div className="flex items-center gap-2 border-b border-gray-100 px-6 py-4">
-          <BellRing className="h-4 w-4 text-amber-500" />
+          <BellRing className="h-4 w-4 text-orange-500" />
           <h2 className="text-sm font-semibold text-gray-900">Alarmlar</h2>
         </div>
         <div className="p-6">

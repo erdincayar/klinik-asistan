@@ -94,7 +94,7 @@ export default function MessagingPage() {
           </div>
           <h3 className="text-lg font-semibold text-gray-900">WhatsApp Entegrasyonu</h3>
           <p className="mt-2 text-sm text-gray-500">WhatsApp Business API entegrasyonu yakında kullanıma açılacak.</p>
-          <span className="mt-4 inline-block rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">Yakında</span>
+          <span className="mt-4 inline-block rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700">Yakında</span>
         </div>
       </TabsContent>
 

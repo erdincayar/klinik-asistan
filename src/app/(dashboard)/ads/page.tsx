@@ -130,7 +130,7 @@ const GENDER_LABELS: Record<string, string> = {
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string }> = {
   ACTIVE: { label: "Aktif", bg: "bg-emerald-100", text: "text-emerald-700" },
-  PAUSED: { label: "Duraklatıldı", bg: "bg-amber-100", text: "text-amber-700" },
+  PAUSED: { label: "Duraklatıldı", bg: "bg-orange-100", text: "text-orange-700" },
   DELETED: { label: "Durduruldu", bg: "bg-red-100", text: "text-red-700" },
 };
 
@@ -826,7 +826,7 @@ export default function AdsPage() {
                                   onClick={() => handleStatusUpdate(camp.id, "PAUSED")}
                                   disabled={isUpdating}
                                   title="Duraklat"
-                                  className="rounded-lg p-1.5 text-amber-600 transition-colors hover:bg-amber-50 disabled:opacity-50"
+                                  className="rounded-lg p-1.5 text-orange-600 transition-colors hover:bg-orange-50 disabled:opacity-50"
                                 >
                                   {isUpdating ? (
                                     <Loader2 className="h-3.5 w-3.5 animate-spin" />

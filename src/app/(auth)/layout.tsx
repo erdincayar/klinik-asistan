@@ -20,7 +20,7 @@ export default function AuthLayout({
   return (
     <div className="flex min-h-screen">
       {/* ── Left panel (hidden on mobile) ── */}
-      <div className="relative hidden w-[480px] shrink-0 overflow-hidden bg-gradient-to-br from-[#EF9F27] via-[#D88A1B] to-[#BA7517] lg:flex lg:flex-col lg:justify-between">
+      <div className="relative hidden w-[480px] shrink-0 overflow-hidden bg-gradient-to-br from-[#c75b12] via-[#a84d0f] to-[#9e4a0f] lg:flex lg:flex-col lg:justify-between">
         {/* Decorative elements */}
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -left-20 -top-20 h-64 w-64 rounded-full bg-white/5" />
@@ -40,7 +40,7 @@ export default function AuthLayout({
         <div className="relative z-10 flex flex-1 flex-col justify-center px-12">
           <Link href="/" className="mb-10 text-2xl font-extrabold tracking-tight">
             <span className="text-white">Po</span>
-            <span className="text-amber-100">by</span>
+            <span className="text-orange-100">by</span>
           </Link>
 
           <h2 className="mb-3 text-2xl font-bold leading-snug text-white">
@@ -48,7 +48,7 @@ export default function AuthLayout({
             <br />
             en kolay yolu.
           </h2>
-          <p className="mb-10 max-w-[320px] text-sm leading-relaxed text-amber-100">
+          <p className="mb-10 max-w-[320px] text-sm leading-relaxed text-orange-100">
             Tek platform üzerinden müşteri, randevu, finans ve stok yönetimini
             AI destekli araçlarla kolayca yapın.
           </p>
@@ -65,9 +65,9 @@ export default function AuthLayout({
                   className="flex items-center gap-3"
                 >
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10">
-                    <Icon className="h-4 w-4 text-amber-100" />
+                    <Icon className="h-4 w-4 text-orange-100" />
                   </div>
-                  <span className="text-sm font-medium text-amber-50">
+                  <span className="text-sm font-medium text-orange-50">
                     {f.text}
                   </span>
                 </motion.li>
@@ -78,7 +78,7 @@ export default function AuthLayout({
 
         {/* Bottom */}
         <div className="relative z-10 px-12 pb-8">
-          <p className="text-xs text-amber-200/60">
+          <p className="text-xs text-orange-200/60">
             &copy; 2026 Poby. Tüm hakları saklıdır.
           </p>
         </div>
@@ -95,7 +95,7 @@ export default function AuthLayout({
           {/* Mobile-only logo */}
           <div className="mb-8 lg:hidden">
             <Link href="/" className="text-2xl font-extrabold tracking-tight">
-              <span className="text-[#EF9F27]">Po</span>
+              <span className="text-[#c75b12]">Po</span>
               <span className="text-gray-800">by</span>
             </Link>
           </div>
