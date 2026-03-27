@@ -245,8 +245,8 @@ export function SmartSelect({
               type="button"
               data-idx={idx}
               className={cn(
-                "flex w-full items-center gap-2 border-b border-gray-100 bg-blue-50/50 px-3 py-2 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100/50",
-                highlightIndex === idx && "bg-blue-100/70",
+                "flex w-full items-center gap-2 border-b border-gray-100 bg-[#fef4ec]/50 px-3 py-2 text-sm font-medium text-[#9e4a0f] transition-colors hover:bg-[#fde5d0]/50",
+                highlightIndex === idx && "bg-[#fde5d0]/70",
               )}
               onMouseDown={(e) => {
                 e.preventDefault();
@@ -270,8 +270,8 @@ export function SmartSelect({
                 type="button"
                 data-idx={myIdx}
                 className={cn(
-                  "flex w-full items-center gap-2 border-b border-gray-100 bg-blue-50/50 px-3 py-2 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100/50",
-                  highlightIndex === myIdx && "bg-blue-100/70",
+                  "flex w-full items-center gap-2 border-b border-gray-100 bg-[#fef4ec]/50 px-3 py-2 text-sm font-medium text-[#9e4a0f] transition-colors hover:bg-[#fde5d0]/50",
+                  highlightIndex === myIdx && "bg-[#fde5d0]/70",
                 )}
                 onMouseDown={(e) => {
                   e.preventDefault();
@@ -295,8 +295,8 @@ export function SmartSelect({
                 type="button"
                 data-idx={myIdx}
                 className={cn(
-                  "w-full px-3 py-2 text-left text-sm transition-colors hover:bg-blue-50",
-                  highlightIndex === myIdx && "bg-blue-50 text-blue-700",
+                  "w-full px-3 py-2 text-left text-sm transition-colors hover:bg-[#fef4ec]",
+                  highlightIndex === myIdx && "bg-[#fef4ec] text-[#9e4a0f]",
                 )}
                 onMouseDown={(e) => {
                   e.preventDefault();
@@ -321,7 +321,7 @@ export function SmartSelect({
 
       {/* Inline create form */}
       {showCreateForm && createForm && (
-        <div className="mt-2 space-y-3 rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+        <div className="mt-2 space-y-3 rounded-xl border border-[#fde5d0] bg-[#fef4ec]/50 p-4">
           {createForm}
         </div>
       )}

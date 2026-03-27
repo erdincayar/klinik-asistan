@@ -368,15 +368,15 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
 
       {/* Bulk selection bar */}
       {selectedIds.size > 0 && (
-        <div className="flex items-center gap-3 rounded-lg bg-blue-50 border border-blue-200 px-4 py-2">
-          <span className="text-sm font-medium text-blue-800">{selectedIds.size} ürün seçildi</span>
+        <div className="flex items-center gap-3 rounded-lg bg-[#fef4ec] border border-[#fde5d0] px-4 py-2">
+          <span className="text-sm font-medium text-[#863d0c]">{selectedIds.size} ürün seçildi</span>
           <Button size="sm" variant="outline" onClick={() => setShowBulkBrand(true)}>
             <Tag className="mr-1 h-3.5 w-3.5" /> Marka Ata
           </Button>
           <Button size="sm" variant="destructive" onClick={() => setShowBulkDeleteConfirm(true)}>
             <Trash2 className="mr-1 h-3.5 w-3.5" /> Sil
           </Button>
-          <button onClick={() => setSelectedIds(new Set())} className="ml-auto rounded p-1 text-blue-400 hover:text-blue-700 hover:bg-blue-100 transition-colors" title="Seçimi kaldır">
+          <button onClick={() => setSelectedIds(new Set())} className="ml-auto rounded p-1 text-[#c75b12] hover:text-[#9e4a0f] hover:bg-[#fde5d0] transition-colors" title="Seçimi kaldır">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -441,7 +441,7 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
                           if (key === "brand") return (
                             <TableCell key={key} className="text-muted-foreground" onClick={(e) => e.stopPropagation()}>
                               {product.brand ? product.brand : (
-                                <button onClick={() => { setBrandEditTarget(product); setBrandEditValue(""); }} className="text-xs text-blue-500 hover:text-blue-700 hover:underline">+ Marka Ekle</button>
+                                <button onClick={() => { setBrandEditTarget(product); setBrandEditValue(""); }} className="text-xs text-[#c75b12] hover:text-[#9e4a0f] hover:underline">+ Marka Ekle</button>
                               )}
                             </TableCell>
                           );
@@ -493,7 +493,7 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
                             <TableCell key={key} className="text-center" onClick={(e) => e.stopPropagation()}>
                               <div className="flex items-center justify-center gap-1">
                                 <button onClick={() => handleProductClick(product)} className="inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors" title="Detay"><Eye className="h-4 w-4" /></button>
-                                <button onClick={() => setEditProduct(product)} className="inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors" title="Düzenle"><Pencil className="h-4 w-4" /></button>
+                                <button onClick={() => setEditProduct(product)} className="inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-[#c75b12] hover:bg-[#fef4ec] transition-colors" title="Düzenle"><Pencil className="h-4 w-4" /></button>
                                 <button onClick={() => setDeleteTarget(product)} className="inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors" title="Sil"><Trash2 className="h-4 w-4" /></button>
                               </div>
                             </TableCell>
@@ -678,7 +678,7 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
                 <div className="flex flex-wrap gap-2">
                   {existingBrands.map((b) => (
                     <button key={b} onClick={() => setBulkBrandValue(b)}
-                      className={`rounded-full border px-3 py-1 text-xs transition-colors ${bulkBrandValue === b ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 bg-white text-gray-600 hover:border-blue-300"}`}
+                      className={`rounded-full border px-3 py-1 text-xs transition-colors ${bulkBrandValue === b ? "border-[#c75b12] bg-[#fef4ec] text-[#9e4a0f]" : "border-gray-200 bg-white text-gray-600 hover:border-[#fde5d0]"}`}
                     >{b}</button>
                   ))}
                 </div>
@@ -712,7 +712,7 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
                 <div className="flex flex-wrap gap-2">
                   {existingBrands.map((b) => (
                     <button key={b} onClick={() => setBrandEditValue(b)}
-                      className={`rounded-full border px-3 py-1 text-xs transition-colors ${brandEditValue === b ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 bg-white text-gray-600 hover:border-blue-300"}`}
+                      className={`rounded-full border px-3 py-1 text-xs transition-colors ${brandEditValue === b ? "border-[#c75b12] bg-[#fef4ec] text-[#9e4a0f]" : "border-gray-200 bg-white text-gray-600 hover:border-[#fde5d0]"}`}
                     >{b}</button>
                   ))}
                 </div>
@@ -1319,7 +1319,7 @@ function ImportDialog({
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FileSpreadsheet className="h-5 w-5 text-blue-600" />
+            <FileSpreadsheet className="h-5 w-5 text-[#c75b12]" />
             Stok Verisi İçe Aktar
           </DialogTitle>
           <DialogDescription>
@@ -1335,7 +1335,7 @@ function ImportDialog({
             <div className="rounded-xl border-2 border-dashed border-gray-200 p-8 text-center">
               {uploading ? (
                 <div className="flex flex-col items-center gap-3">
-                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                  <Loader2 className="h-8 w-8 animate-spin text-[#c75b12]" />
                   <p className="text-sm text-gray-600">Dosya okunuyor...</p>
                 </div>
               ) : (
@@ -1345,7 +1345,7 @@ function ImportDialog({
                     <p className="text-sm font-medium text-gray-700">Dosya seçin veya sürükleyin</p>
                     <p className="text-xs text-gray-400">Excel (.xlsx) veya CSV (.csv)</p>
                   </div>
-                  <label className="cursor-pointer rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                  <label className="cursor-pointer rounded-lg bg-[#32373c] px-4 py-2 text-sm font-medium text-white hover:bg-[#454a50]">
                     Dosya Seç
                     <input type="file" accept=".xlsx,.xls,.csv" onChange={(e) => handleFileSelect(e.target.files)} className="hidden" />
                   </label>
@@ -1358,8 +1358,8 @@ function ImportDialog({
 
         {step === "mapping" && preview && (
           <div className="space-y-4">
-            <div className="rounded-lg bg-blue-50 p-3">
-              <p className="text-sm text-blue-700"><strong>{preview.totalRows}</strong> satır bulundu. Sütunları eşleştirin:</p>
+            <div className="rounded-lg bg-[#fef4ec] p-3">
+              <p className="text-sm text-[#9e4a0f]"><strong>{preview.totalRows}</strong> satır bulundu. Sütunları eşleştirin:</p>
             </div>
 
             {/* Column mapping */}
@@ -1410,7 +1410,7 @@ function ImportDialog({
                       setNewCustomName("");
                     }
                   }}
-                  className="shrink-0 rounded-md border border-dashed border-gray-300 p-1.5 text-gray-400 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  className="shrink-0 rounded-md border border-dashed border-gray-300 p-1.5 text-gray-400 hover:text-[#c75b12] hover:border-[#c75b12] hover:bg-[#fef4ec] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                   title="Özel Kolon Ekle"
                 >
                   <Plus className="h-4 w-4" />
@@ -1527,7 +1527,7 @@ function ImportDialog({
 
         {step === "importing" && (
           <div className="flex flex-col items-center gap-4 py-8">
-            <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
+            <Loader2 className="h-10 w-10 animate-spin text-[#c75b12]" />
             <p className="text-sm font-medium text-gray-600">Veriler içe aktarılıyor...</p>
           </div>
         )}
@@ -1545,7 +1545,7 @@ function ImportDialog({
                   <p className="text-xs text-gray-500">Yeni eklendi</p>
                 </div>
                 <div className="rounded-lg bg-white p-3 text-center">
-                  <p className="text-2xl font-bold text-blue-600">{result.updated}</p>
+                  <p className="text-2xl font-bold text-[#c75b12]">{result.updated}</p>
                   <p className="text-xs text-gray-500">Güncellendi</p>
                 </div>
                 <div className="rounded-lg bg-white p-3 text-center">
@@ -1815,7 +1815,7 @@ function SortableColumnItem({
       <button
         onClick={onToggle}
         disabled={isLocked}
-        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${isLocked ? "cursor-not-allowed opacity-50" : "cursor-pointer"} ${isHidden ? "bg-gray-200" : "bg-blue-600"}`}
+        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${isLocked ? "cursor-not-allowed opacity-50" : "cursor-pointer"} ${isHidden ? "bg-gray-200" : "bg-[#32373c]"}`}
       >
         <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform ${isHidden ? "translate-x-1" : "translate-x-[18px]"}`} />
       </button>

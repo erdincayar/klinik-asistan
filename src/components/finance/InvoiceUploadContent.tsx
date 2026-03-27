@@ -85,7 +85,7 @@ interface ProductOption {
 
 const statusConfig: Record<string, { label: string; color: string; icon: typeof Clock }> = {
   PENDING: { label: "Bekliyor", color: "bg-yellow-100 text-yellow-700", icon: Clock },
-  PROCESSING: { label: "İşleniyor", color: "bg-blue-100 text-blue-700", icon: Loader2 },
+  PROCESSING: { label: "İşleniyor", color: "bg-[#fde5d0] text-[#9e4a0f]", icon: Loader2 },
   COMPLETED: { label: "Tamamlandı", color: "bg-green-100 text-green-700", icon: CheckCircle },
   FAILED: { label: "Hata", color: "bg-red-100 text-red-700", icon: XCircle },
   REJECTED: { label: "Reddedildi", color: "bg-orange-100 text-orange-700", icon: XCircle },
@@ -427,13 +427,13 @@ export default function InvoiceUploadContent() {
           onDrop={handleDrop}
           className={`relative rounded-2xl border-2 border-dashed p-12 text-center transition-all ${
             dragOver
-              ? "border-blue-400 bg-blue-50"
+              ? "border-[#c75b12] bg-[#fef4ec]"
               : "border-gray-200 bg-white hover:border-gray-300"
           }`}
         >
           {uploading ? (
             <div className="flex flex-col items-center gap-3">
-              <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
+              <Loader2 className="h-10 w-10 animate-spin text-[#c75b12]" />
               <p className="text-sm font-medium text-gray-600">Fatura işleniyor...</p>
               <p className="text-xs text-gray-400">AI ile fatura okunuyor</p>
             </div>
@@ -599,7 +599,7 @@ export default function InvoiceUploadContent() {
                         <button
                           onClick={(e) => { e.stopPropagation(); handleRecalculate(inv); }}
                           disabled={recalculating === inv.id}
-                          className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2 py-1 text-[11px] font-medium text-blue-600 transition-colors hover:bg-blue-100 disabled:opacity-50"
+                          className="inline-flex items-center gap-1 rounded-lg bg-[#fef4ec] px-2 py-1 text-[11px] font-medium text-[#c75b12] transition-colors hover:bg-[#fde5d0] disabled:opacity-50"
                           title="Kârı Güncelle"
                         >
                           <RefreshCw className={`h-3 w-3 ${recalculating === inv.id ? "animate-spin" : ""}`} />
@@ -743,7 +743,7 @@ export default function InvoiceUploadContent() {
 
                 {/* Invoice type selector */}
                 {!selectedInvoice.approved && selectedInvoice.status === "COMPLETED" && (
-                  <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+                  <div className="rounded-xl border border-[#fde5d0] bg-[#fef4ec]/50 p-4">
                     <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Fatura Türü</p>
                     <div className="flex gap-2">
                       <button
@@ -793,7 +793,7 @@ export default function InvoiceUploadContent() {
                 {selectedInvoice.ocrData && (selectedInvoice.ocrData as any).items && (
                   <div>
                     <div className="flex items-center gap-2 mb-3">
-                      <Package className="h-4 w-4 text-blue-600" />
+                      <Package className="h-4 w-4 text-[#c75b12]" />
                       <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
                         Kalemler & Stok Eşleştirme
                       </p>
@@ -801,7 +801,7 @@ export default function InvoiceUploadContent() {
 
                     {matchLoading ? (
                       <div className="flex items-center justify-center py-8">
-                        <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                        <Loader2 className="h-6 w-6 animate-spin text-[#c75b12]" />
                         <span className="ml-2 text-sm text-gray-500">Ürünler eşleştiriliyor...</span>
                       </div>
                     ) : (
@@ -886,8 +886,8 @@ export default function InvoiceUploadContent() {
                                         <button
                                           key={product.id}
                                           onClick={() => updateMapping(idx, product.id, product.name)}
-                                          className={`flex w-full items-center justify-between px-3 py-2 text-xs hover:bg-blue-50 ${
-                                            mapping.productId === product.id ? "bg-blue-50 text-blue-700" : "text-gray-700"
+                                          className={`flex w-full items-center justify-between px-3 py-2 text-xs hover:bg-[#fef4ec] ${
+                                            mapping.productId === product.id ? "bg-[#fef4ec] text-[#9e4a0f]" : "text-gray-700"
                                           }`}
                                         >
                                           <span className="truncate">{product.name}</span>
@@ -998,7 +998,7 @@ export default function InvoiceUploadContent() {
 
                 {/* Expense Preview - Stock Impact */}
                 {!selectedInvoice.approved && selectedInvoice.status === "COMPLETED" && (invoiceTypeOverride || selectedInvoice.invoiceType) === "EXPENSE" && stockMappings.length > 0 && (
-                  <div className="rounded-xl border border-blue-100 bg-blue-50/30 p-4">
+                  <div className="rounded-xl border border-[#fde5d0] bg-[#fef4ec]/30 p-4">
                     <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Stok Etkisi</p>
                     <div className="space-y-2">
                       {stockMappings.map((mapping, idx) => {
@@ -1013,8 +1013,8 @@ export default function InvoiceUploadContent() {
                                 </div>
                               ) : (
                                 <div className="flex items-center gap-1 mt-0.5">
-                                  <Package className="h-3 w-3 text-blue-500" />
-                                  <span className="text-[11px] text-blue-600">Yeni ürün oluşturulacak (+{mapping.quantity})</span>
+                                  <Package className="h-3 w-3 text-[#c75b12]" />
+                                  <span className="text-[11px] text-[#c75b12]">Yeni ürün oluşturulacak (+{mapping.quantity})</span>
                                 </div>
                               )}
                             </div>
@@ -1026,7 +1026,7 @@ export default function InvoiceUploadContent() {
                       const matched = stockMappings.filter(m => m.productId);
                       const unmatched = stockMappings.filter(m => !m.productId);
                       return (matched.length > 0 || unmatched.length > 0) ? (
-                        <div className="mt-3 border-t border-blue-100 pt-3 text-xs text-gray-500">
+                        <div className="mt-3 border-t border-[#fde5d0] pt-3 text-xs text-gray-500">
                           {matched.length > 0 && <span>{matched.length} ürün güncellenecek</span>}
                           {matched.length > 0 && unmatched.length > 0 && <span> · </span>}
                           {unmatched.length > 0 && <span>{unmatched.length} yeni ürün oluşturulacak</span>}
@@ -1040,7 +1040,7 @@ export default function InvoiceUploadContent() {
                 {!selectedInvoice.approved && selectedInvoice.status === "COMPLETED" && (
                   <div className="border-t border-gray-100 pt-4">
                     <div className="flex items-center gap-2 mb-3">
-                      <Check className="h-4 w-4 text-blue-600" />
+                      <Check className="h-4 w-4 text-[#c75b12]" />
                       <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
                         Onay
                       </p>

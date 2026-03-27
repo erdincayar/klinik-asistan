@@ -281,7 +281,7 @@ function NewAppointmentForm() {
                 onCreateFormToggle={setShowNewCustomer}
                 createForm={
                   <>
-                    <p className="text-sm font-medium text-blue-700">Yeni Müşteri Ekle</p>
+                    <p className="text-sm font-medium text-[#9e4a0f]">Yeni Müşteri Ekle</p>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <div className="space-y-1">
                         <Label className="text-xs">Ad Soyad *</Label>
@@ -331,7 +331,7 @@ function NewAppointmentForm() {
                 onCreateFormToggle={setShowNewEmployee}
                 createForm={
                   <>
-                    <p className="text-sm font-medium text-blue-700">Yeni Çalışan Ekle</p>
+                    <p className="text-sm font-medium text-[#9e4a0f]">Yeni Çalışan Ekle</p>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <div className="space-y-1">
                         <Label className="text-xs">Ad Soyad *</Label>

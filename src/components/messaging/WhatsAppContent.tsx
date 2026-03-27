@@ -243,7 +243,7 @@ export default function WhatsAppContent() {
     if (!msg.parsed) return null;
     switch (msg.parsed.type) {
       case "APPOINTMENT":
-        return <Badge className="bg-blue-100 text-blue-800">Randevu</Badge>;
+        return <Badge className="bg-[#fde5d0] text-[#863d0c]">Randevu</Badge>;
       case "INCOME":
         return <Badge className="bg-green-100 text-green-800">Gelir</Badge>;
       case "EXPENSE":
@@ -513,7 +513,7 @@ export default function WhatsAppContent() {
               <Card>
                 <CardHeader className="py-3 px-4">
                   <CardTitle className="text-sm flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-blue-500" />
+                    <div className="w-2 h-2 rounded-full bg-[#fef4ec]0" />
                     Randevu
                   </CardTitle>
                 </CardHeader>

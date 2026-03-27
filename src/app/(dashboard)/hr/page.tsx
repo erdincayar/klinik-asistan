@@ -594,7 +594,7 @@ export default function HRPage() {
                         }`}
                         onClick={() => handleSelectDbDoc(doc)}
                       >
-                        <File className="w-3.5 h-3.5 flex-shrink-0 text-blue-500" />
+                        <File className="w-3.5 h-3.5 flex-shrink-0 text-[#c75b12]" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">{doc.name}</p>
                           <span className="text-xs text-gray-400">
@@ -629,7 +629,7 @@ export default function HRPage() {
               </button>
               <button
                 onClick={() => setUploadDialogOpen(true)}
-                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors border border-blue-200"
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium bg-[#fef4ec] text-[#9e4a0f] rounded-lg hover:bg-[#fde5d0] transition-colors border border-[#fde5d0]"
               >
                 <Upload className="w-3.5 h-3.5" />
                 Belge Yükle
@@ -823,7 +823,7 @@ export default function HRPage() {
                       href={selectedDbDoc.fileUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                      className="flex items-center gap-2 px-4 py-2.5 bg-[#32373c] text-white rounded-lg hover:bg-[#454a50] transition-colors text-sm font-medium"
                     >
                       <Eye className="w-4 h-4" />
                       Orijinali Görüntüle
@@ -1024,7 +1024,7 @@ export default function HRPage() {
             <button
               onClick={handleUploadDocument}
               disabled={uploading || !uploadFile || !uploadName.trim()}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors text-sm font-medium"
+              className="flex items-center gap-2 px-4 py-2 bg-[#32373c] text-white rounded-lg hover:bg-[#454a50] disabled:opacity-50 transition-colors text-sm font-medium"
             >
               {uploading ? (
                 <>

@@ -232,7 +232,7 @@ function buildPdfHtml(data: ProfitLossData, year: number): string {
 function LoadingSkeleton() {
   return (
     <div className="flex flex-col items-center justify-center py-20">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600" />
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-[#c75b12]" />
       <p className="mt-4 text-sm text-gray-500">Veriler yükleniyor...</p>
     </div>
   );
@@ -605,12 +605,12 @@ function ProfitLossTab({ year, active }: { year: number; active: boolean }) {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-3">
-              <div className="rounded-full bg-blue-100 p-2">
-                <DollarSign className="h-5 w-5 text-blue-600" />
+              <div className="rounded-full bg-[#fde5d0] p-2">
+                <DollarSign className="h-5 w-5 text-[#c75b12]" />
               </div>
               <div>
                 <p className="text-sm text-gray-500">Net Kâr</p>
-                <p className="text-xl font-bold text-blue-600">{formatTL(summary.netProfit)}</p>
+                <p className="text-xl font-bold text-[#c75b12]">{formatTL(summary.netProfit)}</p>
               </div>
             </div>
           </CardContent>
@@ -729,17 +729,17 @@ function ProfitLossTab({ year, active }: { year: number; active: boolean }) {
             </CardContent>
           </Card>
 
-          <Card className="border-blue-200 bg-blue-50/50">
+          <Card className="border-[#fde5d0] bg-[#fef4ec]/50">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-blue-700">
+              <CardTitle className="text-sm font-medium text-[#9e4a0f]">
                 Brüt Kâr Marjı
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-blue-600">
+              <p className="text-2xl font-bold text-[#c75b12]">
                 %{(summary.profitMargin ?? 0).toFixed(1)}
               </p>
-              <p className="mt-1 text-xs text-blue-500">
+              <p className="mt-1 text-xs text-[#c75b12]">
                 (Gelir - Gider) / Gelir x 100
               </p>
             </CardContent>
@@ -936,7 +936,7 @@ function EmployeeTab({ year, active }: { year: number; active: boolean }) {
                     <TableCell className="text-right text-green-600 font-medium">
                       {formatTL(emp.totalRevenue)}
                     </TableCell>
-                    <TableCell className="text-right text-blue-600 font-medium">
+                    <TableCell className="text-right text-[#c75b12] font-medium">
                       {formatTL(emp.commission)}
                     </TableCell>
                     <TableCell className="text-right">{emp.treatmentCount}</TableCell>
@@ -1040,8 +1040,8 @@ export default function ReportsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-blue-100 p-2">
-            <BarChart3 className="h-6 w-6 text-blue-600" />
+          <div className="rounded-lg bg-[#fde5d0] p-2">
+            <BarChart3 className="h-6 w-6 text-[#c75b12]" />
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Raporlar</h1>
@@ -1054,7 +1054,7 @@ export default function ReportsPage() {
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium shadow-sm focus:border-[#c75b12] focus:outline-none focus:ring-1 focus:ring-[#c75b12]"
           >
             {years.map((y) => (
               <option key={y} value={y}>

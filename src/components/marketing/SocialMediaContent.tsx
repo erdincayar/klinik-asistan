@@ -58,7 +58,7 @@ const TURKISH_HOLIDAYS = [
 ];
 
 const statusConfig: Record<string, { label: string; color: string; icon: typeof Clock }> = {
-  SCHEDULED: { label: "Planlandı", color: "bg-blue-100 text-blue-700", icon: Clock },
+  SCHEDULED: { label: "Planlandı", color: "bg-[#fde5d0] text-[#9e4a0f]", icon: Clock },
   POSTED: { label: "Paylaşıldı", color: "bg-green-100 text-green-700", icon: CheckCircle },
   FAILED: { label: "Başarısız", color: "bg-red-100 text-red-700", icon: XCircle },
   CANCELLED: { label: "İptal", color: "bg-gray-100 text-gray-700", icon: XCircle },
@@ -255,7 +255,7 @@ export default function SocialMediaContent() {
         className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
       >
         <div className="flex items-center gap-2">
-          <Share2 className="h-5 w-5 text-blue-600" />
+          <Share2 className="h-5 w-5 text-[#c75b12]" />
           <h2 className="text-lg font-semibold text-gray-900">Sosyal Medya</h2>
         </div>
         <div className="flex items-center gap-2">
@@ -272,7 +272,7 @@ export default function SocialMediaContent() {
           </button>
           <button
             onClick={() => setShowNewPost(true)}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-700"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-[#32373c] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#454a50]"
           >
             <Plus className="h-3.5 w-3.5" />
             Yeni Paylaşım
@@ -296,15 +296,15 @@ export default function SocialMediaContent() {
           >
             <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
               <div className="flex items-center gap-2">
-                <ImageIcon className="h-4 w-4 text-blue-600" />
+                <ImageIcon className="h-4 w-4 text-[#c75b12]" />
                 <h3 className="text-sm font-semibold text-gray-900">Görseller</h3>
                 {assets.length > 0 && (
-                  <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700">
+                  <span className="rounded-full bg-[#fef4ec] px-2 py-0.5 text-[11px] font-semibold text-[#9e4a0f]">
                     {assets.length}
                   </span>
                 )}
               </div>
-              <label className="cursor-pointer inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-700">
+              <label className="cursor-pointer inline-flex items-center gap-1.5 rounded-xl bg-[#32373c] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#454a50]">
                 {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
                 {uploading ? "Yükleniyor..." : "Görsel Yükle"}
                 <input
@@ -343,7 +343,7 @@ export default function SocialMediaContent() {
           >
             <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-blue-600" />
+                <Calendar className="h-4 w-4 text-[#c75b12]" />
                 <h3 className="text-sm font-semibold text-gray-900">İçerik Takvimi</h3>
               </div>
               <div className="flex items-center gap-2">
@@ -386,11 +386,11 @@ export default function SocialMediaContent() {
                       key={day}
                       className={`h-20 rounded-lg border p-1.5 text-xs transition-colors ${
                         isToday
-                          ? "border-blue-300 bg-blue-50/50"
+                          ? "border-[#fde5d0] bg-[#fef4ec]/50"
                           : "border-gray-100 hover:bg-gray-50"
                       }`}
                     >
-                      <p className={`text-[11px] font-medium ${isToday ? "text-blue-600" : "text-gray-700"}`}>
+                      <p className={`text-[11px] font-medium ${isToday ? "text-[#c75b12]" : "text-gray-700"}`}>
                         {day}
                       </p>
                       {holiday && (
@@ -404,7 +404,7 @@ export default function SocialMediaContent() {
                           className={`mt-0.5 truncate rounded px-1 py-0.5 text-[9px] font-medium ${
                             p.platform === "instagram"
                               ? "bg-pink-100 text-pink-700"
-                              : "bg-blue-100 text-blue-700"
+                              : "bg-[#fde5d0] text-[#9e4a0f]"
                           }`}
                           title={p.content || p.occasion || ""}
                         >
@@ -542,7 +542,7 @@ export default function SocialMediaContent() {
                   value={newPost.scheduledAt}
                   onChange={(e) => setNewPost({ ...newPost, scheduledAt: e.target.value })}
                   required
-                  className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                  className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
                 />
               </div>
 
@@ -572,11 +572,11 @@ export default function SocialMediaContent() {
                     onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
                     rows={4}
                     placeholder="Paylaşım içeriği..."
-                    className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                    className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
                   />
                   {generatingContent && (
                     <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-white/80">
-                      <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                      <Loader2 className="h-5 w-5 animate-spin text-[#c75b12]" />
                     </div>
                   )}
                 </div>
@@ -594,7 +594,7 @@ export default function SocialMediaContent() {
                         onClick={() => setNewPost({ ...newPost, imageUrl: asset.fileUrl })}
                         className={`shrink-0 overflow-hidden rounded-lg border-2 transition-colors ${
                           newPost.imageUrl === asset.fileUrl
-                            ? "border-blue-600"
+                            ? "border-[#c75b12]"
                             : "border-gray-100 hover:border-gray-300"
                         }`}
                       >
@@ -607,7 +607,7 @@ export default function SocialMediaContent() {
 
               <button
                 type="submit"
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#32373c] py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#454a50]"
               >
                 <Calendar className="h-4 w-4" />
                 Planla

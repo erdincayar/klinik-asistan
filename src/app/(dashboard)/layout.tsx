@@ -671,13 +671,13 @@ function TrialBanner({ status, trialEnd }: { status: string; trialEnd?: string |
     const isUrgent = daysLeft <= 3;
     return (
       <div className={`border-b px-4 py-2.5 flex items-center justify-between text-sm ${
-        isUrgent ? "bg-red-50 border-red-200" : "bg-blue-50 border-blue-100"
+        isUrgent ? "bg-red-50 border-red-200" : "bg-[#fef4ec] border-[#fde5d0]"
       }`}>
-        <span className={isUrgent ? "text-red-700 font-medium" : "text-blue-700"}>
+        <span className={isUrgent ? "text-red-700 font-medium" : "text-[#9e4a0f]"}>
           {isUrgent ? "🔴" : "⏱"} Deneme süreniz: {daysLeft} gün kaldı
         </span>
         <Link href="/billing" className={`rounded-lg px-3 py-1 text-xs font-semibold text-white ${
-          isUrgent ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"
+          isUrgent ? "bg-red-600 hover:bg-red-700" : "bg-[#32373c] hover:bg-[#454a50]"
         }`}>
           {isUrgent ? "Hemen Aktif Et" : "Planımı Aktif Et"}
         </Link>

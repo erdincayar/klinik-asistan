@@ -117,8 +117,8 @@ export function AutocompleteInput({
             <button
               key={s}
               type="button"
-              className={`w-full px-3 py-2 text-left text-sm transition-colors hover:bg-blue-50 ${
-                i === highlightIndex ? "bg-blue-50 text-blue-700" : "text-gray-700"
+              className={`w-full px-3 py-2 text-left text-sm transition-colors hover:bg-[#fef4ec] ${
+                i === highlightIndex ? "bg-[#fef4ec] text-[#9e4a0f]" : "text-gray-700"
               }`}
               onMouseDown={(e) => {
                 e.preventDefault();

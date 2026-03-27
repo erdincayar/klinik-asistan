@@ -471,7 +471,7 @@ export default function SettingsPage() {
         className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
       >
         <div className="flex items-center gap-2 border-b border-gray-100 px-6 py-4">
-          <SettingsIcon className="h-4 w-4 text-blue-600" />
+          <SettingsIcon className="h-4 w-4 text-[#c75b12]" />
           <h2 className="text-sm font-semibold text-gray-900">İşletme Bilgileri</h2>
         </div>
         <form onSubmit={handleSaveSettings} className="space-y-4 p-6">
@@ -481,7 +481,7 @@ export default function SettingsPage() {
               <input
                 value={settings.clinicName}
                 onChange={(e) => setSettings({ ...settings, clinicName: e.target.value })}
-                className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
                 placeholder="İşletme adı"
               />
             </div>
@@ -490,7 +490,7 @@ export default function SettingsPage() {
               <input
                 value={settings.phone}
                 onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
-                className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
                 placeholder="Telefon"
               />
             </div>
@@ -501,7 +501,7 @@ export default function SettingsPage() {
               value={settings.address}
               onChange={(e) => setSettings({ ...settings, address: e.target.value })}
               rows={2}
-              className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+              className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
               placeholder="Adres"
             />
           </div>
@@ -513,7 +513,7 @@ export default function SettingsPage() {
               max="100"
               value={settings.vatRate}
               onChange={(e) => setSettings({ ...settings, vatRate: Number(e.target.value) })}
-              className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+              className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
             />
           </div>
 
@@ -523,7 +523,7 @@ export default function SettingsPage() {
           <button
             type="submit"
             disabled={saving}
-            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#32373c] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#454a50] disabled:opacity-50"
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             {saving ? "Kaydediliyor..." : "Kaydet"}
@@ -539,7 +539,7 @@ export default function SettingsPage() {
         className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
       >
         <div className="flex items-center gap-2 border-b border-gray-100 px-6 py-4">
-          <Target className="h-4 w-4 text-blue-600" />
+          <Target className="h-4 w-4 text-[#c75b12]" />
           <h2 className="text-sm font-semibold text-gray-900">Meta Reklam Bağlantısı</h2>
         </div>
         <div className="p-6">
@@ -632,7 +632,7 @@ export default function SettingsPage() {
                   <input
                     value={metaForm.appId}
                     onChange={(e) => setMetaForm({ ...metaForm, appId: e.target.value })}
-                    className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                    className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
                     placeholder="123456789..."
                   />
                 </div>
@@ -641,7 +641,7 @@ export default function SettingsPage() {
                   <input
                     value={metaForm.adAccountId}
                     onChange={(e) => setMetaForm({ ...metaForm, adAccountId: e.target.value })}
-                    className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                    className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
                     placeholder="act_123456789..."
                   />
                   <p className="mt-1 text-[11px] text-gray-400">act_ prefix ile birlikte girin</p>
@@ -654,7 +654,7 @@ export default function SettingsPage() {
                     type={showMetaToken ? "text" : "password"}
                     value={metaForm.accessToken}
                     onChange={(e) => setMetaForm({ ...metaForm, accessToken: e.target.value })}
-                    className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                    className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
                     placeholder="EAA..."
                   />
                   <button
@@ -707,7 +707,7 @@ export default function SettingsPage() {
                     }
                   }}
                   disabled={metaSaving}
-                  className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#32373c] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#454a50] disabled:opacity-50"
                 >
                   {metaSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                   Bağlantıyı Kaydet
@@ -767,7 +767,7 @@ export default function SettingsPage() {
                   <p><strong>3.</strong> Tools → Graph API Explorer → Token oluşturun (ads_management, ads_read izinleri).</p>
                   <p><strong>4.</strong> Business Settings → Ad Accounts → Hesap ID&apos;nizi kopyalayın (act_ ile başlar).</p>
                   <p><strong>5.</strong> Uzun süreli token için: Settings → Advanced → System Users → token oluşturun.</p>
-                  <p className="flex items-center gap-1 text-blue-600">
+                  <p className="flex items-center gap-1 text-[#c75b12]">
                     <ExternalLink className="h-3 w-3" />
                     <a href="https://developers.facebook.com/docs/marketing-apis" target="_blank" rel="noopener noreferrer" className="underline">
                       Meta Marketing API Dokümantasyonu
@@ -788,7 +788,7 @@ export default function SettingsPage() {
         className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
       >
         <div className="flex items-center gap-2 border-b border-gray-100 px-6 py-4">
-          <Send className="h-4 w-4 text-blue-600" />
+          <Send className="h-4 w-4 text-[#c75b12]" />
           <h2 className="text-sm font-semibold text-gray-900">Telegram Bağlantısı</h2>
         </div>
         <div className="p-6">
@@ -812,8 +812,8 @@ export default function SettingsPage() {
             </div>
           ) : (
             <div className="text-center">
-              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50">
-                <Send className="h-6 w-6 text-blue-600" />
+              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#fef4ec]">
+                <Send className="h-6 w-6 text-[#c75b12]" />
               </div>
               <p className="mb-1 text-sm font-medium text-gray-800">Telegram ile Bağlan</p>
               <p className="mb-4 text-xs text-gray-500">
@@ -821,7 +821,7 @@ export default function SettingsPage() {
               </p>
               <button
                 onClick={handleGenerateTelegramLink}
-                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+                className="inline-flex items-center gap-2 rounded-xl bg-[#32373c] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#454a50]"
               >
                 <QrCode className="h-4 w-4" />
                 Telegram Bağla
@@ -864,7 +864,7 @@ export default function SettingsPage() {
             <div className="mb-4 rounded-xl bg-gray-50 p-3">
               <p className="mb-1 text-xs text-gray-500">veya bu linki kullanın:</p>
               <div className="flex items-center gap-2">
-                <code className="flex-1 truncate text-xs text-blue-600">
+                <code className="flex-1 truncate text-xs text-[#c75b12]">
                   {telegramLink.link}
                 </code>
                 <button
@@ -1070,14 +1070,14 @@ export default function SettingsPage() {
                   key={plan.id}
                   className={`relative rounded-xl border p-5 ${
                     plan.popular
-                      ? "border-blue-200 bg-blue-50/30 ring-1 ring-blue-100"
+                      ? "border-[#fde5d0] bg-[#fef4ec]/30 ring-1 ring-[#c75b12]/20"
                       : isCurrent
                       ? "border-green-200 bg-green-50/30"
                       : "border-gray-100"
                   }`}
                 >
                   {plan.popular && (
-                    <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-blue-600 px-3 py-0.5 text-[10px] font-semibold text-white">
+                    <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-[#32373c] px-3 py-0.5 text-[10px] font-semibold text-white">
                       Popüler
                     </span>
                   )}
@@ -1105,7 +1105,7 @@ export default function SettingsPage() {
                       <button
                         onClick={() => handlePayment("SUBSCRIPTION", plan.id)}
                         disabled={paymentLoading === `SUBSCRIPTION_${plan.id}`}
-                        className="w-full rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+                        className="w-full rounded-lg bg-[#32373c] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#454a50] disabled:opacity-50"
                       >
                         {paymentLoading === `SUBSCRIPTION_${plan.id}` ? (
                           <Loader2 className="mx-auto h-4 w-4 animate-spin" />
@@ -1136,7 +1136,7 @@ export default function SettingsPage() {
         className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
       >
         <div className="flex items-center gap-2 border-b border-gray-100 px-6 py-4">
-          <HardDrive className="h-4 w-4 text-blue-600" />
+          <HardDrive className="h-4 w-4 text-[#c75b12]" />
           <h2 className="text-sm font-semibold text-gray-900">Depolama</h2>
         </div>
         <div className="p-6 space-y-6">
@@ -1144,7 +1144,7 @@ export default function SettingsPage() {
             const used = settings.storageUsedMB || 0;
             const limit = settings.storageLimitMB || 100;
             const pct = Math.min(100, (used / limit) * 100);
-            const barColor = pct >= 100 ? "bg-red-500" : pct >= 95 ? "bg-red-400" : pct >= 80 ? "bg-orange-500" : "bg-blue-500";
+            const barColor = pct >= 100 ? "bg-red-500" : pct >= 95 ? "bg-red-400" : pct >= 80 ? "bg-orange-500" : "bg-[#fef4ec]0";
             const formatSize = (mb: number) => mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${mb} MB`;
             return (
               <div className="rounded-xl bg-gray-50 p-5">
@@ -1178,7 +1178,7 @@ export default function SettingsPage() {
                   <button
                     onClick={() => handlePayment("STORAGE_PACKAGE", pkg.id)}
                     disabled={paymentLoading === `STORAGE_PACKAGE_${pkg.id}`}
-                    className="mt-3 w-full rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+                    className="mt-3 w-full rounded-lg bg-[#32373c] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#454a50] disabled:opacity-50"
                   >
                     {paymentLoading === `STORAGE_PACKAGE_${pkg.id}` ? (
                       <Loader2 className="mx-auto h-3.5 w-3.5 animate-spin" />
@@ -1228,7 +1228,7 @@ export default function SettingsPage() {
                     <button
                       onClick={() => handleToggleReminder(reminder.id, reminder.isActive)}
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        reminder.isActive ? "bg-blue-600" : "bg-gray-300"
+                        reminder.isActive ? "bg-[#32373c]" : "bg-gray-300"
                       }`}
                     >
                       <span
@@ -1261,7 +1261,7 @@ export default function SettingsPage() {
                 value={newReminder.treatmentCategory}
                 onChange={(e) => setNewReminder({ ...newReminder, treatmentCategory: e.target.value })}
                 required
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
               >
                 <option value="">Kategori seçin...</option>
                 {TREATMENT_CATEGORIES.map((cat) => (
@@ -1279,7 +1279,7 @@ export default function SettingsPage() {
                 onChange={(e) => setNewReminder({ ...newReminder, intervalDays: e.target.value })}
                 required
                 placeholder="Örnek: 30"
-                className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
               />
             </div>
 
@@ -1291,14 +1291,14 @@ export default function SettingsPage() {
                 required
                 placeholder="Örnek: Sayın {musteri}, {tedavi} işleminizin üzerinden {gun} gün geçmiştir."
                 rows={3}
-                className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
               />
             </div>
 
             <button
               type="submit"
               disabled={reminderSaving}
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#32373c] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#454a50] disabled:opacity-50"
             >
               {reminderSaving ? "Ekleniyor..." : "Hatırlatma Ekle"}
             </button>
@@ -1384,7 +1384,7 @@ export default function SettingsPage() {
                               handleInviteEmployee(emp.id);
                             }}
                             disabled={inviteLoading === emp.id}
-                            className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50"
+                            className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-[#c75b12] hover:bg-[#fef4ec] transition-colors disabled:opacity-50"
                           >
                             {inviteLoading === emp.id ? <Loader2 className="h-3 w-3 animate-spin" /> : "Yeniden Davet"}
                           </button>
@@ -1394,7 +1394,7 @@ export default function SettingsPage() {
                         <button
                           onClick={() => handleInviteEmployee(emp.id)}
                           disabled={inviteLoading === emp.id}
-                          className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
+                          className="flex items-center gap-1.5 rounded-lg bg-[#32373c] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#454a50] transition-colors disabled:opacity-50"
                         >
                           {inviteLoading === emp.id ? (
                             <Loader2 className="h-3 w-3 animate-spin" />
@@ -1419,8 +1419,8 @@ export default function SettingsPage() {
         <DialogContent className="max-w-md rounded-2xl">
           <div className="space-y-4">
             <div className="text-center">
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-50">
-                <UserPlus className="h-6 w-6 text-blue-600" />
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#fef4ec]">
+                <UserPlus className="h-6 w-6 text-[#c75b12]" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900">Davet Bağlantısı Oluşturuldu</h3>
               <p className="mt-1 text-sm text-gray-500">Bu bağlantıyı çalışanınızla paylaşın. 7 gün geçerlidir.</p>
@@ -1434,7 +1434,7 @@ export default function SettingsPage() {
               />
               <button
                 onClick={copyInviteLink}
-                className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition-colors"
+                className="flex items-center gap-1.5 rounded-lg bg-[#32373c] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#454a50] transition-colors"
               >
                 {linkCopied ? <><Check className="h-3 w-3" /> Kopyalandı</> : <><Copy className="h-3 w-3" /> Kopyala</>}
               </button>
@@ -1630,7 +1630,7 @@ export default function SettingsPage() {
       <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
         <DialogContent className="max-w-lg p-0">
           <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-3">
-            <CreditCard className="h-4 w-4 text-blue-600" />
+            <CreditCard className="h-4 w-4 text-[#c75b12]" />
             <h3 className="text-sm font-semibold text-gray-900">Güvenli Ödeme</h3>
           </div>
           {paytrToken && (

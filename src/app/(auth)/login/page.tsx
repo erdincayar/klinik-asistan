@@ -83,7 +83,7 @@ export default function LoginPage() {
           >
             {error}
             {googleError && (
-              <Link href="/register" className="ml-1 font-semibold text-blue-600 hover:text-blue-700 underline">
+              <Link href="/register" className="ml-1 font-semibold text-[#c75b12] hover:text-[#9e4a0f] underline">
                 Kayıt Ol
               </Link>
             )}
@@ -103,7 +103,7 @@ export default function LoginPage() {
             type="email"
             autoComplete="email"
             placeholder="ornek@email.com"
-            className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
             {...register("email")}
           />
           {errors.email && (
@@ -122,7 +122,7 @@ export default function LoginPage() {
             </label>
             <Link
               href="/forgot-password"
-              className="text-xs font-medium text-blue-600 hover:text-blue-700"
+              className="text-xs font-medium text-[#c75b12] hover:text-[#9e4a0f]"
             >
               Şifremi Unuttum
             </Link>
@@ -133,7 +133,7 @@ export default function LoginPage() {
               type={showPassword ? "text" : "password"}
               autoComplete="current-password"
               placeholder="••••••••"
-              className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 pr-11 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 pr-11 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
               {...register("password")}
             />
             <button
@@ -161,7 +161,7 @@ export default function LoginPage() {
             type="checkbox"
             checked={rememberMe}
             onChange={(e) => setRememberMe(e.target.checked)}
-            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500/20"
+            className="h-4 w-4 rounded border-gray-300 text-[#c75b12] focus:ring-[#c75b12]/20"
           />
           <label
             htmlFor="rememberMe"
@@ -175,7 +175,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#32373c] px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-[#454a50] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? (
             <>
@@ -238,7 +238,7 @@ export default function LoginPage() {
         Hesabınız yok mu?{" "}
         <Link
           href="/register"
-          className="font-semibold text-blue-600 hover:text-blue-700"
+          className="font-semibold text-[#c75b12] hover:text-[#9e4a0f]"
         >
           Kayıt Ol
         </Link>

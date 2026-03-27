@@ -57,13 +57,13 @@ export default function ReportTab() {
     <div className="space-y-6">
       {/* Financial summary cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-5">
+        <div className="rounded-2xl border border-[#fde5d0] bg-gradient-to-br from-[#fef4ec] to-white p-5">
           <div className="flex items-center gap-2 mb-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-lg">📦</span>
-            <p className="text-sm font-medium text-blue-700">Stok Maliyeti</p>
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#fde5d0] text-lg">📦</span>
+            <p className="text-sm font-medium text-[#9e4a0f]">Stok Maliyeti</p>
           </div>
-          <p className="text-2xl font-bold text-blue-900">{formatCurrency(summary.totalStockValue.purchase)}</p>
-          <p className="mt-1 text-xs text-blue-500">{summary.trackedCount} ürünün maliyet toplamı</p>
+          <p className="text-2xl font-bold text-[#652e09]">{formatCurrency(summary.totalStockValue.purchase)}</p>
+          <p className="mt-1 text-xs text-[#c75b12]">{summary.trackedCount} ürünün maliyet toplamı</p>
         </div>
         <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-5">
           <div className="flex items-center gap-2 mb-2">
@@ -94,7 +94,7 @@ export default function ReportTab() {
         <Card>
           <CardContent className="p-6">
             <p className="text-sm text-gray-500">Stok Takip Edilen</p>
-            <p className="text-2xl font-bold text-blue-600">{summary.trackedCount}</p>
+            <p className="text-2xl font-bold text-[#c75b12]">{summary.trackedCount}</p>
           </CardContent>
         </Card>
         <Card>

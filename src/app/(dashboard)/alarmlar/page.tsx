@@ -76,7 +76,7 @@ interface Product {
 /* ──────────────────────── HELPERS ──────────────────────── */
 
 const typeConfig: Record<string, { label: string; icon: typeof Package; color: string }> = {
-  STOCK: { label: "Stok", icon: Package, color: "bg-blue-50 text-blue-700" },
+  STOCK: { label: "Stok", icon: Package, color: "bg-[#fef4ec] text-[#9e4a0f]" },
   CUSTOMER_VISIT: { label: "Müşteri Ziyareti", icon: Users, color: "bg-purple-50 text-purple-700" },
   CUSTOMER_BIRTHDAY: { label: "Doğum Günü", icon: Cake, color: "bg-pink-50 text-pink-700" },
   FINANCE: { label: "Finans", icon: DollarSign, color: "bg-green-50 text-green-700" },
@@ -383,8 +383,8 @@ function AlarmsPage() {
           className="rounded-2xl border border-gray-100 bg-white p-5"
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
-              <BellRing className="h-5 w-5 text-blue-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fef4ec]">
+              <BellRing className="h-5 w-5 text-[#c75b12]" />
             </div>
             <div>
               <p className="text-[11px] font-medium text-gray-400">Aktif Alarm</p>
@@ -430,10 +430,10 @@ function AlarmsPage() {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <button
           onClick={openCreateDialog}
-          className="group flex items-center gap-3 rounded-xl border-2 border-dashed border-gray-200 px-4 py-3 text-left transition-all hover:border-blue-300 hover:bg-blue-50/30"
+          className="group flex items-center gap-3 rounded-xl border-2 border-dashed border-gray-200 px-4 py-3 text-left transition-all hover:border-[#fde5d0] hover:bg-[#fef4ec]/30"
         >
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 transition-colors group-hover:bg-blue-100">
-            <UserPlus className="h-4 w-4 text-blue-600" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#fef4ec] transition-colors group-hover:bg-[#fde5d0]">
+            <UserPlus className="h-4 w-4 text-[#c75b12]" />
           </div>
           <div>
             <p className="text-sm font-semibold text-gray-800">Müşteriye Özel Alarm</p>
@@ -461,7 +461,7 @@ function AlarmsPage() {
           className={cn(
             "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
             tab === "alarms"
-              ? "bg-blue-600 text-white"
+              ? "bg-[#32373c] text-white"
               : "bg-gray-100 text-gray-600 hover:bg-gray-200",
           )}
         >
@@ -472,7 +472,7 @@ function AlarmsPage() {
           className={cn(
             "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
             tab === "logs"
-              ? "bg-blue-600 text-white"
+              ? "bg-[#32373c] text-white"
               : "bg-gray-100 text-gray-600 hover:bg-gray-200",
           )}
         >
@@ -526,7 +526,7 @@ function AlarmsPage() {
                     <p className="text-sm text-gray-500">Henüz alarm tanımlanmamış</p>
                     <button
                       onClick={openCreateDialog}
-                      className="mt-2 text-sm font-medium text-blue-600 hover:underline"
+                      className="mt-2 text-sm font-medium text-[#c75b12] hover:underline"
                     >
                       İlk alarmınızı oluşturun
                     </button>
@@ -628,7 +628,7 @@ function AlarmsPage() {
                                         onChange={() => handleToggleAlarm(alarm)}
                                         className="peer sr-only"
                                       />
-                                      <div className="h-4 w-7 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-3 after:w-3 after:rounded-full after:bg-white after:transition-all peer-checked:bg-blue-600 peer-checked:after:translate-x-3" />
+                                      <div className="h-4 w-7 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-3 after:w-3 after:rounded-full after:bg-white after:transition-all peer-checked:bg-[#32373c] peer-checked:after:translate-x-3" />
                                     </label>
                                   </div>
                                 ))}
@@ -685,11 +685,11 @@ function AlarmsPage() {
                                     onChange={() => handleToggleAlarm(alarm)}
                                     className="peer sr-only"
                                   />
-                                  <div className="h-5 w-9 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-all peer-checked:bg-blue-600 peer-checked:after:translate-x-full" />
+                                  <div className="h-5 w-9 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-all peer-checked:bg-[#32373c] peer-checked:after:translate-x-full" />
                                 </label>
                                 <button
                                   onClick={() => openEditDialog(alarm)}
-                                  className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
+                                  className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-[#fef4ec] hover:text-[#c75b12]"
                                   title="Düzenle"
                                 >
                                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
@@ -727,7 +727,7 @@ function AlarmsPage() {
                   <select
                     value={logTypeFilter}
                     onChange={(e) => setLogTypeFilter(e.target.value)}
-                    className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs text-gray-700 focus:border-blue-400 focus:outline-none"
+                    className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs text-gray-700 focus:border-[#c75b12] focus:outline-none"
                   >
                     <option value="all">Tüm Türler</option>
                     <option value="STOCK">Stok</option>
@@ -760,7 +760,7 @@ function AlarmsPage() {
                         key={log.id}
                         className={cn(
                           "flex items-center justify-between rounded-xl border px-4 py-3",
-                          log.isRead ? "border-gray-100 bg-white" : "border-blue-100 bg-blue-50/30",
+                          log.isRead ? "border-gray-100 bg-white" : "border-[#fde5d0] bg-[#fef4ec]/30",
                         )}
                       >
                         <div className="min-w-0 flex-1">
@@ -774,7 +774,7 @@ function AlarmsPage() {
                               </span>
                             )}
                             {!log.isRead && (
-                              <span className="h-2 w-2 rounded-full bg-blue-500" />
+                              <span className="h-2 w-2 rounded-full bg-[#fef4ec]0" />
                             )}
                           </div>
                           <p className="mt-0.5 truncate text-xs text-gray-500">{log.message}</p>
@@ -824,7 +824,7 @@ function AlarmsPage() {
                     setFormType(e.target.value);
                     setFormConditions({});
                   }}
-                  className="block w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                  className="block w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
                 >
                   <option value="STOCK">Stok</option>
                   <option value="CUSTOMER_VISIT">Müşteri Ziyareti</option>
@@ -844,7 +844,7 @@ function AlarmsPage() {
                     onChange={(e) =>
                       setFormConditions((prev) => ({ ...prev, productId: e.target.value || undefined }))
                     }
-                    className="block w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                    className="block w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
                   >
                     <option value="">Tüm Ürünler</option>
                     {products.map((p) => (

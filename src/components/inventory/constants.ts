@@ -119,7 +119,7 @@ export const CURRENCIES = [
 
 export const CATEGORY_BADGE_COLORS: Record<string, string> = {
   KOZMETIK: "bg-pink-100 text-pink-800",
-  MEDIKAL: "bg-blue-100 text-blue-800",
+  MEDIKAL: "bg-[#fde5d0] text-[#863d0c]",
   SARF_MALZEME: "bg-orange-100 text-orange-800",
   DIGER: "bg-gray-100 text-gray-800",
 };
@@ -138,7 +138,7 @@ export const TYPE_BADGE: Record<string, { label: string; className: string }> = 
 };
 
 export const ALARM_TYPE_BADGE: Record<string, { label: string; className: string }> = {
-  STOCK: { label: "Stok", className: "bg-blue-100 text-blue-800" },
+  STOCK: { label: "Stok", className: "bg-[#fde5d0] text-[#863d0c]" },
   PROFIT_MARGIN: { label: "Kâr Marjı", className: "bg-orange-100 text-orange-800" },
   CURRENCY: { label: "Döviz", className: "bg-green-100 text-green-800" },
 };

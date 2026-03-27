@@ -96,13 +96,13 @@ export default function FinancialReportsContent() {
         className="flex items-center justify-between"
       >
         <div className="flex items-center gap-2">
-          <BarChart3 className="h-5 w-5 text-blue-600" />
+          <BarChart3 className="h-5 w-5 text-[#c75b12]" />
           <h2 className="text-lg font-semibold text-gray-900">Mali Tablo</h2>
         </div>
         <select
           value={year}
           onChange={(e) => setYear(parseInt(e.target.value))}
-          className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+          className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
         >
           {[2024, 2025, 2026].map((y) => (
             <option key={y} value={y}>{y}</option>
@@ -127,12 +127,12 @@ export default function FinancialReportsContent() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <div className="rounded-2xl border border-gray-100 bg-white p-5">
               <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50">
-                  <TrendingUp className="h-4 w-4 text-blue-600" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#fef4ec]">
+                  <TrendingUp className="h-4 w-4 text-[#c75b12]" />
                 </div>
                 <span className="text-sm text-gray-500">Ciro</span>
               </div>
-              <p className="mt-3 text-xl font-bold text-blue-600">
+              <p className="mt-3 text-xl font-bold text-[#c75b12]">
                 {formatCurrency(data.totalIncome)}
               </p>
             </div>
@@ -313,7 +313,7 @@ export default function FinancialReportsContent() {
                       <td className="px-6 py-3 font-medium text-gray-800">{m.monthName}</td>
                       <td className="px-6 py-3 text-right text-emerald-600">{formatCurrency(m.income)}</td>
                       <td className="px-6 py-3 text-right text-red-600">{formatCurrency(m.expense)}</td>
-                      <td className={`px-6 py-3 text-right font-semibold ${m.profit >= 0 ? "text-blue-600" : "text-red-600"}`}>
+                      <td className={`px-6 py-3 text-right font-semibold ${m.profit >= 0 ? "text-[#c75b12]" : "text-red-600"}`}>
                         {formatCurrency(m.profit)}
                       </td>
                     </tr>
@@ -336,7 +336,7 @@ export default function FinancialReportsContent() {
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-500">Net Kar</span>
-                    <span className={`font-semibold ${m.profit >= 0 ? "text-blue-600" : "text-red-600"}`}>
+                    <span className={`font-semibold ${m.profit >= 0 ? "text-[#c75b12]" : "text-red-600"}`}>
                       {formatCurrency(m.profit)}
                     </span>
                   </div>

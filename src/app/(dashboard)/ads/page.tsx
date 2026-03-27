@@ -215,7 +215,7 @@ function parseAnalysisText(text: string): React.ReactNode[] {
     const numberedMatch = trimmed.match(/^\d+\.\s*\*\*(.+?)\*\*(.*)/);
     if (numberedMatch) {
       elements.push(
-        <h4 key={i} className="mt-3 mb-1 text-sm font-bold text-blue-800">
+        <h4 key={i} className="mt-3 mb-1 text-sm font-bold text-[#863d0c]">
           {numberedMatch[1]}
         </h4>
       );
@@ -579,7 +579,7 @@ export default function AdsPage() {
           transition={{ duration: 0.4 }}
           className="flex items-center gap-2"
         >
-          <Megaphone className="h-5 w-5 text-blue-600" />
+          <Megaphone className="h-5 w-5 text-[#c75b12]" />
           <h2 className="text-lg font-semibold text-gray-900">Meta Reklam Yonetimi</h2>
         </motion.div>
 
@@ -590,8 +590,8 @@ export default function AdsPage() {
           className="flex min-h-[400px] items-center justify-center rounded-2xl border border-gray-100 bg-white"
         >
           <div className="text-center max-w-md px-6">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50">
-              <Megaphone className="h-8 w-8 text-blue-400" />
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#fef4ec]">
+              <Megaphone className="h-8 w-8 text-[#c75b12]" />
             </div>
             <h3 className="text-base font-semibold text-gray-900 mb-2">
               Meta hesabinizi baglayin
@@ -602,7 +602,7 @@ export default function AdsPage() {
             </p>
             <Link
               href="/settings"
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#32373c] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#454a50]"
             >
               <Settings className="h-4 w-4" />
               Ayarlara Git
@@ -625,7 +625,7 @@ export default function AdsPage() {
         className="flex items-center justify-between"
       >
         <div className="flex items-center gap-2">
-          <Megaphone className="h-5 w-5 text-blue-600" />
+          <Megaphone className="h-5 w-5 text-[#c75b12]" />
           <h2 className="text-lg font-semibold text-gray-900">Meta Reklam Yonetimi</h2>
         </div>
         <button
@@ -658,7 +658,7 @@ export default function AdsPage() {
               onClick={() => setActiveTab(tab.key)}
               className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-semibold transition-all ${
                 isActive
-                  ? "bg-blue-600 text-white shadow-sm"
+                  ? "bg-[#32373c] text-white shadow-sm"
                   : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
               }`}
             >
@@ -696,7 +696,7 @@ export default function AdsPage() {
             </p>
             <button
               onClick={() => setActiveTab("new")}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-700"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#32373c] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#454a50]"
             >
               <Plus className="h-3.5 w-3.5" />
               Yeni Kampanya
@@ -722,7 +722,7 @@ export default function AdsPage() {
                 </p>
                 <button
                   onClick={() => setActiveTab("new")}
-                  className="mt-4 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+                  className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#32373c] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#454a50]"
                 >
                   <Plus className="h-4 w-4" />
                   Yeni Kampanya Olustur
@@ -908,7 +908,7 @@ export default function AdsPage() {
                       value={form.name}
                       onChange={(e) => updateForm("name", e.target.value)}
                       placeholder="Ornegin: Yaz Kampanyasi 2025"
-                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
                     />
                   </div>
                   <div>
@@ -919,7 +919,7 @@ export default function AdsPage() {
                       required
                       value={form.objective}
                       onChange={(e) => updateForm("objective", e.target.value)}
-                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
                     >
                       {Object.entries(OBJECTIVES).map(([key, label]) => (
                         <option key={key} value={key}>
@@ -940,7 +940,7 @@ export default function AdsPage() {
                       value={form.dailyBudget}
                       onChange={(e) => updateForm("dailyBudget", e.target.value)}
                       placeholder="100"
-                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
                     />
                   </div>
                   <div>
@@ -952,7 +952,7 @@ export default function AdsPage() {
                       required
                       value={form.startDate}
                       onChange={(e) => updateForm("startDate", e.target.value)}
-                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
                     />
                   </div>
                   <div>
@@ -963,7 +963,7 @@ export default function AdsPage() {
                       type="date"
                       value={form.endDate}
                       onChange={(e) => updateForm("endDate", e.target.value)}
-                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
                     />
                   </div>
                   <div>
@@ -973,7 +973,7 @@ export default function AdsPage() {
                     <select
                       value={form.platforms}
                       onChange={(e) => updateForm("platforms", e.target.value)}
-                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
                     >
                       {Object.entries(PLATFORM_LABELS).map(([key, label]) => (
                         <option key={key} value={key}>
@@ -998,7 +998,7 @@ export default function AdsPage() {
                       value={form.targetCity}
                       onChange={(e) => updateForm("targetCity", e.target.value)}
                       placeholder="Ornegin: Istanbul, Ankara"
-                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
                     />
                   </div>
                   <div>
@@ -1011,7 +1011,7 @@ export default function AdsPage() {
                       max="65"
                       value={form.targetAgeMin}
                       onChange={(e) => updateForm("targetAgeMin", e.target.value)}
-                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
                     />
                   </div>
                   <div>
@@ -1024,7 +1024,7 @@ export default function AdsPage() {
                       max="65"
                       value={form.targetAgeMax}
                       onChange={(e) => updateForm("targetAgeMax", e.target.value)}
-                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
                     />
                   </div>
                   <div>
@@ -1034,7 +1034,7 @@ export default function AdsPage() {
                     <select
                       value={form.targetGender}
                       onChange={(e) => updateForm("targetGender", e.target.value)}
-                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
                     >
                       {Object.entries(GENDER_LABELS).map(([key, label]) => (
                         <option key={key} value={key}>
@@ -1052,7 +1052,7 @@ export default function AdsPage() {
                       value={form.interests}
                       onChange={(e) => updateForm("interests", e.target.value)}
                       placeholder="Virgul ile ayirin: saglik, guzellik, spor"
-                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
                     />
                   </div>
                 </div>
@@ -1113,7 +1113,7 @@ export default function AdsPage() {
                       onChange={(e) => updateForm("headline", e.target.value)}
                       placeholder="Dikkat cekici bir baslik"
                       maxLength={100}
-                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
                     />
                   </div>
                   <div className="sm:col-span-2">
@@ -1126,7 +1126,7 @@ export default function AdsPage() {
                       placeholder="Reklamda gosterilecek aciklama metni..."
                       rows={3}
                       maxLength={500}
-                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20 resize-none"
+                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20 resize-none"
                     />
                   </div>
                   <div>
@@ -1136,7 +1136,7 @@ export default function AdsPage() {
                     <select
                       value={form.ctaType}
                       onChange={(e) => updateForm("ctaType", e.target.value)}
-                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
                     >
                       {Object.entries(CTA_TYPES).map(([key, label]) => (
                         <option key={key} value={key}>
@@ -1154,7 +1154,7 @@ export default function AdsPage() {
                       value={form.websiteUrl}
                       onChange={(e) => updateForm("websiteUrl", e.target.value)}
                       placeholder="https://ornek.com"
-                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
                     />
                   </div>
                 </div>
@@ -1164,7 +1164,7 @@ export default function AdsPage() {
               <button
                 type="submit"
                 disabled={creating || !form.name || !form.dailyBudget || !form.startDate}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#32373c] py-3 text-sm font-semibold text-white transition-colors hover:bg-[#454a50] disabled:opacity-50"
               >
                 {creating ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -1184,8 +1184,8 @@ export default function AdsPage() {
                 <div className="rounded-xl border border-gray-200 overflow-hidden">
                   {/* Header */}
                   <div className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100">
-                    <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                      <Megaphone className="h-4 w-4 text-blue-600" />
+                    <div className="h-8 w-8 rounded-full bg-[#fde5d0] flex items-center justify-center">
+                      <Megaphone className="h-4 w-4 text-[#c75b12]" />
                     </div>
                     <div>
                       <p className="text-xs font-semibold text-gray-900">
@@ -1226,10 +1226,10 @@ export default function AdsPage() {
                   {/* CTA */}
                   <div className="border-t border-gray-100 px-3 py-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-blue-600">
+                      <span className="text-xs font-semibold text-[#c75b12]">
                         {CTA_TYPES[form.ctaType] || "Daha Fazla"}
                       </span>
-                      <ChevronRight className="h-3.5 w-3.5 text-blue-600" />
+                      <ChevronRight className="h-3.5 w-3.5 text-[#c75b12]" />
                     </div>
                   </div>
                 </div>
@@ -1308,7 +1308,7 @@ export default function AdsPage() {
                   onClick={() => setDateRangeDays(range.days)}
                   className={`rounded-xl px-4 py-2 text-xs font-semibold transition-all ${
                     dateRangeDays === range.days
-                      ? "bg-blue-600 text-white shadow-sm"
+                      ? "bg-[#32373c] text-white shadow-sm"
                       : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
                   }`}
                 >
@@ -1319,7 +1319,7 @@ export default function AdsPage() {
             <button
               onClick={handleAnalyze}
               disabled={analyzing}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#32373c] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#454a50] disabled:opacity-50"
             >
               {analyzing ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1357,8 +1357,8 @@ export default function AdsPage() {
                     .reduce((s, d) => s + (d.impressions || 0), 0)
                     .toLocaleString("tr-TR"),
                   icon: Eye,
-                  color: "text-blue-600",
-                  bg: "bg-blue-50",
+                  color: "text-[#c75b12]",
+                  bg: "bg-[#fef4ec]",
                 },
                 {
                   label: "Toplam Tiklama",
@@ -1551,12 +1551,12 @@ export default function AdsPage() {
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-center justify-center rounded-2xl border border-blue-100 bg-blue-50/50 py-12"
+              className="flex items-center justify-center rounded-2xl border border-[#fde5d0] bg-[#fef4ec]/50 py-12"
             >
               <div className="text-center">
-                <Loader2 className="mx-auto h-8 w-8 animate-spin text-blue-500 mb-3" />
-                <p className="text-sm font-medium text-blue-700">AI analiz yapiliyor...</p>
-                <p className="mt-1 text-xs text-blue-500">
+                <Loader2 className="mx-auto h-8 w-8 animate-spin text-[#c75b12] mb-3" />
+                <p className="text-sm font-medium text-[#9e4a0f]">AI analiz yapiliyor...</p>
+                <p className="mt-1 text-xs text-[#c75b12]">
                   Kampanya verileriniz inceleniyor
                 </p>
               </div>
@@ -1567,13 +1567,13 @@ export default function AdsPage() {
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-2xl border border-blue-100 bg-blue-50/50 p-6"
+              className="rounded-2xl border border-[#fde5d0] bg-[#fef4ec]/50 p-6"
             >
               <div className="flex items-center gap-2 mb-4">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-100">
-                  <Bot className="h-4 w-4 text-blue-600" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#fde5d0]">
+                  <Bot className="h-4 w-4 text-[#c75b12]" />
                 </div>
-                <h3 className="text-sm font-semibold text-blue-900">AI Kampanya Analizi</h3>
+                <h3 className="text-sm font-semibold text-[#652e09]">AI Kampanya Analizi</h3>
               </div>
               <div className="space-y-0.5">{parseAnalysisText(analysis)}</div>
             </motion.div>

@@ -21,7 +21,7 @@ export default function PaymentFailedPage() {
         <div className="space-y-2">
           <button
             onClick={() => router.push("/settings")}
-            className="w-full rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+            className="w-full rounded-xl bg-[#32373c] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#454a50]"
           >
             Tekrar Dene
           </button>

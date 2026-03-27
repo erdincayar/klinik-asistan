@@ -46,7 +46,7 @@ interface BillingRecord {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; icon: any; color: string; bg: string }> = {
-  trial: { label: "Deneme Süresi", icon: Clock, color: "text-blue-700", bg: "bg-blue-50 border-blue-200" },
+  trial: { label: "Deneme Süresi", icon: Clock, color: "text-[#9e4a0f]", bg: "bg-[#fef4ec] border-[#fde5d0]" },
   active: { label: "Aktif", icon: CheckCircle2, color: "text-green-700", bg: "bg-green-50 border-green-200" },
   suspended: { label: "Askıda", icon: AlertTriangle, color: "text-red-700", bg: "bg-red-50 border-red-200" },
   cancelled: { label: "İptal", icon: XCircle, color: "text-gray-700", bg: "bg-gray-50 border-gray-200" },
@@ -105,7 +105,7 @@ export default function BillingPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#c75b12]" />
       </div>
     );
   }
@@ -180,7 +180,7 @@ export default function BillingPage() {
           <p className="mt-1 text-2xl font-bold text-gray-900">{plan.activeModules.length}</p>
           <Link
             href="/billing/moduller"
-            className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700"
+            className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#c75b12] hover:text-[#9e4a0f]"
           >
             Modülleri Yönet <ArrowRight className="h-3.5 w-3.5" />
           </Link>
@@ -210,7 +210,7 @@ export default function BillingPage() {
           <button
             onClick={handleAddCard}
             disabled={cardLoading}
-            className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700 disabled:opacity-50"
+            className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#c75b12] hover:text-[#9e4a0f] disabled:opacity-50"
           >
             {cardLoading ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -232,7 +232,7 @@ export default function BillingPage() {
           <p className="mt-1 text-2xl font-bold text-gray-900">{plan.extraUsers}</p>
           <Link
             href="/billing/moduller"
-            className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700"
+            className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#c75b12] hover:text-[#9e4a0f]"
           >
             Değiştir <ArrowRight className="h-3.5 w-3.5" />
           </Link>

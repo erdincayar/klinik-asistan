@@ -113,7 +113,7 @@ export default function AdminPage() {
   ];
 
   const colorMap: Record<string, { bg: string; icon: string; text: string }> = {
-    blue: { bg: "bg-blue-50", icon: "text-blue-600", text: "text-blue-700" },
+    blue: { bg: "bg-[#fef4ec]", icon: "text-[#c75b12]", text: "text-[#9e4a0f]" },
     green: { bg: "bg-green-50", icon: "text-green-600", text: "text-green-700" },
     purple: { bg: "bg-purple-50", icon: "text-purple-600", text: "text-purple-700" },
     orange: { bg: "bg-orange-50", icon: "text-orange-600", text: "text-orange-700" },
@@ -136,7 +136,7 @@ export default function AdminPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="flex items-center gap-2 text-xl font-bold text-gray-900">
-            <Shield className="h-6 w-6 text-blue-600" />
+            <Shield className="h-6 w-6 text-[#c75b12]" />
             Admin Panel
           </h2>
           <p className="mt-1 text-sm text-gray-500">
@@ -146,7 +146,7 @@ export default function AdminPage() {
         <div className="flex gap-2">
           <Link
             href="/admin/users"
-            className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+            className="flex items-center gap-2 rounded-xl bg-[#32373c] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#454a50]"
           >
             <UserPlus className="h-4 w-4" />
             Kullanıcılar
@@ -203,7 +203,7 @@ export default function AdminPage() {
           <h3 className="font-semibold text-gray-900">Son Kullanıcılar</h3>
           <Link
             href="/admin/users"
-            className="flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700"
+            className="flex items-center gap-1 text-sm font-medium text-[#c75b12] hover:text-[#9e4a0f]"
           >
             Tümünü gör <ArrowRight className="h-4 w-4" />
           </Link>

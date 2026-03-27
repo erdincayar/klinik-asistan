@@ -86,7 +86,7 @@ interface Patient {
 
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
   DRAFT: { label: "Taslak", className: "bg-gray-100 text-gray-800" },
-  SENT: { label: "Gönderildi", className: "bg-blue-100 text-blue-800" },
+  SENT: { label: "Gönderildi", className: "bg-[#fde5d0] text-[#863d0c]" },
   APPROVED: { label: "Onaylandı", className: "bg-green-100 text-green-800" },
   CANCELLED: { label: "İptal", className: "bg-red-100 text-red-800" },
 };
@@ -1054,7 +1054,7 @@ function InvoiceSummaryTab() {
         <Card>
           <CardContent className="p-6">
             <p className="text-sm text-gray-500">Bu Yıl Toplam</p>
-            <p className="text-2xl font-bold text-blue-600">
+            <p className="text-2xl font-bold text-[#c75b12]">
               {formatCurrency(thisYearTotal)}
             </p>
           </CardContent>
@@ -1158,7 +1158,7 @@ function InvoiceSummaryTab() {
             </div>
             <div className="rounded-lg border p-4 text-center">
               <p className="text-sm text-gray-500">Gönderildi</p>
-              <p className="text-2xl font-bold text-blue-600">{sentCount}</p>
+              <p className="text-2xl font-bold text-[#c75b12]">{sentCount}</p>
             </div>
             <div className="rounded-lg border p-4 text-center">
               <p className="text-sm text-gray-500">Onaylandı</p>

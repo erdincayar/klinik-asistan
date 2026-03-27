@@ -552,14 +552,14 @@ export default function DashboardPage() {
                 </span>
               </div>
               {(isWarning || isFull) && (
-                <Link href="/billing/moduller" className="text-xs font-medium text-blue-600 hover:text-blue-700">
+                <Link href="/billing/moduller" className="text-xs font-medium text-[#c75b12] hover:text-[#9e4a0f]">
                   {isFull ? "Depolama doldu! Yükselt" : "Dolmak üzere — Yükselt"}
                 </Link>
               )}
             </div>
             <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-200">
               <div
-                className={cn("h-full rounded-full transition-all", isFull ? "bg-red-500" : isWarning ? "bg-orange-500" : "bg-blue-500")}
+                className={cn("h-full rounded-full transition-all", isFull ? "bg-red-500" : isWarning ? "bg-orange-500" : "bg-[#fef4ec]0")}
                 style={{ width: `${pct}%` }}
               />
             </div>

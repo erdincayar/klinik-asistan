@@ -23,7 +23,7 @@ function TelegramStatus() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
-        <Send className="h-5 w-5 text-blue-500" />
+        <Send className="h-5 w-5 text-[#c75b12]" />
         <h2 className="text-lg font-semibold text-gray-900">Telegram</h2>
       </div>
 
@@ -52,7 +52,7 @@ function TelegramStatus() {
             </p>
             <a
               href="/settings"
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#32373c] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#454a50]"
             >
               Ayarlara Git
             </a>

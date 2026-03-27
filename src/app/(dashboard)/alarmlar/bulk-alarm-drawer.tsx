@@ -42,9 +42,9 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
               className={cn(
                 "flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold transition-colors",
                 i < currentStep
-                  ? "bg-blue-600 text-white"
+                  ? "bg-[#32373c] text-white"
                   : i === currentStep
-                  ? "bg-blue-600 text-white"
+                  ? "bg-[#32373c] text-white"
                   : "bg-gray-100 text-gray-400",
               )}
             >
@@ -59,7 +59,7 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
             </span>
           </div>
           {i < STEPS.length - 1 && (
-            <div className={cn("h-px w-8 mb-4", i < currentStep ? "bg-blue-600" : "bg-gray-200")} />
+            <div className={cn("h-px w-8 mb-4", i < currentStep ? "bg-[#32373c]" : "bg-gray-200")} />
           )}
         </div>
       ))}
@@ -276,13 +276,13 @@ export default function BulkAlarmDrawer({ open, onOpenChange, onComplete }: Bulk
                           className={cn(
                             "flex items-center gap-2 rounded-xl border-2 px-3 py-3 text-left transition-all",
                             mode === "smart"
-                              ? "border-blue-500 bg-blue-50/50"
+                              ? "border-[#c75b12] bg-[#fef4ec]/50"
                               : "border-gray-100 hover:border-gray-200",
                           )}
                         >
-                          <Zap className={cn("h-4 w-4", mode === "smart" ? "text-blue-600" : "text-gray-400")} />
+                          <Zap className={cn("h-4 w-4", mode === "smart" ? "text-[#c75b12]" : "text-gray-400")} />
                           <div>
-                            <p className={cn("text-xs font-semibold", mode === "smart" ? "text-blue-700" : "text-gray-700")}>Akıllı</p>
+                            <p className={cn("text-xs font-semibold", mode === "smart" ? "text-[#9e4a0f]" : "text-gray-700")}>Akıllı</p>
                             <p className="text-[10px] text-gray-400">Kişiye özel</p>
                           </div>
                         </button>
@@ -291,13 +291,13 @@ export default function BulkAlarmDrawer({ open, onOpenChange, onComplete }: Bulk
                           className={cn(
                             "flex items-center gap-2 rounded-xl border-2 px-3 py-3 text-left transition-all",
                             mode === "manual"
-                              ? "border-blue-500 bg-blue-50/50"
+                              ? "border-[#c75b12] bg-[#fef4ec]/50"
                               : "border-gray-100 hover:border-gray-200",
                           )}
                         >
-                          <SlidersHorizontal className={cn("h-4 w-4", mode === "manual" ? "text-blue-600" : "text-gray-400")} />
+                          <SlidersHorizontal className={cn("h-4 w-4", mode === "manual" ? "text-[#c75b12]" : "text-gray-400")} />
                           <div>
-                            <p className={cn("text-xs font-semibold", mode === "manual" ? "text-blue-700" : "text-gray-700")}>Manuel</p>
+                            <p className={cn("text-xs font-semibold", mode === "manual" ? "text-[#9e4a0f]" : "text-gray-700")}>Manuel</p>
                             <p className="text-[10px] text-gray-400">Sabit gün</p>
                           </div>
                         </button>
@@ -404,9 +404,9 @@ export default function BulkAlarmDrawer({ open, onOpenChange, onComplete }: Bulk
                   <>
                     {/* Stats */}
                     <div className="grid grid-cols-2 gap-2">
-                      <div className="rounded-xl bg-blue-50 p-3 text-center">
-                        <p className="text-xl font-bold text-blue-700">{preview.total}</p>
-                        <p className="text-[10px] font-medium text-blue-600">Toplam Müşteri</p>
+                      <div className="rounded-xl bg-[#fef4ec] p-3 text-center">
+                        <p className="text-xl font-bold text-[#9e4a0f]">{preview.total}</p>
+                        <p className="text-[10px] font-medium text-[#c75b12]">Toplam Müşteri</p>
                       </div>
                       {type === "CUSTOMER_VISIT" && preview.smartCount !== undefined && (
                         <>
@@ -461,7 +461,7 @@ export default function BulkAlarmDrawer({ open, onOpenChange, onComplete }: Bulk
                   <div className="space-y-2">
                     <div className="h-2 overflow-hidden rounded-full bg-gray-100">
                       <motion.div
-                        className="h-full bg-blue-600 rounded-full"
+                        className="h-full bg-[#32373c] rounded-full"
                         initial={{ width: "0%" }}
                         animate={{ width: `${progress}%` }}
                         transition={{ duration: 0.3 }}

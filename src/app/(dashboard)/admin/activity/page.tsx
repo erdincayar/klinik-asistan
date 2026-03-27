@@ -52,8 +52,8 @@ const actionLabels: Record<string, string> = {
 const actionColors: Record<string, string> = {
   LOGIN: "bg-green-100 text-green-700",
   LOGOUT: "bg-gray-100 text-gray-700",
-  PATIENT_CREATE: "bg-blue-100 text-blue-700",
-  PATIENT_UPDATE: "bg-blue-100 text-blue-700",
+  PATIENT_CREATE: "bg-[#fde5d0] text-[#9e4a0f]",
+  PATIENT_UPDATE: "bg-[#fde5d0] text-[#9e4a0f]",
   APPOINTMENT_CREATE: "bg-purple-100 text-purple-700",
   APPOINTMENT_UPDATE: "bg-purple-100 text-purple-700",
   USER_CREATE: "bg-red-100 text-red-700",
@@ -117,7 +117,7 @@ export default function AdminActivityPage() {
       {/* Header */}
       <div>
         <h2 className="flex items-center gap-2 text-xl font-bold text-gray-900">
-          <Activity className="h-6 w-6 text-blue-600" />
+          <Activity className="h-6 w-6 text-[#c75b12]" />
           Aktivite Logları
         </h2>
         <p className="mt-1 text-sm text-gray-500">
@@ -171,7 +171,7 @@ export default function AdminActivityPage() {
               setActionFilter(e.target.value);
               setPage(1);
             }}
-            className="appearance-none rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-10 text-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+            className="appearance-none rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-10 text-sm outline-none focus:border-[#fde5d0] focus:ring-2 focus:ring-[#c75b12]/20"
           >
             <option value="">Tüm Aktiviteler</option>
             {Object.entries(actionLabels).map(([key, label]) => (

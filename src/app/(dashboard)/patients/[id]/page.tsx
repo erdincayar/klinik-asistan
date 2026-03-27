@@ -344,7 +344,7 @@ export default function PatientDetailPage() {
       >
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#32373c] text-sm font-semibold text-white">
               {patient.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
             </div>
             <div className="flex items-center gap-2">
@@ -375,7 +375,7 @@ export default function PatientDetailPage() {
             </button>
             <Link
               href={`/finance/new-income?patientId=${patient.id}`}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-700"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#32373c] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#454a50]"
             >
               <Plus className="h-3.5 w-3.5" />
               Yeni İşlem
@@ -392,7 +392,7 @@ export default function PatientDetailPage() {
                   <input
                     value={editForm.name}
                     onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                    className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                    className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
                   />
                 </div>
                 <div>
@@ -400,7 +400,7 @@ export default function PatientDetailPage() {
                   <input
                     value={editForm.phone}
                     onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                    className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                    className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
                   />
                 </div>
                 <div>
@@ -408,7 +408,7 @@ export default function PatientDetailPage() {
                   <input
                     value={editForm.email}
                     onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                    className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                    className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
                   />
                 </div>
               </div>
@@ -418,13 +418,13 @@ export default function PatientDetailPage() {
                   value={editForm.notes}
                   onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
                   rows={2}
-                  className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+                  className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
                 />
               </div>
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-xl bg-[#32373c] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#454a50] disabled:opacity-50"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 {saving ? "Kaydediliyor..." : "Kaydet"}
@@ -465,7 +465,7 @@ export default function PatientDetailPage() {
         >
           <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
             <div className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-blue-600" />
+              <TrendingUp className="h-4 w-4 text-[#c75b12]" />
               <h2 className="text-sm font-semibold text-gray-900">CRM Özeti</h2>
             </div>
             {crmStats.totalVisits < 3 ? (
@@ -577,7 +577,7 @@ export default function PatientDetailPage() {
               </p>
               <Link
                 href={`/alarmlar?newAlarm=customer_visit&customerId=${patient.id}&customerName=${encodeURIComponent(patient.name)}`}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-700"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-[#32373c] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#454a50]"
               >
                 Alarm Oluştur
                 <ArrowRight className="h-3.5 w-3.5" />
@@ -616,10 +616,10 @@ export default function PatientDetailPage() {
       >
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
           <div className="flex items-center gap-2">
-            <Camera className="h-4 w-4 text-blue-600" />
+            <Camera className="h-4 w-4 text-[#c75b12]" />
             <h2 className="text-sm font-semibold text-gray-900">Fotoğraflar</h2>
             {photos.length > 0 && (
-              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700">
+              <span className="rounded-full bg-[#fef4ec] px-2 py-0.5 text-[11px] font-semibold text-[#9e4a0f]">
                 {photos.length}
               </span>
             )}
@@ -629,7 +629,7 @@ export default function PatientDetailPage() {
               <button
                 onClick={() => setCompareMode(!compareMode)}
                 className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors ${
-                  compareMode ? "bg-blue-600 text-white" : "border border-gray-200 text-gray-600 hover:bg-gray-50"
+                  compareMode ? "bg-[#32373c] text-white" : "border border-gray-200 text-gray-600 hover:bg-gray-50"
                 }`}
               >
                 <Columns className="h-3.5 w-3.5" />
@@ -646,12 +646,12 @@ export default function PatientDetailPage() {
             onDragLeave={() => setDragOver(false)}
             onDrop={handleDrop}
             className={`rounded-xl border-2 border-dashed p-6 text-center transition-all ${
-              dragOver ? "border-blue-400 bg-blue-50" : "border-gray-200 hover:border-gray-300"
+              dragOver ? "border-[#c75b12] bg-[#fef4ec]" : "border-gray-200 hover:border-gray-300"
             }`}
           >
             {uploading ? (
               <div className="flex items-center justify-center gap-2">
-                <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                <Loader2 className="h-5 w-5 animate-spin text-[#c75b12]" />
                 <span className="text-sm text-gray-600">Yükleniyor...</span>
               </div>
             ) : (
@@ -660,7 +660,7 @@ export default function PatientDetailPage() {
                   <select
                     value={uploadCategory}
                     onChange={(e) => setUploadCategory(e.target.value)}
-                    className="rounded-lg border border-gray-200 px-3 py-2 text-xs text-gray-700 focus:border-blue-400 focus:outline-none"
+                    className="rounded-lg border border-gray-200 px-3 py-2 text-xs text-gray-700 focus:border-[#c75b12] focus:outline-none"
                   >
                     {categories.map((cat) => (
                       <option key={cat} value={cat}>{cat}</option>
@@ -670,10 +670,10 @@ export default function PatientDetailPage() {
                     value={uploadNotes}
                     onChange={(e) => setUploadNotes(e.target.value)}
                     placeholder="Not (opsiyonel)"
-                    className="rounded-lg border border-gray-200 px-3 py-2 text-xs text-gray-700 placeholder:text-gray-400 focus:border-blue-400 focus:outline-none"
+                    className="rounded-lg border border-gray-200 px-3 py-2 text-xs text-gray-700 placeholder:text-gray-400 focus:border-[#c75b12] focus:outline-none"
                   />
                 </div>
-                <label className="cursor-pointer inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-700">
+                <label className="cursor-pointer inline-flex items-center gap-1.5 rounded-xl bg-[#32373c] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#454a50]">
                   <Upload className="h-3.5 w-3.5" />
                   Fotoğraf Yükle
                   <input
@@ -729,7 +729,7 @@ export default function PatientDetailPage() {
                       onClick={() => setPhotoFilter(cat)}
                       className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                         photoFilter === cat
-                          ? "bg-blue-600 text-white"
+                          ? "bg-[#32373c] text-white"
                           : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                       }`}
                     >
@@ -744,12 +744,12 @@ export default function PatientDetailPage() {
                         onKeyDown={(e) => e.key === "Enter" && handleAddCategory()}
                         placeholder="Kategori adı"
                         autoFocus
-                        className="w-28 rounded-lg border border-gray-200 px-2 py-1 text-xs focus:border-blue-400 focus:outline-none"
+                        className="w-28 rounded-lg border border-gray-200 px-2 py-1 text-xs focus:border-[#c75b12] focus:outline-none"
                       />
                       <button
                         onClick={handleAddCategory}
                         disabled={savingCategory || !newCategoryName.trim()}
-                        className="rounded-lg bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                        className="rounded-lg bg-[#32373c] px-2 py-1 text-xs font-medium text-white hover:bg-[#454a50] disabled:opacity-50"
                       >
                         {savingCategory ? "..." : "Ekle"}
                       </button>
@@ -906,7 +906,7 @@ export default function PatientDetailPage() {
                     </span>
                     <Link
                       href={`/finance/new-income?edit=${treatment.id}`}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
+                      className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-[#fef4ec] hover:text-[#c75b12]"
                       title="Düzenle"
                     >
                       <Pencil className="h-3.5 w-3.5" />

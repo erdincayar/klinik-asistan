@@ -345,7 +345,7 @@ function NewIncomeForm() {
               <button
                 type="button"
                 onClick={() => setShowAddField(true)}
-                className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
+                className="flex items-center gap-1 text-sm text-[#c75b12] hover:text-[#9e4a0f]"
               >
                 <Plus className="h-3.5 w-3.5" />
                 Alan Ekle

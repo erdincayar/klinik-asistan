@@ -95,6 +95,14 @@
   animation: gradient-shift 8s ease infinite;
 }
 
+/* Enfold button utilities */
+.btn-dark {
+  @apply bg-[#32373c] text-white hover:bg-[#454a50] transition-colors;
+}
+.btn-accent {
+  @apply bg-[#c75b12] text-white hover:bg-[#9e4a0f] transition-colors;
+}
+
 /* Enfold-style section divider */
 .enfold-divider {
   position: relative;

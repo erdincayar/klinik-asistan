@@ -10,7 +10,7 @@ export default function VerifyEmailPage() {
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+        <Loader2 className="h-6 w-6 animate-spin text-[#c75b12]" />
       </div>
     }>
       <VerifyEmailContent />
@@ -186,8 +186,8 @@ function VerifyEmailContent() {
   return (
     <>
       <div className="mb-8 text-center">
-        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-blue-100">
-          <MailOpen className="h-7 w-7 text-blue-600" />
+        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#fde5d0]">
+          <MailOpen className="h-7 w-7 text-[#c75b12]" />
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-gray-900">
           Email Doğrulama
@@ -221,7 +221,7 @@ function VerifyEmailContent() {
             onChange={(e) => handleChange(i, e.target.value)}
             onKeyDown={(e) => handleKeyDown(i, e)}
             disabled={loading}
-            className="h-14 w-12 rounded-xl border-2 border-gray-200 bg-white text-center text-xl font-bold text-gray-900 transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50"
+            className="h-14 w-12 rounded-xl border-2 border-gray-200 bg-white text-center text-xl font-bold text-gray-900 transition-all focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20 disabled:opacity-50"
           />
         ))}
       </div>
@@ -246,7 +246,7 @@ function VerifyEmailContent() {
             <button
               onClick={handleResend}
               disabled={resending}
-              className="inline-flex items-center gap-1 font-semibold text-blue-600 hover:text-blue-700 disabled:opacity-50"
+              className="inline-flex items-center gap-1 font-semibold text-[#c75b12] hover:text-[#9e4a0f] disabled:opacity-50"
             >
               {resending ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
