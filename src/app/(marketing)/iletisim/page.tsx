@@ -27,11 +27,11 @@ export default function IletisimPage() {
       <nav className="border-b border-gray-100 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/" className="text-xl font-bold text-gray-900">
-            Poby<span className="text-[#c75b12]">.ai</span>
+            Poby<span className="text-[#BE3A21]">.ai</span>
           </Link>
           <Link
             href="/login"
-            className="rounded-xl bg-[#c75b12] px-5 py-2 text-sm font-semibold text-white hover:bg-[#9e4a0f]"
+            className="rounded-[4px] bg-[#BE3A21] px-5 py-2 text-sm font-semibold text-white hover:bg-[#9B2D18]"
           >
             Giriş Yap
           </Link>
@@ -49,15 +49,15 @@ export default function IletisimPage() {
         </div>
 
         <div className="grid gap-8 sm:grid-cols-3 mb-16">
-          <div className="rounded-2xl border border-gray-200 p-6 text-center">
+          <div className="rounded-[4px] border border-gray-200 p-6 text-center">
             <h2 className="font-semibold text-gray-900">E-posta</h2>
             <p className="mt-2 text-sm text-gray-600">destek@poby.ai</p>
           </div>
-          <div className="rounded-2xl border border-gray-200 p-6 text-center">
+          <div className="rounded-[4px] border border-gray-200 p-6 text-center">
             <h2 className="font-semibold text-gray-900">WhatsApp</h2>
             <p className="mt-2 text-sm text-gray-600">+90 (xxx) xxx xx xx</p>
           </div>
-          <div className="rounded-2xl border border-gray-200 p-6 text-center">
+          <div className="rounded-[4px] border border-gray-200 p-6 text-center">
             <h2 className="font-semibold text-gray-900">Çalışma Saatleri</h2>
             <p className="mt-2 text-sm text-gray-600">
               Pzt-Cum 09:00-18:00
@@ -65,7 +65,7 @@ export default function IletisimPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 p-8">
+        <div className="rounded-[4px] border border-gray-200 p-8">
           <h2 className="text-xl font-bold text-gray-900 mb-6">
             Bize Mesaj Gönderin
           </h2>
@@ -130,7 +130,7 @@ export default function IletisimPage() {
             </div>
             <button
               type="submit"
-              className="rounded-xl bg-[#c75b12] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#9e4a0f] transition-colors"
+              className="rounded-[4px] bg-[#BE3A21] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#9B2D18] transition-colors"
             >
               Gönder
             </button>

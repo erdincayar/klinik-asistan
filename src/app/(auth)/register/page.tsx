@@ -117,8 +117,8 @@ export default function RegisterPage() {
         </p>
         {/* Step indicators */}
         <div className="mt-4 flex gap-2">
-          <div className={`h-1 flex-1 rounded-full ${step >= 1 ? "bg-[#32373c]" : "bg-gray-200"}`} />
-          <div className={`h-1 flex-1 rounded-full ${step >= 2 ? "bg-[#32373c]" : "bg-gray-200"}`} />
+          <div className={`h-1 flex-1 rounded-full ${step >= 1 ? "bg-[#2B2B2B]" : "bg-gray-200"}`} />
+          <div className={`h-1 flex-1 rounded-full ${step >= 2 ? "bg-[#2B2B2B]" : "bg-gray-200"}`} />
         </div>
       </div>
 
@@ -127,11 +127,11 @@ export default function RegisterPage() {
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
+            className="rounded-[4px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
           >
             {error}
             {googleError && (
-              <Link href="/login" className="ml-1 font-semibold text-[#c75b12] hover:text-[#9e4a0f] underline">
+              <Link href="/login" className="ml-1 font-semibold text-[#BE3A21] hover:text-[#9B2D18] underline">
                 Giriş Yap
               </Link>
             )}
@@ -155,7 +155,7 @@ export default function RegisterPage() {
                   type="text"
                   autoComplete="name"
                   placeholder="Ahmet Yılmaz"
-                  className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
+                  className="block w-full rounded-[4px] border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
                   {...register("name")}
                 />
                 {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
@@ -169,7 +169,7 @@ export default function RegisterPage() {
                   type="email"
                   autoComplete="email"
                   placeholder="ornek@email.com"
-                  className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
+                  className="block w-full rounded-[4px] border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
                   {...register("email")}
                 />
                 {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
@@ -182,7 +182,7 @@ export default function RegisterPage() {
                   id="clinicName"
                   type="text"
                   placeholder="İşletme adınız"
-                  className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
+                  className="block w-full rounded-[4px] border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
                   {...register("clinicName")}
                 />
                 {errors.clinicName && <p className="text-xs text-red-500">{errors.clinicName.message}</p>}
@@ -197,7 +197,7 @@ export default function RegisterPage() {
                     type={showPassword ? "text" : "password"}
                     autoComplete="new-password"
                     placeholder="••••••••"
-                    className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 pr-11 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
+                    className="block w-full rounded-[4px] border border-gray-200 bg-white px-4 py-3 pr-11 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
                     {...register("password")}
                   />
                   <button
@@ -234,7 +234,7 @@ export default function RegisterPage() {
                     type={showConfirmPassword ? "text" : "password"}
                     autoComplete="new-password"
                     placeholder="••••••••"
-                    className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 pr-11 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
+                    className="block w-full rounded-[4px] border border-gray-200 bg-white px-4 py-3 pr-11 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
                     {...register("confirmPassword")}
                   />
                   <button
@@ -253,7 +253,7 @@ export default function RegisterPage() {
               <button
                 type="button"
                 onClick={handleStep1}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#32373c] px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-[#454a50] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
+                className="flex w-full items-center justify-center gap-2 rounded-[4px] bg-[#2B2B2B] px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-[#3A3A3A] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
               >
                 Devam Et
                 <ArrowRight className="h-4 w-4" />
@@ -279,7 +279,7 @@ export default function RegisterPage() {
                   signIn("google", { callbackUrl: "/register/complete" });
                 }}
                 disabled={loading}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 disabled:opacity-60"
+                className="flex w-full items-center justify-center gap-2 rounded-[4px] border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 disabled:opacity-60"
               >
                 <svg className="h-4 w-4" viewBox="0 0 24 24">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
@@ -301,9 +301,9 @@ export default function RegisterPage() {
               className="space-y-5"
             >
               {/* Trial info card */}
-              <div className="rounded-2xl border border-[#fde5d0] bg-gradient-to-br from-[#fef4ec] to-[#fef4ec] p-6">
+              <div className="rounded-[4px] border border-[#FDEDEC] bg-gradient-to-br from-[#FFF5F3] to-[#FFF5F3] p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#32373c]">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-[4px] bg-[#2B2B2B]">
                     <Sparkles className="h-5 w-5 text-white" />
                   </div>
                   <div>
@@ -316,12 +316,12 @@ export default function RegisterPage() {
                   <p className="text-sm font-medium text-gray-700">Denemenize dahil modüller:</p>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2.5 rounded-lg bg-white/70 px-3 py-2">
-                      <LayoutDashboard className="h-4 w-4 text-[#c75b12]" />
+                      <LayoutDashboard className="h-4 w-4 text-[#BE3A21]" />
                       <span className="text-sm text-gray-700">Başlangıç Platformu</span>
                       <span className="ml-auto text-xs text-gray-400">Dahil</span>
                     </div>
                     <div className="flex items-center gap-2.5 rounded-lg bg-white/70 px-3 py-2">
-                      <MessageCircle className="h-4 w-4 text-[#c75b12]" />
+                      <MessageCircle className="h-4 w-4 text-[#BE3A21]" />
                       <span className="text-sm text-gray-700">Mesajlaşma (Telegram)</span>
                       <span className="ml-auto text-xs text-gray-400">Ücretsiz</span>
                     </div>
@@ -337,7 +337,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="flex items-center justify-center gap-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50"
+                  className="flex items-center justify-center gap-1 rounded-[4px] border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50"
                 >
                   <ArrowLeft className="h-4 w-4" />
                   Geri
@@ -345,7 +345,7 @@ export default function RegisterPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#32373c] px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-[#454a50] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-[4px] bg-[#2B2B2B] px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-[#3A3A3A] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {loading ? (
                     <>
@@ -367,16 +367,16 @@ export default function RegisterPage() {
         {/* Terms */}
         <p className="text-center text-xs leading-relaxed text-gray-400">
           Kayıt olarak{" "}
-          <Link href="#" className="text-[#c75b12] hover:underline">Kullanım Koşulları</Link>
+          <Link href="#" className="text-[#BE3A21] hover:underline">Kullanım Koşulları</Link>
           {" "}ve{" "}
-          <Link href="#" className="text-[#c75b12] hover:underline">Gizlilik Politikası</Link>
+          <Link href="#" className="text-[#BE3A21] hover:underline">Gizlilik Politikası</Link>
           &apos;nı kabul etmiş olursunuz.
         </p>
       </form>
 
       <p className="mt-6 text-center text-sm text-gray-500">
         Zaten hesabınız var mı?{" "}
-        <Link href="/login" className="font-semibold text-[#c75b12] hover:text-[#9e4a0f]">
+        <Link href="/login" className="font-semibold text-[#BE3A21] hover:text-[#9B2D18]">
           Giriş Yap
         </Link>
       </p>

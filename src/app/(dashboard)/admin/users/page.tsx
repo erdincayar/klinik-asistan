@@ -151,7 +151,7 @@ export default function AdminUsersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="flex items-center gap-2 text-xl font-bold text-gray-900">
-            <Users className="h-6 w-6 text-[#c75b12]" />
+            <Users className="h-6 w-6 text-[#BE3A21]" />
             Kullanıcı Yönetimi
           </h2>
           <p className="mt-1 text-sm text-gray-500">
@@ -160,7 +160,7 @@ export default function AdminUsersPage() {
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 rounded-xl bg-[#32373c] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#454a50]"
+          className="flex items-center gap-2 rounded-[4px] bg-[#2B2B2B] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#3A3A3A]"
         >
           <UserPlus className="h-4 w-4" />
           Yeni Kullanıcı
@@ -176,7 +176,7 @@ export default function AdminUsersPage() {
             placeholder="Ad veya email ile ara..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-[#fde5d0] focus:ring-2 focus:ring-[#c75b12]/20"
+            className="w-full rounded-[4px] border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-[#FDEDEC] focus:ring-2 focus:ring-[#BE3A21]/20"
           />
         </div>
         <div className="relative">
@@ -184,7 +184,7 @@ export default function AdminUsersPage() {
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="appearance-none rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-10 text-sm outline-none focus:border-[#fde5d0] focus:ring-2 focus:ring-[#c75b12]/20"
+            className="appearance-none rounded-[4px] border border-gray-200 bg-white py-2.5 pl-10 pr-10 text-sm outline-none focus:border-[#FDEDEC] focus:ring-2 focus:ring-[#BE3A21]/20"
           >
             <option value="">Tüm Roller</option>
             <option value="ADMIN">Admin</option>
@@ -198,7 +198,7 @@ export default function AdminUsersPage() {
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-gray-100 bg-white"
+        className="rounded-[4px] border border-gray-100 bg-white"
       >
         {loading ? (
           <div className="space-y-4 p-6">
@@ -268,7 +268,7 @@ export default function AdminUsersPage() {
                     <td className="px-6 py-3">
                       <button
                         onClick={() => openEdit(user)}
-                        className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-[#fef4ec] hover:text-[#c75b12]"
+                        className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-[#FFF5F3] hover:text-[#BE3A21]"
                         title="Düzenle"
                       >
                         <Pencil className="h-4 w-4" />
@@ -303,12 +303,12 @@ export default function AdminUsersPage() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="mx-4 w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
+              className="mx-4 w-full max-w-md rounded-[4px] bg-white p-6 shadow-xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="mb-5 flex items-center justify-between">
                 <h3 className="flex items-center gap-2 text-lg font-bold text-gray-900">
-                  <UserPlus className="h-5 w-5 text-[#c75b12]" />
+                  <UserPlus className="h-5 w-5 text-[#BE3A21]" />
                   Yeni Kullanıcı
                 </h3>
                 <button
@@ -328,7 +328,7 @@ export default function AdminUsersPage() {
                     type="text"
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#fde5d0] focus:ring-2 focus:ring-[#c75b12]/20"
+                    className="w-full rounded-[4px] border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#FDEDEC] focus:ring-2 focus:ring-[#BE3A21]/20"
                     placeholder="Ahmet Yılmaz"
                   />
                 </div>
@@ -340,7 +340,7 @@ export default function AdminUsersPage() {
                     type="email"
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#fde5d0] focus:ring-2 focus:ring-[#c75b12]/20"
+                    className="w-full rounded-[4px] border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#FDEDEC] focus:ring-2 focus:ring-[#BE3A21]/20"
                     placeholder="ahmet@example.com"
                   />
                 </div>
@@ -352,7 +352,7 @@ export default function AdminUsersPage() {
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#fde5d0] focus:ring-2 focus:ring-[#c75b12]/20"
+                    className="w-full rounded-[4px] border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#FDEDEC] focus:ring-2 focus:ring-[#BE3A21]/20"
                     placeholder="En az 8 karakter"
                   />
                 </div>
@@ -363,7 +363,7 @@ export default function AdminUsersPage() {
                   <select
                     value={newRole}
                     onChange={(e) => setNewRole(e.target.value)}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#fde5d0] focus:ring-2 focus:ring-[#c75b12]/20"
+                    className="w-full rounded-[4px] border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#FDEDEC] focus:ring-2 focus:ring-[#BE3A21]/20"
                   >
                     <option value="USER">User</option>
                     <option value="ADMIN">Admin</option>
@@ -378,7 +378,7 @@ export default function AdminUsersPage() {
                     type="text"
                     value={newClinicName}
                     onChange={(e) => setNewClinicName(e.target.value)}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#fde5d0] focus:ring-2 focus:ring-[#c75b12]/20"
+                    className="w-full rounded-[4px] border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#FDEDEC] focus:ring-2 focus:ring-[#BE3A21]/20"
                     placeholder="Yeni klinik oluşturulacak"
                   />
                 </div>
@@ -387,14 +387,14 @@ export default function AdminUsersPage() {
               <div className="mt-6 flex gap-3">
                 <button
                   onClick={() => setShowCreateModal(false)}
-                  className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  className="flex-1 rounded-[4px] border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
                   İptal
                 </button>
                 <button
                   onClick={handleCreate}
                   disabled={saving || !newName || !newEmail || !newPassword}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#32373c] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#454a50] disabled:opacity-50"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-[4px] bg-[#2B2B2B] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#3A3A3A] disabled:opacity-50"
                 >
                   {saving ? (
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
@@ -423,12 +423,12 @@ export default function AdminUsersPage() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="mx-4 w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
+              className="mx-4 w-full max-w-md rounded-[4px] bg-white p-6 shadow-xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="mb-5 flex items-center justify-between">
                 <h3 className="flex items-center gap-2 text-lg font-bold text-gray-900">
-                  <Shield className="h-5 w-5 text-[#c75b12]" />
+                  <Shield className="h-5 w-5 text-[#BE3A21]" />
                   Kullanıcı Düzenle
                 </h3>
                 <button
@@ -450,7 +450,7 @@ export default function AdminUsersPage() {
                     type="text"
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#fde5d0] focus:ring-2 focus:ring-[#c75b12]/20"
+                    className="w-full rounded-[4px] border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#FDEDEC] focus:ring-2 focus:ring-[#BE3A21]/20"
                   />
                 </div>
                 <div>
@@ -460,21 +460,21 @@ export default function AdminUsersPage() {
                   <select
                     value={editRole}
                     onChange={(e) => setEditRole(e.target.value)}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#fde5d0] focus:ring-2 focus:ring-[#c75b12]/20"
+                    className="w-full rounded-[4px] border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-[#FDEDEC] focus:ring-2 focus:ring-[#BE3A21]/20"
                   >
                     <option value="USER">User</option>
                     <option value="ADMIN">Admin</option>
                     <option value="DEMO">Demo</option>
                   </select>
                 </div>
-                <div className="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3">
+                <div className="flex items-center justify-between rounded-[4px] border border-gray-200 px-4 py-3">
                   <span className="text-sm font-medium text-gray-700">
                     Aktif Hesap
                   </span>
                   <button
                     onClick={() => setEditActive(!editActive)}
                     className={`relative h-6 w-11 rounded-full transition-colors ${
-                      editActive ? "bg-[#32373c]" : "bg-gray-300"
+                      editActive ? "bg-[#2B2B2B]" : "bg-gray-300"
                     }`}
                   >
                     <span
@@ -489,14 +489,14 @@ export default function AdminUsersPage() {
               <div className="mt-6 flex gap-3">
                 <button
                   onClick={() => setEditUser(null)}
-                  className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  className="flex-1 rounded-[4px] border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
                   İptal
                 </button>
                 <button
                   onClick={handleEdit}
                   disabled={saving}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#32373c] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#454a50] disabled:opacity-50"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-[4px] bg-[#2B2B2B] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#3A3A3A] disabled:opacity-50"
                 >
                   {saving ? (
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />

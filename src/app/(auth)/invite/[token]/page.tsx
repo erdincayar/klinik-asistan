@@ -131,7 +131,7 @@ export default function InviteRegisterPage() {
   if (validating) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
-        <Loader2 className="h-8 w-8 animate-spin text-[#c75b12]" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#BE3A21]" />
         <p className="mt-4 text-sm text-gray-500">Davet doğrulanıyor...</p>
       </div>
     );
@@ -147,7 +147,7 @@ export default function InviteRegisterPage() {
         <p className="text-sm text-gray-500 mb-6">{tokenError}</p>
         <Link
           href="/login"
-          className="inline-flex items-center gap-2 rounded-xl bg-[#32373c] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#454a50] transition-colors"
+          className="inline-flex items-center gap-2 rounded-[4px] bg-[#2B2B2B] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#3A3A3A] transition-colors"
         >
           Giriş Sayfasına Git
         </Link>
@@ -171,7 +171,7 @@ export default function InviteRegisterPage() {
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
+            className="rounded-[4px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
           >
             {error}
           </motion.div>
@@ -187,7 +187,7 @@ export default function InviteRegisterPage() {
             type="text"
             autoComplete="name"
             placeholder="Ahmet Yılmaz"
-            className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
+            className="block w-full rounded-[4px] border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
             {...register("name")}
           />
           {errors.name && (
@@ -205,7 +205,7 @@ export default function InviteRegisterPage() {
             type="email"
             autoComplete="email"
             placeholder="ornek@email.com"
-            className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
+            className="block w-full rounded-[4px] border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
             {...register("email")}
           />
           {errors.email && (
@@ -224,7 +224,7 @@ export default function InviteRegisterPage() {
               type={showPassword ? "text" : "password"}
               autoComplete="new-password"
               placeholder="••••••••"
-              className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 pr-11 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
+              className="block w-full rounded-[4px] border border-gray-200 bg-white px-4 py-3 pr-11 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
               {...register("password")}
             />
             <button
@@ -271,7 +271,7 @@ export default function InviteRegisterPage() {
               type={showConfirmPassword ? "text" : "password"}
               autoComplete="new-password"
               placeholder="••••••••"
-              className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 pr-11 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
+              className="block w-full rounded-[4px] border border-gray-200 bg-white px-4 py-3 pr-11 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
               {...register("confirmPassword")}
             />
             <button
@@ -292,7 +292,7 @@ export default function InviteRegisterPage() {
         <button
           type="submit"
           disabled={loading}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#32373c] px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-[#454a50] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2 rounded-[4px] bg-[#2B2B2B] px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-[#3A3A3A] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? (
             <>
@@ -312,7 +312,7 @@ export default function InviteRegisterPage() {
         Zaten hesabınız var mı?{" "}
         <Link
           href="/login"
-          className="font-semibold text-[#c75b12] hover:text-[#9e4a0f]"
+          className="font-semibold text-[#BE3A21] hover:text-[#9B2D18]"
         >
           Giriş Yap
         </Link>

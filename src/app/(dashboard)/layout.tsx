@@ -200,19 +200,19 @@ function SortableNavItem({
           type="button"
           onClick={onLockedClick}
           title={collapsed ? `${item.label} (${isYakinda ? "Yakında" : "Kilitli"})` : undefined}
-          className={`group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium opacity-40 cursor-not-allowed ${
+          className={`group relative flex w-full items-center gap-3 rounded-[2px] px-3 py-2.5 text-[13px] uppercase tracking-wider font-medium opacity-30 cursor-not-allowed ${
             collapsed ? "lg:justify-center lg:px-0" : ""
           }`}
         >
           <div className="relative shrink-0">
-            <Icon className="h-[18px] w-[18px] text-gray-400" />
-            <Lock className="absolute -right-1 -top-1 h-2.5 w-2.5 text-gray-500" />
+            <Icon className="h-[18px] w-[18px] text-[#666]" />
+            <Lock className="absolute -right-1 -top-1 h-2.5 w-2.5 text-[#666]" />
           </div>
-          <span className={collapsed ? "lg:hidden" : "text-gray-400"}>
+          <span className={collapsed ? "lg:hidden" : "text-[#666]"}>
             {item.label}
           </span>
           {isYakinda && !collapsed && (
-            <span className="ml-auto rounded-full bg-gray-100 px-1.5 py-0.5 text-[9px] font-semibold text-gray-500">
+            <span className="ml-auto rounded-full bg-white/10 px-1.5 py-0.5 text-[9px] font-semibold text-[#666]">
               Yakında
             </span>
           )}
@@ -232,15 +232,15 @@ function SortableNavItem({
         href={item.href}
         onClick={onClose}
         title={collapsed ? item.label : undefined}
-        className={`group relative flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[13px] font-medium transition-all duration-200 ${
+        className={`group relative flex items-center gap-3 rounded-[2px] px-3 py-2.5 text-[13px] uppercase tracking-wider font-medium transition-all duration-200 ${
           isActive
-            ? "bg-gradient-to-r from-[#c75b12] to-[#e8843a] text-white shadow-sm"
-            : "text-gray-500 hover:bg-[#fef4ec] hover:text-[#9e4a0f]"
+            ? "bg-[rgba(190,58,33,0.2)] text-white border-l-[3px] border-[#BE3A21]"
+            : "text-[#AAA] hover:bg-white/5 hover:text-white"
         } ${collapsed ? "lg:justify-center lg:px-0" : ""}`}
       >
         <Icon
           className={`h-[18px] w-[18px] shrink-0 ${
-            isActive ? "text-white" : "text-gray-400 group-hover:text-[#9e4a0f]"
+            isActive ? "text-white" : "text-[#AAA] group-hover:text-white"
           }`}
         />
         <span className={collapsed ? "lg:hidden" : ""}>
@@ -251,7 +251,7 @@ function SortableNavItem({
         {isActive && (
           <motion.div
             layoutId="sidebar-active"
-            className="absolute -left-3 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[#c75b12]"
+            className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[#BE3A21]"
             transition={{ type: "spring", stiffness: 350, damping: 30 }}
           />
         )}
@@ -406,24 +406,24 @@ function Sidebar({
       </AnimatePresence>
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-[#F0EDE8] bg-white transition-all duration-300 lg:static lg:z-auto ${
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col bg-[#2B2B2B] transition-all duration-300 lg:static lg:z-auto ${
           open ? "translate-x-0" : "-translate-x-full"
         } lg:translate-x-0 ${collapsed ? "lg:w-[72px]" : "lg:w-[240px]"} w-[240px]`}
       >
         {/* Logo */}
-        <div className="flex h-16 shrink-0 items-center justify-between border-b border-gray-100 px-5">
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-white/10 bg-[#1A1A1A] px-5">
           <Link href="/dashboard" className="flex items-center gap-2">
             {collapsed ? (
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#c75b12]">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#BE3A21]">
                 <span className="text-sm font-extrabold text-white">P</span>
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#c75b12]">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#BE3A21]">
                   <span className="text-sm font-extrabold text-white">P</span>
                 </div>
-                <span className="text-xl font-extrabold tracking-tight text-gray-800">
-                  poby<span className="text-[#c75b12]">.</span>
+                <span className="text-xl font-extrabold tracking-tight text-white">
+                  poby<span className="text-[#BE3A21]">.</span>
                 </span>
               </div>
             )}
@@ -432,7 +432,7 @@ function Sidebar({
           {/* Mobile close */}
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 lg:hidden"
+            className="rounded-lg p-1.5 text-[#AAA] transition-colors hover:bg-white/10 hover:text-white lg:hidden"
           >
             <X className="h-5 w-5" />
           </button>
@@ -440,7 +440,7 @@ function Sidebar({
           {/* Desktop collapse toggle */}
           <button
             onClick={onToggleCollapse}
-            className="hidden rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 lg:block"
+            className="hidden rounded-lg p-1.5 text-[#AAA] transition-colors hover:bg-white/10 hover:text-white lg:block"
           >
             {collapsed ? (
               <ChevronsRight className="h-4 w-4" />
@@ -475,7 +475,7 @@ function Sidebar({
                   return (
                     <div key={item.href}>
                       {NAV_GROUP_BREAKS.has(item.href) && (
-                        <div className="border-t border-gray-100 mt-3 pt-3" />
+                        <div className="border-t border-white/10 mt-3 pt-3" />
                       )}
                       <div className="relative">
                         <SortableNavItem
@@ -502,9 +502,9 @@ function Sidebar({
 
           {/* Admin Section - only visible to ADMIN role */}
           {(session?.user as any)?.role === "ADMIN" && (
-            <div className="mt-4 border-t border-gray-100 pt-4">
+            <div className="mt-4 border-t border-white/10 pt-4">
               {!collapsed && (
-                <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-[#A8A29E]">
+                <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#555]">
                   Yönetim
                 </p>
               )}
@@ -521,15 +521,15 @@ function Sidebar({
                       href={item.href}
                       onClick={onClose}
                       title={collapsed ? item.label : undefined}
-                      className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-200 ${
+                      className={`group relative flex items-center gap-3 rounded-[2px] px-3 py-2.5 text-[13px] uppercase tracking-wider font-medium transition-all duration-200 ${
                         isActive
-                          ? "bg-red-50 text-red-700"
-                          : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+                          ? "bg-[rgba(190,58,33,0.2)] text-white border-l-[3px] border-[#BE3A21]"
+                          : "text-[#AAA] hover:bg-white/5 hover:text-white"
                       } ${collapsed ? "lg:justify-center lg:px-0" : ""}`}
                     >
                       <Icon
                         className={`h-[18px] w-[18px] shrink-0 ${
-                          isActive ? "text-red-600" : "text-gray-400 group-hover:text-gray-600"
+                          isActive ? "text-white" : "text-[#AAA] group-hover:text-white"
                         }`}
                       />
                       <span className={collapsed ? "lg:hidden" : ""}>
@@ -538,7 +538,7 @@ function Sidebar({
                       {isActive && (
                         <motion.div
                           layoutId="sidebar-admin-active"
-                          className="absolute -left-3 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-red-600"
+                          className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[#BE3A21]"
                           transition={{ type: "spring", stiffness: 350, damping: 30 }}
                         />
                       )}
@@ -551,31 +551,31 @@ function Sidebar({
         </nav>
 
         {/* Settings + Plan badge + User section */}
-        <div className="shrink-0 border-t border-gray-100 px-3 py-3">
+        <div className="shrink-0 border-t border-white/10 px-3 py-3">
           {/* Fixed Settings link */}
           <div className="mb-2">
             <Link
               href="/settings"
               onClick={onClose}
               title={collapsed ? "Ayarlar" : undefined}
-              className={`group relative flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[13px] font-medium transition-all duration-200 ${
+              className={`group relative flex items-center gap-3 rounded-[2px] px-3 py-2.5 text-[13px] uppercase tracking-wider font-medium transition-all duration-200 ${
                 pathname === "/settings" || pathname.startsWith("/settings/")
-                  ? "bg-gradient-to-r from-[#c75b12] to-[#e8843a] text-white shadow-sm"
-                  : "text-gray-500 hover:bg-[#fef4ec] hover:text-[#9e4a0f]"
+                  ? "bg-[rgba(190,58,33,0.2)] text-white border-l-[3px] border-[#BE3A21]"
+                  : "text-[#AAA] hover:bg-white/5 hover:text-white"
               } ${collapsed ? "lg:justify-center lg:px-0" : ""}`}
             >
               <Settings
                 className={`h-[18px] w-[18px] shrink-0 ${
                   pathname === "/settings" || pathname.startsWith("/settings/")
                     ? "text-white"
-                    : "text-gray-400 group-hover:text-[#9e4a0f]"
+                    : "text-[#AAA] group-hover:text-white"
                 }`}
               />
               <span className={collapsed ? "lg:hidden" : ""}>Ayarlar</span>
               {(pathname === "/settings" || pathname.startsWith("/settings/")) && (
                 <motion.div
                   layoutId="sidebar-settings-active"
-                  className="absolute -left-3 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[#c75b12]"
+                  className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[#BE3A21]"
                   transition={{ type: "spring", stiffness: 350, damping: 30 }}
                 />
               )}
@@ -584,14 +584,14 @@ function Sidebar({
 
           {/* Plan badge */}
           {!collapsed && (
-            <div className="mb-3 rounded-xl bg-gradient-to-r from-[#fef4ec] to-[#fde5d0] px-3 py-2.5">
+            <div className="mb-3 rounded-[4px] bg-white/5 px-3 py-2.5">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-[#c75b12]" />
-                <span className="text-xs font-semibold text-[#9e4a0f]">
+                <Sparkles className="h-4 w-4 text-[#BE3A21]" />
+                <span className="text-xs font-semibold text-white">
                   {activeModules.length} modül aktif
                 </span>
               </div>
-              <p className="mt-0.5 text-[11px] text-[#a84d0f]">
+              <p className="mt-0.5 text-[11px] text-[#AAA]">
                 {subscriptionStatus === "trial" && trialEnd
                   ? `Deneme: ${Math.max(0, Math.ceil((new Date(trialEnd).getTime() - Date.now()) / 86400000))} gün kaldı`
                   : subscriptionStatus === "suspended"
@@ -602,19 +602,19 @@ function Sidebar({
           )}
           {collapsed && (
             <div className="mb-3 flex justify-center">
-              <div className="rounded-lg bg-[#fef4ec] p-2" title={`${activeModules.length} modül aktif`}>
-                <Sparkles className="h-4 w-4 text-[#c75b12]" />
+              <div className="rounded-lg bg-white/10 p-2" title={`${activeModules.length} modül aktif`}>
+                <Sparkles className="h-4 w-4 text-[#BE3A21]" />
               </div>
             </div>
           )}
 
           {/* User */}
           <div
-            className={`flex items-center gap-3 rounded-xl bg-[#fef4ec] px-2 py-2 ${
+            className={`flex items-center gap-3 rounded-[4px] bg-white/5 px-2 py-2 ${
               collapsed ? "lg:justify-center" : ""
             }`}
           >
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#c75b12] text-xs font-semibold text-white">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#BE3A21] text-xs font-semibold text-white">
               {(session?.user?.name || "K")
                 .split(" ")
                 .map((n) => n[0])
@@ -625,16 +625,16 @@ function Sidebar({
             {!collapsed && (
               <div className="flex flex-1 items-center justify-between">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-gray-800">
+                  <p className="truncate text-sm font-medium text-white">
                     {session?.user?.name || "Kullanıcı"}
                   </p>
-                  <p className="truncate text-[11px] text-gray-400">
+                  <p className="truncate text-[11px] text-[#777]">
                     {session?.user?.email || ""}
                   </p>
                 </div>
                 <button
                   onClick={() => signOut({ callbackUrl: "/" })}
-                  className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
+                  className="rounded-lg p-1.5 text-[#AAA] transition-colors hover:bg-white/10 hover:text-red-400"
                   title="Çıkış Yap"
                 >
                   <LogOut className="h-4 w-4" />
@@ -671,13 +671,13 @@ function TrialBanner({ status, trialEnd }: { status: string; trialEnd?: string |
     const isUrgent = daysLeft <= 3;
     return (
       <div className={`border-b px-4 py-2.5 flex items-center justify-between text-sm ${
-        isUrgent ? "bg-red-50 border-red-200" : "bg-[#fef4ec] border-[#fde5d0]"
+        isUrgent ? "bg-red-50 border-red-200" : "bg-[#FFF5F3] border-[#FDEDEC]"
       }`}>
-        <span className={isUrgent ? "text-red-700 font-medium" : "text-[#9e4a0f]"}>
+        <span className={isUrgent ? "text-red-700 font-medium" : "text-[#9B2D18]"}>
           {isUrgent ? "🔴" : "⏱"} Deneme süreniz: {daysLeft} gün kaldı
         </span>
-        <Link href="/billing" className={`rounded-lg px-3 py-1 text-xs font-semibold text-white ${
-          isUrgent ? "bg-red-600 hover:bg-red-700" : "bg-[#32373c] hover:bg-[#454a50]"
+        <Link href="/billing" className={`rounded-[2px] px-3 py-1 text-xs font-bold uppercase tracking-wider text-white ${
+          isUrgent ? "bg-red-600 hover:bg-red-700" : "bg-[#BE3A21] hover:bg-[#9B2D18]"
         }`}>
           {isUrgent ? "Hemen Aktif Et" : "Planımı Aktif Et"}
         </Link>
@@ -709,7 +709,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <div className="flex h-screen bg-[#F8F7F4]">
+    <div className="flex h-screen bg-[#F9F9F9]">
       <Sidebar
         open={sidebarOpen}
         collapsed={collapsed}
@@ -722,7 +722,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         <TrialBanner status={subStatus} trialEnd={subTrialEnd} />
 
         {/* Top header */}
-        <header className="flex h-16 shrink-0 items-center justify-between border-b border-[#F0EDE8] bg-white px-6">
+        <header className="flex h-[60px] shrink-0 items-center justify-between border-b border-[#E8E8E8] bg-white px-6">
           {/* Left side */}
           <div className="flex items-center gap-4">
             <button
@@ -741,12 +741,12 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             {/* Notifications */}
             <button className="relative rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600">
               <Bell className="h-5 w-5" />
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#c75b12]" />
+              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#BE3A21]" />
             </button>
 
             {/* User (desktop) */}
-            <div className="hidden items-center gap-3 rounded-xl px-3 py-1.5 sm:flex">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#c75b12] text-xs font-semibold text-white">
+            <div className="hidden items-center gap-3 rounded-[4px] px-3 py-1.5 sm:flex">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#BE3A21] text-xs font-semibold text-white">
                 {(session?.user?.name || "K")
                   .split(" ")
                   .map((n) => n[0])

@@ -76,7 +76,7 @@ interface Product {
 /* ──────────────────────── HELPERS ──────────────────────── */
 
 const typeConfig: Record<string, { label: string; icon: typeof Package; color: string }> = {
-  STOCK: { label: "Stok", icon: Package, color: "bg-[#fef4ec] text-[#9e4a0f]" },
+  STOCK: { label: "Stok", icon: Package, color: "bg-[#FFF5F3] text-[#9B2D18]" },
   CUSTOMER_VISIT: { label: "Müşteri Ziyareti", icon: Users, color: "bg-purple-50 text-purple-700" },
   CUSTOMER_BIRTHDAY: { label: "Doğum Günü", icon: Cake, color: "bg-pink-50 text-pink-700" },
   FINANCE: { label: "Finans", icon: DollarSign, color: "bg-green-50 text-green-700" },
@@ -97,14 +97,14 @@ function getConditionSummary(type: string, conditions: Record<string, any>): str
 }
 
 function Skeleton({ className }: { className?: string }) {
-  return <div className={cn("animate-pulse rounded-xl bg-gray-100", className)} />;
+  return <div className={cn("animate-pulse rounded-[4px] bg-gray-100", className)} />;
 }
 
 /* ──────────────────────── MAIN ──────────────────────── */
 
 export default function AlarmsPageWrapper() {
   return (
-    <Suspense fallback={<div className="space-y-6"><div className="animate-pulse rounded-xl bg-gray-100 h-24" /><div className="animate-pulse rounded-xl bg-gray-100 h-96" /></div>}>
+    <Suspense fallback={<div className="space-y-6"><div className="animate-pulse rounded-[4px] bg-gray-100 h-24" /><div className="animate-pulse rounded-[4px] bg-gray-100 h-96" /></div>}>
       <AlarmsPage />
     </Suspense>
   );
@@ -380,11 +380,11 @@ function AlarmsPage() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="rounded-2xl border border-gray-100 bg-white p-5"
+          className="rounded-[4px] border border-gray-100 bg-white p-5"
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fef4ec]">
-              <BellRing className="h-5 w-5 text-[#c75b12]" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-[4px] bg-[#FFF5F3]">
+              <BellRing className="h-5 w-5 text-[#BE3A21]" />
             </div>
             <div>
               <p className="text-[11px] font-medium text-gray-400">Aktif Alarm</p>
@@ -396,10 +396,10 @@ function AlarmsPage() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.05 }}
-          className="rounded-2xl border border-gray-100 bg-white p-5"
+          className="rounded-[4px] border border-gray-100 bg-white p-5"
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50">
+            <div className="flex h-10 w-10 items-center justify-center rounded-[4px] bg-orange-50">
               <Bell className="h-5 w-5 text-orange-600" />
             </div>
             <div>
@@ -412,10 +412,10 @@ function AlarmsPage() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.1 }}
-          className="rounded-2xl border border-gray-100 bg-white p-5"
+          className="rounded-[4px] border border-gray-100 bg-white p-5"
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50">
+            <div className="flex h-10 w-10 items-center justify-center rounded-[4px] bg-red-50">
               <Bell className="h-5 w-5 text-red-600" />
             </div>
             <div>
@@ -430,10 +430,10 @@ function AlarmsPage() {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <button
           onClick={openCreateDialog}
-          className="group flex items-center gap-3 rounded-xl border-2 border-dashed border-gray-200 px-4 py-3 text-left transition-all hover:border-[#fde5d0] hover:bg-[#fef4ec]/30"
+          className="group flex items-center gap-3 rounded-[4px] border-2 border-dashed border-gray-200 px-4 py-3 text-left transition-all hover:border-[#FDEDEC] hover:bg-[#FFF5F3]/30"
         >
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#fef4ec] transition-colors group-hover:bg-[#fde5d0]">
-            <UserPlus className="h-4 w-4 text-[#c75b12]" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#FFF5F3] transition-colors group-hover:bg-[#FDEDEC]">
+            <UserPlus className="h-4 w-4 text-[#BE3A21]" />
           </div>
           <div>
             <p className="text-sm font-semibold text-gray-800">Müşteriye Özel Alarm</p>
@@ -442,7 +442,7 @@ function AlarmsPage() {
         </button>
         <button
           onClick={() => setShowBulkSheet(true)}
-          className="group flex items-center gap-3 rounded-xl border-2 border-dashed border-gray-200 px-4 py-3 text-left transition-all hover:border-purple-300 hover:bg-purple-50/30"
+          className="group flex items-center gap-3 rounded-[4px] border-2 border-dashed border-gray-200 px-4 py-3 text-left transition-all hover:border-purple-300 hover:bg-purple-50/30"
         >
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-50 transition-colors group-hover:bg-purple-100">
             <UsersRound className="h-4 w-4 text-purple-600" />
@@ -461,7 +461,7 @@ function AlarmsPage() {
           className={cn(
             "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
             tab === "alarms"
-              ? "bg-[#32373c] text-white"
+              ? "bg-[#2B2B2B] text-white"
               : "bg-gray-100 text-gray-600 hover:bg-gray-200",
           )}
         >
@@ -472,7 +472,7 @@ function AlarmsPage() {
           className={cn(
             "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
             tab === "logs"
-              ? "bg-[#32373c] text-white"
+              ? "bg-[#2B2B2B] text-white"
               : "bg-gray-100 text-gray-600 hover:bg-gray-200",
           )}
         >
@@ -526,7 +526,7 @@ function AlarmsPage() {
                     <p className="text-sm text-gray-500">Henüz alarm tanımlanmamış</p>
                     <button
                       onClick={openCreateDialog}
-                      className="mt-2 text-sm font-medium text-[#c75b12] hover:underline"
+                      className="mt-2 text-sm font-medium text-[#BE3A21] hover:underline"
                     >
                       İlk alarmınızı oluşturun
                     </button>
@@ -547,7 +547,7 @@ function AlarmsPage() {
                         const Icon = tc.icon;
 
                         return (
-                          <div key={gName} className="rounded-xl border border-gray-100 overflow-hidden">
+                          <div key={gName} className="rounded-[4px] border border-gray-100 overflow-hidden">
                             <div
                               className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50/50 transition-colors"
                               onClick={() => toggleGroup(gName)}
@@ -628,7 +628,7 @@ function AlarmsPage() {
                                         onChange={() => handleToggleAlarm(alarm)}
                                         className="peer sr-only"
                                       />
-                                      <div className="h-4 w-7 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-3 after:w-3 after:rounded-full after:bg-white after:transition-all peer-checked:bg-[#32373c] peer-checked:after:translate-x-3" />
+                                      <div className="h-4 w-7 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-3 after:w-3 after:rounded-full after:bg-white after:transition-all peer-checked:bg-[#2B2B2B] peer-checked:after:translate-x-3" />
                                     </label>
                                   </div>
                                 ))}
@@ -653,7 +653,7 @@ function AlarmsPage() {
                           <div
                             key={alarm.id}
                             className={cn(
-                              "rounded-xl border px-4 py-3 transition-colors",
+                              "rounded-[4px] border px-4 py-3 transition-colors",
                               alarm.isActive ? "border-gray-100 bg-white" : "border-gray-100 bg-gray-50 opacity-60",
                             )}
                           >
@@ -685,11 +685,11 @@ function AlarmsPage() {
                                     onChange={() => handleToggleAlarm(alarm)}
                                     className="peer sr-only"
                                   />
-                                  <div className="h-5 w-9 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-all peer-checked:bg-[#32373c] peer-checked:after:translate-x-full" />
+                                  <div className="h-5 w-9 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-all peer-checked:bg-[#2B2B2B] peer-checked:after:translate-x-full" />
                                 </label>
                                 <button
                                   onClick={() => openEditDialog(alarm)}
-                                  className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-[#fef4ec] hover:text-[#c75b12]"
+                                  className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-[#FFF5F3] hover:text-[#BE3A21]"
                                   title="Düzenle"
                                 >
                                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
@@ -727,7 +727,7 @@ function AlarmsPage() {
                   <select
                     value={logTypeFilter}
                     onChange={(e) => setLogTypeFilter(e.target.value)}
-                    className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs text-gray-700 focus:border-[#c75b12] focus:outline-none"
+                    className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs text-gray-700 focus:border-[#BE3A21] focus:outline-none"
                   >
                     <option value="all">Tüm Türler</option>
                     <option value="STOCK">Stok</option>
@@ -759,8 +759,8 @@ function AlarmsPage() {
                       <div
                         key={log.id}
                         className={cn(
-                          "flex items-center justify-between rounded-xl border px-4 py-3",
-                          log.isRead ? "border-gray-100 bg-white" : "border-[#fde5d0] bg-[#fef4ec]/30",
+                          "flex items-center justify-between rounded-[4px] border px-4 py-3",
+                          log.isRead ? "border-gray-100 bg-white" : "border-[#FDEDEC] bg-[#FFF5F3]/30",
                         )}
                       >
                         <div className="min-w-0 flex-1">
@@ -774,7 +774,7 @@ function AlarmsPage() {
                               </span>
                             )}
                             {!log.isRead && (
-                              <span className="h-2 w-2 rounded-full bg-[#fef4ec]0" />
+                              <span className="h-2 w-2 rounded-full bg-[#FFF5F3]0" />
                             )}
                           </div>
                           <p className="mt-0.5 truncate text-xs text-gray-500">{log.message}</p>
@@ -824,7 +824,7 @@ function AlarmsPage() {
                     setFormType(e.target.value);
                     setFormConditions({});
                   }}
-                  className="block w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
+                  className="block w-full rounded-[4px] border border-gray-200 px-3 py-2.5 text-sm text-gray-900 focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
                 >
                   <option value="STOCK">Stok</option>
                   <option value="CUSTOMER_VISIT">Müşteri Ziyareti</option>
@@ -844,7 +844,7 @@ function AlarmsPage() {
                     onChange={(e) =>
                       setFormConditions((prev) => ({ ...prev, productId: e.target.value || undefined }))
                     }
-                    className="block w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
+                    className="block w-full rounded-[4px] border border-gray-200 px-3 py-2.5 text-sm text-gray-900 focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
                   >
                     <option value="">Tüm Ürünler</option>
                     {products.map((p) => (
@@ -871,7 +871,7 @@ function AlarmsPage() {
                 {prefillCustomerName && formConditions.customerId && (
                   <div>
                     <label className="mb-1.5 block text-xs font-medium text-gray-600">Müşteri</label>
-                    <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5">
+                    <div className="flex items-center gap-2 rounded-[4px] border border-gray-200 bg-gray-50 px-3 py-2.5">
                       <Users className="h-4 w-4 text-gray-400" />
                       <span className="text-sm text-gray-700">{prefillCustomerName}</span>
                     </div>
@@ -910,7 +910,7 @@ function AlarmsPage() {
             )}
 
             {formType === "FINANCE" && (
-              <div className="flex items-center gap-2 rounded-xl bg-orange-50 px-4 py-3">
+              <div className="flex items-center gap-2 rounded-[4px] bg-orange-50 px-4 py-3">
                 <Bell className="h-4 w-4 text-orange-600" />
                 <span className="text-sm text-orange-700">Finans alarmları yakında eklenecek</span>
               </div>

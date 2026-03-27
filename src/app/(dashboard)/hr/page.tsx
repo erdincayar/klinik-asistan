@@ -463,7 +463,7 @@ export default function HRPage() {
           className="lg:col-span-4 xl:col-span-3 space-y-4"
         >
           {/* Kategoriler */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="bg-white rounded-[4px] border border-gray-200 overflow-hidden">
             {categories.map((cat) => {
               const Icon = cat.icon;
               const isActive = activeCategory === cat.id;
@@ -512,7 +512,7 @@ export default function HRPage() {
           </div>
 
           {/* Belge Şablonları */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="bg-white rounded-[4px] border border-gray-200 overflow-hidden">
             <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
               <h3 className="font-semibold text-gray-900 text-sm">Belge Şablonları</h3>
             </div>
@@ -594,7 +594,7 @@ export default function HRPage() {
                         }`}
                         onClick={() => handleSelectDbDoc(doc)}
                       >
-                        <File className="w-3.5 h-3.5 flex-shrink-0 text-[#c75b12]" />
+                        <File className="w-3.5 h-3.5 flex-shrink-0 text-[#BE3A21]" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">{doc.name}</p>
                           <span className="text-xs text-gray-400">
@@ -629,7 +629,7 @@ export default function HRPage() {
               </button>
               <button
                 onClick={() => setUploadDialogOpen(true)}
-                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium bg-[#fef4ec] text-[#9e4a0f] rounded-lg hover:bg-[#fde5d0] transition-colors border border-[#fde5d0]"
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium bg-[#FFF5F3] text-[#9B2D18] rounded-lg hover:bg-[#FDEDEC] transition-colors border border-[#FDEDEC]"
               >
                 <Upload className="w-3.5 h-3.5" />
                 Belge Yükle
@@ -638,7 +638,7 @@ export default function HRPage() {
           </div>
 
           {/* Token bilgisi */}
-          <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
+          <div className="bg-orange-50 border border-orange-200 rounded-[4px] p-4">
             <p className="text-sm text-orange-800">
               <strong>Token Kullanımı:</strong> Her belge oluşturma/doldurma işlemi 3.000 token harcar.
             </p>
@@ -654,7 +654,7 @@ export default function HRPage() {
         >
           {!isAnythingSelected ? (
             /* Boş durum */
-            <div className="bg-white rounded-xl border border-gray-200 p-12 flex flex-col items-center justify-center text-center">
+            <div className="bg-white rounded-[4px] border border-gray-200 p-12 flex flex-col items-center justify-center text-center">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                 <FileText className="w-8 h-8 text-gray-400" />
               </div>
@@ -668,7 +668,7 @@ export default function HRPage() {
           ) : (
             <>
               {/* Form */}
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <div className="bg-white rounded-[4px] border border-gray-200 p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-1">
                   {selectedDoc?.label || selectedDbDoc?.name || "Belge Bilgileri"}
                 </h2>
@@ -823,7 +823,7 @@ export default function HRPage() {
                       href={selectedDbDoc.fileUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-4 py-2.5 bg-[#32373c] text-white rounded-lg hover:bg-[#454a50] transition-colors text-sm font-medium"
+                      className="flex items-center gap-2 px-4 py-2.5 bg-[#2B2B2B] text-white rounded-lg hover:bg-[#3A3A3A] transition-colors text-sm font-medium"
                     >
                       <Eye className="w-4 h-4" />
                       Orijinali Görüntüle
@@ -837,7 +837,7 @@ export default function HRPage() {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-xl border border-gray-200 overflow-hidden"
+                  className="bg-white rounded-[4px] border border-gray-200 overflow-hidden"
                 >
                   <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50">
                     <div className="flex items-center gap-2">
@@ -1024,7 +1024,7 @@ export default function HRPage() {
             <button
               onClick={handleUploadDocument}
               disabled={uploading || !uploadFile || !uploadName.trim()}
-              className="flex items-center gap-2 px-4 py-2 bg-[#32373c] text-white rounded-lg hover:bg-[#454a50] disabled:opacity-50 transition-colors text-sm font-medium"
+              className="flex items-center gap-2 px-4 py-2 bg-[#2B2B2B] text-white rounded-lg hover:bg-[#3A3A3A] disabled:opacity-50 transition-colors text-sm font-medium"
             >
               {uploading ? (
                 <>

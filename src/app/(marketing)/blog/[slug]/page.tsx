@@ -64,11 +64,11 @@ export default async function BlogPostPage({ params }: Props) {
       <nav className="border-b border-gray-100 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/" className="text-xl font-bold text-gray-900">
-            Poby<span className="text-[#c75b12]">.ai</span>
+            Poby<span className="text-[#BE3A21]">.ai</span>
           </Link>
           <Link
             href="/login"
-            className="rounded-xl bg-[#c75b12] px-5 py-2 text-sm font-semibold text-white hover:bg-[#9e4a0f]"
+            className="rounded-[4px] bg-[#BE3A21] px-5 py-2 text-sm font-semibold text-white hover:bg-[#9B2D18]"
           >
             Giriş Yap
           </Link>
@@ -81,12 +81,12 @@ export default async function BlogPostPage({ params }: Props) {
             <div className="flex items-center gap-3 mb-4">
               <Link
                 href="/blog"
-                className="text-sm text-[#c75b12] hover:text-[#9e4a0f]"
+                className="text-sm text-[#BE3A21] hover:text-[#9B2D18]"
               >
                 Blog
               </Link>
               <span className="text-gray-300">/</span>
-              <span className="rounded-full bg-[#fef4ec] px-3 py-1 text-xs font-medium text-[#c75b12]">
+              <span className="rounded-full bg-[#FFF5F3] px-3 py-1 text-xs font-medium text-[#BE3A21]">
                 {post.category}
               </span>
             </div>
@@ -108,7 +108,7 @@ export default async function BlogPostPage({ params }: Props) {
             </div>
           </header>
 
-          <div className="prose prose-gray max-w-none prose-headings:text-gray-900 prose-a:text-[#c75b12]">
+          <div className="prose prose-gray max-w-none prose-headings:text-gray-900 prose-a:text-[#BE3A21]">
             {post.content.split("\n\n").map((paragraph, i) => {
               if (paragraph.startsWith("## ")) {
                 return (
@@ -171,7 +171,7 @@ export default async function BlogPostPage({ params }: Props) {
           {prevPost ? (
             <Link
               href={`/blog/${prevPost.slug}`}
-              className="flex-1 rounded-xl border border-gray-200 p-4 hover:border-indigo-200 transition-colors"
+              className="flex-1 rounded-[4px] border border-gray-200 p-4 hover:border-indigo-200 transition-colors"
             >
               <span className="text-xs text-gray-400">Önceki Yazı</span>
               <p className="mt-1 text-sm font-semibold text-gray-900 line-clamp-2">
@@ -184,7 +184,7 @@ export default async function BlogPostPage({ params }: Props) {
           {nextPost ? (
             <Link
               href={`/blog/${nextPost.slug}`}
-              className="flex-1 rounded-xl border border-gray-200 p-4 hover:border-indigo-200 transition-colors text-right"
+              className="flex-1 rounded-[4px] border border-gray-200 p-4 hover:border-indigo-200 transition-colors text-right"
             >
               <span className="text-xs text-gray-400">Sonraki Yazı</span>
               <p className="mt-1 text-sm font-semibold text-gray-900 line-clamp-2">

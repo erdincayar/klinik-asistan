@@ -76,7 +76,7 @@ const fadeUp = {
 };
 
 function Skeleton({ className }: { className?: string }) {
-  return <div className={cn("animate-pulse rounded-xl bg-gray-100", className)} />;
+  return <div className={cn("animate-pulse rounded-[4px] bg-gray-100", className)} />;
 }
 
 function TableSkeleton() {
@@ -373,13 +373,13 @@ export default function PatientsPage() {
               placeholder="Müşteri ara..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="block w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
+              className="block w-full rounded-[4px] border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
             />
           </div>
           <select
             value={riskFilter}
             onChange={(e) => setRiskFilter(e.target.value as any)}
-            className="rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm text-gray-700 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
+            className="rounded-[4px] border border-gray-200 bg-white px-3 py-3 text-sm text-gray-700 focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
           >
             <option value="all">Tümü</option>
             <option value="active">Aktif</option>
@@ -563,10 +563,10 @@ export default function PatientsPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-[#c75b12]" />
+                <Users className="h-4 w-4 text-[#BE3A21]" />
                 <CardTitle>Müşteri Listesi</CardTitle>
                 {!loading && filteredPatients.length > 0 && (
-                  <span className="rounded-full bg-[#fef4ec] px-2 py-0.5 text-[11px] font-semibold text-[#9e4a0f]">
+                  <span className="rounded-full bg-[#FFF5F3] px-2 py-0.5 text-[11px] font-semibold text-[#9B2D18]">
                     {filteredPatients.length}
                   </span>
                 )}
@@ -577,7 +577,7 @@ export default function PatientsPage() {
                   className={cn(
                     "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
                     columnEditMode
-                      ? "bg-[#32373c] text-white"
+                      ? "bg-[#2B2B2B] text-white"
                       : "border border-gray-200 text-gray-600 hover:bg-gray-50",
                   )}
                 >
@@ -596,7 +596,7 @@ export default function PatientsPage() {
                   <p className="text-sm text-red-500">{error}</p>
                   <button
                     onClick={() => window.location.reload()}
-                    className="mt-2 text-sm font-medium text-[#c75b12] hover:underline"
+                    className="mt-2 text-sm font-medium text-[#BE3A21] hover:underline"
                   >
                     Tekrar dene
                   </button>
@@ -612,7 +612,7 @@ export default function PatientsPage() {
                   {!search && (
                     <Link
                       href="/patients/new"
-                      className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#c75b12] hover:text-[#9e4a0f]"
+                      className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#BE3A21] hover:text-[#9B2D18]"
                     >
                       İlk müşterinizi ekleyin
                       <ArrowRight className="h-3 w-3" />
@@ -626,8 +626,8 @@ export default function PatientsPage() {
                 <div className="space-y-2 md:hidden">
                   {filteredPatients.map((patient, i) => (
                     <motion.div key={patient.id} variants={fadeUp} initial="hidden" animate="visible" custom={i}>
-                      <div className="flex items-center gap-3 rounded-xl border border-gray-100 px-4 py-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fef4ec] text-sm font-semibold text-[#9e4a0f]">
+                      <div className="flex items-center gap-3 rounded-[4px] border border-gray-100 px-4 py-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FFF5F3] text-sm font-semibold text-[#9B2D18]">
                           {patient.name
                             .split(" ")
                             .map((n) => n[0])
@@ -662,7 +662,7 @@ export default function PatientsPage() {
                         </Link>
                         <button
                           onClick={() => openEditModal(patient)}
-                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition-colors hover:bg-gray-50 hover:text-[#c75b12]"
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition-colors hover:bg-gray-50 hover:text-[#BE3A21]"
                           title="Düzenle"
                         >
                           <Pencil className="h-3.5 w-3.5" />
@@ -729,7 +729,7 @@ export default function PatientsPage() {
                           ) : (
                             <button
                               onClick={() => setShowAddColumn(true)}
-                              className="flex h-6 w-6 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-[#fef4ec] hover:text-[#c75b12]"
+                              className="flex h-6 w-6 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-[#FFF5F3] hover:text-[#BE3A21]"
                               title="Özel sütun ekle"
                             >
                               <Plus className="h-3.5 w-3.5" />
@@ -743,7 +743,7 @@ export default function PatientsPage() {
                         <motion.tr key={patient.id} variants={fadeUp} initial="hidden" animate="visible" custom={i}>
                           <TableCell>
                             <div className="flex items-center gap-3">
-                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fef4ec] text-sm font-semibold text-[#9e4a0f]">
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FFF5F3] text-sm font-semibold text-[#9B2D18]">
                                 {patient.name
                                   .split(" ")
                                   .map((n) => n[0])
@@ -779,7 +779,7 @@ export default function PatientsPage() {
                               />
                             ) : (
                               <span
-                                className="cursor-pointer rounded px-1 py-0.5 text-sm text-gray-600 hover:bg-[#fef4ec]"
+                                className="cursor-pointer rounded px-1 py-0.5 text-sm text-gray-600 hover:bg-[#FFF5F3]"
                                 onClick={() => startEdit(patient.id, "phone", patient.phone)}
                               >
                                 {patient.phone || <span className="text-gray-300">&mdash;</span>}
@@ -801,7 +801,7 @@ export default function PatientsPage() {
                               />
                             ) : (
                               <span
-                                className="cursor-pointer truncate rounded px-1 py-0.5 text-sm text-gray-600 hover:bg-[#fef4ec]"
+                                className="cursor-pointer truncate rounded px-1 py-0.5 text-sm text-gray-600 hover:bg-[#FFF5F3]"
                                 onClick={() => startEdit(patient.id, "email", patient.email)}
                               >
                                 {patient.email || <span className="text-gray-300">&mdash;</span>}
@@ -829,7 +829,7 @@ export default function PatientsPage() {
                                   />
                                 ) : (
                                   <span
-                                    className="cursor-pointer rounded px-1 py-0.5 text-sm text-gray-600 hover:bg-[#fef4ec]"
+                                    className="cursor-pointer rounded px-1 py-0.5 text-sm text-gray-600 hover:bg-[#FFF5F3]"
                                     onClick={() => startEdit(patient.id, cellKey, cv?.value || "")}
                                   >
                                     {cv?.value || <span className="text-gray-300">&mdash;</span>}

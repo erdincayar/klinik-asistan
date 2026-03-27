@@ -139,7 +139,7 @@ const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; i
 /* ──────────────────────── HELPERS ──────────────────────── */
 
 function Skeleton({ className }: { className?: string }) {
-  return <div className={`animate-pulse rounded-xl bg-gray-100 ${className || ""}`} />;
+  return <div className={`animate-pulse rounded-[4px] bg-gray-100 ${className || ""}`} />;
 }
 
 function formatTL(amount: number): string {
@@ -409,19 +409,19 @@ export default function MetaAdsContent() {
     return (
       <div className="space-y-6">
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="flex items-center gap-2">
-          <Megaphone className="h-5 w-5 text-[#c75b12]" />
+          <Megaphone className="h-5 w-5 text-[#BE3A21]" />
           <h2 className="text-lg font-semibold text-gray-900">Pazarlama</h2>
         </motion.div>
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.05 }} className="flex min-h-[400px] items-center justify-center rounded-2xl border border-gray-100 bg-white">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.05 }} className="flex min-h-[400px] items-center justify-center rounded-[4px] border border-gray-100 bg-white">
           <div className="text-center max-w-md px-6">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#fef4ec]">
-              <Megaphone className="h-8 w-8 text-[#c75b12]" />
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[4px] bg-[#FFF5F3]">
+              <Megaphone className="h-8 w-8 text-[#BE3A21]" />
             </div>
             <h3 className="text-base font-semibold text-gray-900 mb-2">Meta hesabinizi baglayin</h3>
             <p className="text-sm text-gray-500 mb-6">
               Facebook ve Instagram reklam kampanyalarinizi goruntulemek ve AI destekli analizler almak icin Meta hesabinizi Ayarlar sayfasindan baglayiniz.
             </p>
-            <Link href="/settings" className="inline-flex items-center gap-2 rounded-xl bg-[#32373c] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#454a50]">
+            <Link href="/settings" className="inline-flex items-center gap-2 rounded-[4px] bg-[#2B2B2B] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#3A3A3A]">
               <Settings className="h-4 w-4" />
               Ayarlara Git
               <ChevronRight className="h-4 w-4" />
@@ -437,15 +437,15 @@ export default function MetaAdsContent() {
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Megaphone className="h-5 w-5 text-[#c75b12]" />
+          <Megaphone className="h-5 w-5 text-[#BE3A21]" />
           <h2 className="text-lg font-semibold text-gray-900">Pazarlama</h2>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={handleAnalyze} disabled={analyzing} className="inline-flex items-center gap-1.5 rounded-xl bg-[#32373c] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#454a50] disabled:opacity-50">
+          <button onClick={handleAnalyze} disabled={analyzing} className="inline-flex items-center gap-1.5 rounded-[4px] bg-[#2B2B2B] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#3A3A3A] disabled:opacity-50">
             {analyzing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Bot className="h-3.5 w-3.5" />}
             {analyzing ? "Analiz Ediliyor..." : "AI Analiz"}
           </button>
-          <button onClick={handleDisconnect} disabled={disconnecting} className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 px-4 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50">
+          <button onClick={handleDisconnect} disabled={disconnecting} className="inline-flex items-center gap-1.5 rounded-[4px] border border-red-200 px-4 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50">
             {disconnecting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Unlink className="h-3.5 w-3.5" />}
             Baglantiyi Kes
           </button>
@@ -460,7 +460,7 @@ export default function MetaAdsContent() {
         ]).map((tab) => {
           const Icon = tab.icon;
           return (
-            <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-semibold transition-all ${activeTab === tab.key ? "bg-[#32373c] text-white shadow-sm" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"}`}>
+            <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`inline-flex items-center gap-1.5 rounded-[4px] px-4 py-2.5 text-xs font-semibold transition-all ${activeTab === tab.key ? "bg-[#2B2B2B] text-white shadow-sm" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"}`}>
               <Icon className="h-3.5 w-3.5" />
               {tab.label}
             </button>
@@ -470,7 +470,7 @@ export default function MetaAdsContent() {
 
       {/* Error */}
       {error && (
-        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2 rounded-xl bg-red-50 border border-red-200 px-5 py-3.5">
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2 rounded-[4px] bg-red-50 border border-red-200 px-5 py-3.5">
           <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
           <p className="text-sm font-medium text-red-700">Meta baglanti hatasi: {error}</p>
         </motion.div>
@@ -484,7 +484,7 @@ export default function MetaAdsContent() {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
             {[
               { label: "Toplam Harcama", value: formatTL(campaignStats.totalSpend), icon: DollarSign, color: "text-red-600", bg: "bg-red-50" },
-              { label: "Toplam Gosterim", value: formatNum(campaignStats.totalImpressions), icon: Eye, color: "text-[#c75b12]", bg: "bg-[#fef4ec]" },
+              { label: "Toplam Gosterim", value: formatNum(campaignStats.totalImpressions), icon: Eye, color: "text-[#BE3A21]", bg: "bg-[#FFF5F3]" },
               { label: "Toplam Tiklama", value: formatNum(campaignStats.totalClicks), icon: MousePointerClick, color: "text-indigo-600", bg: "bg-indigo-50" },
               { label: "Ort. CTR", value: `%${campaignStats.avgCtr.toFixed(2)}`, icon: TrendingUp, color: "text-emerald-600", bg: "bg-emerald-50" },
               { label: "Toplam Kampanya", value: campaignStats.total.toString(), icon: Megaphone, color: "text-purple-600", bg: "bg-purple-50" },
@@ -492,7 +492,7 @@ export default function MetaAdsContent() {
             ].map((stat) => {
               const Icon = stat.icon;
               return (
-                <div key={stat.label} className="rounded-2xl border border-gray-100 bg-white p-4">
+                <div key={stat.label} className="rounded-[4px] border border-gray-100 bg-white p-4">
                   <div className="flex items-center gap-2">
                     <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${stat.bg}`}>
                       <Icon className={`h-3.5 w-3.5 ${stat.color}`} />
@@ -506,7 +506,7 @@ export default function MetaAdsContent() {
           </div>
 
           {/* Filters */}
-          <div className="rounded-2xl border border-gray-100 bg-white p-4 space-y-3">
+          <div className="rounded-[4px] border border-gray-100 bg-white p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Filter className="h-4 w-4 text-gray-400" />
@@ -525,7 +525,7 @@ export default function MetaAdsContent() {
               <span className="text-[11px] text-gray-400 font-medium">Tarih (Insight)</span>
               <div className="flex flex-wrap gap-1.5">
                 {DATE_PRESETS.map((p) => (
-                  <button key={p.key} onClick={() => setCampaignsDatePreset(p.key)} className={`rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-all ${campaignsDatePreset === p.key ? "bg-[#32373c] text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"}`}>
+                  <button key={p.key} onClick={() => setCampaignsDatePreset(p.key)} className={`rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-all ${campaignsDatePreset === p.key ? "bg-[#2B2B2B] text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"}`}>
                     {p.label}
                   </button>
                 ))}
@@ -535,9 +535,9 @@ export default function MetaAdsContent() {
             {/* Custom date range */}
             <div className="flex items-center gap-2">
               <span className="text-[11px] text-gray-400 font-medium whitespace-nowrap">Ozel Tarih:</span>
-              <input type="date" value={customDateStart} onChange={(e) => setCustomDateStart(e.target.value)} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-[11px] text-gray-700 focus:border-[#c75b12] focus:outline-none" />
+              <input type="date" value={customDateStart} onChange={(e) => setCustomDateStart(e.target.value)} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-[11px] text-gray-700 focus:border-[#BE3A21] focus:outline-none" />
               <span className="text-[11px] text-gray-400">—</span>
-              <input type="date" value={customDateEnd} onChange={(e) => setCustomDateEnd(e.target.value)} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-[11px] text-gray-700 focus:border-[#c75b12] focus:outline-none" />
+              <input type="date" value={customDateEnd} onChange={(e) => setCustomDateEnd(e.target.value)} className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-[11px] text-gray-700 focus:border-[#BE3A21] focus:outline-none" />
             </div>
 
             {/* Objective filter */}
@@ -545,7 +545,7 @@ export default function MetaAdsContent() {
               <span className="text-[11px] text-gray-400 font-medium">Kampanya Turu</span>
               <div className="flex flex-wrap gap-1.5">
                 {OBJECTIVE_FILTERS.map((f) => (
-                  <button key={f.key} onClick={() => setObjectiveFilter(f.key)} className={`rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-all ${objectiveFilter === f.key ? "bg-[#32373c] text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"}`}>
+                  <button key={f.key} onClick={() => setObjectiveFilter(f.key)} className={`rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-all ${objectiveFilter === f.key ? "bg-[#2B2B2B] text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"}`}>
                     {f.label}
                   </button>
                 ))}
@@ -557,7 +557,7 @@ export default function MetaAdsContent() {
               <span className="text-[11px] text-gray-400 font-medium">Durum</span>
               <div className="flex flex-wrap gap-1.5">
                 {STATUS_FILTERS.map((f) => (
-                  <button key={f.key} onClick={() => setStatusFilter(f.key)} className={`rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-all ${statusFilter === f.key ? "bg-[#32373c] text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"}`}>
+                  <button key={f.key} onClick={() => setStatusFilter(f.key)} className={`rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-all ${statusFilter === f.key ? "bg-[#2B2B2B] text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100"}`}>
                     {f.label}
                   </button>
                 ))}
@@ -567,7 +567,7 @@ export default function MetaAdsContent() {
 
           {/* Campaign List */}
           {filteredCampaigns.length === 0 ? (
-            <div className="flex min-h-[200px] items-center justify-center rounded-2xl border border-gray-100 bg-white">
+            <div className="flex min-h-[200px] items-center justify-center rounded-[4px] border border-gray-100 bg-white">
               <div className="text-center">
                 <Megaphone className="mx-auto mb-3 h-10 w-10 text-gray-300" />
                 <p className="text-sm font-medium text-gray-500">
@@ -576,7 +576,7 @@ export default function MetaAdsContent() {
               </div>
             </div>
           ) : (
-            <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white">
+            <div className="overflow-hidden rounded-[4px] border border-gray-100 bg-white">
               <div className="border-b border-gray-100 px-6 py-3">
                 <span className="text-xs text-gray-500">{filteredCampaigns.length} kampanya</span>
               </div>
@@ -631,7 +631,7 @@ export default function MetaAdsContent() {
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex gap-1.5">
               {INSIGHTS_DATE_PRESETS.map((p) => (
-                <button key={p.key} onClick={() => setInsightsDatePreset(p.key)} className={`rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-all ${insightsDatePreset === p.key ? "bg-[#32373c] text-white" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"}`}>
+                <button key={p.key} onClick={() => setInsightsDatePreset(p.key)} className={`rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-all ${insightsDatePreset === p.key ? "bg-[#2B2B2B] text-white" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"}`}>
                   {p.label}
                 </button>
               ))}
@@ -647,7 +647,7 @@ export default function MetaAdsContent() {
 
           {/* Insights Error */}
           {insightsError && (
-            <div className="flex items-center gap-2 rounded-xl bg-red-50 border border-red-200 px-5 py-3.5">
+            <div className="flex items-center gap-2 rounded-[4px] bg-red-50 border border-red-200 px-5 py-3.5">
               <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
               <p className="text-sm font-medium text-red-700">{insightsError}</p>
             </div>
@@ -661,7 +661,7 @@ export default function MetaAdsContent() {
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
               {[
-                { label: "Gosterim", value: formatNum(insightsStats.totalImpressions), icon: Eye, color: "text-[#c75b12]", bg: "bg-[#fef4ec]" },
+                { label: "Gosterim", value: formatNum(insightsStats.totalImpressions), icon: Eye, color: "text-[#BE3A21]", bg: "bg-[#FFF5F3]" },
                 { label: "Tiklama", value: formatNum(insightsStats.totalClicks), icon: MousePointerClick, color: "text-indigo-600", bg: "bg-indigo-50" },
                 { label: "Harcama", value: formatTL(insightsStats.totalSpend), icon: DollarSign, color: "text-red-600", bg: "bg-red-50" },
                 { label: "Ort. CTR", value: `%${insightsStats.avgCtr.toFixed(2)}`, icon: TrendingUp, color: "text-emerald-600", bg: "bg-emerald-50" },
@@ -670,7 +670,7 @@ export default function MetaAdsContent() {
               ].map((stat) => {
                 const Icon = stat.icon;
                 return (
-                  <div key={stat.label} className="rounded-2xl border border-gray-100 bg-white p-4">
+                  <div key={stat.label} className="rounded-[4px] border border-gray-100 bg-white p-4">
                     <div className="flex items-center gap-2">
                       <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${stat.bg}`}>
                         <Icon className={`h-3.5 w-3.5 ${stat.color}`} />
@@ -688,7 +688,7 @@ export default function MetaAdsContent() {
           {insightsLoading ? (
             <Skeleton className="h-80" />
           ) : trendChartData.length > 0 ? (
-            <div className="rounded-2xl border border-gray-100 bg-white p-6">
+            <div className="rounded-[4px] border border-gray-100 bg-white p-6">
               <h3 className="mb-4 text-sm font-semibold text-gray-900">Gunluk Performans Trendi</h3>
               <ResponsiveContainer width="100%" height={320}>
                 <LineChart data={trendChartData}>
@@ -705,7 +705,7 @@ export default function MetaAdsContent() {
               </ResponsiveContainer>
             </div>
           ) : !insightsError ? (
-            <div className="flex min-h-[250px] items-center justify-center rounded-2xl border border-gray-100 bg-white">
+            <div className="flex min-h-[250px] items-center justify-center rounded-[4px] border border-gray-100 bg-white">
               <div className="text-center">
                 <BarChart3 className="mx-auto mb-3 h-10 w-10 text-gray-300" />
                 <p className="text-sm font-medium text-gray-500">Secilen donemde veri bulunamadi</p>
@@ -716,7 +716,7 @@ export default function MetaAdsContent() {
           {/* Campaign Comparison Bar Chart */}
           {campaignChartData.length > 0 && !insightsLoading && (
             <div className="grid gap-6 lg:grid-cols-2">
-              <div className="rounded-2xl border border-gray-100 bg-white p-6">
+              <div className="rounded-[4px] border border-gray-100 bg-white p-6">
                 <h3 className="mb-4 text-sm font-semibold text-gray-900">Harcama Dagilimi</h3>
                 <ResponsiveContainer width="100%" height={250}>
                   <BarChart data={campaignChartData}>
@@ -728,7 +728,7 @@ export default function MetaAdsContent() {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              <div className="rounded-2xl border border-gray-100 bg-white p-6">
+              <div className="rounded-[4px] border border-gray-100 bg-white p-6">
                 <h3 className="mb-4 text-sm font-semibold text-gray-900">Tiklama ve Donusum</h3>
                 <ResponsiveContainer width="100%" height={250}>
                   <BarChart data={campaignChartData}>
@@ -746,7 +746,7 @@ export default function MetaAdsContent() {
 
           {/* Campaign Comparison Table */}
           {filteredInsightsCampaigns.length > 0 && !insightsLoading && (
-            <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white">
+            <div className="overflow-hidden rounded-[4px] border border-gray-100 bg-white">
               <div className="border-b border-gray-100 px-6 py-3">
                 <h3 className="text-sm font-semibold text-gray-900">Kampanya Karsilastirmasi</h3>
               </div>
@@ -785,10 +785,10 @@ export default function MetaAdsContent() {
 
       {/* AI Analysis */}
       {analysis && (
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-[#fde5d0] bg-[#fef4ec]/50 p-6">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="rounded-[4px] border border-[#FDEDEC] bg-[#FFF5F3]/50 p-6">
           <div className="flex items-center gap-2 mb-3">
-            <Bot className="h-5 w-5 text-[#c75b12]" />
-            <h3 className="text-sm font-semibold text-[#652e09]">AI Kampanya Analizi</h3>
+            <Bot className="h-5 w-5 text-[#BE3A21]" />
+            <h3 className="text-sm font-semibold text-[#5C1B0F]">AI Kampanya Analizi</h3>
           </div>
           <div className="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap">{analysis}</div>
         </motion.div>

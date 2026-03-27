@@ -253,7 +253,7 @@ export default function ModullerPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-[#c75b12]" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#BE3A21]" />
       </div>
     );
   }
@@ -310,11 +310,11 @@ export default function ModullerPage() {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.2 }}
-                    className="flex items-center justify-between rounded-2xl border border-[#fde5d0] bg-[#fef4ec]/60 p-4"
+                    className="flex items-center justify-between rounded-[4px] border border-[#FDEDEC] bg-[#FFF5F3]/60 p-4"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#fde5d0]">
-                        <Icon className="h-5 w-5 text-[#c75b12]" />
+                      <div className="flex h-9 w-9 items-center justify-center rounded-[4px] bg-[#FDEDEC]">
+                        <Icon className="h-5 w-5 text-[#BE3A21]" />
                       </div>
                       <div>
                         <p className="text-sm font-medium">{mod.name}</p>
@@ -325,7 +325,7 @@ export default function ModullerPage() {
                     </div>
 
                     {included ? (
-                      <span className="rounded-full bg-[#fde5d0] px-2.5 py-0.5 text-xs font-medium text-[#9e4a0f]">
+                      <span className="rounded-full bg-[#FDEDEC] px-2.5 py-0.5 text-xs font-medium text-[#9B2D18]">
                         Dahil
                       </span>
                     ) : (
@@ -362,10 +362,10 @@ export default function ModullerPage() {
                   return (
                     <div
                       key={slug}
-                      className="flex items-center justify-between rounded-2xl border border-gray-200 bg-white p-4 transition hover:border-[#fde5d0]"
+                      className="flex items-center justify-between rounded-[4px] border border-gray-200 bg-white p-4 transition hover:border-[#FDEDEC]"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-100">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-[4px] bg-gray-100">
                           <Icon className="h-5 w-5 text-gray-600" />
                         </div>
                         <div>
@@ -381,7 +381,7 @@ export default function ModullerPage() {
                       <button
                         type="button"
                         onClick={() => addModule(slug)}
-                        className="flex items-center gap-1 rounded-lg border border-[#fde5d0] bg-white px-3 py-1.5 text-xs font-medium text-[#c75b12] transition hover:bg-[#fef4ec]"
+                        className="flex items-center gap-1 rounded-lg border border-[#FDEDEC] bg-white px-3 py-1.5 text-xs font-medium text-[#BE3A21] transition hover:bg-[#FFF5F3]"
                       >
                         Ekle <Plus className="h-3.5 w-3.5" />
                       </button>
@@ -409,10 +409,10 @@ export default function ModullerPage() {
                   return (
                     <div
                       key={slug}
-                      className="flex items-center justify-between rounded-2xl border border-gray-200 bg-gray-50 p-4 opacity-60"
+                      className="flex items-center justify-between rounded-[4px] border border-gray-200 bg-gray-50 p-4 opacity-60"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-200">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-[4px] bg-gray-200">
                           <Icon className="h-5 w-5 text-gray-400" />
                         </div>
                         <div>
@@ -440,7 +440,7 @@ export default function ModullerPage() {
             transition={{ duration: 0.3, delay: 0.3 }}
           >
             <h2 className="mb-3 text-lg font-semibold">Ek Kullanıcılar</h2>
-            <div className="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white p-4">
+            <div className="flex items-center gap-4 rounded-[4px] border border-gray-200 bg-white p-4">
               <div className="flex-1">
                 <p className="text-sm font-medium">Ek Kullanıcı Sayısı</p>
                 <p className="text-xs text-gray-500">
@@ -488,10 +488,10 @@ export default function ModullerPage() {
                     key={key}
                     type="button"
                     onClick={() => setStoragePlan(key)}
-                    className={`flex items-center justify-between rounded-2xl border p-4 text-left transition ${
+                    className={`flex items-center justify-between rounded-[4px] border p-4 text-left transition ${
                       isSelected
-                        ? "border-[#c75b12] bg-[#fef4ec] ring-1 ring-[#c75b12]"
-                        : "border-gray-200 bg-white hover:border-[#fde5d0]"
+                        ? "border-[#BE3A21] bg-[#FFF5F3] ring-1 ring-[#BE3A21]"
+                        : "border-gray-200 bg-white hover:border-[#FDEDEC]"
                     }`}
                   >
                     <div>
@@ -503,7 +503,7 @@ export default function ModullerPage() {
                         {sp.price > 0 ? `${fmt(sp.price)} TL/ay + KDV` : "Ücretsiz"}
                       </span>
                       {isSelected && (
-                        <Check className="h-4 w-4 text-[#c75b12]" />
+                        <Check className="h-4 w-4 text-[#BE3A21]" />
                       )}
                     </div>
                   </button>
@@ -520,7 +520,7 @@ export default function ModullerPage() {
           transition={{ duration: 0.35, delay: 0.15 }}
           className="lg:w-80"
         >
-          <div className="sticky top-24 space-y-4 rounded-2xl border border-gray-200 bg-white p-6">
+          <div className="sticky top-24 space-y-4 rounded-[4px] border border-gray-200 bg-white p-6">
             <h3 className="text-lg font-semibold">Aylık Maliyet Özeti</h3>
 
             {/* Module lines */}
@@ -596,7 +596,7 @@ export default function ModullerPage() {
             {/* Genel Toplam */}
             <div className="flex justify-between">
               <span className="font-semibold">Genel Toplam (KDV Dahil)</span>
-              <span className="text-xl font-bold text-[#c75b12]">
+              <span className="text-xl font-bold text-[#BE3A21]">
                 {fmt(pricing.totalWithKdv)} TL/ay
               </span>
             </div>
@@ -616,7 +616,7 @@ export default function ModullerPage() {
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#32373c] py-3 text-sm font-semibold text-white transition hover:bg-[#454a50] disabled:opacity-60"
+              className="flex w-full items-center justify-center gap-2 rounded-[4px] bg-[#2B2B2B] py-3 text-sm font-semibold text-white transition hover:bg-[#3A3A3A] disabled:opacity-60"
             >
               {saving ? (
                 <>

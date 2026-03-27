@@ -153,7 +153,7 @@ function formatPrice(priceInKurus: number): string {
 function CheckIcon() {
   return (
     <svg
-      className="h-4 w-4 shrink-0 text-[#c75b12]"
+      className="h-4 w-4 shrink-0 text-[#BE3A21]"
       fill="none"
       viewBox="0 0 24 24"
       stroke="currentColor"
@@ -194,11 +194,11 @@ export default function FiyatlandirmaPage() {
       <nav className="border-b border-gray-100 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/" className="text-xl font-bold text-gray-900">
-            Poby<span className="text-[#c75b12]">.ai</span>
+            Poby<span className="text-[#BE3A21]">.ai</span>
           </Link>
           <Link
             href="/login"
-            className="rounded-xl bg-[#c75b12] px-5 py-2 text-sm font-semibold text-white hover:bg-[#9e4a0f]"
+            className="rounded-[4px] bg-[#BE3A21] px-5 py-2 text-sm font-semibold text-white hover:bg-[#9B2D18]"
           >
             Giris Yap
           </Link>
@@ -222,11 +222,11 @@ export default function FiyatlandirmaPage() {
 
         {/* ── Baslangic Platformu Callout ── */}
         <section className="mb-16">
-          <div className="relative overflow-hidden rounded-2xl border-2 border-[#c75b12] bg-gradient-to-br from-[#fef4ec] to-white p-8 sm:p-10">
+          <div className="relative overflow-hidden rounded-[4px] border-2 border-[#BE3A21] bg-gradient-to-br from-[#FFF5F3] to-white p-8 sm:p-10">
             <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-indigo-100/60" />
             <div className="relative flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#c75b12] text-white">
+                <div className="flex h-14 w-14 items-center justify-center rounded-[4px] bg-[#BE3A21] text-white">
                   {MODULE_ICONS.LayoutDashboard}
                 </div>
                 <div>
@@ -240,7 +240,7 @@ export default function FiyatlandirmaPage() {
               </div>
               <div className="text-left sm:text-right">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold text-[#c75b12]">
+                  <span className="text-4xl font-bold text-[#BE3A21]">
                     ₺{formatPrice(MODULE_PRICES.base.price)}
                   </span>
                   <span className="text-sm text-gray-500">/ay + KDV</span>
@@ -278,11 +278,11 @@ export default function FiyatlandirmaPage() {
             {activeModules.map(([slug, mod]) => (
               <div
                 key={slug}
-                className="group rounded-2xl border border-gray-200 bg-white p-6 transition-shadow hover:shadow-lg"
+                className="group rounded-[4px] border border-gray-200 bg-white p-6 transition-shadow hover:shadow-lg"
               >
                 {/* Icon + Name */}
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#fef4ec] text-[#c75b12] transition-colors group-hover:bg-[#fde5d0]">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#FFF5F3] text-[#BE3A21] transition-colors group-hover:bg-[#FDEDEC]">
                     {MODULE_ICONS[mod.icon] ?? MODULE_ICONS.LayoutDashboard}
                   </div>
                   <div>
@@ -342,7 +342,7 @@ export default function FiyatlandirmaPage() {
             {lockedModuleData.map((mod) => (
               <div
                 key={mod.slug}
-                className="relative rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-6 opacity-75"
+                className="relative rounded-[4px] border border-dashed border-gray-300 bg-gray-50 p-6 opacity-75"
               >
                 {/* Yakinda badge */}
                 <span className="absolute -top-3 right-4 rounded-full bg-orange-100 px-3 py-0.5 text-xs font-semibold text-orange-700">
@@ -393,7 +393,7 @@ export default function FiyatlandirmaPage() {
             Ne kadar cok modül eklerseniz, o kadar cok tasarruf edersiniz.
           </p>
 
-          <div className="mx-auto max-w-lg overflow-hidden rounded-2xl border border-gray-200">
+          <div className="mx-auto max-w-lg overflow-hidden rounded-[4px] border border-gray-200">
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-gray-50">
@@ -438,14 +438,14 @@ export default function FiyatlandirmaPage() {
               return (
                 <div
                   key={key}
-                  className={`rounded-2xl border p-6 text-center transition-shadow hover:shadow-lg ${
+                  className={`rounded-[4px] border p-6 text-center transition-shadow hover:shadow-lg ${
                     key === "professional"
-                      ? "border-[#c75b12] ring-2 ring-[#c75b12]"
+                      ? "border-[#BE3A21] ring-2 ring-[#BE3A21]"
                       : "border-gray-200"
                   }`}
                 >
                   {key === "professional" && (
-                    <span className="mb-3 inline-block rounded-full bg-[#c75b12] px-3 py-0.5 text-xs font-semibold text-white">
+                    <span className="mb-3 inline-block rounded-full bg-[#BE3A21] px-3 py-0.5 text-xs font-semibold text-white">
                       Populer
                     </span>
                   )}
@@ -485,7 +485,7 @@ export default function FiyatlandirmaPage() {
 
         {/* ── CTA Section ── */}
         <section className="mb-20">
-          <div className="rounded-2xl bg-gradient-to-r from-[#c75b12] to-[#9e4a0f] px-8 py-14 text-center sm:px-12">
+          <div className="rounded-[4px] bg-gradient-to-r from-[#BE3A21] to-[#9B2D18] px-8 py-14 text-center sm:px-12">
             <h2 className="text-3xl font-bold text-white sm:text-4xl">
               7 Gün Ücretsiz Deneyin
             </h2>
@@ -495,7 +495,7 @@ export default function FiyatlandirmaPage() {
             </p>
             <Link
               href="/register"
-              className="mt-8 inline-flex items-center gap-2 rounded-xl bg-white px-8 py-3.5 text-base font-semibold text-[#c75b12] shadow-lg transition-all hover:bg-[#fef4ec] hover:shadow-xl"
+              className="mt-8 inline-flex items-center gap-2 rounded-[4px] bg-white px-8 py-3.5 text-base font-semibold text-[#BE3A21] shadow-lg transition-all hover:bg-[#FFF5F3] hover:shadow-xl"
             >
               Hemen Baslayin
               <svg

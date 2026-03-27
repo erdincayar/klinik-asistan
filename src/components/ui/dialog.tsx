@@ -71,7 +71,7 @@ function DialogContent({ children, className, ...props }: React.HTMLAttributes<H
       <div
         className={cn(
           "relative z-50 grid w-full max-w-lg gap-4 border bg-background p-6 shadow-lg max-h-[90vh] overflow-y-auto",
-          "rounded-t-2xl sm:rounded-2xl",
+          "rounded-[4px]",
           className
         )}
         {...props}

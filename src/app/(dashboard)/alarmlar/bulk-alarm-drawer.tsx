@@ -42,9 +42,9 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
               className={cn(
                 "flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold transition-colors",
                 i < currentStep
-                  ? "bg-[#32373c] text-white"
+                  ? "bg-[#2B2B2B] text-white"
                   : i === currentStep
-                  ? "bg-[#32373c] text-white"
+                  ? "bg-[#2B2B2B] text-white"
                   : "bg-gray-100 text-gray-400",
               )}
             >
@@ -59,7 +59,7 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
             </span>
           </div>
           {i < STEPS.length - 1 && (
-            <div className={cn("h-px w-8 mb-4", i < currentStep ? "bg-[#32373c]" : "bg-gray-200")} />
+            <div className={cn("h-px w-8 mb-4", i < currentStep ? "bg-[#2B2B2B]" : "bg-gray-200")} />
           )}
         </div>
       ))}
@@ -214,10 +214,10 @@ export default function BulkAlarmDrawer({ open, onOpenChange, onComplete }: Bulk
 
                 <button
                   onClick={() => handleSelectType("CUSTOMER_VISIT")}
-                  className="w-full rounded-xl border-2 border-gray-100 p-4 text-left transition-all hover:border-purple-200 hover:bg-purple-50/30"
+                  className="w-full rounded-[4px] border-2 border-gray-100 p-4 text-left transition-all hover:border-purple-200 hover:bg-purple-50/30"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-[4px] bg-purple-50">
                       <Users className="h-5 w-5 text-purple-600" />
                     </div>
                     <div>
@@ -229,10 +229,10 @@ export default function BulkAlarmDrawer({ open, onOpenChange, onComplete }: Bulk
 
                 <button
                   onClick={() => handleSelectType("CUSTOMER_BIRTHDAY")}
-                  className="w-full rounded-xl border-2 border-gray-100 p-4 text-left transition-all hover:border-pink-200 hover:bg-pink-50/30"
+                  className="w-full rounded-[4px] border-2 border-gray-100 p-4 text-left transition-all hover:border-pink-200 hover:bg-pink-50/30"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-pink-50">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-[4px] bg-pink-50">
                       <Cake className="h-5 w-5 text-pink-600" />
                     </div>
                     <div>
@@ -242,9 +242,9 @@ export default function BulkAlarmDrawer({ open, onOpenChange, onComplete }: Bulk
                   </div>
                 </button>
 
-                <div className="w-full rounded-xl border-2 border-gray-100 p-4 opacity-40 cursor-not-allowed">
+                <div className="w-full rounded-[4px] border-2 border-gray-100 p-4 opacity-40 cursor-not-allowed">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-50">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-[4px] bg-green-50">
                       <DollarSign className="h-5 w-5 text-green-600" />
                     </div>
                     <div>
@@ -274,30 +274,30 @@ export default function BulkAlarmDrawer({ open, onOpenChange, onComplete }: Bulk
                         <button
                           onClick={() => setMode("smart")}
                           className={cn(
-                            "flex items-center gap-2 rounded-xl border-2 px-3 py-3 text-left transition-all",
+                            "flex items-center gap-2 rounded-[4px] border-2 px-3 py-3 text-left transition-all",
                             mode === "smart"
-                              ? "border-[#c75b12] bg-[#fef4ec]/50"
+                              ? "border-[#BE3A21] bg-[#FFF5F3]/50"
                               : "border-gray-100 hover:border-gray-200",
                           )}
                         >
-                          <Zap className={cn("h-4 w-4", mode === "smart" ? "text-[#c75b12]" : "text-gray-400")} />
+                          <Zap className={cn("h-4 w-4", mode === "smart" ? "text-[#BE3A21]" : "text-gray-400")} />
                           <div>
-                            <p className={cn("text-xs font-semibold", mode === "smart" ? "text-[#9e4a0f]" : "text-gray-700")}>Akıllı</p>
+                            <p className={cn("text-xs font-semibold", mode === "smart" ? "text-[#9B2D18]" : "text-gray-700")}>Akıllı</p>
                             <p className="text-[10px] text-gray-400">Kişiye özel</p>
                           </div>
                         </button>
                         <button
                           onClick={() => setMode("manual")}
                           className={cn(
-                            "flex items-center gap-2 rounded-xl border-2 px-3 py-3 text-left transition-all",
+                            "flex items-center gap-2 rounded-[4px] border-2 px-3 py-3 text-left transition-all",
                             mode === "manual"
-                              ? "border-[#c75b12] bg-[#fef4ec]/50"
+                              ? "border-[#BE3A21] bg-[#FFF5F3]/50"
                               : "border-gray-100 hover:border-gray-200",
                           )}
                         >
-                          <SlidersHorizontal className={cn("h-4 w-4", mode === "manual" ? "text-[#c75b12]" : "text-gray-400")} />
+                          <SlidersHorizontal className={cn("h-4 w-4", mode === "manual" ? "text-[#BE3A21]" : "text-gray-400")} />
                           <div>
-                            <p className={cn("text-xs font-semibold", mode === "manual" ? "text-[#9e4a0f]" : "text-gray-700")}>Manuel</p>
+                            <p className={cn("text-xs font-semibold", mode === "manual" ? "text-[#9B2D18]" : "text-gray-700")}>Manuel</p>
                             <p className="text-[10px] text-gray-400">Sabit gün</p>
                           </div>
                         </button>
@@ -404,13 +404,13 @@ export default function BulkAlarmDrawer({ open, onOpenChange, onComplete }: Bulk
                   <>
                     {/* Stats */}
                     <div className="grid grid-cols-2 gap-2">
-                      <div className="rounded-xl bg-[#fef4ec] p-3 text-center">
-                        <p className="text-xl font-bold text-[#9e4a0f]">{preview.total}</p>
-                        <p className="text-[10px] font-medium text-[#c75b12]">Toplam Müşteri</p>
+                      <div className="rounded-[4px] bg-[#FFF5F3] p-3 text-center">
+                        <p className="text-xl font-bold text-[#9B2D18]">{preview.total}</p>
+                        <p className="text-[10px] font-medium text-[#BE3A21]">Toplam Müşteri</p>
                       </div>
                       {type === "CUSTOMER_VISIT" && preview.smartCount !== undefined && (
                         <>
-                          <div className="rounded-xl bg-purple-50 p-3 text-center">
+                          <div className="rounded-[4px] bg-purple-50 p-3 text-center">
                             <p className="text-xl font-bold text-purple-700">{preview.smartCount}</p>
                             <p className="text-[10px] font-medium text-purple-600">Akıllı Eşik</p>
                           </div>
@@ -423,7 +423,7 @@ export default function BulkAlarmDrawer({ open, onOpenChange, onComplete }: Bulk
                       <p className="mb-2 text-xs font-medium text-gray-500">
                         Müşteri Listesi ({preview.customers.length})
                       </p>
-                      <div className="max-h-56 space-y-1 overflow-y-auto rounded-xl border border-gray-100 p-2">
+                      <div className="max-h-56 space-y-1 overflow-y-auto rounded-[4px] border border-gray-100 p-2">
                         {preview.customers.slice(0, 100).map((c) => (
                           <div key={c.id} className="flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs hover:bg-gray-50">
                             <span className="font-medium text-gray-700">{c.name}</span>
@@ -461,7 +461,7 @@ export default function BulkAlarmDrawer({ open, onOpenChange, onComplete }: Bulk
                   <div className="space-y-2">
                     <div className="h-2 overflow-hidden rounded-full bg-gray-100">
                       <motion.div
-                        className="h-full bg-[#32373c] rounded-full"
+                        className="h-full bg-[#2B2B2B] rounded-full"
                         initial={{ width: "0%" }}
                         animate={{ width: `${progress}%` }}
                         transition={{ duration: 0.3 }}

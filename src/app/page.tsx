@@ -237,16 +237,16 @@ function HeroModuleCard({
   return (
     <button
       onClick={onToggle}
-      className={`flex w-full items-center gap-3 rounded-xl border-2 p-4 text-left backdrop-blur-sm transition-all ${
+      className={`flex w-full items-center gap-3 rounded-[4px] border-2 p-4 text-left backdrop-blur-sm transition-all ${
         selected
-          ? "border-[#c75b12] bg-[#fef4ec]/80 shadow-md shadow-[#c75b12]/10"
+          ? "border-[#BE3A21] bg-[#FFF5F3]/80 shadow-md shadow-[#BE3A21]/10"
           : muted
           ? "border-gray-200/60 bg-white/50 opacity-70 hover:opacity-100"
           : "border-gray-200/80 bg-white/80 hover:border-gray-300"
       }`}
     >
       <div
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px]"
         style={{ backgroundColor: `${mod.color}15` }}
       >
         <ModuleIcon name={mod.icon} className="h-5 w-5" color={mod.color} />
@@ -255,14 +255,14 @@ function HeroModuleCard({
         <p className="text-sm font-semibold text-gray-900">{mod.name}</p>
         <p className="text-xs text-gray-500 line-clamp-1">{mod.shortDescription}</p>
         {mod.reasoning && (
-          <p className="mt-0.5 text-[11px] italic text-[#9e4a0f] line-clamp-1">{mod.reasoning}</p>
+          <p className="mt-0.5 text-[11px] italic text-[#9B2D18] line-clamp-1">{mod.reasoning}</p>
         )}
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <span className="text-xs font-bold text-gray-600">₺{mod.basePrice}/ay</span>
         <div
           className={`flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all ${
-            selected ? "border-[#c75b12] bg-[#c75b12]" : "border-gray-300"
+            selected ? "border-[#BE3A21] bg-[#BE3A21]" : "border-gray-300"
           }`}
         >
           {selected && <Check className="h-3 w-3 text-white" />}
@@ -276,7 +276,7 @@ function HeroModuleCard({
 
 function TweetCard({ tweet }: { tweet: (typeof tweets)[0] }) {
   return (
-    <div className="mx-3 w-[340px] shrink-0 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
+    <div className="mx-3 w-[340px] shrink-0 rounded-[4px] border border-gray-100 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
       <div className="mb-3 flex items-center gap-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -309,14 +309,14 @@ function DashboardOverview() {
     <div>
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
-          { label: "Toplam Müşteri", target: 247, prefix: "", icon: Users, change: "+18", up: true, color: "text-[#c75b12]", bg: "bg-[#fef4ec]" },
+          { label: "Toplam Müşteri", target: 247, prefix: "", icon: Users, change: "+18", up: true, color: "text-[#BE3A21]", bg: "bg-[#FFF5F3]" },
           { label: "Bugünün Randevuları", target: 12, prefix: "", icon: Calendar, change: "+3", up: true, color: "text-emerald-600", bg: "bg-emerald-50" },
           { label: "Aylık Gelir", target: 48500, prefix: "₺", icon: TrendingUp, change: "+22%", up: true, color: "text-orange-600", bg: "bg-orange-50" },
           { label: "Stok Uyarısı", target: 3, prefix: "", icon: AlertTriangle, change: "Kritik", up: false, color: "text-red-600", bg: "bg-red-50" },
         ].map((s) => {
           const Icon = s.icon;
           return (
-            <div key={s.label} className="rounded-xl border border-gray-100 bg-white p-4">
+            <div key={s.label} className="rounded-[4px] border border-gray-100 bg-white p-4">
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-[11px] font-medium text-gray-400">{s.label}</span>
                 <div className={`rounded-lg p-1.5 ${s.bg}`}>
@@ -333,11 +333,11 @@ function DashboardOverview() {
           );
         })}
       </div>
-      <div className="rounded-xl border border-gray-100 bg-white p-4">
+      <div className="rounded-[4px] border border-gray-100 bg-white p-4">
         <p className="mb-3 text-xs font-semibold text-gray-500">Aylık Gelir Trendi</p>
         <div className="flex h-[100px] items-end gap-2">
           {[35, 50, 40, 65, 55, 80, 60, 75, 90, 70, 85, 95].map((h, i) => (
-            <div key={i} className="flex-1 rounded-t bg-gradient-to-t from-[#c75b12] to-[#e8843a]" style={{ height: `${h}%` }} />
+            <div key={i} className="flex-1 rounded-t bg-gradient-to-t from-[#BE3A21] to-[#D4502E]" style={{ height: `${h}%` }} />
           ))}
         </div>
         <div className="mt-2 flex justify-between text-[10px] text-gray-400">
@@ -358,7 +358,7 @@ function DashboardAppointments() {
     { name: "Ali Kılıç", time: "16:00", service: "İmplant Konsültasyon", status: "Onaylandı", statusColor: "bg-emerald-100 text-emerald-700" },
   ];
   return (
-    <div className="rounded-xl border border-gray-100 bg-white">
+    <div className="rounded-[4px] border border-gray-100 bg-white">
       <div className="border-b border-gray-50 px-4 py-3">
         <p className="text-xs font-semibold text-gray-500">Bugünün Randevuları</p>
       </div>
@@ -366,7 +366,7 @@ function DashboardAppointments() {
         {appointments.map((a) => (
           <div key={a.name} className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#fef4ec] text-xs font-bold text-[#c75b12]">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FFF5F3] text-xs font-bold text-[#BE3A21]">
                 {a.name.split(" ").map(n => n[0]).join("")}
               </div>
               <div>
@@ -394,11 +394,11 @@ function DashboardFinance() {
         {[
           { label: "Gelir", target: 48500, color: "text-emerald-600", bg: "bg-emerald-50", icon: TrendingUp },
           { label: "Gider", target: 12300, color: "text-red-600", bg: "bg-red-50", icon: TrendingDown },
-          { label: "Net Kâr", target: 36200, color: "text-[#c75b12]", bg: "bg-[#fef4ec]", icon: DollarSign },
+          { label: "Net Kâr", target: 36200, color: "text-[#BE3A21]", bg: "bg-[#FFF5F3]", icon: DollarSign },
         ].map((s) => {
           const Icon = s.icon;
           return (
-            <div key={s.label} className="rounded-xl border border-gray-100 bg-white p-4 text-center">
+            <div key={s.label} className="rounded-[4px] border border-gray-100 bg-white p-4 text-center">
               <div className={`mx-auto mb-2 inline-flex rounded-lg p-2 ${s.bg}`}>
                 <Icon className={`h-4 w-4 ${s.color}`} />
               </div>
@@ -410,7 +410,7 @@ function DashboardFinance() {
           );
         })}
       </div>
-      <div className="rounded-xl border border-gray-100 bg-white">
+      <div className="rounded-[4px] border border-gray-100 bg-white">
         <div className="border-b border-gray-50 px-4 py-3">
           <p className="text-xs font-semibold text-gray-500">Son İşlemler</p>
         </div>
@@ -443,7 +443,7 @@ function DashboardStock() {
     { name: "Porselen Kron", stock: 3, min: 5, status: "critical" },
   ];
   return (
-    <div className="rounded-xl border border-gray-100 bg-white">
+    <div className="rounded-[4px] border border-gray-100 bg-white">
       <div className="border-b border-gray-50 px-4 py-3">
         <p className="text-xs font-semibold text-gray-500">Stok Durumu</p>
       </div>
@@ -474,7 +474,7 @@ function DashboardStock() {
 
 function DashboardCustomers() {
   const customers = [
-    { name: "Ahmet Yılmaz", lastVisit: "10 Mar 2026", total: "₺4.800", visits: 12, color: "bg-[#c75b12]" },
+    { name: "Ahmet Yılmaz", lastVisit: "10 Mar 2026", total: "₺4.800", visits: 12, color: "bg-[#BE3A21]" },
     { name: "Fatma Kaya", lastVisit: "8 Mar 2026", total: "₺3.200", visits: 8, color: "bg-emerald-500" },
     { name: "Mehmet Demir", lastVisit: "5 Mar 2026", total: "₺6.100", visits: 15, color: "bg-purple-500" },
     { name: "Ayşe Çelik", lastVisit: "3 Mar 2026", total: "₺2.400", visits: 6, color: "bg-orange-500" },
@@ -482,7 +482,7 @@ function DashboardCustomers() {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       {customers.map((c) => (
-        <div key={c.name} className="rounded-xl border border-gray-100 bg-white p-4">
+        <div key={c.name} className="rounded-[4px] border border-gray-100 bg-white p-4">
           <div className="mb-3 flex items-center gap-3">
             <div className={`flex h-10 w-10 items-center justify-center rounded-full ${c.color} text-xs font-bold text-white`}>
               {c.name.split(" ").map(n => n[0]).join("")}
@@ -504,13 +504,13 @@ function DashboardCustomers() {
 
 function DashboardEmployees() {
   const employees = [
-    { name: "Dr. Elif Şahin", role: "Diş Hekimi", commission: "₺12.400", color: "bg-[#c75b12]" },
+    { name: "Dr. Elif Şahin", role: "Diş Hekimi", commission: "₺12.400", color: "bg-[#BE3A21]" },
     { name: "Selin Aydın", role: "Hijyenist", commission: "₺4.200", color: "bg-emerald-500" },
     { name: "Burak Erdoğan", role: "Asistan", commission: "₺2.800", color: "bg-purple-500" },
     { name: "Derya Yılmaz", role: "Sekreter", commission: "₺1.500", color: "bg-orange-500" },
   ];
   return (
-    <div className="rounded-xl border border-gray-100 bg-white">
+    <div className="rounded-[4px] border border-gray-100 bg-white">
       <div className="border-b border-gray-50 px-4 py-3">
         <p className="text-xs font-semibold text-gray-500">Personel Listesi</p>
       </div>
@@ -544,6 +544,8 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const [tabHovered, setTabHovered] = useState(false);
+  const [heroSlide, setHeroSlide] = useState(0);
+  const [heroHovered, setHeroHovered] = useState(false);
 
   /* ── Inline onboarding state ── */
   const [obStep, setObStep] = useState(0); // 0=sector, 1=team, 2=pain, 3=analysis, 4=package
@@ -719,6 +721,15 @@ export default function Home() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Auto-rotate hero slides every 5s, pause on hover
+  useEffect(() => {
+    if (heroHovered) return;
+    const id = setInterval(() => {
+      setHeroSlide((prev) => (prev + 1) % 3);
+    }, 5000);
+    return () => clearInterval(id);
+  }, [heroHovered, heroSlide]);
+
   // Auto-rotate dashboard tabs every 3s, pause on hover
   useEffect(() => {
     if (tabHovered) return;
@@ -750,7 +761,7 @@ export default function Home() {
       >
         <div className="mx-auto flex max-w-[1200px] items-center justify-between px-6 py-4">
           <Link href="/" className="text-2xl font-extrabold tracking-tight">
-            <span className="text-[#c75b12]">Po</span>
+            <span className="text-[#BE3A21]">Po</span>
             <span className="text-gray-800">by</span>
           </Link>
 
@@ -759,20 +770,20 @@ export default function Home() {
               <Link
                 key={link.label}
                 href={link.href}
-                className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
+                className="text-[13px] font-medium uppercase tracking-wider text-[#333] transition-colors hover:text-[#BE3A21]"
               >
                 {link.label}
               </Link>
             ))}
             <Link
               href="/login"
-              className="rounded-[10px] border border-gray-300 px-5 py-2.5 text-sm font-semibold text-gray-700 transition-all hover:border-gray-400 hover:bg-gray-50"
+              className="rounded-[2px] border-2 border-[#BE3A21] px-5 py-2.5 text-[13px] font-bold uppercase tracking-wider text-[#BE3A21] transition-all hover:bg-[#BE3A21] hover:text-white"
             >
               Giriş Yap
             </Link>
             <Link
               href="/register"
-              className="rounded-[10px] bg-[#c75b12] px-5 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-[#a84d0f] hover:shadow-lg hover:shadow-[#c75b12]/30"
+              className="rounded-[2px] bg-[#BE3A21] px-5 py-2.5 text-[13px] font-bold uppercase tracking-wider text-white transition-all hover:-translate-y-0.5 hover:bg-[#9B2D18] hover:shadow-lg hover:shadow-[#BE3A21]/30"
             >
               Kayıt Ol
             </Link>
@@ -808,7 +819,7 @@ export default function Home() {
               </Link>
               <Link
                 href="/register"
-                className="inline-flex items-center justify-center rounded-[10px] bg-[#c75b12] px-6 py-2.5 text-sm font-semibold text-white"
+                className="inline-flex items-center justify-center rounded-[2px] bg-[#BE3A21] px-6 py-2.5 text-sm font-semibold text-white"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Kayıt Ol
@@ -818,61 +829,216 @@ export default function Home() {
         )}
       </nav>
 
-      {/* ════════════════════════ HERO + INLINE ONBOARDING ════════════════════════ */}
-      <section ref={heroRef} className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 pb-20 pt-28">
-        {/* Animated gradient background */}
-        <div
-          className="animate-gradient pointer-events-none absolute inset-0"
-          style={{
-            background: "linear-gradient(135deg, #fef4ec 0%, #fff9f5 25%, #fde5d0 50%, #fef4ec 75%, #fff9f5 100%)",
-          }}
-        />
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(199,91,18,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(199,91,18,0.05) 1px,transparent 1px)",
-            backgroundSize: "60px 60px",
-          }}
-        />
+      {/* ════════════════════════ HERO SLIDER ════════════════════════ */}
+      <section
+        className="relative h-[600px] overflow-hidden pt-20"
+        onMouseEnter={() => setHeroHovered(true)}
+        onMouseLeave={() => setHeroHovered(false)}
+      >
+        {/* Slides */}
+        <AnimatePresence mode="wait">
+          {heroSlide === 0 && (
+            <motion.div
+              key="slide-0"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.6 }}
+              className="absolute inset-0 flex items-center"
+              style={{ background: "linear-gradient(135deg, #1a1a2e, #0f3460)" }}
+            >
+              <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between px-6">
+                <div className="max-w-[520px]">
+                  <h1 className="mb-4 text-[clamp(28px,4.5vw,52px)] font-extrabold uppercase tracking-wider leading-[1.1] text-white">
+                    AI Destekli<br />
+                    <span className="text-[#BE3A21]">İşletme Yönetimi</span>
+                  </h1>
+                  <p className="mb-8 text-lg leading-relaxed text-white/70">
+                    Randevu, finans, stok, çalışan yönetimi ve daha fazlası — hepsi tek platformda, yapay zeka destekli.
+                  </p>
+                  <div className="flex gap-4">
+                    <Link href="/register" className="rounded-[2px] bg-[#BE3A21] px-8 py-3.5 text-[13px] font-bold uppercase tracking-wider text-white transition-all hover:-translate-y-0.5 hover:bg-[#9B2D18] hover:shadow-lg">
+                      Hemen Başla
+                    </Link>
+                    <Link href="#dashboard-preview" className="rounded-[2px] border-2 border-white/30 px-8 py-3.5 text-[13px] font-bold uppercase tracking-wider text-white transition-all hover:border-white hover:bg-white/10">
+                      Demo Gör
+                    </Link>
+                  </div>
+                </div>
+                {/* CSS Dashboard mockup */}
+                <div className="hidden lg:block">
+                  <div className="w-[420px] rounded-[4px] bg-white/10 p-4 backdrop-blur-sm border border-white/10">
+                    <div className="mb-3 flex gap-2">
+                      <div className="h-2.5 w-2.5 rounded-full bg-red-400" />
+                      <div className="h-2.5 w-2.5 rounded-full bg-yellow-400" />
+                      <div className="h-2.5 w-2.5 rounded-full bg-green-400" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      {[
+                        { label: "Müşteri", val: "247", color: "#BE3A21" },
+                        { label: "Randevu", val: "12", color: "#27AE60" },
+                        { label: "Gelir", val: "₺48.5K", color: "#F39C12" },
+                        { label: "Stok", val: "156", color: "#2980B9" },
+                      ].map((s) => (
+                        <div key={s.label} className="rounded-[2px] bg-white/10 p-3">
+                          <p className="text-[10px] text-white/50 uppercase tracking-wider">{s.label}</p>
+                          <p className="text-lg font-bold text-white">{s.val}</p>
+                          <div className="mt-1 h-1 rounded-full bg-white/10">
+                            <div className="h-1 rounded-full" style={{ width: "65%", backgroundColor: s.color }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex h-[80px] items-end gap-1.5">
+                      {[35, 50, 40, 65, 55, 80, 60, 75, 90, 70, 85, 95].map((h, i) => (
+                        <div key={i} className="flex-1 rounded-t bg-[#BE3A21]/80" style={{ height: `${h}%` }} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+          {heroSlide === 1 && (
+            <motion.div
+              key="slide-1"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.6 }}
+              className="absolute inset-0 flex items-center"
+              style={{ background: "linear-gradient(135deg, #2d1b69, #11998e)" }}
+            >
+              <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between px-6">
+                <div className="max-w-[520px]">
+                  <h1 className="mb-4 text-[clamp(28px,4.5vw,52px)] font-extrabold uppercase tracking-wider leading-[1.1] text-white">
+                    12+ Modül<br />
+                    <span className="text-[#BE3A21]">Tek Platform</span>
+                  </h1>
+                  <p className="mb-8 text-lg leading-relaxed text-white/70">
+                    Müşteri yönetimi, randevu, finans, stok, çalışan, AI asistan, raporlar ve daha fazlası.
+                  </p>
+                  <Link href="/ozellikler" className="rounded-[2px] bg-[#BE3A21] px-8 py-3.5 text-[13px] font-bold uppercase tracking-wider text-white transition-all hover:-translate-y-0.5 hover:bg-[#9B2D18] hover:shadow-lg">
+                    Tüm Özellikleri Keşfet
+                  </Link>
+                </div>
+                {/* Module grid */}
+                <div className="hidden lg:block">
+                  <div className="grid grid-cols-3 gap-3 w-[380px]">
+                    {[
+                      { icon: "🏥", label: "Müşteri" },
+                      { icon: "📅", label: "Randevu" },
+                      { icon: "💰", label: "Finans" },
+                      { icon: "📦", label: "Stok" },
+                      { icon: "🤖", label: "AI Asistan" },
+                      { icon: "📊", label: "Raporlar" },
+                    ].map((m) => (
+                      <div key={m.label} className="flex flex-col items-center gap-2 rounded-[4px] bg-white/10 p-5 backdrop-blur-sm border border-white/10 transition-all hover:bg-white/20">
+                        <span className="text-3xl">{m.icon}</span>
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-white/80">{m.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+          {heroSlide === 2 && (
+            <motion.div
+              key="slide-2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.6 }}
+              className="absolute inset-0 flex items-center"
+              style={{ background: "linear-gradient(135deg, #134e5e, #71b280)" }}
+            >
+              <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between px-6">
+                <div className="max-w-[520px]">
+                  <h1 className="mb-4 text-[clamp(28px,4.5vw,52px)] font-extrabold uppercase tracking-wider leading-[1.1] text-white">
+                    Güvenli &<br />
+                    <span className="text-[#BE3A21]">KVKK Uyumlu</span>
+                  </h1>
+                  <p className="mb-8 text-lg leading-relaxed text-white/70">
+                    Verileriniz şifreli, KVKK uyumlu altyapıda güvenle saklanır. İşletmenizi koruma altında tutun.
+                  </p>
+                  <Link href="/register" className="rounded-[2px] bg-[#BE3A21] px-8 py-3.5 text-[13px] font-bold uppercase tracking-wider text-white transition-all hover:-translate-y-0.5 hover:bg-[#9B2D18] hover:shadow-lg">
+                    Güvenle Başlayın
+                  </Link>
+                </div>
+                {/* Shield animation */}
+                <div className="hidden lg:flex items-center justify-center">
+                  <motion.div
+                    animate={{ scale: [1, 1.05, 1] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                    className="relative flex h-[220px] w-[220px] items-center justify-center"
+                  >
+                    <div className="absolute inset-0 rounded-full bg-white/5 border border-white/10" />
+                    <div className="absolute inset-4 rounded-full bg-white/5 border border-white/10" />
+                    <div className="absolute inset-8 rounded-full bg-white/10 border border-white/10" />
+                    <svg className="h-20 w-20 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                      <path d="M9 12l2 2 4-4" />
+                    </svg>
+                  </motion.div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* Hero content */}
+        {/* Slider controls */}
+        <div className="absolute bottom-8 left-1/2 z-30 flex -translate-x-1/2 items-center gap-3">
+          {[0, 1, 2].map((i) => (
+            <button
+              key={i}
+              onClick={() => setHeroSlide(i)}
+              className={`h-2.5 rounded-full transition-all ${
+                heroSlide === i ? "w-8 bg-[#BE3A21]" : "w-2.5 bg-white/40 hover:bg-white/60"
+              }`}
+            />
+          ))}
+        </div>
+        <button
+          onClick={() => setHeroSlide((prev) => (prev - 1 + 3) % 3)}
+          className="absolute left-4 top-1/2 z-30 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white backdrop-blur-sm transition-all hover:bg-white/20"
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </button>
+        <button
+          onClick={() => setHeroSlide((prev) => (prev + 1) % 3)}
+          className="absolute right-4 top-1/2 z-30 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white backdrop-blur-sm transition-all hover:bg-white/20"
+        >
+          <ArrowRight className="h-5 w-5" />
+        </button>
+      </section>
+
+      {/* ════════════════════════ ONBOARDING SECTION ════════════════════════ */}
+      <section ref={heroRef} className="relative overflow-hidden px-6 py-20 bg-[#F9F9F9]">
         <div className="relative z-20 mx-auto w-full max-w-[900px] text-center">
           {/* ── Title area — compacts after step 0 ── */}
           <motion.div
             animate={obStarted ? { marginBottom: 24 } : { marginBottom: 0 }}
             transition={{ duration: 0.5, ease: "easeInOut" }}
           >
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#e8843a] bg-white/80 px-4 py-1.5 text-[13px] font-medium text-[#9e4a0f] backdrop-blur-sm"
-            >
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#c75b12]" />
-              AI destekli yeni nesil işletme yönetimi
-            </motion.div>
-
-            <motion.h1
+            <motion.h2
               initial={{ opacity: 0, y: 30 }}
-              animate={obStarted
-                ? { opacity: 1, y: 0, fontSize: "clamp(24px,4vw,40px)" }
-                : { opacity: 1, y: 0, fontSize: "clamp(32px,5.5vw,64px)" }
-              }
-              transition={{ duration: 0.6, delay: obStarted ? 0 : 0.4 }}
-              className="mb-4 font-extrabold leading-[1.1] tracking-[-2px] text-gray-900"
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="mb-4 text-[clamp(24px,4vw,42px)] font-extrabold uppercase tracking-wider leading-tight text-[#333]"
             >
-              Kişisel AI Asistanınız{" "}
-              <span className="bg-gradient-to-r from-[#c75b12] to-[#e8843a] bg-clip-text text-transparent">
-                Poby
-              </span>
-              {!obStarted && (
+              {obStarted ? (
                 <>
-                  <br />
-                  Her İşleminizde Yanınızda
+                  Kişisel AI Asistanınız{" "}
+                  <span className="text-[#BE3A21]">Poby</span>
+                </>
+              ) : (
+                <>
+                  Size Özel Platformu{" "}
+                  <span className="text-[#BE3A21]">Kuralım</span>
                 </>
               )}
-            </motion.h1>
+            </motion.h2>
 
             <AnimatePresence mode="wait">
               {!obStarted ? (
@@ -881,11 +1047,10 @@ export default function Home() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.4, delay: obStarted ? 0 : 0.6 }}
-                  className="mx-auto mb-8 max-w-[600px] text-lg leading-relaxed text-gray-500"
+                  transition={{ duration: 0.4 }}
+                  className="mx-auto mb-8 max-w-[600px] text-lg leading-relaxed text-[#777]"
                 >
-                  Randevu, finans, stok, çalışan yönetimi ve daha fazlası — hepsi tek
-                  platformda, yapay zeka destekli.
+                  Sektörünüzü seçin, ihtiyaçlarınızı belirleyin — size özel modülleri önerelim.
                 </motion.p>
               ) : null}
             </AnimatePresence>
@@ -912,7 +1077,7 @@ export default function Home() {
                   <div
                     key={i}
                     className={`h-2 rounded-full transition-all duration-300 ${
-                      i === obStep ? "w-7 bg-[#c75b12]" : i < obStep ? "w-2 bg-[#e8843a]" : "w-2 bg-gray-300/60"
+                      i === obStep ? "w-7 bg-[#BE3A21]" : i < obStep ? "w-2 bg-[#D4502E]" : "w-2 bg-gray-300/60"
                     }`}
                   />
                 ))}
@@ -942,8 +1107,8 @@ export default function Home() {
                       whileHover={{ scale: 1.03, y: -2 }}
                       whileTap={{ scale: 0.97 }}
                       onClick={() => handleSectorSelect(s.id)}
-                      className={`flex flex-col items-center gap-2 rounded-2xl border-2 bg-white/80 p-5 backdrop-blur-sm transition-all hover:border-[#e8843a] hover:shadow-lg hover:shadow-[#c75b12]/10 ${
-                        obSector === s.id ? "border-[#c75b12] bg-[#fef4ec]/80 shadow-lg shadow-[#c75b12]/10" : "border-gray-200/80"
+                      className={`flex flex-col items-center gap-2 rounded-[4px] border-2 bg-white/80 p-5 backdrop-blur-sm transition-all hover:border-[#D4502E] hover:shadow-lg hover:shadow-[#BE3A21]/10 ${
+                        obSector === s.id ? "border-[#BE3A21] bg-[#FFF5F3]/80 shadow-lg shadow-[#BE3A21]/10" : "border-gray-200/80"
                       }`}
                     >
                       <span className="text-3xl">{s.emoji}</span>
@@ -958,8 +1123,8 @@ export default function Home() {
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
                     onClick={() => handleSectorSelect("other")}
-                    className={`flex w-full items-center justify-center gap-2 rounded-2xl border-2 bg-white/80 p-4 backdrop-blur-sm transition-all hover:border-[#e8843a] ${
-                      obSector === "other" ? "border-[#c75b12] bg-[#fef4ec]/80" : "border-gray-200/80"
+                    className={`flex w-full items-center justify-center gap-2 rounded-[4px] border-2 bg-white/80 p-4 backdrop-blur-sm transition-all hover:border-[#D4502E] ${
+                      obSector === "other" ? "border-[#BE3A21] bg-[#FFF5F3]/80" : "border-gray-200/80"
                     }`}
                   >
                     <span className="text-xl">✏️</span>
@@ -979,13 +1144,13 @@ export default function Home() {
                           onChange={(e) => setObSectorCustom(e.target.value)}
                           onKeyDown={(e) => e.key === "Enter" && handleSectorCustomSubmit()}
                           placeholder="Sektörünüzü yazın..."
-                          className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
+                          className="flex-1 rounded-[4px] border border-gray-200 bg-white px-4 py-3 text-sm focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
                           autoFocus
                         />
                         <button
                           onClick={handleSectorCustomSubmit}
                           disabled={!obSectorCustom.trim()}
-                          className="rounded-xl bg-[#c75b12] px-5 py-3 text-sm font-semibold text-white transition-all hover:bg-[#a84d0f] disabled:opacity-40"
+                          className="rounded-[4px] bg-[#BE3A21] px-5 py-3 text-sm font-semibold text-white transition-all hover:bg-[#9B2D18] disabled:opacity-40"
                         >
                           <ArrowRight className="h-4 w-4" />
                         </button>
@@ -1015,8 +1180,8 @@ export default function Home() {
                       whileHover={{ scale: 1.03, y: -2 }}
                       whileTap={{ scale: 0.97 }}
                       onClick={() => handleTeamSelect(t.id)}
-                      className={`flex flex-1 flex-col items-center gap-2 rounded-2xl border-2 bg-white/80 p-6 backdrop-blur-sm transition-all hover:border-[#e8843a] hover:shadow-lg hover:shadow-[#c75b12]/10 ${
-                        obTeamSize === t.id ? "border-[#c75b12] bg-[#fef4ec]/80" : "border-gray-200/80"
+                      className={`flex flex-1 flex-col items-center gap-2 rounded-[4px] border-2 bg-white/80 p-6 backdrop-blur-sm transition-all hover:border-[#D4502E] hover:shadow-lg hover:shadow-[#BE3A21]/10 ${
+                        obTeamSize === t.id ? "border-[#BE3A21] bg-[#FFF5F3]/80" : "border-gray-200/80"
                       }`}
                     >
                       <span className="text-4xl">{t.emoji}</span>
@@ -1049,7 +1214,7 @@ export default function Home() {
                         disabled={obAnalyzing}
                         className={`inline-flex items-center gap-2 rounded-full border-2 bg-white/80 px-5 py-3 text-sm font-medium backdrop-blur-sm transition-all disabled:opacity-50 ${
                           obPainPoints.has(p.id)
-                            ? "border-[#c75b12] bg-[#fef4ec]/80 text-[#9e4a0f] shadow-md shadow-[#c75b12]/10"
+                            ? "border-[#BE3A21] bg-[#FFF5F3]/80 text-[#9B2D18] shadow-md shadow-[#BE3A21]/10"
                             : "border-gray-200/80 text-gray-600 hover:border-gray-300"
                         }`}
                       >
@@ -1073,7 +1238,7 @@ export default function Home() {
                   whileTap={!obAnalyzing ? { scale: 0.98 } : {}}
                   onClick={handleAnalyze}
                   disabled={obPainPoints.size === 0 || obAnalyzing}
-                  className="mt-8 inline-flex items-center gap-2 rounded-xl bg-[#c75b12] px-10 py-4 text-[15px] font-semibold text-white transition-all hover:bg-[#a84d0f] hover:shadow-xl hover:shadow-[#c75b12]/30 disabled:opacity-40"
+                  className="mt-8 inline-flex items-center gap-2 rounded-[4px] bg-[#BE3A21] px-10 py-4 text-[15px] font-semibold text-white transition-all hover:bg-[#9B2D18] hover:shadow-xl hover:shadow-[#BE3A21]/30 disabled:opacity-40"
                 >
                   {obAnalyzing ? (
                     <>
@@ -1103,8 +1268,8 @@ export default function Home() {
               >
                 {obAnalysis ? (
                   <>
-                    <div className="mb-5 rounded-2xl border border-[#e8843a]/40 bg-[#fef4ec]/80 p-5 backdrop-blur-sm">
-                      <p className="text-sm leading-relaxed text-[#652e09]">{obAnalysis.customMessage}</p>
+                    <div className="mb-5 rounded-[4px] border border-[#D4502E]/40 bg-[#FFF5F3]/80 p-5 backdrop-blur-sm">
+                      <p className="text-sm leading-relaxed text-[#5C1B0F]">{obAnalysis.customMessage}</p>
                     </div>
                     <div className="mb-3 flex items-center gap-2">
                       <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">Sizin için önerildi</span>
@@ -1129,7 +1294,7 @@ export default function Home() {
                       whileTap={{ scale: 0.98 }}
                       onClick={() => { setObDirection(1); setObStep(4); }}
                       disabled={obSelected.size === 0}
-                      className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#c75b12] py-4 text-[15px] font-semibold text-white transition-all hover:bg-[#a84d0f] disabled:opacity-40"
+                      className="mt-6 flex w-full items-center justify-center gap-2 rounded-[4px] bg-[#BE3A21] py-4 text-[15px] font-semibold text-white transition-all hover:bg-[#9B2D18] disabled:opacity-40"
                     >
                       Paketimi Oluştur
                       <ArrowRight className="h-4 w-4" />
@@ -1138,7 +1303,7 @@ export default function Home() {
                 ) : (
                   <div className="py-16 text-center">
                     <p className="text-sm text-red-600">{obError || "Bir hata oluştu. Lütfen tekrar deneyin."}</p>
-                    <button onClick={() => { setObError(null); obGoBack(); }} className="mt-3 text-sm font-medium text-[#c75b12] hover:underline">Geri Dön</button>
+                    <button onClick={() => { setObError(null); obGoBack(); }} className="mt-3 text-sm font-medium text-[#BE3A21] hover:underline">Geri Dön</button>
                   </div>
                 )}
               </motion.div>
@@ -1159,8 +1324,8 @@ export default function Home() {
                 <p className="mb-6 text-center text-sm text-gray-500">{obSelected.size} modül seçildi</p>
                 <div className="space-y-2">
                   {obSelectedList.map((mod) => (
-                    <div key={mod.slug} className="flex items-center gap-3 rounded-xl border border-gray-200/80 bg-white/80 p-4 backdrop-blur-sm">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: `${mod.color}15` }}>
+                    <div key={mod.slug} className="flex items-center gap-3 rounded-[4px] border border-gray-200/80 bg-white/80 p-4 backdrop-blur-sm">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px]" style={{ backgroundColor: `${mod.color}15` }}>
                         <ModuleIcon name={mod.icon} className="h-5 w-5" color={mod.color} />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -1171,7 +1336,7 @@ export default function Home() {
                     </div>
                   ))}
                 </div>
-                <div className="mt-4 rounded-xl bg-white/80 p-5 backdrop-blur-sm border border-gray-200/80">
+                <div className="mt-4 rounded-[4px] bg-white/80 p-5 backdrop-blur-sm border border-gray-200/80">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-600">Toplam</span>
                     <span className="text-2xl font-bold text-gray-900">₺{obTotalPrice}/ay</span>
@@ -1182,7 +1347,7 @@ export default function Home() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleComplete}
-                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#c75b12] py-4 text-[15px] font-semibold text-white transition-all hover:bg-[#a84d0f] hover:shadow-xl hover:shadow-[#c75b12]/30"
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-[4px] bg-[#BE3A21] py-4 text-[15px] font-semibold text-white transition-all hover:bg-[#9B2D18] hover:shadow-xl hover:shadow-[#BE3A21]/30"
                 >
                   Hemen Başla — Ücretsiz Dene
                   <ArrowRight className="h-4 w-4" />
@@ -1203,10 +1368,10 @@ export default function Home() {
             viewport={{ once: true }}
             className="mb-4 text-center"
           >
-            <span className="mb-3 inline-block text-[13px] font-semibold uppercase tracking-widest text-[#c75b12]">
+            <span className="mb-3 inline-block text-[13px] font-semibold uppercase tracking-widest text-[#BE3A21]">
               Dashboard
             </span>
-            <h2 className="mb-4 text-[clamp(28px,4vw,42px)] font-extrabold leading-tight tracking-tight text-gray-900">
+            <h2 className="mb-4 text-[clamp(28px,4vw,42px)] font-extrabold uppercase tracking-wider leading-tight text-[#333]">
               İşletmenizi Tek Bakışta Yönetin
             </h2>
             <p className="mx-auto mb-10 max-w-[500px] text-base leading-relaxed text-gray-500">
@@ -1222,7 +1387,7 @@ export default function Home() {
             style={{ perspective: "1200px" }}
           >
             <div
-              className="rounded-2xl bg-gradient-to-br from-gray-900 to-gray-800 p-3 shadow-2xl shadow-black/20 transition-transform duration-700 hover:[transform:rotateX(0deg)] [transform:rotateX(3deg)]"
+              className="rounded-[4px] bg-gradient-to-br from-gray-900 to-gray-800 p-3 shadow-2xl shadow-black/20 transition-transform duration-700 hover:[transform:rotateX(0deg)] [transform:rotateX(3deg)]"
               onMouseEnter={() => setTabHovered(true)}
               onMouseLeave={() => setTabHovered(false)}
             >
@@ -1246,7 +1411,7 @@ export default function Home() {
                       onClick={() => setActiveTab(i)}
                       className={`relative whitespace-nowrap px-4 py-3 text-[13px] font-medium transition-colors ${
                         activeTab === i
-                          ? "text-[#c75b12]"
+                          ? "text-[#BE3A21]"
                           : "text-gray-500 hover:text-gray-700"
                       }`}
                     >
@@ -1254,7 +1419,7 @@ export default function Home() {
                       {activeTab === i && (
                         <motion.div
                           layoutId="activeTab"
-                          className="absolute inset-x-0 bottom-0 h-0.5 bg-[#c75b12]"
+                          className="absolute inset-x-0 bottom-0 h-0.5 bg-[#BE3A21]"
                           transition={{ type: "spring", stiffness: 400, damping: 30 }}
                         />
                       )}
@@ -1288,20 +1453,20 @@ export default function Home() {
       </section>
 
       {/* ════════════════════════ TWEET SLIDER ════════════════════════ */}
-      <section id="reviews" className="overflow-hidden bg-gray-50 py-24">
+      <section id="reviews" className="overflow-hidden bg-[#2B2B2B] py-24">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           className="mb-12 text-center px-6"
         >
-          <span className="mb-3 inline-block text-[13px] font-semibold uppercase tracking-widest text-[#c75b12]">
+          <span className="mb-3 inline-block text-[13px] font-bold uppercase tracking-widest text-[#BE3A21]">
             Yorumlar
           </span>
-          <h2 className="mb-4 text-[clamp(28px,4vw,42px)] font-extrabold leading-tight tracking-tight text-gray-900">
+          <h2 className="mb-4 text-[clamp(28px,4vw,42px)] font-extrabold uppercase tracking-wider leading-tight text-white">
             İşletme Sahipleri Poby&apos;yi Seviyor
           </h2>
-          <p className="mx-auto max-w-[500px] text-base leading-relaxed text-gray-500">
+          <p className="mx-auto max-w-[500px] text-base leading-relaxed text-[#AAA]">
             Türkiye genelinde yüzlerce işletme Poby ile büyüyor
           </p>
         </motion.div>
@@ -1324,10 +1489,10 @@ export default function Home() {
             viewport={{ once: true }}
             className="mb-14 text-center"
           >
-            <span className="mb-3 inline-block text-[13px] font-semibold uppercase tracking-widest text-[#c75b12]">
+            <span className="mb-3 inline-block text-[13px] font-semibold uppercase tracking-widest text-[#BE3A21]">
               Modüller
             </span>
-            <h2 className="mb-4 text-[clamp(28px,4vw,42px)] font-extrabold leading-tight tracking-tight text-gray-900">
+            <h2 className="mb-4 text-[clamp(28px,4vw,42px)] font-extrabold uppercase tracking-wider leading-tight text-[#333]">
               Her İhtiyacınız İçin Güçlü Modüller
             </h2>
             <p className="mx-auto max-w-[550px] text-base leading-relaxed text-gray-500">
@@ -1347,7 +1512,7 @@ export default function Home() {
                 key={mod.title}
                 variants={fadeUp}
                 custom={i}
-                className="group cursor-default rounded-2xl border border-gray-200 bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[#e8843a] hover:shadow-lg hover:shadow-[#c75b12]/[0.06]"
+                className="group cursor-default rounded-[4px] border border-gray-200 bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[#D4502E] hover:shadow-lg hover:shadow-[#BE3A21]/[0.06]"
               >
                 <span className="mb-4 block text-3xl">{mod.icon}</span>
                 <h3 className="mb-2 text-[15px] font-bold text-gray-900">{mod.title}</h3>
@@ -1363,7 +1528,7 @@ export default function Home() {
         <div
           className="animate-gradient pointer-events-none absolute inset-0"
           style={{
-            background: "linear-gradient(135deg, #c75b12 0%, #9e4a0f 25%, #e8843a 50%, #c75b12 75%, #9e4a0f 100%)",
+            background: "linear-gradient(135deg, #BE3A21 0%, #9B2D18 25%, #D4502E 50%, #BE3A21 75%, #9B2D18 100%)",
           }}
         />
         <div
@@ -1380,7 +1545,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mb-4 text-[clamp(28px,4vw,48px)] font-extrabold tracking-[-1.5px] text-white"
+            className="mb-4 text-[clamp(28px,4vw,48px)] font-extrabold uppercase tracking-wider text-white"
           >
             Hemen Başlayın
           </motion.h2>
@@ -1389,7 +1554,7 @@ export default function Home() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="mx-auto mb-10 max-w-[480px] text-[17px] leading-relaxed text-orange-100"
+            className="mx-auto mb-10 max-w-[480px] text-[17px] leading-relaxed text-white/70"
           >
             İlk ay ücretsiz, kredi kartı gerekmez. Hemen başlayın ve farkı görün.
           </motion.p>
@@ -1401,7 +1566,7 @@ export default function Home() {
           >
             <Link
               href="/register"
-              className="inline-flex items-center gap-2 rounded-[14px] bg-white px-10 py-4 text-base font-semibold text-[#c75b12] transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-black/20"
+              className="inline-flex items-center gap-2 rounded-[4px] bg-white px-10 py-4 text-base font-semibold text-[#BE3A21] transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-black/20"
             >
               Ücretsiz Hesap Oluştur
               <ArrowRight className="h-4 w-4" />
@@ -1411,28 +1576,28 @@ export default function Home() {
       </section>
 
       {/* ════════════════════════ FOOTER ════════════════════════ */}
-      <footer className="border-t border-gray-200 bg-gray-50 px-6 pb-8 pt-16">
+      <footer className="bg-[#1A1A1A] px-6 pb-8 pt-16">
         <div className="mx-auto max-w-[1100px]">
           <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr]">
             <div>
               <Link href="/" className="text-xl font-extrabold">
-                <span className="text-[#c75b12]">Po</span>
-                <span className="text-gray-800">by</span>
+                <span className="text-[#BE3A21]">Po</span>
+                <span className="text-white">by</span>
               </Link>
-              <p className="mt-3 max-w-[280px] text-[13px] leading-relaxed text-gray-500">
+              <p className="mt-3 max-w-[280px] text-[13px] leading-relaxed text-[#777]">
                 İşletmenizin cebindeki akıllı asistan. Tüm operasyonlarınızı tek
                 panelden yönetin.
               </p>
             </div>
             {Object.entries(footerLinks).map(([title, links]) => (
               <div key={title}>
-                <h5 className="mb-4 text-[13px] font-semibold uppercase tracking-wider text-gray-800">
+                <h5 className="mb-4 text-[13px] font-bold uppercase tracking-wider text-white">
                   {title}
                 </h5>
                 <ul className="space-y-2.5">
                   {links.map((link) => (
                     <li key={link}>
-                      <Link href="#" className="text-[13px] text-gray-500 transition-colors hover:text-[#c75b12]">
+                      <Link href="#" className="text-[13px] text-[#777] transition-colors hover:text-[#BE3A21]">
                         {link}
                       </Link>
                     </li>
@@ -1441,8 +1606,8 @@ export default function Home() {
               </div>
             ))}
           </div>
-          <div className="mt-10 border-t border-gray-200 pt-6 text-center">
-            <p className="text-xs text-gray-400">&copy; 2026 Poby. Tüm hakları saklıdır.</p>
+          <div className="mt-10 border-t border-white/10 pt-6 text-center">
+            <p className="text-xs text-[#555]">&copy; 2026 Poby. Tüm hakları saklıdır.</p>
           </div>
         </div>
       </footer>

@@ -45,7 +45,7 @@ interface ReportData {
 }
 
 function Skeleton({ className }: { className?: string }) {
-  return <div className={`animate-pulse rounded-xl bg-gray-100 ${className || ""}`} />;
+  return <div className={`animate-pulse rounded-[4px] bg-gray-100 ${className || ""}`} />;
 }
 
 const categoryLabels: Record<string, string> = {
@@ -96,13 +96,13 @@ export default function FinancialReportsContent() {
         className="flex items-center justify-between"
       >
         <div className="flex items-center gap-2">
-          <BarChart3 className="h-5 w-5 text-[#c75b12]" />
+          <BarChart3 className="h-5 w-5 text-[#BE3A21]" />
           <h2 className="text-lg font-semibold text-gray-900">Mali Tablo</h2>
         </div>
         <select
           value={year}
           onChange={(e) => setYear(parseInt(e.target.value))}
-          className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
+          className="rounded-[4px] border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
         >
           {[2024, 2025, 2026].map((y) => (
             <option key={y} value={y}>{y}</option>
@@ -125,20 +125,20 @@ export default function FinancialReportsContent() {
           className="space-y-4"
         >
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            <div className="rounded-2xl border border-gray-100 bg-white p-5">
+            <div className="rounded-[4px] border border-gray-100 bg-white p-5">
               <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#fef4ec]">
-                  <TrendingUp className="h-4 w-4 text-[#c75b12]" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-[4px] bg-[#FFF5F3]">
+                  <TrendingUp className="h-4 w-4 text-[#BE3A21]" />
                 </div>
                 <span className="text-sm text-gray-500">Ciro</span>
               </div>
-              <p className="mt-3 text-xl font-bold text-[#c75b12]">
+              <p className="mt-3 text-xl font-bold text-[#BE3A21]">
                 {formatCurrency(data.totalIncome)}
               </p>
             </div>
-            <div className="rounded-2xl border border-gray-100 bg-white p-5">
+            <div className="rounded-[4px] border border-gray-100 bg-white p-5">
               <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-50">
+                <div className="flex h-9 w-9 items-center justify-center rounded-[4px] bg-orange-50">
                   <ShoppingCart className="h-4 w-4 text-orange-600" />
                 </div>
                 <span className="text-sm text-gray-500">Maliyet</span>
@@ -147,9 +147,9 @@ export default function FinancialReportsContent() {
                 {formatCurrency(data.totalCogs || 0)}
               </p>
             </div>
-            <div className="rounded-2xl border border-gray-100 bg-white p-5">
+            <div className="rounded-[4px] border border-gray-100 bg-white p-5">
               <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50">
+                <div className="flex h-9 w-9 items-center justify-center rounded-[4px] bg-emerald-50">
                   <TrendingUp className="h-4 w-4 text-emerald-600" />
                 </div>
                 <span className="text-sm text-gray-500">Brüt Kar</span>
@@ -158,9 +158,9 @@ export default function FinancialReportsContent() {
                 {formatCurrency(data.grossProfit || 0)}
               </p>
             </div>
-            <div className="rounded-2xl border border-gray-100 bg-white p-5">
+            <div className="rounded-[4px] border border-gray-100 bg-white p-5">
               <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-50">
+                <div className="flex h-9 w-9 items-center justify-center rounded-[4px] bg-red-50">
                   <TrendingDown className="h-4 w-4 text-red-600" />
                 </div>
                 <span className="text-sm text-gray-500">Giderler</span>
@@ -169,9 +169,9 @@ export default function FinancialReportsContent() {
                 {formatCurrency(data.totalExpense)}
               </p>
             </div>
-            <div className="rounded-2xl border border-gray-100 bg-white p-5">
+            <div className="rounded-[4px] border border-gray-100 bg-white p-5">
               <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-50">
+                <div className="flex h-9 w-9 items-center justify-center rounded-[4px] bg-purple-50">
                   <DollarSign className="h-4 w-4 text-purple-600" />
                 </div>
                 <span className="text-sm text-gray-500">Net Kar</span>
@@ -182,7 +182,7 @@ export default function FinancialReportsContent() {
             </div>
           </div>
           {(data.unmatchedItemCount || 0) > 0 && (
-            <div className="flex items-center gap-2 rounded-xl bg-yellow-50 border border-yellow-100 px-4 py-3">
+            <div className="flex items-center gap-2 rounded-[4px] bg-yellow-50 border border-yellow-100 px-4 py-3">
               <AlertTriangle className="h-4 w-4 text-yellow-500 shrink-0" />
               <span className="text-sm text-yellow-700">
                 {data.unmatchedItemCount} fatura kalemi eşleştirilmedi. Brüt kar hesaplaması eksik olabilir.
@@ -200,7 +200,7 @@ export default function FinancialReportsContent() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
-            className="rounded-2xl border border-gray-100 bg-white p-6"
+            className="rounded-[4px] border border-gray-100 bg-white p-6"
           >
             <h3 className="mb-4 text-sm font-semibold text-gray-900">Aylık Gelir vs Gider</h3>
             <ResponsiveContainer width="100%" height={320}>
@@ -224,7 +224,7 @@ export default function FinancialReportsContent() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.15 }}
-            className="rounded-2xl border border-gray-100 bg-white p-6"
+            className="rounded-[4px] border border-gray-100 bg-white p-6"
           >
             <h3 className="mb-4 text-sm font-semibold text-gray-900">Kar Trendi</h3>
             <ResponsiveContainer width="100%" height={280}>
@@ -253,7 +253,7 @@ export default function FinancialReportsContent() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.2 }}
-              className="rounded-2xl border border-gray-100 bg-white p-6"
+              className="rounded-[4px] border border-gray-100 bg-white p-6"
             >
               <h3 className="mb-4 text-sm font-semibold text-gray-900">Gider Kategorileri</h3>
               <div className="space-y-3">
@@ -291,7 +291,7 @@ export default function FinancialReportsContent() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.25 }}
-            className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
+            className="overflow-hidden rounded-[4px] border border-gray-100 bg-white"
           >
             <div className="border-b border-gray-100 px-6 py-4">
               <h3 className="text-sm font-semibold text-gray-900">Aylık Detay</h3>
@@ -313,7 +313,7 @@ export default function FinancialReportsContent() {
                       <td className="px-6 py-3 font-medium text-gray-800">{m.monthName}</td>
                       <td className="px-6 py-3 text-right text-emerald-600">{formatCurrency(m.income)}</td>
                       <td className="px-6 py-3 text-right text-red-600">{formatCurrency(m.expense)}</td>
-                      <td className={`px-6 py-3 text-right font-semibold ${m.profit >= 0 ? "text-[#c75b12]" : "text-red-600"}`}>
+                      <td className={`px-6 py-3 text-right font-semibold ${m.profit >= 0 ? "text-[#BE3A21]" : "text-red-600"}`}>
                         {formatCurrency(m.profit)}
                       </td>
                     </tr>
@@ -336,7 +336,7 @@ export default function FinancialReportsContent() {
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-500">Net Kar</span>
-                    <span className={`font-semibold ${m.profit >= 0 ? "text-[#c75b12]" : "text-red-600"}`}>
+                    <span className={`font-semibold ${m.profit >= 0 ? "text-[#BE3A21]" : "text-red-600"}`}>
                       {formatCurrency(m.profit)}
                     </span>
                   </div>

@@ -17,7 +17,7 @@ export type TreatmentCategory = "BOTOX" | "DOLGU" | "DIS_TEDAVI" | "GENEL";
 export type ExpenseCategory = "KIRA" | "MAAS" | "MALZEME" | "FATURA" | "DIGER";
 
 export const APPOINTMENT_STATUSES = [
-  { value: "SCHEDULED", label: "Planlandı", color: "bg-[#fde5d0] text-[#863d0c]" },
+  { value: "SCHEDULED", label: "Planlandı", color: "bg-[#FDEDEC] text-[#7A2414]" },
   { value: "COMPLETED", label: "Tamamlandı", color: "bg-green-100 text-green-800" },
   { value: "CANCELLED", label: "İptal Edildi", color: "bg-red-100 text-red-800" },
   { value: "NO_SHOW", label: "Gelmedi", color: "bg-yellow-100 text-yellow-800" },

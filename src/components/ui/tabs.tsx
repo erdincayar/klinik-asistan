@@ -43,7 +43,7 @@ function TabsList({ className, ...props }: React.HTMLAttributes<HTMLDivElement>)
   return (
     <div
       className={cn(
-        "inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground",
+        "inline-flex items-center gap-0 border-b border-[#E8E8E8]",
         className
       )}
       {...props}
@@ -62,8 +62,8 @@ function TabsTrigger({ className, value, ...props }: TabsTriggerProps) {
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-        isActive && "bg-background text-foreground shadow-sm",
+        "inline-flex items-center justify-center whitespace-nowrap px-4 py-2.5 text-[13px] uppercase tracking-wider font-medium text-[#777] border-b-2 border-transparent transition-all -mb-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-[#333]",
+        isActive && "border-b-2 border-[#BE3A21] text-[#333] font-bold",
         className
       )}
       onClick={() => setValue(value)}

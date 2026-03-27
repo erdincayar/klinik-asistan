@@ -57,15 +57,15 @@ export default function ReportTab() {
     <div className="space-y-6">
       {/* Financial summary cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border border-[#fde5d0] bg-gradient-to-br from-[#fef4ec] to-white p-5">
+        <div className="rounded-[4px] border border-[#FDEDEC] bg-gradient-to-br from-[#FFF5F3] to-white p-5">
           <div className="flex items-center gap-2 mb-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#fde5d0] text-lg">📦</span>
-            <p className="text-sm font-medium text-[#9e4a0f]">Stok Maliyeti</p>
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FDEDEC] text-lg">📦</span>
+            <p className="text-sm font-medium text-[#9B2D18]">Stok Maliyeti</p>
           </div>
-          <p className="text-2xl font-bold text-[#652e09]">{formatCurrency(summary.totalStockValue.purchase)}</p>
-          <p className="mt-1 text-xs text-[#c75b12]">{summary.trackedCount} ürünün maliyet toplamı</p>
+          <p className="text-2xl font-bold text-[#5C1B0F]">{formatCurrency(summary.totalStockValue.purchase)}</p>
+          <p className="mt-1 text-xs text-[#BE3A21]">{summary.trackedCount} ürünün maliyet toplamı</p>
         </div>
-        <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-5">
+        <div className="rounded-[4px] border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-5">
           <div className="flex items-center gap-2 mb-2">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-lg">💰</span>
             <p className="text-sm font-medium text-emerald-700">Tahmini Satış Geliri</p>
@@ -73,7 +73,7 @@ export default function ReportTab() {
           <p className="text-2xl font-bold text-emerald-900">{formatCurrency(summary.totalStockValue.sale)}</p>
           <p className="mt-1 text-xs text-emerald-500">Tüm stoklar satılırsa</p>
         </div>
-        <div className={`rounded-2xl border p-5 ${estimatedProfit >= 0 ? "border-purple-100 bg-gradient-to-br from-purple-50 to-white" : "border-red-100 bg-gradient-to-br from-red-50 to-white"}`}>
+        <div className={`rounded-[4px] border p-5 ${estimatedProfit >= 0 ? "border-purple-100 bg-gradient-to-br from-purple-50 to-white" : "border-red-100 bg-gradient-to-br from-red-50 to-white"}`}>
           <div className="flex items-center gap-2 mb-2">
             <span className={`flex h-8 w-8 items-center justify-center rounded-lg text-lg ${estimatedProfit >= 0 ? "bg-purple-100" : "bg-red-100"}`}>📈</span>
             <p className={`text-sm font-medium ${estimatedProfit >= 0 ? "text-purple-700" : "text-red-700"}`}>Tahmini Kar</p>
@@ -94,7 +94,7 @@ export default function ReportTab() {
         <Card>
           <CardContent className="p-6">
             <p className="text-sm text-gray-500">Stok Takip Edilen</p>
-            <p className="text-2xl font-bold text-[#c75b12]">{summary.trackedCount}</p>
+            <p className="text-2xl font-bold text-[#BE3A21]">{summary.trackedCount}</p>
           </CardContent>
         </Card>
         <Card>

@@ -52,8 +52,8 @@ const actionLabels: Record<string, string> = {
 const actionColors: Record<string, string> = {
   LOGIN: "bg-green-100 text-green-700",
   LOGOUT: "bg-gray-100 text-gray-700",
-  PATIENT_CREATE: "bg-[#fde5d0] text-[#9e4a0f]",
-  PATIENT_UPDATE: "bg-[#fde5d0] text-[#9e4a0f]",
+  PATIENT_CREATE: "bg-[#FDEDEC] text-[#9B2D18]",
+  PATIENT_UPDATE: "bg-[#FDEDEC] text-[#9B2D18]",
   APPOINTMENT_CREATE: "bg-purple-100 text-purple-700",
   APPOINTMENT_UPDATE: "bg-purple-100 text-purple-700",
   USER_CREATE: "bg-red-100 text-red-700",
@@ -117,7 +117,7 @@ export default function AdminActivityPage() {
       {/* Header */}
       <div>
         <h2 className="flex items-center gap-2 text-xl font-bold text-gray-900">
-          <Activity className="h-6 w-6 text-[#c75b12]" />
+          <Activity className="h-6 w-6 text-[#BE3A21]" />
           Aktivite Logları
         </h2>
         <p className="mt-1 text-sm text-gray-500">
@@ -130,7 +130,7 @@ export default function AdminActivityPage() {
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl border border-gray-100 bg-white p-6"
+          className="rounded-[4px] border border-gray-100 bg-white p-6"
         >
           <h3 className="mb-4 text-sm font-semibold text-gray-700">
             Aktivite Dağılımı (Bu Sayfa)
@@ -171,7 +171,7 @@ export default function AdminActivityPage() {
               setActionFilter(e.target.value);
               setPage(1);
             }}
-            className="appearance-none rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-10 text-sm outline-none focus:border-[#fde5d0] focus:ring-2 focus:ring-[#c75b12]/20"
+            className="appearance-none rounded-[4px] border border-gray-200 bg-white py-2.5 pl-10 pr-10 text-sm outline-none focus:border-[#FDEDEC] focus:ring-2 focus:ring-[#BE3A21]/20"
           >
             <option value="">Tüm Aktiviteler</option>
             {Object.entries(actionLabels).map(([key, label]) => (
@@ -188,7 +188,7 @@ export default function AdminActivityPage() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="rounded-2xl border border-gray-100 bg-white"
+        className="rounded-[4px] border border-gray-100 bg-white"
       >
         {loading ? (
           <div className="space-y-4 p-6">

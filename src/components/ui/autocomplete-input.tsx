@@ -112,13 +112,13 @@ export function AutocompleteInput({
         autoComplete="off"
       />
       {open && suggestions.length > 0 && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 overflow-auto rounded-md border border-gray-200 bg-white shadow-lg">
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 overflow-auto rounded-[4px] border border-[#E8E8E8] bg-white shadow-lg">
           {suggestions.map((s, i) => (
             <button
               key={s}
               type="button"
-              className={`w-full px-3 py-2 text-left text-sm transition-colors hover:bg-[#fef4ec] ${
-                i === highlightIndex ? "bg-[#fef4ec] text-[#9e4a0f]" : "text-gray-700"
+              className={`w-full px-3 py-2 text-left text-sm transition-colors hover:bg-[#FFF5F3] ${
+                i === highlightIndex ? "bg-[#FFF5F3] text-[#BE3A21]" : "text-gray-700"
               }`}
               onMouseDown={(e) => {
                 e.preventDefault();

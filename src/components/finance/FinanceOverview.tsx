@@ -137,7 +137,7 @@ const MONTHS_FULL = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Te
 
 const EXPENSE_BADGE: Record<string, string> = {
   KIRA: "bg-purple-50 text-purple-700",
-  MAAS: "bg-[#fef4ec] text-[#9e4a0f]",
+  MAAS: "bg-[#FFF5F3] text-[#9B2D18]",
   MALZEME: "bg-orange-50 text-orange-700",
   FATURA: "bg-orange-50 text-orange-700",
   DIGER: "bg-gray-100 text-gray-700",
@@ -145,7 +145,7 @@ const EXPENSE_BADGE: Record<string, string> = {
 
 const EXPENSE_CATEGORY_COLORS: Record<string, string> = {
   KIRA: "bg-purple-100 text-purple-800",
-  MAAS: "bg-[#fde5d0] text-[#863d0c]",
+  MAAS: "bg-[#FDEDEC] text-[#7A2414]",
   MALZEME: "bg-orange-100 text-orange-800",
   FATURA: "bg-orange-100 text-orange-800",
   DIGER: "bg-gray-100 text-gray-800",
@@ -166,13 +166,13 @@ const fadeUp = {
 };
 
 function Skeleton({ className }: { className?: string }) {
-  return <div className={cn("animate-pulse rounded-xl bg-gray-100", className)} />;
+  return <div className={cn("animate-pulse rounded-[4px] bg-gray-100", className)} />;
 }
 
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-lg">
+    <div className="rounded-[4px] border border-gray-100 bg-white px-4 py-3 shadow-lg">
       <p className="mb-1 text-xs font-medium text-gray-500">{label}</p>
       {payload.map((entry: any) => (
         <p key={entry.dataKey} className={cn("text-sm font-semibold", entry.dataKey === "income" ? "text-emerald-600" : "text-red-500")}>
@@ -477,13 +477,13 @@ export default function FinanceOverview() {
       <div className="space-y-6">
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-[120px] rounded-2xl" />
+            <Skeleton key={i} className="h-[120px] rounded-[4px]" />
           ))}
         </div>
-        <Skeleton className="h-[350px] rounded-2xl" />
+        <Skeleton className="h-[350px] rounded-[4px]" />
         <div className="grid gap-6 lg:grid-cols-2">
-          <Skeleton className="h-[300px] rounded-2xl" />
-          <Skeleton className="h-[300px] rounded-2xl" />
+          <Skeleton className="h-[300px] rounded-[4px]" />
+          <Skeleton className="h-[300px] rounded-[4px]" />
         </div>
       </div>
     );
@@ -494,7 +494,7 @@ export default function FinanceOverview() {
       <div className="flex min-h-[400px] items-center justify-center">
         <div className="text-center">
           <p className="text-sm text-red-500">{error}</p>
-          <button onClick={() => window.location.reload()} className="mt-3 text-sm font-medium text-[#c75b12] hover:underline">
+          <button onClick={() => window.location.reload()} className="mt-3 text-sm font-medium text-[#BE3A21] hover:underline">
             Tekrar dene
           </button>
         </div>
@@ -507,9 +507,9 @@ export default function FinanceOverview() {
       title: "Ciro",
       value: formatCurrency(incomeStatement?.ciro ?? 0),
       icon: TrendingUp,
-      iconBg: "bg-[#fef4ec]",
-      iconColor: "text-[#c75b12]",
-      valueColor: "text-[#9e4a0f]",
+      iconBg: "bg-[#FFF5F3]",
+      iconColor: "text-[#BE3A21]",
+      valueColor: "text-[#9B2D18]",
     },
     {
       title: "Gelir",
@@ -531,9 +531,9 @@ export default function FinanceOverview() {
       title: "Toplam Kâr",
       value: formatCurrency(incomeStatement?.totalProfit ?? 0),
       icon: (incomeStatement?.totalProfit ?? 0) >= 0 ? TrendingUp : TrendingDown,
-      iconBg: (incomeStatement?.totalProfit ?? 0) >= 0 ? "bg-[#fef4ec]" : "bg-red-50",
-      iconColor: (incomeStatement?.totalProfit ?? 0) >= 0 ? "text-[#c75b12]" : "text-red-500",
-      valueColor: (incomeStatement?.totalProfit ?? 0) >= 0 ? "text-[#9e4a0f]" : "text-red-600",
+      iconBg: (incomeStatement?.totalProfit ?? 0) >= 0 ? "bg-[#FFF5F3]" : "bg-red-50",
+      iconColor: (incomeStatement?.totalProfit ?? 0) >= 0 ? "text-[#BE3A21]" : "text-red-500",
+      valueColor: (incomeStatement?.totalProfit ?? 0) >= 0 ? "text-[#9B2D18]" : "text-red-600",
     },
   ];
 
@@ -566,7 +566,7 @@ export default function FinanceOverview() {
                 <select
                   value={month}
                   onChange={(e) => setMonth(Number(e.target.value))}
-                  className="rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-700 transition-shadow focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
+                  className="rounded-[4px] border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-700 transition-shadow focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
                 >
                   {MONTHS_FULL.map((m, i) => (
                     <option key={i} value={i + 1}>{m}</option>
@@ -575,7 +575,7 @@ export default function FinanceOverview() {
                 <select
                   value={year}
                   onChange={(e) => setYear(Number(e.target.value))}
-                  className="rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-700 transition-shadow focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
+                  className="rounded-[4px] border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-700 transition-shadow focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
                 >
                   {[year - 1, year, year + 1].map((y) => (
                     <option key={y} value={y}>{y}</option>
@@ -586,21 +586,21 @@ export default function FinanceOverview() {
                 <a
                   href={`/api/finance/export?month=${month}&year=${year}`}
                   download
-                  className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 transition-all hover:bg-gray-50"
+                  className="inline-flex items-center gap-2 rounded-[4px] border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 transition-all hover:bg-gray-50"
                 >
                   <Download className="h-4 w-4" />
                   Dışa Aktar
                 </a>
                 <Link
                   href="/finance/new-income"
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#32373c] px-4 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-[#454a50] hover:shadow-lg hover:shadow-[#32373c]/20"
+                  className="inline-flex items-center gap-2 rounded-[4px] bg-[#2B2B2B] px-4 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-[#3A3A3A] hover:shadow-lg hover:shadow-[#2B2B2B]/20"
                 >
                   <Plus className="h-4 w-4" />
                   Gelir Ekle
                 </Link>
                 <Link
                   href="/finance/new-expense"
-                  className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-all hover:bg-gray-50"
+                  className="inline-flex items-center gap-2 rounded-[4px] border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-all hover:bg-gray-50"
                 >
                   <Plus className="h-4 w-4" />
                   Gider Ekle
@@ -619,7 +619,7 @@ export default function FinanceOverview() {
                     initial="hidden"
                     animate="visible"
                     custom={i}
-                    className="rounded-2xl border border-gray-100 bg-white p-6 transition-shadow hover:shadow-md"
+                    className="rounded-[4px] border border-gray-100 bg-white p-6 transition-shadow hover:shadow-md"
                   >
                     <div className="flex items-start justify-between">
                       <div>
@@ -631,7 +631,7 @@ export default function FinanceOverview() {
                           {MONTHS_FULL[month - 1]} {year}
                         </p>
                       </div>
-                      <div className={cn("flex h-12 w-12 items-center justify-center rounded-xl", stat.iconBg)}>
+                      <div className={cn("flex h-12 w-12 items-center justify-center rounded-[4px]", stat.iconBg)}>
                         <Icon className={cn("h-5 w-5", stat.iconColor)} />
                       </div>
                     </div>
@@ -647,11 +647,11 @@ export default function FinanceOverview() {
                 initial="hidden"
                 animate="visible"
                 custom={2.5}
-                className="rounded-2xl border border-gray-100 bg-white p-5"
+                className="rounded-[4px] border border-gray-100 bg-white p-5"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-[4px] bg-emerald-50">
                       <FileText className="h-5 w-5 text-emerald-600" />
                     </div>
                     <div>
@@ -691,14 +691,14 @@ export default function FinanceOverview() {
               initial="hidden"
               animate="visible"
               custom={3}
-              className="rounded-2xl border border-gray-100 bg-white p-6"
+              className="rounded-[4px] border border-gray-100 bg-white p-6"
             >
               <div className="mb-6 flex items-center justify-between">
                 <div>
                   <h2 className="text-base font-semibold text-gray-900">Aylık Gelir / Gider</h2>
                   <p className="mt-0.5 text-[13px] text-gray-500">{year} yılı karşılaştırma</p>
                 </div>
-                <Link href="/reports" className="flex items-center gap-1 text-xs font-medium text-[#c75b12] hover:text-[#9e4a0f]">
+                <Link href="/reports" className="flex items-center gap-1 text-xs font-medium text-[#BE3A21] hover:text-[#9B2D18]">
                   Detaylı Rapor <ArrowRight className="h-3 w-3" />
                 </Link>
               </div>
@@ -730,7 +730,7 @@ export default function FinanceOverview() {
                 initial="hidden"
                 animate="visible"
                 custom={4}
-                className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
+                className="overflow-hidden rounded-[4px] border border-gray-100 bg-white"
               >
                 <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
                   <div className="flex items-center gap-2">
@@ -789,16 +789,16 @@ export default function FinanceOverview() {
                       {displayRows.map((row) => (
                         <div key={row.id} className="flex items-center justify-between px-6 py-3 transition-colors hover:bg-gray-50/70">
                           <div className="flex items-center gap-3">
-                            <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg", row.type === "treatment" ? "bg-emerald-50" : "bg-[#fef4ec]")}>
+                            <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg", row.type === "treatment" ? "bg-emerald-50" : "bg-[#FFF5F3]")}>
                               {row.type === "treatment" ? (
                                 <DollarSign className="h-4 w-4 text-emerald-600" />
                               ) : (
-                                <FileText className="h-4 w-4 text-[#c75b12]" />
+                                <FileText className="h-4 w-4 text-[#BE3A21]" />
                               )}
                             </div>
                             <div>
                               {row.type === "treatment" && row.patientId ? (
-                                <Link href={`/patients/${row.patientId}`} className="text-sm font-medium text-gray-900 hover:text-[#c75b12]">
+                                <Link href={`/patients/${row.patientId}`} className="text-sm font-medium text-gray-900 hover:text-[#BE3A21]">
                                   {row.label}
                                 </Link>
                               ) : (
@@ -826,7 +826,7 @@ export default function FinanceOverview() {
                             {row.type === "treatment" && (
                               <Link
                                 href={`/finance/new-income?edit=${row.id}`}
-                                className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-[#fef4ec] hover:text-[#c75b12]"
+                                className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-[#FFF5F3] hover:text-[#BE3A21]"
                                 title="Düzenle"
                               >
                                 <Pencil className="h-3.5 w-3.5" />
@@ -851,7 +851,7 @@ export default function FinanceOverview() {
                 initial="hidden"
                 animate="visible"
                 custom={5}
-                className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
+                className="overflow-hidden rounded-[4px] border border-gray-100 bg-white"
               >
                 <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
                   <div className="flex items-center gap-2">
@@ -950,7 +950,7 @@ export default function FinanceOverview() {
                               <button
                                 onClick={() => openEditDialog(rt)}
                                 title="Düzenle"
-                                className="inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-[#c75b12] hover:bg-[#fef4ec] transition-colors"
+                                className="inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-[#BE3A21] hover:bg-[#FFF5F3] transition-colors"
                               >
                                 <Pencil className="h-4 w-4" />
                               </button>
@@ -1104,15 +1104,15 @@ export default function FinanceOverview() {
           {invoiceProfitSummary && (
             <div className="space-y-4">
               <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-xl bg-gray-50 p-3 text-center">
+                <div className="rounded-[4px] bg-gray-50 p-3 text-center">
                   <p className="text-[11px] text-gray-400">Toplam Gelir</p>
                   <p className="mt-1 text-sm font-bold text-gray-800">{formatCurrency(invoiceProfitSummary.totalInvoiceRevenue)}</p>
                 </div>
-                <div className="rounded-xl bg-gray-50 p-3 text-center">
+                <div className="rounded-[4px] bg-gray-50 p-3 text-center">
                   <p className="text-[11px] text-gray-400">Toplam Maliyet</p>
                   <p className="mt-1 text-sm font-bold text-gray-800">{formatCurrency(invoiceProfitSummary.totalInvoiceCost)}</p>
                 </div>
-                <div className="rounded-xl bg-gray-50 p-3 text-center">
+                <div className="rounded-[4px] bg-gray-50 p-3 text-center">
                   <p className="text-[11px] text-gray-400">Brüt Kar</p>
                   <p className={cn("mt-1 text-sm font-bold", invoiceProfitSummary.invoiceGrossProfit >= 0 ? "text-emerald-600" : "text-red-600")}>
                     {formatCurrency(invoiceProfitSummary.invoiceGrossProfit)}
@@ -1465,7 +1465,7 @@ export default function FinanceOverview() {
             <label
               className={cn(
                 "flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors",
-                deleteMode === "record_only" ? "border-[#fde5d0] bg-[#fef4ec]/50" : "border-gray-200"
+                deleteMode === "record_only" ? "border-[#FDEDEC] bg-[#FFF5F3]/50" : "border-gray-200"
               )}
             >
               <input

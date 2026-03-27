@@ -46,7 +46,7 @@ interface BillingRecord {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; icon: any; color: string; bg: string }> = {
-  trial: { label: "Deneme Süresi", icon: Clock, color: "text-[#9e4a0f]", bg: "bg-[#fef4ec] border-[#fde5d0]" },
+  trial: { label: "Deneme Süresi", icon: Clock, color: "text-[#9B2D18]", bg: "bg-[#FFF5F3] border-[#FDEDEC]" },
   active: { label: "Aktif", icon: CheckCircle2, color: "text-green-700", bg: "bg-green-50 border-green-200" },
   suspended: { label: "Askıda", icon: AlertTriangle, color: "text-red-700", bg: "bg-red-50 border-red-200" },
   cancelled: { label: "İptal", icon: XCircle, color: "text-gray-700", bg: "bg-gray-50 border-gray-200" },
@@ -105,7 +105,7 @@ export default function BillingPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-[#c75b12]" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#BE3A21]" />
       </div>
     );
   }
@@ -135,11 +135,11 @@ export default function BillingPage() {
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`rounded-2xl border p-6 ${statusCfg.bg}`}
+        className={`rounded-[4px] border p-6 ${statusCfg.bg}`}
       >
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm`}>
+            <div className={`flex h-12 w-12 items-center justify-center rounded-[4px] bg-white shadow-sm`}>
               <StatusIcon className={`h-6 w-6 ${statusCfg.color}`} />
             </div>
             <div>
@@ -174,13 +174,13 @@ export default function BillingPage() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="rounded-2xl border border-gray-100 bg-white p-5"
+          className="rounded-[4px] border border-gray-100 bg-white p-5"
         >
           <p className="text-sm font-medium text-gray-500">Aktif Modüller</p>
           <p className="mt-1 text-2xl font-bold text-gray-900">{plan.activeModules.length}</p>
           <Link
             href="/billing/moduller"
-            className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#c75b12] hover:text-[#9e4a0f]"
+            className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#BE3A21] hover:text-[#9B2D18]"
           >
             Modülleri Yönet <ArrowRight className="h-3.5 w-3.5" />
           </Link>
@@ -191,7 +191,7 @@ export default function BillingPage() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="rounded-2xl border border-gray-100 bg-white p-5"
+          className="rounded-[4px] border border-gray-100 bg-white p-5"
         >
           <p className="text-sm font-medium text-gray-500">Ödeme Yöntemi</p>
           {plan.cardLast4 ? (
@@ -210,7 +210,7 @@ export default function BillingPage() {
           <button
             onClick={handleAddCard}
             disabled={cardLoading}
-            className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#c75b12] hover:text-[#9e4a0f] disabled:opacity-50"
+            className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#BE3A21] hover:text-[#9B2D18] disabled:opacity-50"
           >
             {cardLoading ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -226,13 +226,13 @@ export default function BillingPage() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="rounded-2xl border border-gray-100 bg-white p-5"
+          className="rounded-[4px] border border-gray-100 bg-white p-5"
         >
           <p className="text-sm font-medium text-gray-500">Ek Kullanıcılar</p>
           <p className="mt-1 text-2xl font-bold text-gray-900">{plan.extraUsers}</p>
           <Link
             href="/billing/moduller"
-            className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#c75b12] hover:text-[#9e4a0f]"
+            className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#BE3A21] hover:text-[#9B2D18]"
           >
             Değiştir <ArrowRight className="h-3.5 w-3.5" />
           </Link>
@@ -244,7 +244,7 @@ export default function BillingPage() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="rounded-2xl border border-gray-100 bg-white"
+        className="rounded-[4px] border border-gray-100 bg-white"
       >
         <div className="border-b border-gray-100 px-6 py-4">
           <h2 className="text-sm font-semibold text-gray-900">Fatura Geçmişi</h2>
@@ -322,7 +322,7 @@ export default function BillingPage() {
       {/* PayTR Iframe Modal */}
       {cardModalOpen && cardToken && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="relative w-full max-w-lg rounded-2xl bg-white shadow-xl">
+          <div className="relative w-full max-w-lg rounded-[4px] bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
               <h3 className="text-lg font-semibold text-gray-900">Kart Bilgileri</h3>
               <button
@@ -338,7 +338,7 @@ export default function BillingPage() {
               </p>
               <iframe
                 src={`https://www.paytr.com/odeme/guvenli/${cardToken}`}
-                className="h-[420px] w-full rounded-xl border border-gray-200"
+                className="h-[420px] w-full rounded-[4px] border border-gray-200"
                 frameBorder="0"
               />
             </div>

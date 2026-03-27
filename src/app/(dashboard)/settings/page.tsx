@@ -81,7 +81,7 @@ interface TelegramLink {
 }
 
 function Skeleton({ className }: { className?: string }) {
-  return <div className={`animate-pulse rounded-xl bg-gray-100 ${className || ""}`} />;
+  return <div className={`animate-pulse rounded-[4px] bg-gray-100 ${className || ""}`} />;
 }
 
 export default function SettingsPage() {
@@ -468,10 +468,10 @@ export default function SettingsPage() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
+        className="overflow-hidden rounded-[4px] border border-gray-100 bg-white"
       >
         <div className="flex items-center gap-2 border-b border-gray-100 px-6 py-4">
-          <SettingsIcon className="h-4 w-4 text-[#c75b12]" />
+          <SettingsIcon className="h-4 w-4 text-[#BE3A21]" />
           <h2 className="text-sm font-semibold text-gray-900">İşletme Bilgileri</h2>
         </div>
         <form onSubmit={handleSaveSettings} className="space-y-4 p-6">
@@ -481,7 +481,7 @@ export default function SettingsPage() {
               <input
                 value={settings.clinicName}
                 onChange={(e) => setSettings({ ...settings, clinicName: e.target.value })}
-                className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
+                className="block w-full rounded-[4px] border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
                 placeholder="İşletme adı"
               />
             </div>
@@ -490,7 +490,7 @@ export default function SettingsPage() {
               <input
                 value={settings.phone}
                 onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
-                className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
+                className="block w-full rounded-[4px] border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
                 placeholder="Telefon"
               />
             </div>
@@ -501,7 +501,7 @@ export default function SettingsPage() {
               value={settings.address}
               onChange={(e) => setSettings({ ...settings, address: e.target.value })}
               rows={2}
-              className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
+              className="block w-full rounded-[4px] border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
               placeholder="Adres"
             />
           </div>
@@ -513,7 +513,7 @@ export default function SettingsPage() {
               max="100"
               value={settings.vatRate}
               onChange={(e) => setSettings({ ...settings, vatRate: Number(e.target.value) })}
-              className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
+              className="block w-full rounded-[4px] border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
             />
           </div>
 
@@ -523,7 +523,7 @@ export default function SettingsPage() {
           <button
             type="submit"
             disabled={saving}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#32373c] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#454a50] disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-[4px] bg-[#2B2B2B] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#3A3A3A] disabled:opacity-50"
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             {saving ? "Kaydediliyor..." : "Kaydet"}
@@ -536,16 +536,16 @@ export default function SettingsPage() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.05 }}
-        className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
+        className="overflow-hidden rounded-[4px] border border-gray-100 bg-white"
       >
         <div className="flex items-center gap-2 border-b border-gray-100 px-6 py-4">
-          <Target className="h-4 w-4 text-[#c75b12]" />
+          <Target className="h-4 w-4 text-[#BE3A21]" />
           <h2 className="text-sm font-semibold text-gray-900">Meta Reklam Bağlantısı</h2>
         </div>
         <div className="p-6">
           {metaConnected ? (
             <div className="space-y-3">
-              <div className="flex items-center justify-between rounded-xl bg-green-50 px-5 py-4">
+              <div className="flex items-center justify-between rounded-[4px] bg-green-50 px-5 py-4">
                 <div className="flex items-center gap-3">
                   <CheckCircle className="h-5 w-5 text-green-600" />
                   <div>
@@ -564,7 +564,7 @@ export default function SettingsPage() {
                       }
                     } catch { /* silent */ }
                   }}
-                  className="rounded-xl border border-red-200 bg-white px-4 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50"
+                  className="rounded-[4px] border border-red-200 bg-white px-4 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50"
                 >
                   Bağlantıyı Kaldır
                 </button>
@@ -586,7 +586,7 @@ export default function SettingsPage() {
                 }
 
                 return (
-                  <div className={`flex items-center justify-between rounded-xl px-5 py-4 ${isExpired ? "bg-red-50" : "bg-orange-50"}`}>
+                  <div className={`flex items-center justify-between rounded-[4px] px-5 py-4 ${isExpired ? "bg-red-50" : "bg-orange-50"}`}>
                     <div className="flex items-center gap-3">
                       <AlertCircle className={`h-5 w-5 ${isExpired ? "text-red-600" : "text-orange-600"}`} />
                       <div>
@@ -611,7 +611,7 @@ export default function SettingsPage() {
                           setMetaTokenExpiresAt(null);
                         } catch { /* silent */ }
                       }}
-                      className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition-colors ${
+                      className={`inline-flex items-center gap-1.5 rounded-[4px] px-4 py-2 text-xs font-semibold transition-colors ${
                         isExpired
                           ? "bg-red-600 text-white hover:bg-red-700"
                           : "border border-orange-300 bg-white text-orange-700 hover:bg-orange-50"
@@ -632,7 +632,7 @@ export default function SettingsPage() {
                   <input
                     value={metaForm.appId}
                     onChange={(e) => setMetaForm({ ...metaForm, appId: e.target.value })}
-                    className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
+                    className="block w-full rounded-[4px] border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
                     placeholder="123456789..."
                   />
                 </div>
@@ -641,7 +641,7 @@ export default function SettingsPage() {
                   <input
                     value={metaForm.adAccountId}
                     onChange={(e) => setMetaForm({ ...metaForm, adAccountId: e.target.value })}
-                    className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
+                    className="block w-full rounded-[4px] border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
                     placeholder="act_123456789..."
                   />
                   <p className="mt-1 text-[11px] text-gray-400">act_ prefix ile birlikte girin</p>
@@ -654,7 +654,7 @@ export default function SettingsPage() {
                     type={showMetaToken ? "text" : "password"}
                     value={metaForm.accessToken}
                     onChange={(e) => setMetaForm({ ...metaForm, accessToken: e.target.value })}
-                    className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
+                    className="block w-full rounded-[4px] border border-gray-200 bg-white px-4 py-2.5 pr-10 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
                     placeholder="EAA..."
                   />
                   <button
@@ -668,7 +668,7 @@ export default function SettingsPage() {
               </div>
 
               {metaTestResult && (
-                <div className={`rounded-xl px-4 py-3 text-sm ${metaTestResult.success ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"}`}>
+                <div className={`rounded-[4px] px-4 py-3 text-sm ${metaTestResult.success ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"}`}>
                   {metaTestResult.success ? (
                     <span className="flex items-center gap-2"><CheckCircle className="h-4 w-4" /> Bağlantı başarılı{metaTestResult.name ? ` — ${metaTestResult.name}` : ""}</span>
                   ) : (
@@ -707,7 +707,7 @@ export default function SettingsPage() {
                     }
                   }}
                   disabled={metaSaving}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#32373c] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#454a50] disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-[4px] bg-[#2B2B2B] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#3A3A3A] disabled:opacity-50"
                 >
                   {metaSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                   Bağlantıyı Kaydet
@@ -745,7 +745,7 @@ export default function SettingsPage() {
                     }
                   }}
                   disabled={metaTesting}
-                  className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-[4px] border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
                 >
                   {metaTesting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                   Bağlantıyı Test Et
@@ -755,19 +755,19 @@ export default function SettingsPage() {
               {/* How-to accordion */}
               <button
                 onClick={() => setMetaHowTo(!metaHowTo)}
-                className="flex w-full items-center justify-between rounded-xl bg-gray-50 px-4 py-3 text-left text-xs font-medium text-gray-600 hover:bg-gray-100"
+                className="flex w-full items-center justify-between rounded-[4px] bg-gray-50 px-4 py-3 text-left text-xs font-medium text-gray-600 hover:bg-gray-100"
               >
                 <span>Nasıl yapılır? Token alma adımları</span>
                 {metaHowTo ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </button>
               {metaHowTo && (
-                <div className="rounded-xl bg-gray-50 px-4 py-3 text-xs text-gray-600 space-y-2">
+                <div className="rounded-[4px] bg-gray-50 px-4 py-3 text-xs text-gray-600 space-y-2">
                   <p><strong>1.</strong> developers.facebook.com adresine gidin ve bir uygulama oluşturun.</p>
                   <p><strong>2.</strong> Uygulama Dashboard → Settings → Basic → App ID&apos;yi kopyalayın.</p>
                   <p><strong>3.</strong> Tools → Graph API Explorer → Token oluşturun (ads_management, ads_read izinleri).</p>
                   <p><strong>4.</strong> Business Settings → Ad Accounts → Hesap ID&apos;nizi kopyalayın (act_ ile başlar).</p>
                   <p><strong>5.</strong> Uzun süreli token için: Settings → Advanced → System Users → token oluşturun.</p>
-                  <p className="flex items-center gap-1 text-[#c75b12]">
+                  <p className="flex items-center gap-1 text-[#BE3A21]">
                     <ExternalLink className="h-3 w-3" />
                     <a href="https://developers.facebook.com/docs/marketing-apis" target="_blank" rel="noopener noreferrer" className="underline">
                       Meta Marketing API Dokümantasyonu
@@ -785,17 +785,17 @@ export default function SettingsPage() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.05 }}
-        className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
+        className="overflow-hidden rounded-[4px] border border-gray-100 bg-white"
       >
         <div className="flex items-center gap-2 border-b border-gray-100 px-6 py-4">
-          <Send className="h-4 w-4 text-[#c75b12]" />
+          <Send className="h-4 w-4 text-[#BE3A21]" />
           <h2 className="text-sm font-semibold text-gray-900">Telegram Bağlantısı</h2>
         </div>
         <div className="p-6">
           {telegramLoading ? (
             <Skeleton className="h-20" />
           ) : telegramConnected ? (
-            <div className="flex items-center justify-between rounded-xl bg-green-50 px-5 py-4">
+            <div className="flex items-center justify-between rounded-[4px] bg-green-50 px-5 py-4">
               <div className="flex items-center gap-3">
                 <CheckCircle className="h-5 w-5 text-green-600" />
                 <div>
@@ -805,15 +805,15 @@ export default function SettingsPage() {
               </div>
               <button
                 onClick={handleDisconnectTelegram}
-                className="rounded-xl border border-red-200 bg-white px-4 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50"
+                className="rounded-[4px] border border-red-200 bg-white px-4 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50"
               >
                 Bağlantıyı Kaldır
               </button>
             </div>
           ) : (
             <div className="text-center">
-              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#fef4ec]">
-                <Send className="h-6 w-6 text-[#c75b12]" />
+              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-[4px] bg-[#FFF5F3]">
+                <Send className="h-6 w-6 text-[#BE3A21]" />
               </div>
               <p className="mb-1 text-sm font-medium text-gray-800">Telegram ile Bağlan</p>
               <p className="mb-4 text-xs text-gray-500">
@@ -821,7 +821,7 @@ export default function SettingsPage() {
               </p>
               <button
                 onClick={handleGenerateTelegramLink}
-                className="inline-flex items-center gap-2 rounded-xl bg-[#32373c] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#454a50]"
+                className="inline-flex items-center gap-2 rounded-[4px] bg-[#2B2B2B] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#3A3A3A]"
               >
                 <QrCode className="h-4 w-4" />
                 Telegram Bağla
@@ -840,7 +840,7 @@ export default function SettingsPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="mx-4 w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
+            className="mx-4 w-full max-w-sm rounded-[4px] bg-white p-6 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
@@ -856,15 +856,15 @@ export default function SettingsPage() {
             {/* QR Code */}
             <div className="flex justify-center mb-4">
               {qrDataUrl && (
-                <img src={qrDataUrl} alt="QR Code" className="h-48 w-48 rounded-xl" />
+                <img src={qrDataUrl} alt="QR Code" className="h-48 w-48 rounded-[4px]" />
               )}
             </div>
 
             {/* Link */}
-            <div className="mb-4 rounded-xl bg-gray-50 p-3">
+            <div className="mb-4 rounded-[4px] bg-gray-50 p-3">
               <p className="mb-1 text-xs text-gray-500">veya bu linki kullanın:</p>
               <div className="flex items-center gap-2">
-                <code className="flex-1 truncate text-xs text-[#c75b12]">
+                <code className="flex-1 truncate text-xs text-[#BE3A21]">
                   {telegramLink.link}
                 </code>
                 <button
@@ -903,7 +903,7 @@ export default function SettingsPage() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.08 }}
-        className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
+        className="overflow-hidden rounded-[4px] border border-gray-100 bg-white"
       >
         <div className="flex items-center gap-2 border-b border-gray-100 px-6 py-4">
           <MessageCircle className="h-4 w-4 text-green-600" />
@@ -912,7 +912,7 @@ export default function SettingsPage() {
         <div className="p-6">
           {whatsappConnected ? (
             <div className="space-y-3">
-              <div className="flex items-center justify-between rounded-xl bg-green-50 px-5 py-4">
+              <div className="flex items-center justify-between rounded-[4px] bg-green-50 px-5 py-4">
                 <div className="flex items-center gap-3">
                   <CheckCircle className="h-5 w-5 text-green-600" />
                   <div>
@@ -930,7 +930,7 @@ export default function SettingsPage() {
                       }
                     } catch { /* silent */ }
                   }}
-                  className="rounded-xl border border-red-200 bg-white px-4 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50"
+                  className="rounded-[4px] border border-red-200 bg-white px-4 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50"
                 >
                   Bağlantıyı Kaldır
                 </button>
@@ -959,7 +959,7 @@ export default function SettingsPage() {
                   }
                 }}
                 disabled={whatsappTesting}
-                className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-[4px] border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
               >
                 {whatsappTesting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                 Test Mesajı Gönder
@@ -971,7 +971,7 @@ export default function SettingsPage() {
           ) : (
             <div className="space-y-4">
               <div className="text-center">
-                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-green-50">
+                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-[4px] bg-green-50">
                   <MessageCircle className="h-6 w-6 text-green-600" />
                 </div>
                 <p className="mb-1 text-sm font-medium text-gray-800">WhatsApp ile Bağlan</p>
@@ -991,7 +991,7 @@ export default function SettingsPage() {
                       value={whatsappPhoneInput}
                       onChange={(e) => setWhatsappPhoneInput(e.target.value)}
                       placeholder="+905551234567"
-                      className="block w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-400/20"
+                      className="block w-full rounded-[4px] border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-400/20"
                     />
                   </div>
                   <button
@@ -1023,7 +1023,7 @@ export default function SettingsPage() {
                       }
                     }}
                     disabled={whatsappSaving}
-                    className="inline-flex items-center gap-2 rounded-xl bg-green-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                    className="inline-flex items-center gap-2 rounded-[4px] bg-green-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-50"
                   >
                     {whatsappSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                     Bağlan
@@ -1046,7 +1046,7 @@ export default function SettingsPage() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.09 }}
-        className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
+        className="overflow-hidden rounded-[4px] border border-gray-100 bg-white"
       >
         <div className="flex items-center gap-2 border-b border-gray-100 px-6 py-4">
           <Crown className="h-4 w-4 text-orange-500" />
@@ -1068,16 +1068,16 @@ export default function SettingsPage() {
               return (
                 <div
                   key={plan.id}
-                  className={`relative rounded-xl border p-5 ${
+                  className={`relative rounded-[4px] border p-5 ${
                     plan.popular
-                      ? "border-[#fde5d0] bg-[#fef4ec]/30 ring-1 ring-[#c75b12]/20"
+                      ? "border-[#FDEDEC] bg-[#FFF5F3]/30 ring-1 ring-[#BE3A21]/20"
                       : isCurrent
                       ? "border-green-200 bg-green-50/30"
                       : "border-gray-100"
                   }`}
                 >
                   {plan.popular && (
-                    <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-[#32373c] px-3 py-0.5 text-[10px] font-semibold text-white">
+                    <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-[#2B2B2B] px-3 py-0.5 text-[10px] font-semibold text-white">
                       Popüler
                     </span>
                   )}
@@ -1105,7 +1105,7 @@ export default function SettingsPage() {
                       <button
                         onClick={() => handlePayment("SUBSCRIPTION", plan.id)}
                         disabled={paymentLoading === `SUBSCRIPTION_${plan.id}`}
-                        className="w-full rounded-lg bg-[#32373c] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#454a50] disabled:opacity-50"
+                        className="w-full rounded-lg bg-[#2B2B2B] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#3A3A3A] disabled:opacity-50"
                       >
                         {paymentLoading === `SUBSCRIPTION_${plan.id}` ? (
                           <Loader2 className="mx-auto h-4 w-4 animate-spin" />
@@ -1133,10 +1133,10 @@ export default function SettingsPage() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.12 }}
-        className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
+        className="overflow-hidden rounded-[4px] border border-gray-100 bg-white"
       >
         <div className="flex items-center gap-2 border-b border-gray-100 px-6 py-4">
-          <HardDrive className="h-4 w-4 text-[#c75b12]" />
+          <HardDrive className="h-4 w-4 text-[#BE3A21]" />
           <h2 className="text-sm font-semibold text-gray-900">Depolama</h2>
         </div>
         <div className="p-6 space-y-6">
@@ -1144,10 +1144,10 @@ export default function SettingsPage() {
             const used = settings.storageUsedMB || 0;
             const limit = settings.storageLimitMB || 100;
             const pct = Math.min(100, (used / limit) * 100);
-            const barColor = pct >= 100 ? "bg-red-500" : pct >= 95 ? "bg-red-400" : pct >= 80 ? "bg-orange-500" : "bg-[#fef4ec]0";
+            const barColor = pct >= 100 ? "bg-red-500" : pct >= 95 ? "bg-red-400" : pct >= 80 ? "bg-orange-500" : "bg-[#FFF5F3]0";
             const formatSize = (mb: number) => mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${mb} MB`;
             return (
-              <div className="rounded-xl bg-gray-50 p-5">
+              <div className="rounded-[4px] bg-gray-50 p-5">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm font-medium text-gray-700">Kullanılan Alan</span>
                   <span className="text-xs text-gray-500">{formatSize(used)} / {formatSize(limit)}</span>
@@ -1171,14 +1171,14 @@ export default function SettingsPage() {
                 { id: "STORAGE_BUSINESS", name: "Business", size: "50 GB", price: 129 },
                 { id: "STORAGE_ENTERPRISE", name: "Enterprise", size: "500 GB", price: 899 },
               ].map((pkg) => (
-                <div key={pkg.id} className="rounded-xl border border-gray-100 p-4 text-center">
+                <div key={pkg.id} className="rounded-[4px] border border-gray-100 p-4 text-center">
                   <p className="text-sm font-semibold text-gray-900">{pkg.name}</p>
                   <p className="text-xs text-gray-500 mt-1">{pkg.size}</p>
                   <p className="mt-2 text-lg font-bold text-gray-900">₺{pkg.price}<span className="text-xs font-normal text-gray-400">/ay</span></p>
                   <button
                     onClick={() => handlePayment("STORAGE_PACKAGE", pkg.id)}
                     disabled={paymentLoading === `STORAGE_PACKAGE_${pkg.id}`}
-                    className="mt-3 w-full rounded-lg bg-[#32373c] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#454a50] disabled:opacity-50"
+                    className="mt-3 w-full rounded-lg bg-[#2B2B2B] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#3A3A3A] disabled:opacity-50"
                   >
                     {paymentLoading === `STORAGE_PACKAGE_${pkg.id}` ? (
                       <Loader2 className="mx-auto h-3.5 w-3.5 animate-spin" />
@@ -1198,7 +1198,7 @@ export default function SettingsPage() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.14 }}
-        className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
+        className="overflow-hidden rounded-[4px] border border-gray-100 bg-white"
       >
         <div className="border-b border-gray-100 px-6 py-4">
           <h2 className="text-sm font-semibold text-gray-900">Hatırlatma Kuralları</h2>
@@ -1211,7 +1211,7 @@ export default function SettingsPage() {
               {reminders.map((reminder) => (
                 <div
                   key={reminder.id}
-                  className="flex items-center justify-between rounded-xl border border-gray-100 p-4"
+                  className="flex items-center justify-between rounded-[4px] border border-gray-100 p-4"
                 >
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
@@ -1228,7 +1228,7 @@ export default function SettingsPage() {
                     <button
                       onClick={() => handleToggleReminder(reminder.id, reminder.isActive)}
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        reminder.isActive ? "bg-[#32373c]" : "bg-gray-300"
+                        reminder.isActive ? "bg-[#2B2B2B]" : "bg-gray-300"
                       }`}
                     >
                       <span
@@ -1261,7 +1261,7 @@ export default function SettingsPage() {
                 value={newReminder.treatmentCategory}
                 onChange={(e) => setNewReminder({ ...newReminder, treatmentCategory: e.target.value })}
                 required
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
+                className="w-full rounded-[4px] border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
               >
                 <option value="">Kategori seçin...</option>
                 {TREATMENT_CATEGORIES.map((cat) => (
@@ -1279,7 +1279,7 @@ export default function SettingsPage() {
                 onChange={(e) => setNewReminder({ ...newReminder, intervalDays: e.target.value })}
                 required
                 placeholder="Örnek: 30"
-                className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
+                className="block w-full rounded-[4px] border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
               />
             </div>
 
@@ -1291,14 +1291,14 @@ export default function SettingsPage() {
                 required
                 placeholder="Örnek: Sayın {musteri}, {tedavi} işleminizin üzerinden {gun} gün geçmiştir."
                 rows={3}
-                className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#c75b12] focus:outline-none focus:ring-2 focus:ring-[#c75b12]/20"
+                className="block w-full rounded-[4px] border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
               />
             </div>
 
             <button
               type="submit"
               disabled={reminderSaving}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#32373c] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#454a50] disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-[4px] bg-[#2B2B2B] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#3A3A3A] disabled:opacity-50"
             >
               {reminderSaving ? "Ekleniyor..." : "Hatırlatma Ekle"}
             </button>
@@ -1311,7 +1311,7 @@ export default function SettingsPage() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.16 }}
-        className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
+        className="overflow-hidden rounded-[4px] border border-gray-100 bg-white"
       >
         <div className="border-b border-gray-100 px-6 py-4">
           <h2 className="text-sm font-semibold text-gray-900">Ekip Yönetimi</h2>
@@ -1320,19 +1320,19 @@ export default function SettingsPage() {
         <div className="p-6 space-y-4">
           {/* Stats */}
           <div className="grid grid-cols-4 gap-3">
-            <div className="rounded-xl border border-gray-100 p-3 text-center">
+            <div className="rounded-[4px] border border-gray-100 p-3 text-center">
               <p className="text-lg font-bold text-gray-900">{teamEmployees.length}</p>
               <p className="text-[11px] text-gray-500">Toplam</p>
             </div>
-            <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-3 text-center">
+            <div className="rounded-[4px] border border-emerald-100 bg-emerald-50/50 p-3 text-center">
               <p className="text-lg font-bold text-emerald-600">{teamEmployees.filter((e: any) => e.inviteStatus === "active").length}</p>
               <p className="text-[11px] text-gray-500">Aktif</p>
             </div>
-            <div className="rounded-xl border border-orange-100 bg-orange-50/50 p-3 text-center">
+            <div className="rounded-[4px] border border-orange-100 bg-orange-50/50 p-3 text-center">
               <p className="text-lg font-bold text-orange-600">{teamEmployees.filter((e: any) => e.inviteStatus === "invited").length}</p>
               <p className="text-[11px] text-gray-500">Bekliyor</p>
             </div>
-            <div className="rounded-xl border border-gray-100 p-3 text-center">
+            <div className="rounded-[4px] border border-gray-100 p-3 text-center">
               <p className="text-lg font-bold text-gray-400">{teamEmployees.filter((e: any) => !e.inviteStatus || e.inviteStatus === "not_invited").length}</p>
               <p className="text-[11px] text-gray-500">Davet Edilmedi</p>
             </div>
@@ -1346,7 +1346,7 @@ export default function SettingsPage() {
           ) : teamEmployees.length === 0 ? (
             <p className="text-center text-sm text-gray-500 py-4">Henüz çalışan eklenmemiş</p>
           ) : (
-            <div className="divide-y divide-gray-100 rounded-xl border border-gray-100">
+            <div className="divide-y divide-gray-100 rounded-[4px] border border-gray-100">
               {teamEmployees.map((emp: any) => {
                 const status = emp.inviteStatus || "not_invited";
                 return (
@@ -1384,7 +1384,7 @@ export default function SettingsPage() {
                               handleInviteEmployee(emp.id);
                             }}
                             disabled={inviteLoading === emp.id}
-                            className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-[#c75b12] hover:bg-[#fef4ec] transition-colors disabled:opacity-50"
+                            className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-[#BE3A21] hover:bg-[#FFF5F3] transition-colors disabled:opacity-50"
                           >
                             {inviteLoading === emp.id ? <Loader2 className="h-3 w-3 animate-spin" /> : "Yeniden Davet"}
                           </button>
@@ -1394,7 +1394,7 @@ export default function SettingsPage() {
                         <button
                           onClick={() => handleInviteEmployee(emp.id)}
                           disabled={inviteLoading === emp.id}
-                          className="flex items-center gap-1.5 rounded-lg bg-[#32373c] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#454a50] transition-colors disabled:opacity-50"
+                          className="flex items-center gap-1.5 rounded-lg bg-[#2B2B2B] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#3A3A3A] transition-colors disabled:opacity-50"
                         >
                           {inviteLoading === emp.id ? (
                             <Loader2 className="h-3 w-3 animate-spin" />
@@ -1416,16 +1416,16 @@ export default function SettingsPage() {
 
       {/* Invite Link Modal */}
       <Dialog open={showInviteLinkModal} onOpenChange={setShowInviteLinkModal}>
-        <DialogContent className="max-w-md rounded-2xl">
+        <DialogContent className="max-w-md rounded-[4px]">
           <div className="space-y-4">
             <div className="text-center">
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#fef4ec]">
-                <UserPlus className="h-6 w-6 text-[#c75b12]" />
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#FFF5F3]">
+                <UserPlus className="h-6 w-6 text-[#BE3A21]" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900">Davet Bağlantısı Oluşturuldu</h3>
               <p className="mt-1 text-sm text-gray-500">Bu bağlantıyı çalışanınızla paylaşın. 7 gün geçerlidir.</p>
             </div>
-            <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 p-3">
+            <div className="flex items-center gap-2 rounded-[4px] border border-gray-200 bg-gray-50 p-3">
               <input
                 type="text"
                 value={currentInviteLink}
@@ -1434,7 +1434,7 @@ export default function SettingsPage() {
               />
               <button
                 onClick={copyInviteLink}
-                className="flex items-center gap-1.5 rounded-lg bg-[#32373c] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#454a50] transition-colors"
+                className="flex items-center gap-1.5 rounded-lg bg-[#2B2B2B] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#3A3A3A] transition-colors"
               >
                 {linkCopied ? <><Check className="h-3 w-3" /> Kopyalandı</> : <><Copy className="h-3 w-3" /> Kopyala</>}
               </button>
@@ -1448,7 +1448,7 @@ export default function SettingsPage() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.18 }}
-        className="overflow-hidden rounded-2xl border border-red-100 bg-white"
+        className="overflow-hidden rounded-[4px] border border-red-100 bg-white"
       >
         <div className="flex items-center gap-2 border-b border-red-100 bg-red-50 px-6 py-4">
           <AlertTriangle className="h-4 w-4 text-red-600" />
@@ -1492,7 +1492,7 @@ export default function SettingsPage() {
             ].map((mod) => (
               <label
                 key={mod.key}
-                className={`flex items-start gap-3 rounded-xl border p-3 cursor-pointer transition-colors ${
+                className={`flex items-start gap-3 rounded-[4px] border p-3 cursor-pointer transition-colors ${
                   resetModules.includes(mod.key)
                     ? "border-red-200 bg-red-50/50"
                     : "border-gray-100 hover:bg-gray-50"
@@ -1519,7 +1519,7 @@ export default function SettingsPage() {
           </div>
 
           {resetSuccess && (
-            <div className="flex items-center gap-2 rounded-xl bg-green-50 px-4 py-3 text-sm text-green-700">
+            <div className="flex items-center gap-2 rounded-[4px] bg-green-50 px-4 py-3 text-sm text-green-700">
               <CheckCircle className="h-4 w-4" />
               {resetSuccess}
             </div>
@@ -1531,7 +1531,7 @@ export default function SettingsPage() {
               setShowResetDialog(true);
             }}
             disabled={resetModules.length === 0}
-            className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 rounded-[4px] bg-red-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Trash2 className="h-4 w-4" />
             Verileri Sil
@@ -1541,7 +1541,7 @@ export default function SettingsPage() {
 
       {/* Reset Confirm Dialog */}
       <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
-        <DialogContent className="max-w-md rounded-2xl">
+        <DialogContent className="max-w-md rounded-[4px]">
           <div className="space-y-4">
             <div className="text-center">
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
@@ -1551,7 +1551,7 @@ export default function SettingsPage() {
               <p className="mt-1 text-sm text-gray-500">Bu işlem geri alınamaz. Seçili modüllerin tüm verileri kalıcı olarak silinecektir.</p>
             </div>
 
-            <div className="rounded-xl bg-red-50 p-3 space-y-1">
+            <div className="rounded-[4px] bg-red-50 p-3 space-y-1">
               <p className="text-xs font-medium text-red-800">Silinecek modüller:</p>
               {resetModules.map((key) => {
                 const labels: Record<string, string> = {
@@ -1578,14 +1578,14 @@ export default function SettingsPage() {
                 value={resetConfirmText}
                 onChange={(e) => setResetConfirmText(e.target.value)}
                 placeholder="TÜM VERİLERİ SİL"
-                className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-400/20"
+                className="block w-full rounded-[4px] border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-400/20"
               />
             </div>
 
             <div className="flex gap-2">
               <button
                 onClick={() => setShowResetDialog(false)}
-                className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                className="flex-1 rounded-[4px] border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
               >
                 İptal
               </button>
@@ -1616,7 +1616,7 @@ export default function SettingsPage() {
                   }
                 }}
                 disabled={resetConfirmText !== "TÜM VERİLERİ SİL" || resetLoading}
-                className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-[4px] bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {resetLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                 {resetLoading ? "Siliniyor..." : "Kalıcı Olarak Sil"}
@@ -1630,7 +1630,7 @@ export default function SettingsPage() {
       <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
         <DialogContent className="max-w-lg p-0">
           <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-3">
-            <CreditCard className="h-4 w-4 text-[#c75b12]" />
+            <CreditCard className="h-4 w-4 text-[#BE3A21]" />
             <h3 className="text-sm font-semibold text-gray-900">Güvenli Ödeme</h3>
           </div>
           {paytrToken && (
