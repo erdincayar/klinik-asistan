@@ -161,7 +161,7 @@ export async function POST(req: NextRequest) {
         const employee = await prisma.employee.create({
           data: {
             name,
-            role: role || "ASISTAN",
+            role: role || "",
             phone: phone || null,
             email: email || null,
             commissionRate: parseInt(commissionRate) || 0,
