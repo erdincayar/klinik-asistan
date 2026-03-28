@@ -1,0 +1,65 @@
+{
+  "name": "Poby — AI Destekli İşletme Yönetimi",
+  "short_name": "Poby",
+  "description": "Küçük işletmeler için AI destekli yönetim platformu. Müşteri, randevu, finans ve stok yönetimi.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#F4F6FA",
+  "theme_color": "#6366F1",
+  "orientation": "any",
+  "scope": "/",
+  "id": "/",
+  "categories": ["business", "productivity"],
+  "lang": "tr",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Randevular",
+      "url": "/appointments",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Müşteriler",
+      "url": "/patients",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Finans",
+      "url": "/finance",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    }
+  ]
+}

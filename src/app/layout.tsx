@@ -7,11 +7,23 @@ const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600", "700"] }
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: "cover",
+  themeColor: "#6366F1",
 };
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://poby.ai"),
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Poby",
+  },
+  formatDetection: {
+    telephone: false,
+  },
   title: {
     default: "Poby.ai — Küçük İşletmeler için AI Destekli Yönetim Platformu",
     template: "%s | Poby.ai",
@@ -91,6 +103,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="tr">
+      <head>
+        <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Poby" />
+      </head>
       <body className={inter.className}>
         <script
           type="application/ld+json"
