@@ -29,6 +29,17 @@ export async function checkAllAlarms(clinicId: string): Promise<CheckResult> {
         case "CUSTOMER_BIRTHDAY":
           triggered = await checkBirthdayAlarm(clinicId, alarm.id, conditions);
           break;
+        case "SCHEDULED":
+          triggered = await checkScheduledAlarm(clinicId, alarm.id, alarm.schedule, alarm.messageTemplate, alarm.name);
+          break;
+        case "AUTO_MESSAGE":
+        case "CUSTOM":
+          // These are handled by specific triggers (after_appointment, after_treatment, etc.)
+          // Log-based custom alarms check conditions
+          if (conditions.thresholdDays) {
+            triggered = await checkCustomerVisitAlarm(clinicId, alarm.id, conditions);
+          }
+          break;
         default:
           break;
       }
@@ -247,4 +258,68 @@ async function checkBirthdayAlarm(
   }
 
   return triggered;
+}
+
+// ── Scheduled Alarm Checker ──────────────────────────────────────
+
+async function checkScheduledAlarm(
+  clinicId: string,
+  alarmId: string,
+  schedule: string | null,
+  messageTemplate: string | null,
+  name: string
+): Promise<number> {
+  if (!schedule) return 0;
+
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+  const currentDay = now.getDay(); // 0=Sun, 1=Mon
+  const currentDate = now.getDate();
+
+  let shouldTrigger = false;
+
+  if (schedule.startsWith("daily:")) {
+    // "daily:09:00"
+    const [h, m] = schedule.replace("daily:", "").split(":").map(Number);
+    shouldTrigger = currentHour === h && currentMinute >= m && currentMinute < m + 30;
+  } else if (schedule.startsWith("weekly:")) {
+    // "weekly:1:09:00" (1=Monday)
+    const parts = schedule.replace("weekly:", "").split(":");
+    const day = parseInt(parts[0]);
+    const h = parseInt(parts[1]);
+    shouldTrigger = currentDay === day && currentHour === h;
+  } else if (schedule.startsWith("monthly:")) {
+    // "monthly:1:09:00" (1st of month)
+    const parts = schedule.replace("monthly:", "").split(":");
+    const date = parseInt(parts[0]);
+    const h = parseInt(parts[1]);
+    shouldTrigger = currentDate === date && currentHour === h;
+  }
+
+  if (!shouldTrigger) return 0;
+
+  // Dedup: 12 saat içinde tekrar tetikleme
+  const twelveHoursAgo = new Date(now.getTime() - 12 * 60 * 60 * 1000);
+  const recentLog = await prisma.alarmLog.findFirst({
+    where: {
+      alarmId,
+      createdAt: { gte: twelveHoursAgo },
+    },
+  });
+
+  if (recentLog) return 0;
+
+  const message = messageTemplate || name;
+
+  await prisma.alarmLog.create({
+    data: {
+      alarmId,
+      clinicId,
+      message,
+      entityName: name,
+    },
+  });
+
+  return 1;
 }

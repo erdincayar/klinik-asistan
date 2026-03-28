@@ -821,18 +821,26 @@ model StockAlarm {
   createdAt     DateTime  @default(now())
 }
 
+// Alarm type values: STOCK, CUSTOMER_VISIT, CUSTOMER_BIRTHDAY, FINANCE, CUSTOM, SCHEDULED, AUTO_MESSAGE
+// triggerAction values: LOG, NOTIFY, SEND_MESSAGE
 model Alarm {
   id              String    @id @default(cuid())
   clinicId        String
   clinic          Clinic    @relation(fields: [clinicId], references: [id], onDelete: Cascade)
   name            String
-  type            String    // STOCK, CUSTOMER_VISIT, CUSTOMER_BIRTHDAY, FINANCE
+  type            String    // STOCK, CUSTOMER_VISIT, CUSTOMER_BIRTHDAY, FINANCE, CUSTOM, SCHEDULED, AUTO_MESSAGE
   conditions      Json
   isActive        Boolean   @default(true)
   isGroup         Boolean   @default(false)
   groupName       String?
   customerId      String?
   customer        Patient?  @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  // AI & Scheduled alarm fields
+  aiGenerated     Boolean   @default(false)    // AI tarafından oluşturuldu mu
+  schedule        String?                       // Cron expression veya "daily:09:00", "after_appointment", "after_treatment"
+  messageTemplate String?   @db.Text            // Gönderilecek mesaj şablonu
+  triggerAction   String    @default("LOG")     // LOG, NOTIFY, SEND_MESSAGE
+  targetChannel   String?                       // TELEGRAM, WHATSAPP, SYSTEM
   lastTriggeredAt DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -840,6 +848,7 @@ model Alarm {
 
   @@index([clinicId, groupName])
   @@index([clinicId, customerId])
+  @@index([clinicId, type])
 }
 
 model AlarmLog {

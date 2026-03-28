@@ -21,6 +21,11 @@ import {
   UsersRound,
   Pause,
   Play,
+  Bot,
+  Send,
+  Sparkles,
+  Clock,
+  MessageCircle,
 } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -114,7 +119,7 @@ function AlarmsPage() {
   const searchParams = useSearchParams();
   const prefillHandled = useRef(false);
 
-  const [tab, setTab] = useState<"alarms" | "logs">("alarms");
+  const [tab, setTab] = useState<"alarms" | "logs" | "ai">("alarms");
   const [alarms, setAlarms] = useState<Alarm[]>([]);
   const [logs, setLogs] = useState<AlarmLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -483,6 +488,18 @@ function AlarmsPage() {
             </span>
           )}
         </button>
+        <button
+          onClick={() => setTab("ai")}
+          className={cn(
+            "rounded-lg px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1.5",
+            tab === "ai"
+              ? "bg-[#6366F1] text-white"
+              : "bg-[#EEF2FF] text-[#6366F1] hover:bg-[#E0E7FF]",
+          )}
+        >
+          <Bot className="h-4 w-4" />
+          AI Asistan
+        </button>
       </div>
 
       {/* Tab Content */}
@@ -713,7 +730,7 @@ function AlarmsPage() {
             </CardContent>
           </Card>
         </motion.div>
-      ) : (
+      ) : tab === "logs" ? (
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -797,6 +814,9 @@ function AlarmsPage() {
             </CardContent>
           </Card>
         </motion.div>
+      ) : (
+        /* AI Asistan Tab */
+        <AIAlarmAssistant onAlarmCreated={fetchAlarms} />
       )}
 
       {/* Create/Edit Dialog */}
@@ -943,5 +963,317 @@ function AlarmsPage() {
         onComplete={fetchAlarms}
       />
     </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════ */
+/*  AI ALARM ASSISTANT                                          */
+/* ══════════════════════════════════════════════════════════════ */
+
+interface AIMessage {
+  role: "user" | "assistant";
+  content: string;
+  alarms?: any[];
+  summary?: string;
+}
+
+const SUGGESTION_CHIPS = [
+  "Her sabah saat 9'da bugünkü randevularımı hatırlat",
+  "Randevu sonrası müşteriye teşekkür ve Google puan mesajı gönder",
+  "Tedavi sonrası dikkat edilecekleri müşteriye gönder",
+  "3 aydır gelmeyen müşterileri hatırlat",
+  "Doğum günü olan müşterilere otomatik tebrik gönder",
+  "Her cuma saat 17'de haftalık özet raporu hatırlat",
+  "Stok 5'in altına düşünce uyar",
+  "Yeni müşteri kaydedildiğinde hoş geldin mesajı gönder",
+];
+
+function AIAlarmAssistant({ onAlarmCreated }: { onAlarmCreated: () => void }) {
+  const [messages, setMessages] = useState<AIMessage[]>([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [pendingAlarms, setPendingAlarms] = useState<any[] | null>(null);
+  const [creating, setCreating] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  async function handleSend(text?: string) {
+    const msg = (text || input).trim();
+    if (!msg || loading) return;
+
+    setInput("");
+    setMessages((prev) => [...prev, { role: "user", content: msg }]);
+    setLoading(true);
+    setPendingAlarms(null);
+
+    try {
+      const res = await fetch("/api/alarms/ai-create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: msg, action: "preview" }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setMessages((prev) => [...prev, { role: "assistant", content: data.error || "Bir hata oluştu." }]);
+        return;
+      }
+
+      const preview = data.preview;
+      setPendingAlarms(preview.alarms);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: preview.summary || "İşte oluşturacağım alarmlar:",
+          alarms: preview.alarms,
+          summary: preview.summary,
+        },
+      ]);
+    } catch {
+      setMessages((prev) => [...prev, { role: "assistant", content: "Bir hata oluştu. Tekrar deneyin." }]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleConfirmCreate() {
+    if (!pendingAlarms || creating) return;
+    setCreating(true);
+
+    try {
+      // Son kullanıcı mesajını bul
+      const lastUserMsg = [...messages].reverse().find((m) => m.role === "user")?.content || "";
+
+      const res = await fetch("/api/alarms/ai-create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: lastUserMsg, action: "create" }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: `${data.alarms.length} alarm başarıyla oluşturuldu! Alarmlarım sekmesinden görüntüleyebilirsiniz.`,
+          },
+        ]);
+        setPendingAlarms(null);
+        onAlarmCreated();
+      } else {
+        setMessages((prev) => [...prev, { role: "assistant", content: data.error || "Oluşturma başarısız." }]);
+      }
+    } catch {
+      setMessages((prev) => [...prev, { role: "assistant", content: "Bir hata oluştu." }]);
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  const TYPE_ICONS: Record<string, typeof Clock> = {
+    SCHEDULED: Clock,
+    AUTO_MESSAGE: MessageCircle,
+    CUSTOM: Sparkles,
+    CUSTOMER_VISIT: Users,
+    CUSTOMER_BIRTHDAY: Cake,
+    STOCK: Package,
+  };
+
+  const TYPE_LABELS: Record<string, string> = {
+    SCHEDULED: "Zamanlanmış",
+    AUTO_MESSAGE: "Otomatik Mesaj",
+    CUSTOM: "Özel Alarm",
+    CUSTOMER_VISIT: "Müşteri Takip",
+    CUSTOMER_BIRTHDAY: "Doğum Günü",
+    STOCK: "Stok",
+  };
+
+  const ACTION_LABELS: Record<string, string> = {
+    LOG: "Bildirim",
+    NOTIFY: "Uyarı",
+    SEND_MESSAGE: "Mesaj Gönder",
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <Card>
+        <CardContent className="p-0">
+          {/* Chat Area */}
+          <div className="flex flex-col h-[600px]">
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {messages.length === 0 && (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <div className="h-16 w-16 rounded-2xl bg-[#EEF2FF] flex items-center justify-center mb-4">
+                    <Bot className="h-8 w-8 text-[#6366F1]" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">AI Alarm Asistanı</h3>
+                  <p className="text-sm text-gray-500 max-w-md mb-6">
+                    Doğal dilde alarm ve otomasyon kurun. Ne istediğinizi yazın,
+                    AI sizin için alarmı oluştursun.
+                  </p>
+
+                  {/* Suggestion Chips */}
+                  <div className="flex flex-wrap gap-2 justify-center max-w-lg">
+                    {SUGGESTION_CHIPS.map((chip) => (
+                      <button
+                        key={chip}
+                        onClick={() => handleSend(chip)}
+                        className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-600 hover:bg-[#EEF2FF] hover:border-[#6366F1] hover:text-[#6366F1] transition-colors"
+                      >
+                        {chip}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {messages.map((msg, i) => (
+                <div key={i} className={cn("flex gap-3", msg.role === "user" ? "justify-end" : "justify-start")}>
+                  {msg.role === "assistant" && (
+                    <div className="shrink-0 h-8 w-8 rounded-lg bg-[#EEF2FF] flex items-center justify-center">
+                      <Bot className="h-4 w-4 text-[#6366F1]" />
+                    </div>
+                  )}
+                  <div className={cn(
+                    "max-w-[80%] rounded-xl px-4 py-3",
+                    msg.role === "user"
+                      ? "bg-[#6366F1] text-white"
+                      : "bg-gray-100 text-gray-900"
+                  )}>
+                    <p className="text-sm">{msg.content}</p>
+
+                    {/* Alarm Preview Cards */}
+                    {msg.alarms && msg.alarms.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        {msg.alarms.map((alarm: any, j: number) => {
+                          const TypeIcon = TYPE_ICONS[alarm.type] || Sparkles;
+                          return (
+                            <div key={j} className="rounded-lg border border-gray-200 bg-white p-3">
+                              <div className="flex items-center gap-2 mb-1.5">
+                                <TypeIcon className="h-4 w-4 text-[#6366F1]" />
+                                <span className="text-xs font-semibold text-gray-900">{alarm.name}</span>
+                                <span className="ml-auto rounded-full bg-[#EEF2FF] px-2 py-0.5 text-[10px] font-medium text-[#6366F1]">
+                                  {TYPE_LABELS[alarm.type] || alarm.type}
+                                </span>
+                              </div>
+                              {alarm.explanation && (
+                                <p className="text-xs text-gray-500 mb-1.5">{alarm.explanation}</p>
+                              )}
+                              <div className="flex flex-wrap gap-2 text-[10px]">
+                                {alarm.schedule && (
+                                  <span className="rounded bg-gray-50 px-1.5 py-0.5 text-gray-600">
+                                    <Clock className="inline h-3 w-3 mr-0.5" />
+                                    {alarm.schedule}
+                                  </span>
+                                )}
+                                <span className="rounded bg-gray-50 px-1.5 py-0.5 text-gray-600">
+                                  {ACTION_LABELS[alarm.triggerAction] || alarm.triggerAction}
+                                </span>
+                                {alarm.targetChannel && (
+                                  <span className="rounded bg-gray-50 px-1.5 py-0.5 text-gray-600">
+                                    {alarm.targetChannel}
+                                  </span>
+                                )}
+                              </div>
+                              {alarm.messageTemplate && (
+                                <div className="mt-2 rounded-lg bg-gray-50 p-2">
+                                  <p className="text-[11px] text-gray-500 italic">&ldquo;{alarm.messageTemplate}&rdquo;</p>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                  {msg.role === "user" && (
+                    <div className="shrink-0 h-8 w-8 rounded-lg bg-[#6366F1] flex items-center justify-center">
+                      <Users className="h-4 w-4 text-white" />
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {/* Confirm Button */}
+              {pendingAlarms && pendingAlarms.length > 0 && !creating && (
+                <div className="flex justify-center gap-2 pt-2">
+                  <button
+                    onClick={handleConfirmCreate}
+                    className="rounded-xl bg-[#6366F1] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#4F46E5] transition-colors flex items-center gap-2"
+                  >
+                    <Check className="h-4 w-4" />
+                    {pendingAlarms.length} Alarm Oluştur
+                  </button>
+                  <button
+                    onClick={() => setPendingAlarms(null)}
+                    className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                  >
+                    İptal
+                  </button>
+                </div>
+              )}
+
+              {creating && (
+                <div className="flex justify-center pt-2">
+                  <Loader2 className="h-5 w-5 animate-spin text-[#6366F1]" />
+                </div>
+              )}
+
+              {loading && (
+                <div className="flex gap-3">
+                  <div className="shrink-0 h-8 w-8 rounded-lg bg-[#EEF2FF] flex items-center justify-center">
+                    <Bot className="h-4 w-4 text-[#6366F1]" />
+                  </div>
+                  <div className="rounded-xl bg-gray-100 px-4 py-3">
+                    <div className="flex gap-1">
+                      <span className="h-2 w-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                      <span className="h-2 w-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                      <span className="h-2 w-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input */}
+            <div className="border-t border-gray-100 p-4">
+              <div className="flex items-center gap-2">
+                <input
+                  ref={inputRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+                  placeholder="Ne tür bir alarm kurmak istiyorsunuz?"
+                  disabled={loading}
+                  className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm placeholder:text-gray-400 focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/20 outline-none disabled:opacity-50"
+                />
+                <button
+                  onClick={() => handleSend()}
+                  disabled={loading || !input.trim()}
+                  className="rounded-xl bg-[#6366F1] p-3 text-white hover:bg-[#4F46E5] disabled:opacity-50 transition-colors"
+                >
+                  <Send className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }
