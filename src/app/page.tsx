@@ -721,14 +721,13 @@ export default function Home() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Auto-rotate hero slides every 5s, pause on hover
+  // Auto-rotate hero slides every 5s
   useEffect(() => {
-    if (heroHovered) return;
     const id = setInterval(() => {
       setHeroSlide((prev) => (prev + 1) % 3);
     }, 5000);
     return () => clearInterval(id);
-  }, [heroHovered, heroSlide]);
+  }, []);
 
   // Auto-rotate dashboard tabs every 3s, pause on hover
   useEffect(() => {
@@ -832,8 +831,6 @@ export default function Home() {
       {/* ════════════════════════ HERO SLIDER ════════════════════════ */}
       <section
         className="relative h-[500px] sm:h-[600px] lg:h-[680px] overflow-hidden pt-20"
-        onMouseEnter={() => setHeroHovered(true)}
-        onMouseLeave={() => setHeroHovered(false)}
       >
         {/* Slides */}
         <AnimatePresence mode="wait">
@@ -907,30 +904,17 @@ export default function Home() {
           )}
         </AnimatePresence>
 
-        {/* Slider controls */}
-        <div className="absolute bottom-8 left-1/2 z-30 flex -translate-x-1/2 items-center gap-3">
+        {/* Slider indicator dots (no interaction, just visual) */}
+        <div className="absolute bottom-6 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2">
           {[0, 1, 2].map((i) => (
-            <button
+            <div
               key={i}
-              onClick={() => setHeroSlide(i)}
-              className={`h-2.5 rounded-full transition-all ${
-                heroSlide === i ? "w-8 bg-[#6366F1]" : "w-2.5 bg-white/40 hover:bg-white/60"
+              className={`h-2 rounded-full transition-all duration-500 ${
+                heroSlide === i ? "w-8 bg-[#6366F1]" : "w-2 bg-[#6366F1]/20"
               }`}
             />
           ))}
         </div>
-        <button
-          onClick={() => setHeroSlide((prev) => (prev - 1 + 3) % 3)}
-          className="absolute left-4 top-1/2 z-30 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white backdrop-blur-sm transition-all hover:bg-white/20"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </button>
-        <button
-          onClick={() => setHeroSlide((prev) => (prev + 1) % 3)}
-          className="absolute right-4 top-1/2 z-30 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white backdrop-blur-sm transition-all hover:bg-white/20"
-        >
-          <ArrowRight className="h-5 w-5" />
-        </button>
       </section>
 
       {/* ════════════════════════ ONBOARDING SECTION ════════════════════════ */}
