@@ -962,6 +962,7 @@ export default function AppointmentsPage() {
                           slotAppointments.map((appointment) => {
                             const statusInfo = getStatusInfo(appointment.status);
                             const isCancelled = appointment.status === "CANCELLED";
+                            const empColor = appointment.employeeColor || "#9ca3af";
                             return (
                               <button
                                 key={appointment.id}
@@ -975,46 +976,39 @@ export default function AppointmentsPage() {
                                   setDialogOpen(true);
                                 }}
                                 className={cn(
-                                  "flex w-full items-center justify-between rounded-lg border text-left transition-colors hover:bg-gray-50",
-                                  compactMode ? "px-4 py-1" : "px-4 py-2",
-                                  isCancelled && "opacity-60"
+                                  "w-full rounded-xl text-left transition-all hover:shadow-md",
+                                  "px-3.5 py-2.5",
+                                  isCancelled && "opacity-50"
                                 )}
+                                style={{
+                                  backgroundColor: `${empColor}10`,
+                                  borderLeft: `3px solid ${empColor}`,
+                                }}
                               >
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-start gap-2.5">
                                   <span
-                                    className="inline-block h-3 w-3 shrink-0 rounded-full"
-                                    style={{ backgroundColor: appointment.employeeColor || "#9ca3af" }}
-                                    title={appointment.employeeName || "Atanmamış"}
+                                    className="mt-1 inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+                                    style={{ backgroundColor: empColor }}
                                   />
-                                  <div>
-                                    <p
-                                      className={cn(
-                                        "font-medium text-gray-900",
-                                        isCancelled && "line-through"
-                                      )}
-                                    >
+                                  <div className="flex-1 min-w-0">
+                                    <p className={cn(
+                                      "text-sm font-semibold text-gray-900 truncate",
+                                      isCancelled && "line-through"
+                                    )}>
                                       {appointment.patientName}
                                     </p>
-                                    <p className="text-xs text-gray-500">
-                                      {appointment.employeeName || "Atanmamış"} · {appointment.startTime} - {appointment.endTime}
+                                    <p className="text-xs text-gray-500 truncate">
+                                      {getTreatmentLabel(appointment.treatmentType)}
                                     </p>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Badge
-                                    className={cn(
-                                      "pointer-events-none",
-                                      getTreatmentLabel(appointment.treatmentType) &&
-                                        "bg-gray-100 text-gray-700"
+                                    {statusInfo && (
+                                      <span className={cn(
+                                        "mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                                        statusInfo.color,
+                                      )}>
+                                        {statusInfo.label}
+                                      </span>
                                     )}
-                                  >
-                                    {getTreatmentLabel(appointment.treatmentType)}
-                                  </Badge>
-                                  {statusInfo && (
-                                    <Badge className={cn("pointer-events-none", statusInfo.color)}>
-                                      {statusInfo.label}
-                                    </Badge>
-                                  )}
+                                  </div>
                                 </div>
                               </button>
                             );
@@ -1090,26 +1084,29 @@ export default function AppointmentsPage() {
                                       key={appt.id}
                                       onClick={() => { setSelectedAppointment(appt); setDialogOpen(true); }}
                                       className={cn(
-                                        "w-full rounded-lg border border-gray-100 text-left text-xs transition-colors hover:border-[#E0E7FF]",
-                                        compactMode ? "px-1 py-0.5" : "px-1.5 py-1",
+                                        "w-full rounded-lg text-left text-xs transition-all hover:shadow-sm",
+                                        "px-2 py-1.5",
                                         appt.status === "CANCELLED" && "opacity-50"
                                       )}
+                                      style={{
+                                        backgroundColor: `${appt.employeeColor || "#9ca3af"}12`,
+                                        borderLeft: `2px solid ${appt.employeeColor || "#9ca3af"}`,
+                                      }}
                                     >
-                                      <div className="flex items-center gap-1 font-medium truncate">
+                                      <div className="flex items-center gap-1 font-semibold text-gray-900 truncate">
                                         <span
                                           className="inline-block h-2 w-2 shrink-0 rounded-full"
                                           style={{ backgroundColor: appt.employeeColor || "#9ca3af" }}
-                                          title={appt.employeeName || "Atanmamış"}
                                         />
                                         <span className="truncate">{appt.patientName || "?"}</span>
                                       </div>
-                                      <div className="truncate text-gray-500">
+                                      <div className="truncate text-gray-500 mt-0.5">
                                         {getTreatmentLabel(appt.treatmentType)}
                                       </div>
                                       {statusInfo && (
-                                        <div className={cn("mt-0.5 inline-block rounded px-1 py-0 text-[10px] font-semibold", statusInfo.color)}>
+                                        <span className={cn("mt-1 inline-block rounded-full px-1.5 py-0 text-[9px] font-semibold", statusInfo.color)}>
                                           {statusInfo.label}
-                                        </div>
+                                        </span>
                                       )}
                                     </button>
                                   );

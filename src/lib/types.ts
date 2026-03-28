@@ -17,10 +17,10 @@ export type TreatmentCategory = "BOTOX" | "DOLGU" | "DIS_TEDAVI" | "GENEL";
 export type ExpenseCategory = "KIRA" | "MAAS" | "MALZEME" | "FATURA" | "DIGER";
 
 export const APPOINTMENT_STATUSES = [
-  { value: "SCHEDULED", label: "Planlandı", color: "bg-[#E0E7FF] text-[#7A2414]" },
-  { value: "COMPLETED", label: "Tamamlandı", color: "bg-green-100 text-green-800" },
-  { value: "CANCELLED", label: "İptal Edildi", color: "bg-red-100 text-red-800" },
-  { value: "NO_SHOW", label: "Gelmedi", color: "bg-yellow-100 text-yellow-800" },
+  { value: "SCHEDULED", label: "Planlandı", color: "bg-[#EEF2FF] text-[#4F46E5]" },
+  { value: "COMPLETED", label: "Tamamlandı", color: "bg-[#ECFDF5] text-[#059669]" },
+  { value: "CANCELLED", label: "İptal Edildi", color: "bg-[#FEF2F2] text-[#DC2626]" },
+  { value: "NO_SHOW", label: "Gelmedi", color: "bg-[#FFFBEB] text-[#D97706]" },
 ] as const;
 
 export type AppointmentStatus = "SCHEDULED" | "COMPLETED" | "CANCELLED" | "NO_SHOW";
