@@ -831,7 +831,7 @@ export default function Home() {
 
       {/* ════════════════════════ HERO SLIDER ════════════════════════ */}
       <section
-        className="relative overflow-hidden pt-20"
+        className="relative h-[500px] sm:h-[600px] lg:h-[680px] overflow-hidden pt-20"
         onMouseEnter={() => setHeroHovered(true)}
         onMouseLeave={() => setHeroHovered(false)}
       >
@@ -842,7 +842,7 @@ export default function Home() {
               key: "slide-0",
               image: "/images/hero-slide-1.png",
               title: <>AI Destekli<br /><span className="text-[#6366F1]">Akıllı Yönetim</span></>,
-              desc: "Yapay zeka ile stok analizi, tedarik zinciri tahmini ve akıllı alarm sistemi. İşletmeniz 7/24 kontrol altında.",
+              desc: "Yapay zeka ile stok analizi, tedarik zinciri tahmini ve akıllı alarm sistemi.",
               cta: { label: "Hemen Başla", href: "/register" },
               cta2: { label: "Demo Gör", href: "#dashboard-preview" },
             },
@@ -850,14 +850,14 @@ export default function Home() {
               key: "slide-1",
               image: "/images/hero-slide-2.png",
               title: <>Finanstan Stoka<br /><span className="text-[#6366F1]">Tek Platform</span></>,
-              desc: "Gelir-gider takibi, faturalama, çalışan yönetimi, raporlar ve 12+ modül tek bir ekranda.",
+              desc: "Gelir-gider takibi, faturalama, çalışan yönetimi ve 12+ modül tek ekranda.",
               cta: { label: "Tüm Özellikleri Keşfet", href: "/ozellikler" },
             },
             {
               key: "slide-2",
               image: "/images/hero-slide-3.png",
               title: <>Randevu & Müşteri<br /><span className="text-[#6366F1]">Yönetimi</span></>,
-              desc: "Renk kodlu takvim, müşteri takibi, otomatik hatırlatmalar ve dijital onam formları.",
+              desc: "Renk kodlu takvim, müşteri takibi, otomatik hatırlatmalar ve onam formları.",
               cta: { label: "Ücretsiz Deneyin", href: "/register" },
             },
           ].map((slide, idx) =>
@@ -868,40 +868,37 @@ export default function Home() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.6 }}
-                className="relative"
+                className="absolute inset-0"
               >
-                {/* Background gradient */}
-                <div className="absolute inset-0 bg-gradient-to-b from-[#EEF2FF] via-[#F8F9FF] to-white" />
+                {/* Full background image */}
+                <img
+                  src={slide.image}
+                  alt={`Poby ${slide.key}`}
+                  className="absolute inset-0 w-full h-full object-cover object-top"
+                />
+                {/* Gradient overlay for text readability */}
+                <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/70 to-transparent sm:from-white/90 sm:via-white/50" />
 
-                <div className="relative mx-auto max-w-[1200px] px-6 py-12 sm:py-16">
-                  {/* Text */}
-                  <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10">
-                    <h1 className="mb-4 text-[clamp(26px,4vw,48px)] font-extrabold leading-[1.15] text-[#1A1A2E]">
-                      {slide.title}
-                    </h1>
-                    <p className="mb-6 text-base sm:text-lg leading-relaxed text-[#6C7293] max-w-lg mx-auto">
-                      {slide.desc}
-                    </p>
-                    <div className="flex justify-center gap-3">
-                      <Link href={slide.cta.href} className="rounded-xl bg-[#6366F1] px-6 py-3 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-[#4F46E5] hover:shadow-lg hover:shadow-[#6366F1]/25">
-                        {slide.cta.label}
-                      </Link>
-                      {slide.cta2 && (
-                        <Link href={slide.cta2.href} className="rounded-xl border border-gray-200 bg-white px-6 py-3 text-sm font-semibold text-[#1A1A2E] transition-all hover:-translate-y-0.5 hover:shadow-md">
-                          {slide.cta2.label}
+                {/* Text content — sol tarafta */}
+                <div className="relative h-full flex items-center">
+                  <div className="mx-auto w-full max-w-[1200px] px-6">
+                    <div className="max-w-md lg:max-w-lg">
+                      <h1 className="mb-4 text-[clamp(24px,4vw,46px)] font-extrabold leading-[1.15] text-[#1A1A2E]">
+                        {slide.title}
+                      </h1>
+                      <p className="mb-6 text-sm sm:text-base leading-relaxed text-[#6C7293]">
+                        {slide.desc}
+                      </p>
+                      <div className="flex gap-3">
+                        <Link href={slide.cta.href} className="rounded-xl bg-[#6366F1] px-5 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-[#4F46E5] hover:shadow-lg hover:shadow-[#6366F1]/25">
+                          {slide.cta.label}
                         </Link>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Image */}
-                  <div className="relative mx-auto max-w-4xl">
-                    <div className="rounded-xl overflow-hidden shadow-2xl shadow-[#6366F1]/10">
-                      <img
-                        src={slide.image}
-                        alt={`Poby ${slide.key}`}
-                        className="w-full h-auto"
-                      />
+                        {slide.cta2 && (
+                          <Link href={slide.cta2.href} className="rounded-xl border border-gray-200 bg-white/80 backdrop-blur-sm px-5 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold text-[#1A1A2E] transition-all hover:-translate-y-0.5 hover:shadow-md">
+                            {slide.cta2.label}
+                          </Link>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
