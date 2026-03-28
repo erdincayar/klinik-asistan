@@ -954,7 +954,7 @@ export default function AppointmentsPage() {
                       data-time={time}
                       className={cn(
                         "flex items-stretch",
-                        slotAppointments.length > 0 ? "min-h-[48px]" : "min-h-[24px]",
+                        slotAppointments.length > 0 ? "min-h-[40px]" : "min-h-[16px]",
                         isCurrentSlot && "bg-[#EEF2FF]/50",
                         isOffHours && !isCurrentSlot && "bg-gray-50/70"
                       )}
@@ -968,7 +968,7 @@ export default function AppointmentsPage() {
                       </div>
 
                       {/* Slot content */}
-                      <div className={cn("flex flex-1 flex-col gap-1 px-2 sm:px-3", slotAppointments.length > 0 ? "py-1.5" : "py-0.5")}>
+                      <div className={cn("flex flex-1 flex-col gap-0.5 px-2 sm:px-3", slotAppointments.length > 0 ? "py-1" : "py-0")}>
                         {slotAppointments.length > 0 ? (
                           slotAppointments.map((appointment) => {
                             const statusInfo = getStatusInfo(appointment.status);
