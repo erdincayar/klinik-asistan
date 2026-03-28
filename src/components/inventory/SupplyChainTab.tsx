@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Loader2,
   AlertTriangle,
@@ -14,6 +14,8 @@ import {
   AlertCircle,
   CheckCircle,
   Archive,
+  Search,
+  Filter,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -97,6 +99,11 @@ export default function SupplyChainTab() {
   const [editingProduct, setEditingProduct] = useState<string | null>(null);
   const [editValues, setEditValues] = useState({ supplier: "", leadTimeDays: "", reorderQty: "", autoReorder: false });
   const [saving, setSaving] = useState(false);
+  // Marka filtre & seçim
+  const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
+  const [brandFilterAll, setBrandFilterAll] = useState(true);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
 
   const fetchData = useCallback(async () => {
     try {
@@ -134,6 +141,54 @@ export default function SupplyChainTab() {
     }
   }
 
+  // Tüm markaları çıkar
+  const allBrands = useMemo(() => {
+    if (!data) return [];
+    const brands = new Set<string>();
+    data.products.forEach((p) => { if (p.brand) brands.add(p.brand); });
+    return Array.from(brands).sort();
+  }, [data]);
+
+  // Filtreleme: durum + marka + arama
+  const filtered = useMemo(() => {
+    if (!data) return [];
+    let list = data.products;
+    if (filter !== "all") list = list.filter((p) => p.urgency === filter);
+    if (!brandFilterAll && selectedBrands.size > 0) {
+      list = list.filter((p) => p.brand && selectedBrands.has(p.brand));
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter((p) =>
+        p.name.toLowerCase().includes(q) ||
+        p.sku.toLowerCase().includes(q) ||
+        (p.brand && p.brand.toLowerCase().includes(q))
+      );
+    }
+    return list;
+  }, [data, filter, brandFilterAll, selectedBrands, searchQuery]);
+
+  function toggleBrand(brand: string) {
+    const next = new Set(selectedBrands);
+    if (next.has(brand)) next.delete(brand); else next.add(brand);
+    setSelectedBrands(next);
+    setBrandFilterAll(false);
+  }
+
+  function toggleSelectProduct(id: string) {
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    setSelectedIds(next);
+  }
+
+  function selectAllFiltered() {
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map((p) => p.id)));
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -145,7 +200,6 @@ export default function SupplyChainTab() {
   if (!data) return <p className="text-center py-12 text-gray-400">Veri yüklenemedi</p>;
 
   const { summary, supplierGroups } = data;
-  const filtered = filter === "all" ? data.products : data.products.filter((p) => p.urgency === filter);
 
   // Aylık tüketim grafiği (tüm ürünlerin toplamı)
   const now = new Date();
@@ -184,21 +238,72 @@ export default function SupplyChainTab() {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Sol: Ürün Listesi */}
         <div className="lg:col-span-2 space-y-4">
-          {/* Filtre */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {(["all", "critical", "warning", "safe", "overstocked"] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={cn(
-                  "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-                  filter === f ? "bg-[#6366F1] text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                )}
-              >
-                {f === "all" ? "Tümü" : URGENCY_CONFIG[f].label}
-                {f !== "all" && ` (${summary[f]})`}
-              </button>
-            ))}
+          {/* Filtre Bar */}
+          <div className="space-y-3 rounded-xl border border-gray-100 bg-white p-3">
+            {/* Durum filtreleri */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {(["all", "critical", "warning", "safe", "overstocked"] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={cn(
+                    "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                    filter === f ? "bg-[#6366F1] text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  )}
+                >
+                  {f === "all" ? "Tümü" : URGENCY_CONFIG[f].label}
+                  {f !== "all" && ` (${summary[f]})`}
+                </button>
+              ))}
+            </div>
+
+            {/* Marka filtreleri */}
+            {allBrands.length > 0 && (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <Filter className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                <button
+                  onClick={() => { setBrandFilterAll(true); setSelectedBrands(new Set()); }}
+                  className={cn(
+                    "rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors",
+                    brandFilterAll ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                  )}
+                >
+                  Tüm Markalar
+                </button>
+                {allBrands.map((brand) => (
+                  <button
+                    key={brand}
+                    onClick={() => toggleBrand(brand)}
+                    className={cn(
+                      "rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors",
+                      !brandFilterAll && selectedBrands.has(brand)
+                        ? "bg-[#6366F1] text-white"
+                        : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                    )}
+                  >
+                    {brand}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Arama + seçim bilgisi */}
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                <input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Ürün, SKU veya marka ara..."
+                  className="w-full rounded-lg border border-gray-200 bg-white pl-9 pr-3 py-1.5 text-xs focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/20 outline-none"
+                />
+              </div>
+              {selectedIds.size > 0 && (
+                <span className="text-xs text-[#6366F1] font-medium shrink-0">
+                  {selectedIds.size} seçili
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Ürün Tablosu */}
@@ -207,45 +312,66 @@ export default function SupplyChainTab() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50/50">
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Ürün</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500">Stok</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500">Gün/Tüketim</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500">Yetecek Gün</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500">Sipariş Tarihi</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500">Durum</th>
+                    <th className="w-10 px-3 py-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.size === filtered.length && filtered.length > 0}
+                        onChange={selectAllFiltered}
+                        className="h-3.5 w-3.5 rounded border-gray-300 text-[#6366F1] focus:ring-[#6366F1]"
+                      />
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500">Ürün</th>
+                    <th className="px-3 py-3 text-right text-xs font-medium text-gray-500">Stok</th>
+                    <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 hidden sm:table-cell">Gün/Tüketim</th>
+                    <th className="px-3 py-3 text-right text-xs font-medium text-gray-500">Yetecek Gün</th>
+                    <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 hidden sm:table-cell">Sipariş Tarihi</th>
+                    <th className="px-3 py-3 text-center text-xs font-medium text-gray-500">Durum</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {filtered.length === 0 ? (
-                    <tr><td colSpan={6} className="px-4 py-12 text-center text-gray-400">Bu filtrede ürün yok</td></tr>
+                    <tr><td colSpan={7} className="px-4 py-12 text-center text-gray-400">Bu filtrede ürün yok</td></tr>
                   ) : filtered.map((p) => {
                     const urg = URGENCY_CONFIG[p.urgency];
+                    const isSelected = selectedIds.has(p.id);
                     return (
                       <tr
                         key={p.id}
                         onClick={() => setSelectedProduct(p)}
-                        className={cn("cursor-pointer hover:bg-gray-50/50 transition-colors", selectedProduct?.id === p.id && "bg-[#EEF2FF]/30")}
+                        className={cn(
+                          "cursor-pointer hover:bg-gray-50/50 transition-colors",
+                          selectedProduct?.id === p.id && "bg-[#EEF2FF]/30",
+                          isSelected && "bg-[#EEF2FF]/20"
+                        )}
                       >
-                        <td className="px-4 py-3">
+                        <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleSelectProduct(p.id)}
+                            className="h-3.5 w-3.5 rounded border-gray-300 text-[#6366F1] focus:ring-[#6366F1]"
+                          />
+                        </td>
+                        <td className="px-3 py-3">
                           <div className="flex items-center gap-2">
                             <span className={cn("h-2 w-2 rounded-full shrink-0", urg.dot)} />
-                            <div>
-                              <p className="font-medium text-gray-900 text-sm">{p.name}</p>
-                              <p className="text-[11px] text-gray-400">{p.brand || p.supplier || p.sku}</p>
+                            <div className="min-w-0">
+                              <p className="font-medium text-gray-900 text-sm truncate">{p.name}</p>
+                              <p className="text-[11px] text-gray-400 truncate">{p.brand || p.supplier || p.sku}</p>
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-right font-medium">{p.currentStock} {p.unit}</td>
-                        <td className="px-4 py-3 text-right text-gray-600">{p.avgDailyConsumption}</td>
-                        <td className="px-4 py-3 text-right">
+                        <td className="px-3 py-3 text-right font-medium text-sm">{p.currentStock} {p.unit}</td>
+                        <td className="px-3 py-3 text-right text-gray-600 hidden sm:table-cell">{p.avgDailyConsumption}</td>
+                        <td className="px-3 py-3 text-right">
                           <span className={cn("font-semibold", p.daysOfSupply <= 7 ? "text-red-600" : p.daysOfSupply <= 14 ? "text-orange-600" : "text-gray-900")}>
                             {p.daysOfSupply > 365 ? "365+" : p.daysOfSupply}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-right text-xs text-gray-500">
+                        <td className="px-3 py-3 text-right text-xs text-gray-500 hidden sm:table-cell">
                           {p.reorderDate ? fmtDate(p.reorderDate) : "-"}
                         </td>
-                        <td className="px-4 py-3 text-center">
+                        <td className="px-3 py-3 text-center">
                           <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold", urg.color)}>
                             {urg.label}
                           </span>

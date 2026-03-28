@@ -13,13 +13,39 @@ export async function GET() {
       return Response.json({ error: "No clinic" }, { status: 400 });
     }
 
-    const alarms = await prisma.stockAlarm.findMany({
-      where: { clinicId },
-      include: { product: { select: { id: true, name: true, sku: true } } },
-      orderBy: { createdAt: "desc" },
-    });
+    const [stockAlarms, mainAlarms] = await Promise.all([
+      prisma.stockAlarm.findMany({
+        where: { clinicId },
+        include: { product: { select: { id: true, name: true, sku: true } } },
+        orderBy: { createdAt: "desc" },
+      }),
+      // Ana Alarm tablosundaki STOCK tipli alarmları da getir (AI oluşturmuş olabilir)
+      prisma.alarm.findMany({
+        where: { clinicId, type: "STOCK" },
+        orderBy: { createdAt: "desc" },
+      }),
+    ]);
 
-    return Response.json(alarms);
+    // Ana Alarm tablosundaki STOCK alarmlarını StockAlarm formatına dönüştür
+    const convertedAlarms = mainAlarms
+      .filter((a) => !stockAlarms.some((sa) => sa.name === a.name)) // Duplikat engelle
+      .map((a) => ({
+        id: a.id,
+        clinicId: a.clinicId,
+        name: a.name,
+        type: "STOCK" as const,
+        threshold: (a.conditions as any)?.thresholdQuantity || (a.conditions as any)?.threshold || 0,
+        productId: (a.conditions as any)?.productId || null,
+        product: null,
+        currency: null,
+        isActive: a.isActive,
+        lastTriggered: a.lastTriggeredAt,
+        createdAt: a.createdAt,
+        _fromMainAlarm: true, // UI'da AI badge göstermek için
+        aiGenerated: a.aiGenerated,
+      }));
+
+    return Response.json([...stockAlarms, ...convertedAlarms]);
   } catch {
     return Response.json({ error: "Bir hata oluştu" }, { status: 500 });
   }
