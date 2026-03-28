@@ -1530,8 +1530,67 @@ function ConsentFormsTab() {
 /*  ANA SAYFA WRAPPER                                           */
 /* ══════════════════════════════════════════════════════════════ */
 
+const CUSTOM_TABS_KEY = "poby-doc-tabs";
+
+interface CustomTab {
+  id: string;
+  label: string;
+}
+
+function loadCustomTabs(): CustomTab[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const saved = localStorage.getItem(CUSTOM_TABS_KEY);
+    return saved ? JSON.parse(saved) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveCustomTabs(tabs: CustomTab[]) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(CUSTOM_TABS_KEY, JSON.stringify(tabs));
+}
+
 export default function DocumentsPage() {
   const [activeMainTab, setActiveMainTab] = useState("hr");
+  const [customTabs, setCustomTabs] = useState<CustomTab[]>([]);
+  const [showAddTab, setShowAddTab] = useState(false);
+  const [newTabName, setNewTabName] = useState("");
+  const [editingTabId, setEditingTabId] = useState<string | null>(null);
+  const [editTabName, setEditTabName] = useState("");
+
+  useEffect(() => {
+    setCustomTabs(loadCustomTabs());
+  }, []);
+
+  function handleAddTab() {
+    if (!newTabName.trim()) return;
+    const id = `custom_${Date.now()}`;
+    const updated = [...customTabs, { id, label: newTabName.trim() }];
+    setCustomTabs(updated);
+    saveCustomTabs(updated);
+    setNewTabName("");
+    setShowAddTab(false);
+    setActiveMainTab(id);
+  }
+
+  function handleRemoveTab(tabId: string) {
+    if (!confirm("Bu sekmeyi silmek istediğinize emin misiniz?")) return;
+    const updated = customTabs.filter((t) => t.id !== tabId);
+    setCustomTabs(updated);
+    saveCustomTabs(updated);
+    if (activeMainTab === tabId) setActiveMainTab("hr");
+  }
+
+  function handleRenameTab(tabId: string) {
+    if (!editTabName.trim()) return;
+    const updated = customTabs.map((t) => t.id === tabId ? { ...t, label: editTabName.trim() } : t);
+    setCustomTabs(updated);
+    saveCustomTabs(updated);
+    setEditingTabId(null);
+    setEditTabName("");
+  }
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
@@ -1547,16 +1606,97 @@ export default function DocumentsPage() {
       </motion.div>
 
       <Tabs value={activeMainTab} onValueChange={setActiveMainTab}>
-        <TabsList className="mb-6">
-          <TabsTrigger value="hr" className="gap-1.5">
-            <FileText className="h-4 w-4" />
-            İK Belgeleri
-          </TabsTrigger>
-          <TabsTrigger value="consent" className="gap-1.5">
-            <ClipboardCheck className="h-4 w-4" />
-            Onam Formları
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex items-center gap-2 mb-6">
+          <TabsList>
+            <TabsTrigger value="hr" className="gap-1.5">
+              <FileText className="h-4 w-4" />
+              İK Belgeleri
+            </TabsTrigger>
+            <TabsTrigger value="consent" className="gap-1.5">
+              <ClipboardCheck className="h-4 w-4" />
+              Onam Formları
+            </TabsTrigger>
+            {customTabs.map((tab) => (
+              <TabsTrigger key={tab.id} value={tab.id} className="gap-1.5 group relative">
+                <FolderOpen className="h-4 w-4" />
+                {editingTabId === tab.id ? (
+                  <input
+                    autoFocus
+                    value={editTabName}
+                    onChange={(e) => setEditTabName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleRenameTab(tab.id);
+                      if (e.key === "Escape") setEditingTabId(null);
+                    }}
+                    onBlur={() => handleRenameTab(tab.id)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-20 bg-transparent text-sm outline-none border-b border-[#6366F1]"
+                  />
+                ) : (
+                  <span
+                    onDoubleClick={(e) => {
+                      e.stopPropagation();
+                      setEditingTabId(tab.id);
+                      setEditTabName(tab.label);
+                    }}
+                  >
+                    {tab.label}
+                  </span>
+                )}
+                {activeMainTab === tab.id && editingTabId !== tab.id && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveTab(tab.id);
+                    }}
+                    className="ml-1 rounded-full p-0.5 text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                    title="Sekmeyi sil"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          {/* Add tab */}
+          {showAddTab ? (
+            <div className="flex items-center gap-1.5">
+              <input
+                autoFocus
+                value={newTabName}
+                onChange={(e) => setNewTabName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleAddTab();
+                  if (e.key === "Escape") { setShowAddTab(false); setNewTabName(""); }
+                }}
+                placeholder="Sekme adı..."
+                className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm focus:border-[#6366F1] outline-none w-32"
+              />
+              <button
+                onClick={handleAddTab}
+                disabled={!newTabName.trim()}
+                className="rounded-lg bg-[#6366F1] px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-[#4F46E5] disabled:opacity-50"
+              >
+                Ekle
+              </button>
+              <button
+                onClick={() => { setShowAddTab(false); setNewTabName(""); }}
+                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowAddTab(true)}
+              className="rounded-lg p-1.5 text-gray-400 hover:bg-[#EEF2FF] hover:text-[#6366F1] transition-colors"
+              title="Yeni sekme ekle"
+            >
+              <Plus className="h-4 w-4" />
+            </button>
+          )}
+        </div>
 
         <TabsContent value="hr">
           <HRDocumentsTab />
@@ -1565,6 +1705,12 @@ export default function DocumentsPage() {
         <TabsContent value="consent">
           <ConsentFormsTab />
         </TabsContent>
+
+        {customTabs.map((tab) => (
+          <TabsContent key={tab.id} value={tab.id}>
+            <HRDocumentsTab />
+          </TabsContent>
+        ))}
       </Tabs>
     </div>
   );
