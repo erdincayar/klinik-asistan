@@ -183,6 +183,10 @@ export default function DashboardPage() {
     upsellModules?: ModuleRecommendation[];
   } | null>(null);
   const [employeePerms, setEmployeePerms] = useState<Record<string, string> | null>(null);
+  const [clinicName, setClinicName] = useState("");
+  const [showNameInput, setShowNameInput] = useState(false);
+  const [nameInput, setNameInput] = useState("");
+  const [savingName, setSavingName] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -192,7 +196,7 @@ export default function DashboardPage() {
         const today = new Date();
         const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
-        const [dashRes, chartRes, lowStockRes, upcomingRes, tokenRes, onbRes, permRes] = await Promise.all([
+        const [dashRes, chartRes, lowStockRes, upcomingRes, tokenRes, onbRes, permRes, settingsRes] = await Promise.all([
           fetch("/api/dashboard"),
           fetch(
             `/api/finance?type=monthly-summary&year=${today.getFullYear()}`
@@ -202,6 +206,7 @@ export default function DashboardPage() {
           fetch("/api/settings/tokens"),
           fetch("/api/onboarding/dashboard-profile"),
           fetch("/api/employees/me/permissions"),
+          fetch("/api/settings"),
         ]);
 
         if (!dashRes.ok) throw new Error("Dashboard verisi alınamadı");
@@ -263,6 +268,11 @@ export default function DashboardPage() {
         if (permRes.ok) {
           const permData = await permRes.json();
           if (permData.permissions) setEmployeePerms(permData.permissions);
+        }
+
+        if (settingsRes.ok) {
+          const settingsData = await settingsRes.json();
+          setClinicName(settingsData.name || "");
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Bir hata oluştu");
@@ -356,9 +366,67 @@ export default function DashboardPage() {
     return employeePerms[card.permKey] !== "none";
   });
 
+  async function handleSaveClinicName() {
+    if (!nameInput.trim()) return;
+    setSavingName(true);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: nameInput.trim() }),
+      });
+      if (res.ok) {
+        setClinicName(nameInput.trim());
+        setShowNameInput(false);
+      }
+    } catch {
+      // silent
+    } finally {
+      setSavingName(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
-      {/* TOKEN_SYSTEM_DISABLED — Token badge kaldırıldı */}
+      {/* ── İşletme Adı / Hoşgeldin ── */}
+      {clinicName ? (
+        <div>
+          <h2 className="text-xl font-bold text-[#1A1A2E]">{clinicName}</h2>
+          <p className="text-sm text-[#6C7293]">Genel bakış</p>
+        </div>
+      ) : !showNameInput ? (
+        <button
+          onClick={() => setShowNameInput(true)}
+          className="flex items-center gap-2 rounded-xl border border-dashed border-[#6366F1]/40 bg-[#EEF2FF]/50 px-4 py-3 text-sm font-medium text-[#6366F1] hover:bg-[#EEF2FF] transition-colors"
+        >
+          <Sparkles className="h-4 w-4" />
+          İşletme ismi ekle
+        </button>
+      ) : (
+        <div className="flex items-center gap-2">
+          <input
+            autoFocus
+            value={nameInput}
+            onChange={(e) => setNameInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSaveClinicName()}
+            placeholder="İşletme adını yazın..."
+            className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/20 outline-none w-64"
+          />
+          <button
+            onClick={handleSaveClinicName}
+            disabled={savingName || !nameInput.trim()}
+            className="rounded-xl bg-[#6366F1] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#4F46E5] disabled:opacity-50"
+          >
+            Kaydet
+          </button>
+          <button
+            onClick={() => setShowNameInput(false)}
+            className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-500 hover:bg-gray-50"
+          >
+            İptal
+          </button>
+        </div>
+      )}
 
       {/* ── ONBOARDING PERSONALIZATION ── */}
       {onboardingProfile?.selectedModules && onboardingProfile.selectedModules.length > 0 && (

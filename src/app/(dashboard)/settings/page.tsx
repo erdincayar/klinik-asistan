@@ -40,10 +40,10 @@ import {
 } from "@/components/ui/dialog";
 
 interface ClinicSettings {
-  clinicName: string;
+  name: string;
   phone: string;
   address: string;
-  vatRate: number;
+  taxRate: number;
   storageLimitMB?: number;
   storageUsedMB?: number;
   storagePlan?: string;
@@ -86,16 +86,34 @@ function Skeleton({ className }: { className?: string }) {
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<ClinicSettings>({
-    clinicName: "",
+    name: "",
     phone: "",
     address: "",
-    vatRate: 20,
+    taxRate: 20,
+  });
+  const [savedSettings, setSavedSettings] = useState<ClinicSettings>({
+    name: "",
+    phone: "",
+    address: "",
+    taxRate: 20,
   });
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const isDirty = JSON.stringify({
+    name: settings.name,
+    phone: settings.phone,
+    address: settings.address,
+    taxRate: settings.taxRate,
+  }) !== JSON.stringify({
+    name: savedSettings.name,
+    phone: savedSettings.phone,
+    address: savedSettings.address,
+    taxRate: savedSettings.taxRate,
+  });
 
   // New reminder form
   const [newReminder, setNewReminder] = useState({
@@ -169,16 +187,18 @@ export default function SettingsPage() {
 
         if (settingsRes.ok) {
           const data = await settingsRes.json();
-          setSettings({
-            clinicName: data.clinicName || "",
+          const loaded = {
+            name: data.name || "",
             phone: data.phone || "",
             address: data.address || "",
-            vatRate: data.vatRate ?? 20,
+            taxRate: data.taxRate ?? 20,
             storageLimitMB: data.storageLimitMB,
             storageUsedMB: data.storageUsedMB,
             storagePlan: data.storagePlan,
             plan: data.plan,
-          });
+          };
+          setSettings(loaded);
+          setSavedSettings(loaded);
           if (data.metaConnected) {
             setMetaConnected(true);
             setMetaAdAccountId(data.metaAdAccountId || "");
@@ -350,6 +370,7 @@ export default function SettingsPage() {
       });
 
       if (!res.ok) throw new Error("Ayarlar kaydedilemedi");
+      setSavedSettings({ ...settings });
       setSuccess("Ayarlar kaydedildi");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Bir hata oluştu");
@@ -479,8 +500,8 @@ export default function SettingsPage() {
             <div>
               <label className="mb-1.5 block text-xs font-medium text-gray-600">İşletme Adı</label>
               <input
-                value={settings.clinicName}
-                onChange={(e) => setSettings({ ...settings, clinicName: e.target.value })}
+                value={settings.name}
+                onChange={(e) => setSettings({ ...settings, name: e.target.value })}
                 className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
                 placeholder="İşletme adı"
               />
@@ -511,8 +532,8 @@ export default function SettingsPage() {
               type="number"
               min="0"
               max="100"
-              value={settings.vatRate}
-              onChange={(e) => setSettings({ ...settings, vatRate: Number(e.target.value) })}
+              value={settings.taxRate}
+              onChange={(e) => setSettings({ ...settings, taxRate: Number(e.target.value) })}
               className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
             />
           </div>
@@ -522,11 +543,11 @@ export default function SettingsPage() {
 
           <button
             type="submit"
-            disabled={saving}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#1E1E2D] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2A2A3C] disabled:opacity-50"
+            disabled={saving || !isDirty}
+            className="inline-flex items-center gap-2 rounded-xl bg-[#6366F1] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#4F46E5] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            {saving ? "Kaydediliyor..." : "Kaydet"}
+            {saving ? "Kaydediliyor..." : isDirty ? "Kaydet" : "Kaydedildi"}
           </button>
         </form>
       </motion.div>
