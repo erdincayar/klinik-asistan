@@ -698,7 +698,7 @@ export default function AppointmentsPage() {
       </motion.div>
 
       {/* Filter block */}
-      <motion.div variants={fadeUp} initial="hidden" animate="visible" className="space-y-2 rounded-xl border border-gray-100 bg-white p-3">
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" className="sticky top-0 z-10 space-y-2 rounded-xl border border-gray-100 bg-white p-3">
         {/* Employee filter row */}
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium text-gray-500">Çalışan:</span>
@@ -919,7 +919,7 @@ export default function AppointmentsPage() {
       >
         {viewMode === "daily" ? (
           /* ── Daily view ── */
-          <div ref={dailyScrollRef} className="max-h-[600px] overflow-y-auto rounded-xl border border-gray-100 bg-white">
+          <div ref={dailyScrollRef} className="max-h-[calc(100vh-320px)] overflow-y-auto rounded-xl border border-gray-100 bg-white">
             {loading ? (
               <div className="space-y-0 divide-y divide-gray-50 p-0">
                 {[...Array(6)].map((_, i) => (
@@ -1027,7 +1027,7 @@ export default function AppointmentsPage() {
           </div>
         ) : (
           /* ── Weekly view ── */
-          <div ref={weeklyScrollRef} className="max-h-[600px] overflow-y-auto rounded-xl border border-gray-100 bg-white">
+          <div ref={weeklyScrollRef} className="max-h-[calc(100vh-320px)] overflow-y-auto rounded-xl border border-gray-100 bg-white">
             {loading ? (
               <div className="p-6">
                 <Skeleton className="h-[400px] w-full" />
