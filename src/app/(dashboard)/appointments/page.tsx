@@ -977,7 +977,7 @@ export default function AppointmentsPage() {
                                   setDialogOpen(true);
                                 }}
                                 className={cn(
-                                  "w-full rounded-xl text-left transition-all hover:shadow-md",
+                                  "w-full rounded-xl text-left transition-all hover:shadow-md active:scale-[0.98] cursor-pointer group",
                                   "px-3.5 py-2.5",
                                   isCancelled && "opacity-50"
                                 )}
@@ -1010,6 +1010,7 @@ export default function AppointmentsPage() {
                                       </span>
                                     )}
                                   </div>
+                                  <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-gray-300 group-hover:text-gray-500 transition-colors" />
                                 </div>
                               </button>
                             );
