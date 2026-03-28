@@ -122,11 +122,24 @@ async function processMessage(msg: TgMessage): Promise<void> {
             await tgSend(chatId, "❌ Bağlantı kodunun süresi dolmuş. Lütfen yeni QR kod oluşturun.");
             return;
           }
-          // Link the clinic
-          await prisma.clinic.update({
+          // Link to user (per-user) and clinic (if no clinic chatId yet)
+          if (link.userId) {
+            await prisma.user.update({
+              where: { id: link.userId },
+              data: { telegramChatId: String(chatId) },
+            });
+          }
+          // Also set clinic-level chatId if not already set (first connection = clinic owner)
+          const clinic = await prisma.clinic.findUnique({
             where: { id: link.clinicId },
-            data: { telegramChatId: String(chatId) },
+            select: { telegramChatId: true },
           });
+          if (!clinic?.telegramChatId) {
+            await prisma.clinic.update({
+              where: { id: link.clinicId },
+              data: { telegramChatId: String(chatId) },
+            });
+          }
           await prisma.telegramLink.update({
             where: { id: link.id },
             data: { used: true },

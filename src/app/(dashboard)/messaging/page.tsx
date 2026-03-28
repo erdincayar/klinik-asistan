@@ -11,11 +11,13 @@ function TelegramStatus() {
   const [clinicName, setClinicName] = useState("");
 
   useEffect(() => {
-    fetch("/api/settings")
-      .then((r) => r.json())
-      .then((data) => {
-        setConnected(!!data.telegramChatId);
-        setClinicName(data.name || "");
+    Promise.all([
+      fetch("/api/settings/telegram/status").then((r) => r.json()),
+      fetch("/api/settings").then((r) => r.json()),
+    ])
+      .then(([tgData, settingsData]) => {
+        setConnected(!!tgData.connected);
+        setClinicName(settingsData.name || "");
       })
       .catch(() => setConnected(false));
   }, []);

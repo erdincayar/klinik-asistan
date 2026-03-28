@@ -8,19 +8,21 @@ export async function GET() {
     if (!session?.user) {
       return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
     }
+    const userId = (session.user as any).id;
     const clinicId = (session.user as any).clinicId;
     if (!clinicId) {
       return NextResponse.json({ error: "Klinik bulunamadı" }, { status: 400 });
     }
 
-    const clinic = await prisma.clinic.findUnique({
-      where: { id: clinicId },
+    // Kullanıcının kendi Telegram durumunu kontrol et
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
       select: { telegramChatId: true },
     });
 
     return NextResponse.json({
-      connected: !!clinic?.telegramChatId,
-      chatId: clinic?.telegramChatId || null,
+      connected: !!user?.telegramChatId,
+      chatId: user?.telegramChatId || null,
     });
   } catch (error) {
     console.error("Telegram status error:", error);
@@ -34,15 +36,36 @@ export async function DELETE() {
     if (!session?.user) {
       return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
     }
+    const userId = (session.user as any).id;
     const clinicId = (session.user as any).clinicId;
     if (!clinicId) {
       return NextResponse.json({ error: "Klinik bulunamadı" }, { status: 400 });
     }
 
-    await prisma.clinic.update({
-      where: { id: clinicId },
+    // Kullanıcının kendi bağlantısını kes
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { telegramChatId: true },
+    });
+
+    await prisma.user.update({
+      where: { id: userId },
       data: { telegramChatId: null },
     });
+
+    // Eğer bu kullanıcının chatId'si klinik seviyesinde de aynıysa, klinik bağlantısını da kes
+    if (user?.telegramChatId) {
+      const clinic = await prisma.clinic.findUnique({
+        where: { id: clinicId },
+        select: { telegramChatId: true },
+      });
+      if (clinic?.telegramChatId === user.telegramChatId) {
+        await prisma.clinic.update({
+          where: { id: clinicId },
+          data: { telegramChatId: null },
+        });
+      }
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

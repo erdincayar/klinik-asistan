@@ -21,12 +21,14 @@ model User {
   emailVerifyToken    String?              @unique
   emailVerifyExpires  DateTime?
   lastLoginAt         DateTime?
+  telegramChatId      String?              // Kullanıcının kendi Telegram chat ID'si
   clinicId            String?
   clinic              Clinic?              @relation(fields: [clinicId], references: [id])
   onboardingCompleted Boolean              @default(false)
   passwordResetTokens PasswordResetToken[]
   activityLogs        ActivityLog[]
   accounts            Account[]
+  telegramLinks       TelegramLink[]
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
 }
@@ -640,6 +642,8 @@ model TelegramLink {
   id        String   @id @default(cuid())
   clinicId  String
   clinic    Clinic   @relation(fields: [clinicId], references: [id])
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
   code      String   @unique
   expiresAt DateTime
   used      Boolean  @default(false)

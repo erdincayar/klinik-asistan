@@ -25,9 +25,12 @@ export async function POST() {
     const code = generateCode();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
+    const userId = (session.user as any).id;
+
     await prisma.telegramLink.create({
       data: {
         clinicId,
+        userId,
         code,
         expiresAt,
       },
