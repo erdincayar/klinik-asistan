@@ -237,16 +237,16 @@ function HeroModuleCard({
   return (
     <button
       onClick={onToggle}
-      className={`flex w-full items-center gap-3 rounded-[4px] border-2 p-4 text-left backdrop-blur-sm transition-all ${
+      className={`flex w-full items-center gap-3 rounded-xl border-2 p-4 text-left backdrop-blur-sm transition-all ${
         selected
-          ? "border-[#BE3A21] bg-[#FFF5F3]/80 shadow-md shadow-[#BE3A21]/10"
+          ? "border-[#6366F1] bg-[#EEF2FF]/80 shadow-md shadow-[#6366F1]/10"
           : muted
           ? "border-gray-200/60 bg-white/50 opacity-70 hover:opacity-100"
           : "border-gray-200/80 bg-white/80 hover:border-gray-300"
       }`}
     >
       <div
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px]"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
         style={{ backgroundColor: `${mod.color}15` }}
       >
         <ModuleIcon name={mod.icon} className="h-5 w-5" color={mod.color} />
@@ -255,14 +255,14 @@ function HeroModuleCard({
         <p className="text-sm font-semibold text-gray-900">{mod.name}</p>
         <p className="text-xs text-gray-500 line-clamp-1">{mod.shortDescription}</p>
         {mod.reasoning && (
-          <p className="mt-0.5 text-[11px] italic text-[#9B2D18] line-clamp-1">{mod.reasoning}</p>
+          <p className="mt-0.5 text-[11px] italic text-[#4F46E5] line-clamp-1">{mod.reasoning}</p>
         )}
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <span className="text-xs font-bold text-gray-600">₺{mod.basePrice}/ay</span>
         <div
           className={`flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all ${
-            selected ? "border-[#BE3A21] bg-[#BE3A21]" : "border-gray-300"
+            selected ? "border-[#6366F1] bg-[#6366F1]" : "border-gray-300"
           }`}
         >
           {selected && <Check className="h-3 w-3 text-white" />}
@@ -276,7 +276,7 @@ function HeroModuleCard({
 
 function TweetCard({ tweet }: { tweet: (typeof tweets)[0] }) {
   return (
-    <div className="mx-3 w-[340px] shrink-0 rounded-[4px] border border-gray-100 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
+    <div className="mx-3 w-[340px] shrink-0 rounded-xl border border-gray-100 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
       <div className="mb-3 flex items-center gap-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -309,14 +309,14 @@ function DashboardOverview() {
     <div>
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
-          { label: "Toplam Müşteri", target: 247, prefix: "", icon: Users, change: "+18", up: true, color: "text-[#BE3A21]", bg: "bg-[#FFF5F3]" },
+          { label: "Toplam Müşteri", target: 247, prefix: "", icon: Users, change: "+18", up: true, color: "text-[#6366F1]", bg: "bg-[#EEF2FF]" },
           { label: "Bugünün Randevuları", target: 12, prefix: "", icon: Calendar, change: "+3", up: true, color: "text-emerald-600", bg: "bg-emerald-50" },
           { label: "Aylık Gelir", target: 48500, prefix: "₺", icon: TrendingUp, change: "+22%", up: true, color: "text-orange-600", bg: "bg-orange-50" },
           { label: "Stok Uyarısı", target: 3, prefix: "", icon: AlertTriangle, change: "Kritik", up: false, color: "text-red-600", bg: "bg-red-50" },
         ].map((s) => {
           const Icon = s.icon;
           return (
-            <div key={s.label} className="rounded-[4px] border border-gray-100 bg-white p-4">
+            <div key={s.label} className="rounded-xl border border-gray-100 bg-white p-4">
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-[11px] font-medium text-gray-400">{s.label}</span>
                 <div className={`rounded-lg p-1.5 ${s.bg}`}>
@@ -333,11 +333,11 @@ function DashboardOverview() {
           );
         })}
       </div>
-      <div className="rounded-[4px] border border-gray-100 bg-white p-4">
+      <div className="rounded-xl border border-gray-100 bg-white p-4">
         <p className="mb-3 text-xs font-semibold text-gray-500">Aylık Gelir Trendi</p>
         <div className="flex h-[100px] items-end gap-2">
           {[35, 50, 40, 65, 55, 80, 60, 75, 90, 70, 85, 95].map((h, i) => (
-            <div key={i} className="flex-1 rounded-t bg-gradient-to-t from-[#BE3A21] to-[#D4502E]" style={{ height: `${h}%` }} />
+            <div key={i} className="flex-1 rounded-t bg-gradient-to-t from-[#6366F1] to-[#818CF8]" style={{ height: `${h}%` }} />
           ))}
         </div>
         <div className="mt-2 flex justify-between text-[10px] text-gray-400">
@@ -358,7 +358,7 @@ function DashboardAppointments() {
     { name: "Ali Kılıç", time: "16:00", service: "İmplant Konsültasyon", status: "Onaylandı", statusColor: "bg-emerald-100 text-emerald-700" },
   ];
   return (
-    <div className="rounded-[4px] border border-gray-100 bg-white">
+    <div className="rounded-xl border border-gray-100 bg-white">
       <div className="border-b border-gray-50 px-4 py-3">
         <p className="text-xs font-semibold text-gray-500">Bugünün Randevuları</p>
       </div>
@@ -366,7 +366,7 @@ function DashboardAppointments() {
         {appointments.map((a) => (
           <div key={a.name} className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FFF5F3] text-xs font-bold text-[#BE3A21]">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#EEF2FF] text-xs font-bold text-[#6366F1]">
                 {a.name.split(" ").map(n => n[0]).join("")}
               </div>
               <div>
@@ -394,11 +394,11 @@ function DashboardFinance() {
         {[
           { label: "Gelir", target: 48500, color: "text-emerald-600", bg: "bg-emerald-50", icon: TrendingUp },
           { label: "Gider", target: 12300, color: "text-red-600", bg: "bg-red-50", icon: TrendingDown },
-          { label: "Net Kâr", target: 36200, color: "text-[#BE3A21]", bg: "bg-[#FFF5F3]", icon: DollarSign },
+          { label: "Net Kâr", target: 36200, color: "text-[#6366F1]", bg: "bg-[#EEF2FF]", icon: DollarSign },
         ].map((s) => {
           const Icon = s.icon;
           return (
-            <div key={s.label} className="rounded-[4px] border border-gray-100 bg-white p-4 text-center">
+            <div key={s.label} className="rounded-xl border border-gray-100 bg-white p-4 text-center">
               <div className={`mx-auto mb-2 inline-flex rounded-lg p-2 ${s.bg}`}>
                 <Icon className={`h-4 w-4 ${s.color}`} />
               </div>
@@ -410,7 +410,7 @@ function DashboardFinance() {
           );
         })}
       </div>
-      <div className="rounded-[4px] border border-gray-100 bg-white">
+      <div className="rounded-xl border border-gray-100 bg-white">
         <div className="border-b border-gray-50 px-4 py-3">
           <p className="text-xs font-semibold text-gray-500">Son İşlemler</p>
         </div>
@@ -443,7 +443,7 @@ function DashboardStock() {
     { name: "Porselen Kron", stock: 3, min: 5, status: "critical" },
   ];
   return (
-    <div className="rounded-[4px] border border-gray-100 bg-white">
+    <div className="rounded-xl border border-gray-100 bg-white">
       <div className="border-b border-gray-50 px-4 py-3">
         <p className="text-xs font-semibold text-gray-500">Stok Durumu</p>
       </div>
@@ -474,7 +474,7 @@ function DashboardStock() {
 
 function DashboardCustomers() {
   const customers = [
-    { name: "Ahmet Yılmaz", lastVisit: "10 Mar 2026", total: "₺4.800", visits: 12, color: "bg-[#BE3A21]" },
+    { name: "Ahmet Yılmaz", lastVisit: "10 Mar 2026", total: "₺4.800", visits: 12, color: "bg-[#6366F1]" },
     { name: "Fatma Kaya", lastVisit: "8 Mar 2026", total: "₺3.200", visits: 8, color: "bg-emerald-500" },
     { name: "Mehmet Demir", lastVisit: "5 Mar 2026", total: "₺6.100", visits: 15, color: "bg-purple-500" },
     { name: "Ayşe Çelik", lastVisit: "3 Mar 2026", total: "₺2.400", visits: 6, color: "bg-orange-500" },
@@ -482,7 +482,7 @@ function DashboardCustomers() {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       {customers.map((c) => (
-        <div key={c.name} className="rounded-[4px] border border-gray-100 bg-white p-4">
+        <div key={c.name} className="rounded-xl border border-gray-100 bg-white p-4">
           <div className="mb-3 flex items-center gap-3">
             <div className={`flex h-10 w-10 items-center justify-center rounded-full ${c.color} text-xs font-bold text-white`}>
               {c.name.split(" ").map(n => n[0]).join("")}
@@ -504,13 +504,13 @@ function DashboardCustomers() {
 
 function DashboardEmployees() {
   const employees = [
-    { name: "Dr. Elif Şahin", role: "Diş Hekimi", commission: "₺12.400", color: "bg-[#BE3A21]" },
+    { name: "Dr. Elif Şahin", role: "Diş Hekimi", commission: "₺12.400", color: "bg-[#6366F1]" },
     { name: "Selin Aydın", role: "Hijyenist", commission: "₺4.200", color: "bg-emerald-500" },
     { name: "Burak Erdoğan", role: "Asistan", commission: "₺2.800", color: "bg-purple-500" },
     { name: "Derya Yılmaz", role: "Sekreter", commission: "₺1.500", color: "bg-orange-500" },
   ];
   return (
-    <div className="rounded-[4px] border border-gray-100 bg-white">
+    <div className="rounded-xl border border-gray-100 bg-white">
       <div className="border-b border-gray-50 px-4 py-3">
         <p className="text-xs font-semibold text-gray-500">Personel Listesi</p>
       </div>
@@ -761,7 +761,7 @@ export default function Home() {
       >
         <div className="mx-auto flex max-w-[1200px] items-center justify-between px-6 py-4">
           <Link href="/" className="text-2xl font-extrabold tracking-tight">
-            <span className="text-[#BE3A21]">Po</span>
+            <span className="text-[#6366F1]">Po</span>
             <span className="text-gray-800">by</span>
           </Link>
 
@@ -770,20 +770,20 @@ export default function Home() {
               <Link
                 key={link.label}
                 href={link.href}
-                className="text-[13px] font-medium uppercase tracking-wider text-[#333] transition-colors hover:text-[#BE3A21]"
+                className="text-[13px] font-medium uppercase tracking-wider text-[#1A1A2E] transition-colors hover:text-[#6366F1]"
               >
                 {link.label}
               </Link>
             ))}
             <Link
               href="/login"
-              className="rounded-[2px] border-2 border-[#BE3A21] px-5 py-2.5 text-[13px] font-bold uppercase tracking-wider text-[#BE3A21] transition-all hover:bg-[#BE3A21] hover:text-white"
+              className="rounded-lg border-2 border-[#6366F1] px-5 py-2.5 text-[13px] font-bold uppercase tracking-wider text-[#6366F1] transition-all hover:bg-[#6366F1] hover:text-white"
             >
               Giriş Yap
             </Link>
             <Link
               href="/register"
-              className="rounded-[2px] bg-[#BE3A21] px-5 py-2.5 text-[13px] font-bold uppercase tracking-wider text-white transition-all hover:-translate-y-0.5 hover:bg-[#9B2D18] hover:shadow-lg hover:shadow-[#BE3A21]/30"
+              className="rounded-lg bg-[#6366F1] px-5 py-2.5 text-[13px] font-bold uppercase tracking-wider text-white transition-all hover:-translate-y-0.5 hover:bg-[#4F46E5] hover:shadow-lg hover:shadow-[#6366F1]/30"
             >
               Kayıt Ol
             </Link>
@@ -819,7 +819,7 @@ export default function Home() {
               </Link>
               <Link
                 href="/register"
-                className="inline-flex items-center justify-center rounded-[2px] bg-[#BE3A21] px-6 py-2.5 text-sm font-semibold text-white"
+                className="inline-flex items-center justify-center rounded-lg bg-[#6366F1] px-6 py-2.5 text-sm font-semibold text-white"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Kayıt Ol
@@ -851,23 +851,23 @@ export default function Home() {
                 <div className="max-w-[520px]">
                   <h1 className="mb-4 text-[clamp(28px,4.5vw,52px)] font-extrabold uppercase tracking-wider leading-[1.1] text-white">
                     AI Destekli<br />
-                    <span className="text-[#BE3A21]">İşletme Yönetimi</span>
+                    <span className="text-[#6366F1]">İşletme Yönetimi</span>
                   </h1>
                   <p className="mb-8 text-lg leading-relaxed text-white/70">
                     Randevu, finans, stok, çalışan yönetimi ve daha fazlası — hepsi tek platformda, yapay zeka destekli.
                   </p>
                   <div className="flex gap-4">
-                    <Link href="/register" className="rounded-[2px] bg-[#BE3A21] px-8 py-3.5 text-[13px] font-bold uppercase tracking-wider text-white transition-all hover:-translate-y-0.5 hover:bg-[#9B2D18] hover:shadow-lg">
+                    <Link href="/register" className="rounded-lg bg-[#6366F1] px-8 py-3.5 text-[13px] font-bold uppercase tracking-wider text-white transition-all hover:-translate-y-0.5 hover:bg-[#4F46E5] hover:shadow-lg">
                       Hemen Başla
                     </Link>
-                    <Link href="#dashboard-preview" className="rounded-[2px] border-2 border-white/30 px-8 py-3.5 text-[13px] font-bold uppercase tracking-wider text-white transition-all hover:border-white hover:bg-white/10">
+                    <Link href="#dashboard-preview" className="rounded-lg border-2 border-white/30 px-8 py-3.5 text-[13px] font-bold uppercase tracking-wider text-white transition-all hover:border-white hover:bg-white/10">
                       Demo Gör
                     </Link>
                   </div>
                 </div>
                 {/* CSS Dashboard mockup */}
                 <div className="hidden lg:block">
-                  <div className="w-[420px] rounded-[4px] bg-white/10 p-4 backdrop-blur-sm border border-white/10">
+                  <div className="w-[420px] rounded-xl bg-white/10 p-4 backdrop-blur-sm border border-white/10">
                     <div className="mb-3 flex gap-2">
                       <div className="h-2.5 w-2.5 rounded-full bg-red-400" />
                       <div className="h-2.5 w-2.5 rounded-full bg-yellow-400" />
@@ -875,12 +875,12 @@ export default function Home() {
                     </div>
                     <div className="grid grid-cols-2 gap-3 mb-3">
                       {[
-                        { label: "Müşteri", val: "247", color: "#BE3A21" },
-                        { label: "Randevu", val: "12", color: "#27AE60" },
-                        { label: "Gelir", val: "₺48.5K", color: "#F39C12" },
-                        { label: "Stok", val: "156", color: "#2980B9" },
+                        { label: "Müşteri", val: "247", color: "#6366F1" },
+                        { label: "Randevu", val: "12", color: "#059669" },
+                        { label: "Gelir", val: "₺48.5K", color: "#D97706" },
+                        { label: "Stok", val: "156", color: "#3B82F6" },
                       ].map((s) => (
-                        <div key={s.label} className="rounded-[2px] bg-white/10 p-3">
+                        <div key={s.label} className="rounded-lg bg-white/10 p-3">
                           <p className="text-[10px] text-white/50 uppercase tracking-wider">{s.label}</p>
                           <p className="text-lg font-bold text-white">{s.val}</p>
                           <div className="mt-1 h-1 rounded-full bg-white/10">
@@ -891,7 +891,7 @@ export default function Home() {
                     </div>
                     <div className="flex h-[80px] items-end gap-1.5">
                       {[35, 50, 40, 65, 55, 80, 60, 75, 90, 70, 85, 95].map((h, i) => (
-                        <div key={i} className="flex-1 rounded-t bg-[#BE3A21]/80" style={{ height: `${h}%` }} />
+                        <div key={i} className="flex-1 rounded-t bg-[#6366F1]/80" style={{ height: `${h}%` }} />
                       ))}
                     </div>
                   </div>
@@ -913,12 +913,12 @@ export default function Home() {
                 <div className="max-w-[520px]">
                   <h1 className="mb-4 text-[clamp(28px,4.5vw,52px)] font-extrabold uppercase tracking-wider leading-[1.1] text-white">
                     12+ Modül<br />
-                    <span className="text-[#BE3A21]">Tek Platform</span>
+                    <span className="text-[#6366F1]">Tek Platform</span>
                   </h1>
                   <p className="mb-8 text-lg leading-relaxed text-white/70">
                     Müşteri yönetimi, randevu, finans, stok, çalışan, AI asistan, raporlar ve daha fazlası.
                   </p>
-                  <Link href="/ozellikler" className="rounded-[2px] bg-[#BE3A21] px-8 py-3.5 text-[13px] font-bold uppercase tracking-wider text-white transition-all hover:-translate-y-0.5 hover:bg-[#9B2D18] hover:shadow-lg">
+                  <Link href="/ozellikler" className="rounded-lg bg-[#6366F1] px-8 py-3.5 text-[13px] font-bold uppercase tracking-wider text-white transition-all hover:-translate-y-0.5 hover:bg-[#4F46E5] hover:shadow-lg">
                     Tüm Özellikleri Keşfet
                   </Link>
                 </div>
@@ -933,7 +933,7 @@ export default function Home() {
                       { icon: "🤖", label: "AI Asistan" },
                       { icon: "📊", label: "Raporlar" },
                     ].map((m) => (
-                      <div key={m.label} className="flex flex-col items-center gap-2 rounded-[4px] bg-white/10 p-5 backdrop-blur-sm border border-white/10 transition-all hover:bg-white/20">
+                      <div key={m.label} className="flex flex-col items-center gap-2 rounded-xl bg-white/10 p-5 backdrop-blur-sm border border-white/10 transition-all hover:bg-white/20">
                         <span className="text-3xl">{m.icon}</span>
                         <span className="text-[11px] font-bold uppercase tracking-wider text-white/80">{m.label}</span>
                       </div>
@@ -957,12 +957,12 @@ export default function Home() {
                 <div className="max-w-[520px]">
                   <h1 className="mb-4 text-[clamp(28px,4.5vw,52px)] font-extrabold uppercase tracking-wider leading-[1.1] text-white">
                     Güvenli &<br />
-                    <span className="text-[#BE3A21]">KVKK Uyumlu</span>
+                    <span className="text-[#6366F1]">KVKK Uyumlu</span>
                   </h1>
                   <p className="mb-8 text-lg leading-relaxed text-white/70">
                     Verileriniz şifreli, KVKK uyumlu altyapıda güvenle saklanır. İşletmenizi koruma altında tutun.
                   </p>
-                  <Link href="/register" className="rounded-[2px] bg-[#BE3A21] px-8 py-3.5 text-[13px] font-bold uppercase tracking-wider text-white transition-all hover:-translate-y-0.5 hover:bg-[#9B2D18] hover:shadow-lg">
+                  <Link href="/register" className="rounded-lg bg-[#6366F1] px-8 py-3.5 text-[13px] font-bold uppercase tracking-wider text-white transition-all hover:-translate-y-0.5 hover:bg-[#4F46E5] hover:shadow-lg">
                     Güvenle Başlayın
                   </Link>
                 </div>
@@ -994,7 +994,7 @@ export default function Home() {
               key={i}
               onClick={() => setHeroSlide(i)}
               className={`h-2.5 rounded-full transition-all ${
-                heroSlide === i ? "w-8 bg-[#BE3A21]" : "w-2.5 bg-white/40 hover:bg-white/60"
+                heroSlide === i ? "w-8 bg-[#6366F1]" : "w-2.5 bg-white/40 hover:bg-white/60"
               }`}
             />
           ))}
@@ -1014,7 +1014,7 @@ export default function Home() {
       </section>
 
       {/* ════════════════════════ ONBOARDING SECTION ════════════════════════ */}
-      <section ref={heroRef} className="relative overflow-hidden px-6 py-20 bg-[#F9F9F9]">
+      <section ref={heroRef} className="relative overflow-hidden px-6 py-20 bg-[#F4F6FA]">
         <div className="relative z-20 mx-auto w-full max-w-[900px] text-center">
           {/* ── Title area — compacts after step 0 ── */}
           <motion.div
@@ -1025,17 +1025,17 @@ export default function Home() {
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="mb-4 text-[clamp(24px,4vw,42px)] font-extrabold uppercase tracking-wider leading-tight text-[#333]"
+              className="mb-4 text-[clamp(24px,4vw,42px)] font-extrabold uppercase tracking-wider leading-tight text-[#1A1A2E]"
             >
               {obStarted ? (
                 <>
                   Kişisel AI Asistanınız{" "}
-                  <span className="text-[#BE3A21]">Poby</span>
+                  <span className="text-[#6366F1]">Poby</span>
                 </>
               ) : (
                 <>
                   Size Özel Platformu{" "}
-                  <span className="text-[#BE3A21]">Kuralım</span>
+                  <span className="text-[#6366F1]">Kuralım</span>
                 </>
               )}
             </motion.h2>
@@ -1048,7 +1048,7 @@ export default function Home() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.4 }}
-                  className="mx-auto mb-8 max-w-[600px] text-lg leading-relaxed text-[#777]"
+                  className="mx-auto mb-8 max-w-[600px] text-lg leading-relaxed text-[#6C7293]"
                 >
                   Sektörünüzü seçin, ihtiyaçlarınızı belirleyin — size özel modülleri önerelim.
                 </motion.p>
@@ -1077,7 +1077,7 @@ export default function Home() {
                   <div
                     key={i}
                     className={`h-2 rounded-full transition-all duration-300 ${
-                      i === obStep ? "w-7 bg-[#BE3A21]" : i < obStep ? "w-2 bg-[#D4502E]" : "w-2 bg-gray-300/60"
+                      i === obStep ? "w-7 bg-[#6366F1]" : i < obStep ? "w-2 bg-[#818CF8]" : "w-2 bg-gray-300/60"
                     }`}
                   />
                 ))}
@@ -1107,8 +1107,8 @@ export default function Home() {
                       whileHover={{ scale: 1.03, y: -2 }}
                       whileTap={{ scale: 0.97 }}
                       onClick={() => handleSectorSelect(s.id)}
-                      className={`flex flex-col items-center gap-2 rounded-[4px] border-2 bg-white/80 p-5 backdrop-blur-sm transition-all hover:border-[#D4502E] hover:shadow-lg hover:shadow-[#BE3A21]/10 ${
-                        obSector === s.id ? "border-[#BE3A21] bg-[#FFF5F3]/80 shadow-lg shadow-[#BE3A21]/10" : "border-gray-200/80"
+                      className={`flex flex-col items-center gap-2 rounded-xl border-2 bg-white/80 p-5 backdrop-blur-sm transition-all hover:border-[#818CF8] hover:shadow-lg hover:shadow-[#6366F1]/10 ${
+                        obSector === s.id ? "border-[#6366F1] bg-[#EEF2FF]/80 shadow-lg shadow-[#6366F1]/10" : "border-gray-200/80"
                       }`}
                     >
                       <span className="text-3xl">{s.emoji}</span>
@@ -1123,8 +1123,8 @@ export default function Home() {
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
                     onClick={() => handleSectorSelect("other")}
-                    className={`flex w-full items-center justify-center gap-2 rounded-[4px] border-2 bg-white/80 p-4 backdrop-blur-sm transition-all hover:border-[#D4502E] ${
-                      obSector === "other" ? "border-[#BE3A21] bg-[#FFF5F3]/80" : "border-gray-200/80"
+                    className={`flex w-full items-center justify-center gap-2 rounded-xl border-2 bg-white/80 p-4 backdrop-blur-sm transition-all hover:border-[#818CF8] ${
+                      obSector === "other" ? "border-[#6366F1] bg-[#EEF2FF]/80" : "border-gray-200/80"
                     }`}
                   >
                     <span className="text-xl">✏️</span>
@@ -1144,13 +1144,13 @@ export default function Home() {
                           onChange={(e) => setObSectorCustom(e.target.value)}
                           onKeyDown={(e) => e.key === "Enter" && handleSectorCustomSubmit()}
                           placeholder="Sektörünüzü yazın..."
-                          className="flex-1 rounded-[4px] border border-gray-200 bg-white px-4 py-3 text-sm focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
+                          className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
                           autoFocus
                         />
                         <button
                           onClick={handleSectorCustomSubmit}
                           disabled={!obSectorCustom.trim()}
-                          className="rounded-[4px] bg-[#BE3A21] px-5 py-3 text-sm font-semibold text-white transition-all hover:bg-[#9B2D18] disabled:opacity-40"
+                          className="rounded-xl bg-[#6366F1] px-5 py-3 text-sm font-semibold text-white transition-all hover:bg-[#4F46E5] disabled:opacity-40"
                         >
                           <ArrowRight className="h-4 w-4" />
                         </button>
@@ -1180,8 +1180,8 @@ export default function Home() {
                       whileHover={{ scale: 1.03, y: -2 }}
                       whileTap={{ scale: 0.97 }}
                       onClick={() => handleTeamSelect(t.id)}
-                      className={`flex flex-1 flex-col items-center gap-2 rounded-[4px] border-2 bg-white/80 p-6 backdrop-blur-sm transition-all hover:border-[#D4502E] hover:shadow-lg hover:shadow-[#BE3A21]/10 ${
-                        obTeamSize === t.id ? "border-[#BE3A21] bg-[#FFF5F3]/80" : "border-gray-200/80"
+                      className={`flex flex-1 flex-col items-center gap-2 rounded-xl border-2 bg-white/80 p-6 backdrop-blur-sm transition-all hover:border-[#818CF8] hover:shadow-lg hover:shadow-[#6366F1]/10 ${
+                        obTeamSize === t.id ? "border-[#6366F1] bg-[#EEF2FF]/80" : "border-gray-200/80"
                       }`}
                     >
                       <span className="text-4xl">{t.emoji}</span>
@@ -1214,7 +1214,7 @@ export default function Home() {
                         disabled={obAnalyzing}
                         className={`inline-flex items-center gap-2 rounded-full border-2 bg-white/80 px-5 py-3 text-sm font-medium backdrop-blur-sm transition-all disabled:opacity-50 ${
                           obPainPoints.has(p.id)
-                            ? "border-[#BE3A21] bg-[#FFF5F3]/80 text-[#9B2D18] shadow-md shadow-[#BE3A21]/10"
+                            ? "border-[#6366F1] bg-[#EEF2FF]/80 text-[#4F46E5] shadow-md shadow-[#6366F1]/10"
                             : "border-gray-200/80 text-gray-600 hover:border-gray-300"
                         }`}
                       >
@@ -1238,7 +1238,7 @@ export default function Home() {
                   whileTap={!obAnalyzing ? { scale: 0.98 } : {}}
                   onClick={handleAnalyze}
                   disabled={obPainPoints.size === 0 || obAnalyzing}
-                  className="mt-8 inline-flex items-center gap-2 rounded-[4px] bg-[#BE3A21] px-10 py-4 text-[15px] font-semibold text-white transition-all hover:bg-[#9B2D18] hover:shadow-xl hover:shadow-[#BE3A21]/30 disabled:opacity-40"
+                  className="mt-8 inline-flex items-center gap-2 rounded-xl bg-[#6366F1] px-10 py-4 text-[15px] font-semibold text-white transition-all hover:bg-[#4F46E5] hover:shadow-xl hover:shadow-[#6366F1]/30 disabled:opacity-40"
                 >
                   {obAnalyzing ? (
                     <>
@@ -1268,7 +1268,7 @@ export default function Home() {
               >
                 {obAnalysis ? (
                   <>
-                    <div className="mb-5 rounded-[4px] border border-[#D4502E]/40 bg-[#FFF5F3]/80 p-5 backdrop-blur-sm">
+                    <div className="mb-5 rounded-xl border border-[#818CF8]/40 bg-[#EEF2FF]/80 p-5 backdrop-blur-sm">
                       <p className="text-sm leading-relaxed text-[#5C1B0F]">{obAnalysis.customMessage}</p>
                     </div>
                     <div className="mb-3 flex items-center gap-2">
@@ -1294,7 +1294,7 @@ export default function Home() {
                       whileTap={{ scale: 0.98 }}
                       onClick={() => { setObDirection(1); setObStep(4); }}
                       disabled={obSelected.size === 0}
-                      className="mt-6 flex w-full items-center justify-center gap-2 rounded-[4px] bg-[#BE3A21] py-4 text-[15px] font-semibold text-white transition-all hover:bg-[#9B2D18] disabled:opacity-40"
+                      className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#6366F1] py-4 text-[15px] font-semibold text-white transition-all hover:bg-[#4F46E5] disabled:opacity-40"
                     >
                       Paketimi Oluştur
                       <ArrowRight className="h-4 w-4" />
@@ -1303,7 +1303,7 @@ export default function Home() {
                 ) : (
                   <div className="py-16 text-center">
                     <p className="text-sm text-red-600">{obError || "Bir hata oluştu. Lütfen tekrar deneyin."}</p>
-                    <button onClick={() => { setObError(null); obGoBack(); }} className="mt-3 text-sm font-medium text-[#BE3A21] hover:underline">Geri Dön</button>
+                    <button onClick={() => { setObError(null); obGoBack(); }} className="mt-3 text-sm font-medium text-[#6366F1] hover:underline">Geri Dön</button>
                   </div>
                 )}
               </motion.div>
@@ -1324,8 +1324,8 @@ export default function Home() {
                 <p className="mb-6 text-center text-sm text-gray-500">{obSelected.size} modül seçildi</p>
                 <div className="space-y-2">
                   {obSelectedList.map((mod) => (
-                    <div key={mod.slug} className="flex items-center gap-3 rounded-[4px] border border-gray-200/80 bg-white/80 p-4 backdrop-blur-sm">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px]" style={{ backgroundColor: `${mod.color}15` }}>
+                    <div key={mod.slug} className="flex items-center gap-3 rounded-xl border border-gray-200/80 bg-white/80 p-4 backdrop-blur-sm">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: `${mod.color}15` }}>
                         <ModuleIcon name={mod.icon} className="h-5 w-5" color={mod.color} />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -1336,7 +1336,7 @@ export default function Home() {
                     </div>
                   ))}
                 </div>
-                <div className="mt-4 rounded-[4px] bg-white/80 p-5 backdrop-blur-sm border border-gray-200/80">
+                <div className="mt-4 rounded-xl bg-white/80 p-5 backdrop-blur-sm border border-gray-200/80">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-600">Toplam</span>
                     <span className="text-2xl font-bold text-gray-900">₺{obTotalPrice}/ay</span>
@@ -1347,7 +1347,7 @@ export default function Home() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleComplete}
-                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-[4px] bg-[#BE3A21] py-4 text-[15px] font-semibold text-white transition-all hover:bg-[#9B2D18] hover:shadow-xl hover:shadow-[#BE3A21]/30"
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#6366F1] py-4 text-[15px] font-semibold text-white transition-all hover:bg-[#4F46E5] hover:shadow-xl hover:shadow-[#6366F1]/30"
                 >
                   Hemen Başla — Ücretsiz Dene
                   <ArrowRight className="h-4 w-4" />
@@ -1368,10 +1368,10 @@ export default function Home() {
             viewport={{ once: true }}
             className="mb-4 text-center"
           >
-            <span className="mb-3 inline-block text-[13px] font-semibold uppercase tracking-widest text-[#BE3A21]">
+            <span className="mb-3 inline-block text-[13px] font-semibold uppercase tracking-widest text-[#6366F1]">
               Dashboard
             </span>
-            <h2 className="mb-4 text-[clamp(28px,4vw,42px)] font-extrabold uppercase tracking-wider leading-tight text-[#333]">
+            <h2 className="mb-4 text-[clamp(28px,4vw,42px)] font-extrabold uppercase tracking-wider leading-tight text-[#1A1A2E]">
               İşletmenizi Tek Bakışta Yönetin
             </h2>
             <p className="mx-auto mb-10 max-w-[500px] text-base leading-relaxed text-gray-500">
@@ -1387,7 +1387,7 @@ export default function Home() {
             style={{ perspective: "1200px" }}
           >
             <div
-              className="rounded-[4px] bg-gradient-to-br from-gray-900 to-gray-800 p-3 shadow-2xl shadow-black/20 transition-transform duration-700 hover:[transform:rotateX(0deg)] [transform:rotateX(3deg)]"
+              className="rounded-xl bg-gradient-to-br from-gray-900 to-gray-800 p-3 shadow-2xl shadow-black/20 transition-transform duration-700 hover:[transform:rotateX(0deg)] [transform:rotateX(3deg)]"
               onMouseEnter={() => setTabHovered(true)}
               onMouseLeave={() => setTabHovered(false)}
             >
@@ -1411,7 +1411,7 @@ export default function Home() {
                       onClick={() => setActiveTab(i)}
                       className={`relative whitespace-nowrap px-4 py-3 text-[13px] font-medium transition-colors ${
                         activeTab === i
-                          ? "text-[#BE3A21]"
+                          ? "text-[#6366F1]"
                           : "text-gray-500 hover:text-gray-700"
                       }`}
                     >
@@ -1419,7 +1419,7 @@ export default function Home() {
                       {activeTab === i && (
                         <motion.div
                           layoutId="activeTab"
-                          className="absolute inset-x-0 bottom-0 h-0.5 bg-[#BE3A21]"
+                          className="absolute inset-x-0 bottom-0 h-0.5 bg-[#6366F1]"
                           transition={{ type: "spring", stiffness: 400, damping: 30 }}
                         />
                       )}
@@ -1453,20 +1453,20 @@ export default function Home() {
       </section>
 
       {/* ════════════════════════ TWEET SLIDER ════════════════════════ */}
-      <section id="reviews" className="overflow-hidden bg-[#2B2B2B] py-24">
+      <section id="reviews" className="overflow-hidden bg-[#1E1E2D] py-24">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           className="mb-12 text-center px-6"
         >
-          <span className="mb-3 inline-block text-[13px] font-bold uppercase tracking-widest text-[#BE3A21]">
+          <span className="mb-3 inline-block text-[13px] font-bold uppercase tracking-widest text-[#6366F1]">
             Yorumlar
           </span>
           <h2 className="mb-4 text-[clamp(28px,4vw,42px)] font-extrabold uppercase tracking-wider leading-tight text-white">
             İşletme Sahipleri Poby&apos;yi Seviyor
           </h2>
-          <p className="mx-auto max-w-[500px] text-base leading-relaxed text-[#AAA]">
+          <p className="mx-auto max-w-[500px] text-base leading-relaxed text-[#8E8EA0]">
             Türkiye genelinde yüzlerce işletme Poby ile büyüyor
           </p>
         </motion.div>
@@ -1489,10 +1489,10 @@ export default function Home() {
             viewport={{ once: true }}
             className="mb-14 text-center"
           >
-            <span className="mb-3 inline-block text-[13px] font-semibold uppercase tracking-widest text-[#BE3A21]">
+            <span className="mb-3 inline-block text-[13px] font-semibold uppercase tracking-widest text-[#6366F1]">
               Modüller
             </span>
-            <h2 className="mb-4 text-[clamp(28px,4vw,42px)] font-extrabold uppercase tracking-wider leading-tight text-[#333]">
+            <h2 className="mb-4 text-[clamp(28px,4vw,42px)] font-extrabold uppercase tracking-wider leading-tight text-[#1A1A2E]">
               Her İhtiyacınız İçin Güçlü Modüller
             </h2>
             <p className="mx-auto max-w-[550px] text-base leading-relaxed text-gray-500">
@@ -1512,7 +1512,7 @@ export default function Home() {
                 key={mod.title}
                 variants={fadeUp}
                 custom={i}
-                className="group cursor-default rounded-[4px] border border-gray-200 bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[#D4502E] hover:shadow-lg hover:shadow-[#BE3A21]/[0.06]"
+                className="group cursor-default rounded-xl border border-gray-200 bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[#818CF8] hover:shadow-lg hover:shadow-[#6366F1]/[0.06]"
               >
                 <span className="mb-4 block text-3xl">{mod.icon}</span>
                 <h3 className="mb-2 text-[15px] font-bold text-gray-900">{mod.title}</h3>
@@ -1528,7 +1528,7 @@ export default function Home() {
         <div
           className="animate-gradient pointer-events-none absolute inset-0"
           style={{
-            background: "linear-gradient(135deg, #BE3A21 0%, #9B2D18 25%, #D4502E 50%, #BE3A21 75%, #9B2D18 100%)",
+            background: "linear-gradient(135deg, #6366F1 0%, #4F46E5 25%, #818CF8 50%, #6366F1 75%, #4F46E5 100%)",
           }}
         />
         <div
@@ -1566,7 +1566,7 @@ export default function Home() {
           >
             <Link
               href="/register"
-              className="inline-flex items-center gap-2 rounded-[4px] bg-white px-10 py-4 text-base font-semibold text-[#BE3A21] transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-black/20"
+              className="inline-flex items-center gap-2 rounded-xl bg-white px-10 py-4 text-base font-semibold text-[#6366F1] transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-black/20"
             >
               Ücretsiz Hesap Oluştur
               <ArrowRight className="h-4 w-4" />
@@ -1576,15 +1576,15 @@ export default function Home() {
       </section>
 
       {/* ════════════════════════ FOOTER ════════════════════════ */}
-      <footer className="bg-[#1A1A1A] px-6 pb-8 pt-16">
+      <footer className="bg-[#16162A] px-6 pb-8 pt-16">
         <div className="mx-auto max-w-[1100px]">
           <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr]">
             <div>
               <Link href="/" className="text-xl font-extrabold">
-                <span className="text-[#BE3A21]">Po</span>
+                <span className="text-[#6366F1]">Po</span>
                 <span className="text-white">by</span>
               </Link>
-              <p className="mt-3 max-w-[280px] text-[13px] leading-relaxed text-[#777]">
+              <p className="mt-3 max-w-[280px] text-[13px] leading-relaxed text-[#6C7293]">
                 İşletmenizin cebindeki akıllı asistan. Tüm operasyonlarınızı tek
                 panelden yönetin.
               </p>
@@ -1597,7 +1597,7 @@ export default function Home() {
                 <ul className="space-y-2.5">
                   {links.map((link) => (
                     <li key={link}>
-                      <Link href="#" className="text-[13px] text-[#777] transition-colors hover:text-[#BE3A21]">
+                      <Link href="#" className="text-[13px] text-[#6C7293] transition-colors hover:text-[#6366F1]">
                         {link}
                       </Link>
                     </li>
@@ -1607,7 +1607,7 @@ export default function Home() {
             ))}
           </div>
           <div className="mt-10 border-t border-white/10 pt-6 text-center">
-            <p className="text-xs text-[#555]">&copy; 2026 Poby. Tüm hakları saklıdır.</p>
+            <p className="text-xs text-[#6C7293]">&copy; 2026 Poby. Tüm hakları saklıdır.</p>
           </div>
         </div>
       </footer>

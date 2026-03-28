@@ -11,9 +11,9 @@ function PageHeader({ title, description, action, className, ...props }: PageHea
   return (
     <div className={cn("flex items-center justify-between", className)} {...props}>
       <div>
-        <h1 className="text-xl font-bold uppercase tracking-wider text-[#333]">{title}</h1>
+        <h1 className="text-xl font-semibold text-[#1A1A2E]">{title}</h1>
         {description && (
-          <p className="mt-1 text-sm text-[#777]">{description}</p>
+          <p className="mt-1 text-sm text-[#6C7293]">{description}</p>
         )}
       </div>
       {action && <div>{action}</div>}

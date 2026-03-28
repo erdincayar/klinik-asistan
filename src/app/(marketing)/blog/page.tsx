@@ -29,11 +29,11 @@ export default function BlogPage() {
       <nav className="border-b border-gray-100 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/" className="text-xl font-bold text-gray-900">
-            Poby<span className="text-[#BE3A21]">.ai</span>
+            Poby<span className="text-[#6366F1]">.ai</span>
           </Link>
           <Link
             href="/login"
-            className="rounded-[4px] bg-[#BE3A21] px-5 py-2 text-sm font-semibold text-white hover:bg-[#9B2D18]"
+            className="rounded-xl bg-[#6366F1] px-5 py-2 text-sm font-semibold text-white hover:bg-[#4F46E5]"
           >
             Giriş Yap
           </Link>
@@ -55,11 +55,11 @@ export default function BlogPage() {
           {blogPosts.map((post) => (
             <article
               key={post.slug}
-              className="rounded-[4px] border border-gray-200 overflow-hidden hover:border-indigo-200 hover:shadow-md transition-all"
+              className="rounded-xl border border-gray-200 overflow-hidden hover:border-indigo-200 hover:shadow-md transition-all"
             >
               <div className="p-6">
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="rounded-full bg-[#FFF5F3] px-3 py-1 text-xs font-medium text-[#BE3A21]">
+                  <span className="rounded-full bg-[#EEF2FF] px-3 py-1 text-xs font-medium text-[#6366F1]">
                     {post.category}
                   </span>
                   <span className="text-xs text-gray-400">
@@ -69,7 +69,7 @@ export default function BlogPage() {
                 <h2 className="text-lg font-bold text-gray-900 line-clamp-2">
                   <Link
                     href={`/blog/${post.slug}`}
-                    className="hover:text-[#BE3A21] transition-colors"
+                    className="hover:text-[#6366F1] transition-colors"
                   >
                     {post.title}
                   </Link>
@@ -87,7 +87,7 @@ export default function BlogPage() {
                   </span>
                   <Link
                     href={`/blog/${post.slug}`}
-                    className="text-sm font-medium text-[#BE3A21] hover:text-[#9B2D18]"
+                    className="text-sm font-medium text-[#6366F1] hover:text-[#4F46E5]"
                   >
                     Devamını Oku
                   </Link>

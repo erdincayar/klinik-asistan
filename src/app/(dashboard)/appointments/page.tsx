@@ -117,7 +117,7 @@ function getMonday(date: Date): Date {
 }
 
 function Skeleton({ className }: { className?: string }) {
-  return <div className={cn("animate-pulse rounded-[4px] bg-gray-100", className)} />;
+  return <div className={cn("animate-pulse rounded-xl bg-gray-100", className)} />;
 }
 
 const fadeUp = {
@@ -625,7 +625,7 @@ export default function AppointmentsPage() {
       {/* Top bar */}
       <motion.div variants={fadeUp} initial="hidden" animate="visible" className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
-          <button onClick={goToday} className="rounded-[4px] border border-gray-200 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">
+          <button onClick={goToday} className="rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">
             Bugün
           </button>
           <button onClick={goPrev} className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600">
@@ -638,7 +638,7 @@ export default function AppointmentsPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {/* Work hours (hidden on mobile) */}
-          <div className="hidden items-center gap-1 rounded-[4px] border border-gray-200 bg-white px-2.5 py-1.5 sm:flex">
+          <div className="hidden items-center gap-1 rounded-xl border border-gray-200 bg-white px-2.5 py-1.5 sm:flex">
             <span className="text-xs font-medium text-gray-500">Mesai:</span>
             <select
               value={workStartTime}
@@ -664,11 +664,11 @@ export default function AppointmentsPage() {
             type="date"
             value={formatDateISO(selectedDate)}
             onChange={(e) => setSelectedDate(new Date(e.target.value + "T00:00:00"))}
-            className="rounded-[4px] border border-gray-200 bg-white px-3.5 py-2 text-sm text-gray-700 transition-shadow focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
+            className="rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm text-gray-700 transition-shadow focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
           />
           <button
             onClick={openCreateDialog}
-            className="inline-flex items-center gap-2 rounded-[4px] bg-[#2B2B2B] px-4 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-[#3A3A3A] hover:shadow-lg hover:shadow-[#2B2B2B]/20"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#1E1E2D] px-4 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-[#2A2A3C] hover:shadow-lg hover:shadow-[#1E1E2D]/20"
           >
             <Plus className="h-4 w-4" />
             Yeni Randevu
@@ -677,7 +677,7 @@ export default function AppointmentsPage() {
       </motion.div>
 
       {/* View tabs */}
-      <motion.div variants={fadeUp} initial="hidden" animate="visible" className="flex gap-1 rounded-[4px] bg-gray-100 p-1">
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" className="flex gap-1 rounded-xl bg-gray-100 p-1">
         {[
           { value: "daily", label: "Günlük" },
           { value: "weekly", label: "Haftalık" },
@@ -698,7 +698,7 @@ export default function AppointmentsPage() {
       </motion.div>
 
       {/* Filter block */}
-      <motion.div variants={fadeUp} initial="hidden" animate="visible" className="space-y-2 rounded-[4px] border border-gray-100 bg-white p-3">
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" className="space-y-2 rounded-xl border border-gray-100 bg-white p-3">
         {/* Employee filter row */}
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium text-gray-500">Çalışan:</span>
@@ -754,7 +754,7 @@ export default function AppointmentsPage() {
                   if (e.key === "Escape") { setShowInlineEmployee(false); setInlineEmployeeName(""); }
                 }}
                 placeholder="Çalışan adı..."
-                className="w-28 rounded-full border border-gray-300 px-3 py-1.5 text-sm focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
+                className="w-28 rounded-full border border-gray-300 px-3 py-1.5 text-sm focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
               />
               <button
                 disabled={savingInlineEmployee || !inlineEmployeeName.trim()}
@@ -771,7 +771,7 @@ export default function AppointmentsPage() {
                   } catch { /* silently handle */ }
                   finally { setSavingInlineEmployee(false); }
                 }}
-                className="rounded-full bg-[#2B2B2B] px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#3A3A3A] disabled:opacity-50"
+                className="rounded-full bg-[#1E1E2D] px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#2A2A3C] disabled:opacity-50"
               >
                 {savingInlineEmployee ? <Loader2 className="h-3 w-3 animate-spin" /> : "Kaydet"}
               </button>
@@ -843,7 +843,7 @@ export default function AppointmentsPage() {
                   if (e.key === "Escape") { setShowInlineService(false); setInlineServiceName(""); }
                 }}
                 placeholder="İşlem adı..."
-                className="w-28 rounded-full border border-gray-300 px-3 py-1.5 text-sm focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
+                className="w-28 rounded-full border border-gray-300 px-3 py-1.5 text-sm focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
               />
               <button
                 disabled={savingInlineService || !inlineServiceName.trim()}
@@ -860,7 +860,7 @@ export default function AppointmentsPage() {
                   } catch { /* silently handle */ }
                   finally { setSavingInlineService(false); }
                 }}
-                className="rounded-full bg-[#2B2B2B] px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#3A3A3A] disabled:opacity-50"
+                className="rounded-full bg-[#1E1E2D] px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#2A2A3C] disabled:opacity-50"
               >
                 {savingInlineService ? <Loader2 className="h-3 w-3 animate-spin" /> : "Kaydet"}
               </button>
@@ -902,7 +902,7 @@ export default function AppointmentsPage() {
               onClick={() => { const v = !compactMode; setCompactMode(v); savePrefs({ compactMode: v }); }}
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-                compactMode ? "bg-[#FDEDEC] text-[#9B2D18]" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                compactMode ? "bg-[#E0E7FF] text-[#4F46E5]" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
               )}
             >
               Kompakt
@@ -911,7 +911,7 @@ export default function AppointmentsPage() {
               onClick={() => { const v = !hideEmpty; setHideEmpty(v); savePrefs({ hideEmpty: v }); }}
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-                hideEmpty ? "bg-[#FDEDEC] text-[#9B2D18]" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                hideEmpty ? "bg-[#E0E7FF] text-[#4F46E5]" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
               )}
             >
               Boş Gizle
@@ -928,13 +928,13 @@ export default function AppointmentsPage() {
       >
         {viewMode === "daily" ? (
           /* ── Daily view ── */
-          <div ref={dailyScrollRef} className="max-h-[600px] overflow-y-auto rounded-[4px] border border-gray-100 bg-white">
+          <div ref={dailyScrollRef} className="max-h-[600px] overflow-y-auto rounded-xl border border-gray-100 bg-white">
             {loading ? (
               <div className="space-y-0 divide-y divide-gray-50 p-0">
                 {[...Array(6)].map((_, i) => (
                   <div key={i} className="flex items-center gap-4 px-6 py-4">
                     <Skeleton className="h-5 w-14" />
-                    <Skeleton className="h-12 flex-1 rounded-[4px]" />
+                    <Skeleton className="h-12 flex-1 rounded-xl" />
                   </div>
                 ))}
               </div>
@@ -953,7 +953,7 @@ export default function AppointmentsPage() {
                       className={cn(
                         "flex items-stretch",
                         compactMode ? "min-h-[40px]" : "min-h-[56px]",
-                        isCurrentSlot && "bg-[#FFF5F3]/50",
+                        isCurrentSlot && "bg-[#EEF2FF]/50",
                         isOffHours && !isCurrentSlot && "bg-gray-50/70"
                       )}
                     >
@@ -1042,7 +1042,7 @@ export default function AppointmentsPage() {
           </div>
         ) : (
           /* ── Weekly view ── */
-          <div ref={weeklyScrollRef} className="max-h-[600px] overflow-y-auto rounded-[4px] border border-gray-100 bg-white">
+          <div ref={weeklyScrollRef} className="max-h-[600px] overflow-y-auto rounded-xl border border-gray-100 bg-white">
             {loading ? (
               <div className="p-6">
                 <Skeleton className="h-[400px] w-full" />
@@ -1064,7 +1064,7 @@ export default function AppointmentsPage() {
                             key={i}
                             className={cn(
                               "px-1 py-3 text-center text-xs font-medium",
-                              isTodayCol ? "bg-[#FFF5F3] text-[#9B2D18]" : "text-gray-500"
+                              isTodayCol ? "bg-[#EEF2FF] text-[#4F46E5]" : "text-gray-500"
                             )}
                           >
                             <div>{DAY_NAMES[d.getDay()]}</div>
@@ -1090,7 +1090,7 @@ export default function AppointmentsPage() {
                           const isTodayCol = dateStr === formatDateISO(new Date());
 
                           return (
-                            <td key={i} className={cn("align-top", compactMode ? "px-0.5 py-0.5" : "px-1 py-1", isTodayCol && "bg-[#FFF5F3]/30")}>
+                            <td key={i} className={cn("align-top", compactMode ? "px-0.5 py-0.5" : "px-1 py-1", isTodayCol && "bg-[#EEF2FF]/30")}>
                               <div className="flex flex-col gap-0.5">
                                 {slotAppts.map((appt) => {
                                   const statusInfo = getStatusInfo(appt.status);
@@ -1099,7 +1099,7 @@ export default function AppointmentsPage() {
                                       key={appt.id}
                                       onClick={() => { setSelectedAppointment(appt); setDialogOpen(true); }}
                                       className={cn(
-                                        "w-full rounded-lg border border-gray-100 text-left text-xs transition-colors hover:border-[#FDEDEC]",
+                                        "w-full rounded-lg border border-gray-100 text-left text-xs transition-colors hover:border-[#E0E7FF]",
                                         compactMode ? "px-1 py-0.5" : "px-1.5 py-1",
                                         appt.status === "CANCELLED" && "opacity-50"
                                       )}
@@ -1143,13 +1143,13 @@ export default function AppointmentsPage() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex flex-col items-center justify-center rounded-[4px] border border-dashed border-gray-200 bg-white py-16"
+          className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-white py-16"
         >
           <Calendar className="mb-3 h-10 w-10 text-gray-300" />
           <p className="text-sm font-medium text-gray-500">Bu tarihte randevu bulunmuyor</p>
           <button
             onClick={openCreateDialog}
-            className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#BE3A21] hover:text-[#9B2D18]"
+            className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#6366F1] hover:text-[#4F46E5]"
           >
             Randevu oluştur
             <Plus className="h-3 w-3" />
@@ -1159,13 +1159,13 @@ export default function AppointmentsPage() {
 
       {/* Create Appointment Dialog */}
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent className="rounded-[4px] sm:max-w-md">
+        <DialogContent className="rounded-xl sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-lg">Yeni Randevu</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             {createError && (
-              <div className="rounded-[4px] bg-red-50 p-3 text-sm text-red-600">{createError}</div>
+              <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600">{createError}</div>
             )}
 
             {/* Müşteri */}
@@ -1183,7 +1183,7 @@ export default function AppointmentsPage() {
                 onCreateFormToggle={setDialogNewCustomer}
                 createForm={
                   <>
-                    <p className="text-sm font-medium text-[#9B2D18]">Yeni Müşteri Ekle</p>
+                    <p className="text-sm font-medium text-[#4F46E5]">Yeni Müşteri Ekle</p>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <div className="space-y-1">
                         <label className="text-xs font-medium text-gray-600">Ad Soyad *</label>
@@ -1191,7 +1191,7 @@ export default function AppointmentsPage() {
                           value={dialogNewCustomerName}
                           onChange={(e) => setDialogNewCustomerName(e.target.value)}
                           placeholder="Müşteri adı"
-                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
+                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
                         />
                       </div>
                       <div className="space-y-1">
@@ -1200,7 +1200,7 @@ export default function AppointmentsPage() {
                           value={dialogNewCustomerPhone}
                           onChange={(e) => setDialogNewCustomerPhone(e.target.value)}
                           placeholder="05XX XXX XX XX"
-                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
+                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
                         />
                       </div>
                     </div>
@@ -1208,7 +1208,7 @@ export default function AppointmentsPage() {
                       type="button"
                       onClick={handleDialogNewCustomer}
                       disabled={dialogSavingCustomer || !dialogNewCustomerName.trim()}
-                      className="inline-flex items-center gap-1 rounded-lg bg-[#2B2B2B] px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[#3A3A3A] disabled:opacity-50"
+                      className="inline-flex items-center gap-1 rounded-lg bg-[#1E1E2D] px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[#2A2A3C] disabled:opacity-50"
                     >
                       {dialogSavingCustomer ? "Kaydediliyor..." : "Kaydet ve Seç"}
                     </button>
@@ -1231,7 +1231,7 @@ export default function AppointmentsPage() {
                 onCreateFormToggle={setDialogNewEmployee}
                 createForm={
                   <>
-                    <p className="text-sm font-medium text-[#9B2D18]">Yeni Çalışan Ekle</p>
+                    <p className="text-sm font-medium text-[#4F46E5]">Yeni Çalışan Ekle</p>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <div className="space-y-1">
                         <label className="text-xs font-medium text-gray-600">Ad Soyad *</label>
@@ -1239,7 +1239,7 @@ export default function AppointmentsPage() {
                           value={dialogNewEmployeeName}
                           onChange={(e) => setDialogNewEmployeeName(e.target.value)}
                           placeholder="Çalışan adı"
-                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
+                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
                         />
                       </div>
                       <div className="space-y-1">
@@ -1248,7 +1248,7 @@ export default function AppointmentsPage() {
                           value={dialogNewEmployeeRole}
                           onChange={(e) => setDialogNewEmployeeRole(e.target.value)}
                           placeholder="Örn: Doktor, Hemşire"
-                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
+                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
                         />
                       </div>
                     </div>
@@ -1256,7 +1256,7 @@ export default function AppointmentsPage() {
                       type="button"
                       onClick={handleDialogNewEmployee}
                       disabled={dialogSavingEmployee || !dialogNewEmployeeName.trim()}
-                      className="inline-flex items-center gap-1 rounded-lg bg-[#2B2B2B] px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[#3A3A3A] disabled:opacity-50"
+                      className="inline-flex items-center gap-1 rounded-lg bg-[#1E1E2D] px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[#2A2A3C] disabled:opacity-50"
                     >
                       {dialogSavingEmployee ? "Kaydediliyor..." : "Kaydet ve Seç"}
                     </button>
@@ -1272,7 +1272,7 @@ export default function AppointmentsPage() {
                 type="date"
                 value={newAppt.date}
                 onChange={(e) => setNewAppt({ ...newAppt, date: e.target.value })}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
               />
             </div>
 
@@ -1282,7 +1282,7 @@ export default function AppointmentsPage() {
               <select
                 value={newAppt.startTime}
                 onChange={(e) => setNewAppt({ ...newAppt, startTime: e.target.value })}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
               >
                 <option value="">Saat seçin...</option>
                 {ALL_TIME_SLOTS.map((time) => (
@@ -1314,7 +1314,7 @@ export default function AppointmentsPage() {
                 onChange={(e) => setNewAppt({ ...newAppt, notes: e.target.value })}
                 placeholder="Randevu ile ilgili notlar..."
                 rows={2}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
               />
             </div>
           </div>
@@ -1323,13 +1323,13 @@ export default function AppointmentsPage() {
               <button
                 onClick={handleCreateAppointment}
                 disabled={creating}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-[4px] bg-[#2B2B2B] px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#3A3A3A] disabled:opacity-50"
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#1E1E2D] px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2A2A3C] disabled:opacity-50"
               >
                 {creating ? <><Loader2 className="h-4 w-4 animate-spin" /> Kaydediliyor...</> : "Randevu Oluştur"}
               </button>
               <button
                 onClick={() => setCreateDialogOpen(false)}
-                className="rounded-[4px] border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
               >
                 İptal
               </button>
@@ -1340,7 +1340,7 @@ export default function AppointmentsPage() {
 
       {/* Detail Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="rounded-[4px] max-w-lg">
+        <DialogContent className="rounded-xl max-w-lg">
           {selectedAppointment && (
             <>
               <DialogHeader>
@@ -1361,7 +1361,7 @@ export default function AppointmentsPage() {
                       <span className="text-sm text-gray-500">Müşteri</span>
                       <Link
                         href={`/patients/${selectedAppointment.patientId}`}
-                        className="font-medium text-[#BE3A21] hover:underline"
+                        className="font-medium text-[#6366F1] hover:underline"
                       >
                         {selectedAppointment.patientName}
                       </Link>
@@ -1474,7 +1474,7 @@ export default function AppointmentsPage() {
                                   setTransactionItems(updated);
                                 }}
                                 placeholder="Tutar (TL)"
-                                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
+                                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
                               />
                             </div>
                             <div>
@@ -1485,7 +1485,7 @@ export default function AppointmentsPage() {
                                   updated[idx] = { ...updated[idx], paymentMethod: e.target.value };
                                   setTransactionItems(updated);
                                 }}
-                                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
+                                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
                               >
                                 <option value="Nakit">Nakit</option>
                                 <option value="Kart">Kart</option>
@@ -1504,13 +1504,13 @@ export default function AppointmentsPage() {
                               setTransactionItems(updated);
                             }}
                             placeholder="Notlar (opsiyonel)"
-                            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
+                            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
                           />
                         </div>
                       ))}
                       <button
                         onClick={() => setTransactionItems([...transactionItems, { name: "", amount: "", paymentMethod: "Nakit", notes: "" }])}
-                        className="flex items-center gap-1.5 text-sm font-medium text-[#BE3A21] hover:text-[#9B2D18]"
+                        className="flex items-center gap-1.5 text-sm font-medium text-[#6366F1] hover:text-[#4F46E5]"
                       >
                         <Plus className="h-4 w-4" /> Başka İşlem Ekle
                       </button>
@@ -1532,7 +1532,7 @@ export default function AppointmentsPage() {
                     <button
                       onClick={handleSaveTransactions}
                       disabled={savingTransactions || transactionItems.every((t) => !t.name.trim() || !Number(t.amount))}
-                      className="flex w-full items-center justify-center gap-1.5 rounded-[4px] bg-[#2B2B2B] px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#3A3A3A] disabled:opacity-50"
+                      className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#1E1E2D] px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2A2A3C] disabled:opacity-50"
                     >
                       {savingTransactions ? <><Loader2 className="h-4 w-4 animate-spin" /> Kaydediliyor...</> : "Kaydet"}
                     </button>
@@ -1546,21 +1546,21 @@ export default function AppointmentsPage() {
                     <button
                       disabled={updating}
                       onClick={() => updateAppointmentStatus(selectedAppointment.id, "COMPLETED")}
-                      className="flex flex-1 items-center justify-center gap-1.5 rounded-[4px] bg-emerald-600 px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
+                      className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
                     >
                       <CheckCircle className="h-4 w-4" /> Tamamlandı
                     </button>
                     <button
                       disabled={updating}
                       onClick={() => updateAppointmentStatus(selectedAppointment.id, "CANCELLED")}
-                      className="flex flex-1 items-center justify-center gap-1.5 rounded-[4px] border border-red-200 px-3 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+                      className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-red-200 px-3 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
                     >
                       <XCircle className="h-4 w-4" /> İptal Et
                     </button>
                     <button
                       disabled={updating}
                       onClick={() => updateAppointmentStatus(selectedAppointment.id, "NO_SHOW")}
-                      className="flex flex-1 items-center justify-center gap-1.5 rounded-[4px] border border-orange-200 px-3 py-2.5 text-sm font-semibold text-orange-600 transition-colors hover:bg-orange-50 disabled:opacity-50"
+                      className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-orange-200 px-3 py-2.5 text-sm font-semibold text-orange-600 transition-colors hover:bg-orange-50 disabled:opacity-50"
                     >
                       <AlertCircle className="h-4 w-4" /> Gelmedi
                     </button>

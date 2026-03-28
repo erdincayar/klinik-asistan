@@ -93,7 +93,7 @@ function Skeleton({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "animate-pulse rounded-[4px] bg-gray-100",
+        "animate-pulse rounded-xl bg-gray-100",
         className
       )}
     />
@@ -102,14 +102,14 @@ function Skeleton({ className }: { className?: string }) {
 
 function StatCardSkeleton() {
   return (
-    <div className="rounded-[4px] border border-gray-100 bg-white p-6">
+    <div className="rounded-xl border border-gray-100 bg-white p-6">
       <div className="flex items-start justify-between">
         <div className="space-y-3">
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-8 w-32" />
           <Skeleton className="h-3 w-20" />
         </div>
-        <Skeleton className="h-12 w-12 rounded-[4px]" />
+        <Skeleton className="h-12 w-12 rounded-xl" />
       </div>
     </div>
   );
@@ -123,10 +123,10 @@ function DashboardSkeleton() {
           <StatCardSkeleton key={i} />
         ))}
       </div>
-      <Skeleton className="h-[350px] w-full rounded-[4px]" />
+      <Skeleton className="h-[350px] w-full rounded-xl" />
       <div className="grid gap-6 lg:grid-cols-2">
-        <Skeleton className="h-[380px] rounded-[4px]" />
-        <Skeleton className="h-[380px] rounded-[4px]" />
+        <Skeleton className="h-[380px] rounded-xl" />
+        <Skeleton className="h-[380px] rounded-xl" />
       </div>
     </div>
   );
@@ -137,7 +137,7 @@ function DashboardSkeleton() {
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-[4px] border border-gray-100 bg-white px-4 py-3 shadow-lg">
+    <div className="rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-lg">
       <p className="mb-1 text-xs font-medium text-gray-500">{label}</p>
       {payload.map((entry: any) => (
         <p key={entry.dataKey} className="text-sm font-semibold text-gray-900">
@@ -282,7 +282,7 @@ export default function DashboardPage() {
           <p className="text-sm text-red-500">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="mt-3 text-sm font-medium text-[#9B2D18] hover:underline"
+            className="mt-3 text-sm font-medium text-[#4F46E5] hover:underline"
           >
             Tekrar dene
           </button>
@@ -300,8 +300,8 @@ export default function DashboardPage() {
       value: data.totalPatients.toLocaleString("tr-TR"),
       change: null,
       icon: Users,
-      iconBg: "bg-[#FFF5F3]",
-      iconColor: "text-[#BE3A21]",
+      iconBg: "bg-[#EEF2FF]",
+      iconColor: "text-[#6366F1]",
       href: "/patients",
       permKey: "customers",
     },
@@ -367,11 +367,11 @@ export default function DashboardPage() {
           initial="hidden"
           animate="visible"
           custom={0}
-          className="rounded-[4px] border border-[#D4502E]/30 bg-gradient-to-br from-[#FFF5F3] to-white p-6"
+          className="rounded-xl border border-[#818CF8]/30 bg-gradient-to-br from-[#EEF2FF] to-white p-6"
         >
           {onboardingProfile.customMessage && (
             <div className="mb-4 flex items-start gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[4px] bg-[#BE3A21]">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#6366F1]">
                 <Bot className="h-4 w-4 text-white" />
               </div>
               <p className="text-sm leading-relaxed text-[#5C1B0F]">
@@ -380,12 +380,12 @@ export default function DashboardPage() {
             </div>
           )}
           <div className="mb-3 flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-[#BE3A21]" />
+            <Sparkles className="h-4 w-4 text-[#6366F1]" />
             <h3 className="text-sm font-semibold text-gray-900">Sizin İçin Hazırlandı</h3>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {onboardingProfile.selectedModules.map((mod) => (
-              <div key={mod.slug} className="rounded-[4px] border border-gray-100 bg-white p-4">
+              <div key={mod.slug} className="rounded-xl border border-gray-100 bg-white p-4">
                 <div className="mb-2 flex items-center gap-2">
                   <div
                     className="flex h-8 w-8 items-center justify-center rounded-lg"
@@ -413,7 +413,7 @@ export default function DashboardPage() {
                     className="inline-flex items-center gap-2 rounded-lg border border-gray-100 bg-white px-3 py-2"
                   >
                     <span className="text-xs font-medium text-gray-700">{mod.name}</span>
-                    <span className="text-[11px] text-[#BE3A21]">₺{mod.basePrice}/ay</span>
+                    <span className="text-[11px] text-[#6366F1]">₺{mod.basePrice}/ay</span>
                   </div>
                 ))}
               </div>
@@ -430,16 +430,16 @@ export default function DashboardPage() {
           animate="visible"
           custom={0}
           onClick={() => window.dispatchEvent(new Event("open-onboarding-widget"))}
-          className="flex w-full items-center gap-4 rounded-[4px] border border-dashed border-[#D4502E] bg-[#FFF5F3]/50 p-5 text-left transition-all hover:bg-[#FFF5F3] hover:shadow-md"
+          className="flex w-full items-center gap-4 rounded-xl border border-dashed border-[#818CF8] bg-[#EEF2FF]/50 p-5 text-left transition-all hover:bg-[#EEF2FF] hover:shadow-md"
         >
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[4px] bg-[#BE3A21]">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#6366F1]">
             <Sparkles className="h-5 w-5 text-white" />
           </div>
           <div>
             <p className="text-sm font-semibold text-gray-900">Platformu size özel kuralım</p>
             <p className="text-xs text-gray-500">Sektörünüze uygun modülleri keşfedin</p>
           </div>
-          <ArrowRight className="ml-auto h-4 w-4 text-[#BE3A21]" />
+          <ArrowRight className="ml-auto h-4 w-4 text-[#6366F1]" />
         </motion.button>
       )}
 
@@ -449,7 +449,7 @@ export default function DashboardPage() {
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-3 rounded-[4px] border border-orange-200 bg-orange-50 px-5 py-3 transition-colors hover:bg-orange-100 cursor-pointer"
+            className="flex items-center gap-3 rounded-xl border border-orange-200 bg-orange-50 px-5 py-3 transition-colors hover:bg-orange-100 cursor-pointer"
           >
             <Bell className="h-5 w-5 text-orange-600" />
             <span className="text-sm font-medium text-orange-800">
@@ -471,7 +471,7 @@ export default function DashboardPage() {
                 initial="hidden"
                 animate="visible"
                 custom={i}
-                className="group cursor-pointer rounded-[4px] border border-gray-100 bg-white p-6 transition-all hover:shadow-md active:scale-[0.98]"
+                className="group cursor-pointer rounded-xl border border-gray-100 bg-white p-6 transition-all hover:shadow-md active:scale-[0.98]"
               >
                 <div className="flex items-start justify-between">
                   <div>
@@ -517,7 +517,7 @@ export default function DashboardPage() {
                   </div>
                   <div
                     className={cn(
-                      "flex h-12 w-12 items-center justify-center rounded-[4px]",
+                      "flex h-12 w-12 items-center justify-center rounded-xl",
                       stat.iconBg
                     )}
                   >
@@ -539,7 +539,7 @@ export default function DashboardPage() {
           <motion.div
             variants={fadeUp} initial="hidden" animate="visible" custom={5}
             className={cn(
-              "rounded-[4px] border p-4",
+              "rounded-xl border p-4",
               isFull ? "border-red-200 bg-red-50" : isWarning ? "border-orange-200 bg-orange-50" : "border-gray-100 bg-white"
             )}
           >
@@ -552,14 +552,14 @@ export default function DashboardPage() {
                 </span>
               </div>
               {(isWarning || isFull) && (
-                <Link href="/billing/moduller" className="text-xs font-medium text-[#BE3A21] hover:text-[#9B2D18]">
+                <Link href="/billing/moduller" className="text-xs font-medium text-[#6366F1] hover:text-[#4F46E5]">
                   {isFull ? "Depolama doldu! Yükselt" : "Dolmak üzere — Yükselt"}
                 </Link>
               )}
             </div>
             <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-200">
               <div
-                className={cn("h-full rounded-full transition-all", isFull ? "bg-red-500" : isWarning ? "bg-orange-500" : "bg-[#FFF5F3]0")}
+                className={cn("h-full rounded-full transition-all", isFull ? "bg-red-500" : isWarning ? "bg-orange-500" : "bg-[#EEF2FF]0")}
                 style={{ width: `${pct}%` }}
               />
             </div>
@@ -573,7 +573,7 @@ export default function DashboardPage() {
         initial="hidden"
         animate="visible"
         custom={4}
-        className="rounded-[4px] border border-gray-100 bg-white p-6"
+        className="rounded-xl border border-gray-100 bg-white p-6"
       >
         <div className="mb-6 flex items-center justify-between">
           <div>
@@ -586,7 +586,7 @@ export default function DashboardPage() {
           </div>
           <Link
             href="/reports"
-            className="flex items-center gap-1 text-xs font-medium text-[#9B2D18] hover:text-[#5C1B0F]"
+            className="flex items-center gap-1 text-xs font-medium text-[#4F46E5] hover:text-[#5C1B0F]"
           >
             Detaylı Rapor
             <ArrowRight className="h-3 w-3" />
@@ -602,8 +602,8 @@ export default function DashboardPage() {
             <AreaChart data={chartData}>
               <defs>
                 <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#BE3A21" stopOpacity={0.15} />
-                  <stop offset="100%" stopColor="#BE3A21" stopOpacity={0} />
+                  <stop offset="0%" stopColor="#6366F1" stopOpacity={0.15} />
+                  <stop offset="100%" stopColor="#6366F1" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="expenseGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#ef4444" stopOpacity={0.12} />
@@ -637,11 +637,11 @@ export default function DashboardPage() {
               <Area
                 type="monotone"
                 dataKey="income"
-                stroke="#BE3A21"
+                stroke="#6366F1"
                 strokeWidth={2.5}
                 fill="url(#incomeGrad)"
                 dot={false}
-                activeDot={{ r: 5, fill: "#BE3A21", strokeWidth: 2, stroke: "#fff" }}
+                activeDot={{ r: 5, fill: "#6366F1", strokeWidth: 2, stroke: "#fff" }}
               />
               <Area
                 type="monotone"
@@ -663,7 +663,7 @@ export default function DashboardPage() {
         initial="hidden"
         animate="visible"
         custom={5}
-        className="rounded-[4px] border border-gray-100 bg-white"
+        className="rounded-xl border border-gray-100 bg-white"
       >
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
           <div>
@@ -677,7 +677,7 @@ export default function DashboardPage() {
           </div>
           <Link
             href="/finance?tab=upcoming"
-            className="flex items-center gap-1 text-xs font-medium text-[#9B2D18] hover:text-[#5C1B0F]"
+            className="flex items-center gap-1 text-xs font-medium text-[#4F46E5] hover:text-[#5C1B0F]"
           >
             Tümünü Gör
             <ArrowRight className="h-3 w-3" />
@@ -693,7 +693,7 @@ export default function DashboardPage() {
               {upcomingPayments.map((payment) => (
                 <div
                   key={payment.id}
-                  className="flex items-center justify-between rounded-[4px] border border-gray-100 px-4 py-3 transition-colors hover:bg-gray-50"
+                  className="flex items-center justify-between rounded-xl border border-gray-100 px-4 py-3 transition-colors hover:bg-gray-50"
                 >
                   <div className="flex items-center gap-3">
                     <span
@@ -729,23 +729,23 @@ export default function DashboardPage() {
           initial="hidden"
           animate="visible"
           custom={6}
-          className="rounded-[4px] border border-gray-100 bg-white"
+          className="rounded-xl border border-gray-100 bg-white"
         >
           <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-[#BE3A21]" />
+              <Calendar className="h-4 w-4 text-[#6366F1]" />
               <h2 className="text-sm font-semibold text-gray-900">
                 Bugünün Randevuları
               </h2>
               {data.todayAppointments.length > 0 && (
-                <span className="rounded-full bg-[#FFF5F3] px-2 py-0.5 text-[11px] font-semibold text-[#9B2D18]">
+                <span className="rounded-full bg-[#EEF2FF] px-2 py-0.5 text-[11px] font-semibold text-[#4F46E5]">
                   {data.todayAppointments.length}
                 </span>
               )}
             </div>
             <Link
               href="/appointments"
-              className="flex items-center gap-1 text-xs font-medium text-[#9B2D18] hover:text-[#5C1B0F]"
+              className="flex items-center gap-1 text-xs font-medium text-[#4F46E5] hover:text-[#5C1B0F]"
             >
               Tümünü Gör
               <ArrowRight className="h-3 w-3" />
@@ -762,7 +762,7 @@ export default function DashboardPage() {
                   </p>
                   <Link
                     href="/appointments"
-                    className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#9B2D18] hover:text-[#5C1B0F]"
+                    className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#4F46E5] hover:text-[#5C1B0F]"
                   >
                     Randevu oluştur
                     <ArrowRight className="h-3 w-3" />
@@ -780,10 +780,10 @@ export default function DashboardPage() {
                   return (
                     <div
                       key={appt.id}
-                      className="flex items-center justify-between rounded-[4px] px-4 py-3 transition-colors hover:bg-gray-50"
+                      className="flex items-center justify-between rounded-xl px-4 py-3 transition-colors hover:bg-gray-50"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#FFF5F3] text-xs font-bold text-[#9B2D18]">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#EEF2FF] text-xs font-bold text-[#4F46E5]">
                           {appt.startTime}
                         </div>
                         <div>
@@ -810,7 +810,7 @@ export default function DashboardPage() {
           initial="hidden"
           animate="visible"
           custom={7}
-          className="rounded-[4px] border border-gray-100 bg-white"
+          className="rounded-xl border border-gray-100 bg-white"
         >
           <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
             <div className="flex items-center gap-2">
@@ -821,7 +821,7 @@ export default function DashboardPage() {
             </div>
             <Link
               href="/finance"
-              className="flex items-center gap-1 text-xs font-medium text-[#9B2D18] hover:text-[#5C1B0F]"
+              className="flex items-center gap-1 text-xs font-medium text-[#4F46E5] hover:text-[#5C1B0F]"
             >
               Tümünü Gör
               <ArrowRight className="h-3 w-3" />
@@ -838,7 +838,7 @@ export default function DashboardPage() {
                   </p>
                   <Link
                     href="/finance/new-income"
-                    className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#9B2D18] hover:text-[#5C1B0F]"
+                    className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#4F46E5] hover:text-[#5C1B0F]"
                   >
                     İşlem ekle
                     <ArrowRight className="h-3 w-3" />
@@ -850,7 +850,7 @@ export default function DashboardPage() {
                 {data.recentTreatments.slice(0, 5).map((t) => (
                   <div
                     key={t.id}
-                    className="flex items-center justify-between rounded-[4px] px-4 py-3 transition-colors hover:bg-gray-50"
+                    className="flex items-center justify-between rounded-xl px-4 py-3 transition-colors hover:bg-gray-50"
                   >
                     <div className="flex items-center gap-3">
                       <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50">

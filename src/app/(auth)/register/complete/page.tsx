@@ -55,7 +55,7 @@ export default function RegisterCompletePage() {
   if (sessionLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-[#BE3A21]" />
+        <Loader2 className="h-6 w-6 animate-spin text-[#6366F1]" />
       </div>
     );
   }
@@ -114,7 +114,7 @@ export default function RegisterCompletePage() {
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-[4px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
+            className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
           >
             {error}
           </motion.div>
@@ -133,7 +133,7 @@ export default function RegisterCompletePage() {
             type="text"
             value={user?.name || ""}
             readOnly
-            className="block w-full rounded-[4px] border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-500 cursor-not-allowed"
+            className="block w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-500 cursor-not-allowed"
           />
         </div>
 
@@ -150,7 +150,7 @@ export default function RegisterCompletePage() {
             type="email"
             value={user?.email || ""}
             readOnly
-            className="block w-full rounded-[4px] border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-500 cursor-not-allowed"
+            className="block w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-500 cursor-not-allowed"
           />
         </div>
 
@@ -168,7 +168,7 @@ export default function RegisterCompletePage() {
             value={clinicName}
             onChange={(e) => setClinicName(e.target.value)}
             placeholder="İşletme adınız"
-            className="block w-full rounded-[4px] border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
+            className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
           />
         </div>
 
@@ -184,7 +184,7 @@ export default function RegisterCompletePage() {
             id="sector"
             value={sector}
             onChange={(e) => setSector(e.target.value)}
-            className="block w-full rounded-[4px] border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 transition-shadow focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
+            className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 transition-shadow focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
           >
             <option value="">Sektör seçin</option>
             {SECTORS.map((s) => (
@@ -209,7 +209,7 @@ export default function RegisterCompletePage() {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="05XX XXX XX XX"
-            className="block w-full rounded-[4px] border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
+            className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
           />
         </div>
 
@@ -217,7 +217,7 @@ export default function RegisterCompletePage() {
         <button
           type="submit"
           disabled={loading}
-          className="flex w-full items-center justify-center gap-2 rounded-[4px] bg-[#2B2B2B] px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-[#3A3A3A] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1E1E2D] px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-[#2A2A3C] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? (
             <>
@@ -237,7 +237,7 @@ export default function RegisterCompletePage() {
         Zaten hesabınız var mı?{" "}
         <Link
           href="/login"
-          className="font-semibold text-[#BE3A21] hover:text-[#9B2D18]"
+          className="font-semibold text-[#6366F1] hover:text-[#4F46E5]"
         >
           Giriş Yap
         </Link>

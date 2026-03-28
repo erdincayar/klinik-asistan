@@ -16,7 +16,7 @@ export default function PaymentSuccessPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-sm rounded-[4px] bg-white p-8 text-center shadow-lg">
+      <div className="w-full max-w-sm rounded-xl bg-white p-8 text-center shadow-lg">
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
           <CheckCircle className="h-8 w-8 text-green-600" />
         </div>
@@ -28,7 +28,7 @@ export default function PaymentSuccessPage() {
         </p>
         <button
           onClick={() => router.push("/dashboard")}
-          className="w-full rounded-[4px] bg-[#2B2B2B] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#3A3A3A]"
+          className="w-full rounded-xl bg-[#1E1E2D] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2A2A3C]"
         >
           Dashboard&apos;a Dön
         </button>

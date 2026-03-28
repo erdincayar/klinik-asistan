@@ -250,7 +250,7 @@ function NewAppointmentForm() {
         </Link>
       </div>
 
-      <Card className="rounded-[4px] shadow-sm">
+      <Card className="rounded-xl shadow-sm">
         <CardHeader>
           <CardTitle>Yeni Randevu</CardTitle>
         </CardHeader>
@@ -260,7 +260,7 @@ function NewAppointmentForm() {
               <motion.div
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="rounded-[4px] bg-red-50 p-3 text-sm text-red-600"
+                className="rounded-xl bg-red-50 p-3 text-sm text-red-600"
               >
                 {error}
               </motion.div>
@@ -281,7 +281,7 @@ function NewAppointmentForm() {
                 onCreateFormToggle={setShowNewCustomer}
                 createForm={
                   <>
-                    <p className="text-sm font-medium text-[#9B2D18]">Yeni Müşteri Ekle</p>
+                    <p className="text-sm font-medium text-[#4F46E5]">Yeni Müşteri Ekle</p>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <div className="space-y-1">
                         <Label className="text-xs">Ad Soyad *</Label>
@@ -331,7 +331,7 @@ function NewAppointmentForm() {
                 onCreateFormToggle={setShowNewEmployee}
                 createForm={
                   <>
-                    <p className="text-sm font-medium text-[#9B2D18]">Yeni Çalışan Ekle</p>
+                    <p className="text-sm font-medium text-[#4F46E5]">Yeni Çalışan Ekle</p>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <div className="space-y-1">
                         <Label className="text-xs">Ad Soyad *</Label>

@@ -43,7 +43,7 @@ function TabsList({ className, ...props }: React.HTMLAttributes<HTMLDivElement>)
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-0 border-b border-[#E8E8E8]",
+        "inline-flex items-center gap-1 rounded-lg bg-[#F3F4F6] p-1",
         className
       )}
       {...props}
@@ -62,8 +62,8 @@ function TabsTrigger({ className, value, ...props }: TabsTriggerProps) {
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center whitespace-nowrap px-4 py-2.5 text-[13px] uppercase tracking-wider font-medium text-[#777] border-b-2 border-transparent transition-all -mb-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-[#333]",
-        isActive && "border-b-2 border-[#BE3A21] text-[#333] font-bold",
+        "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium text-[#6C7293] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+        isActive && "bg-white text-[#1A1A2E] shadow-sm",
         className
       )}
       onClick={() => setValue(value)}
@@ -83,7 +83,7 @@ function TabsContent({ className, value, ...props }: TabsContentProps) {
   return (
     <div
       className={cn(
-        "mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        "mt-4 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         className
       )}
       {...props}

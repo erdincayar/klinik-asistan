@@ -90,11 +90,11 @@ export default function KuaforPage() {
       <nav className="border-b border-gray-100 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/" className="text-xl font-bold text-gray-900">
-            Poby<span className="text-[#BE3A21]">.ai</span>
+            Poby<span className="text-[#6366F1]">.ai</span>
           </Link>
           <Link
             href="/login"
-            className="rounded-[4px] bg-[#BE3A21] px-5 py-2 text-sm font-semibold text-white hover:bg-[#9B2D18]"
+            className="rounded-xl bg-[#6366F1] px-5 py-2 text-sm font-semibold text-white hover:bg-[#4F46E5]"
           >
             Giriş Yap
           </Link>
@@ -122,7 +122,7 @@ export default function KuaforPage() {
             {features.map((feature) => (
               <div
                 key={feature.title}
-                className="rounded-[4px] border border-gray-200 p-6"
+                className="rounded-xl border border-gray-200 p-6"
               >
                 <h3 className="text-lg font-semibold text-gray-900">
                   {feature.title}
@@ -136,7 +136,7 @@ export default function KuaforPage() {
         </section>
 
         {/* Testimonial Placeholder */}
-        <section className="mb-20 rounded-[4px] bg-[#FFF5F3] p-10 text-center">
+        <section className="mb-20 rounded-xl bg-[#EEF2FF] p-10 text-center">
           <blockquote className="text-lg italic text-gray-700 max-w-2xl mx-auto">
             &ldquo;Müşterilerimiz artık WhatsApp&apos;tan randevu alıyor.
             Telefon trafiği azaldı, memnuniyet arttı.&rdquo;
@@ -166,7 +166,7 @@ export default function KuaforPage() {
         <div className="text-center">
           <Link
             href="/register"
-            className="inline-block rounded-[4px] bg-[#BE3A21] px-8 py-3 text-base font-semibold text-white hover:bg-[#9B2D18] transition-colors"
+            className="inline-block rounded-xl bg-[#6366F1] px-8 py-3 text-base font-semibold text-white hover:bg-[#4F46E5] transition-colors"
           >
             Ücretsiz Deneyin
           </Link>

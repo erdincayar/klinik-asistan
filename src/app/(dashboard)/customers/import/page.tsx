@@ -72,7 +72,7 @@ const FORMAT_LABELS: Record<string, { label: string; icon: any; color: string }>
   "image/png": { label: "PNG", icon: Image, color: "bg-green-100 text-green-800" },
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": { label: "Excel", icon: FileSpreadsheet, color: "bg-emerald-100 text-emerald-800" },
   "application/vnd.ms-excel": { label: "Excel", icon: FileSpreadsheet, color: "bg-emerald-100 text-emerald-800" },
-  "text/csv": { label: "CSV", icon: FileText, color: "bg-[#FDEDEC] text-[#7A2414]" },
+  "text/csv": { label: "CSV", icon: FileText, color: "bg-[#E0E7FF] text-[#7A2414]" },
   "application/pdf": { label: "PDF", icon: FileText, color: "bg-red-100 text-red-800" },
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document": { label: "Word", icon: FileText, color: "bg-indigo-100 text-indigo-800" },
 };
@@ -289,18 +289,18 @@ export default function CustomerImportPage() {
       {step !== "done" && (
         <>
           {/* Upload Area */}
-          <Card className="border-2 border-dashed border-gray-200 hover:border-[#FDEDEC] transition-colors">
+          <Card className="border-2 border-dashed border-gray-200 hover:border-[#E0E7FF] transition-colors">
             <CardContent className="p-8">
               <div
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                className={`flex flex-col items-center justify-center rounded-[4px] py-12 transition-colors ${
-                  isDragging ? "bg-[#FFF5F3] border-[#BE3A21]" : "bg-gray-50"
+                className={`flex flex-col items-center justify-center rounded-xl py-12 transition-colors ${
+                  isDragging ? "bg-[#EEF2FF] border-[#6366F1]" : "bg-gray-50"
                 }`}
               >
-                <div className="rounded-full bg-[#FDEDEC] p-4 mb-4">
-                  <Upload className="h-8 w-8 text-[#BE3A21]" />
+                <div className="rounded-full bg-[#E0E7FF] p-4 mb-4">
+                  <Upload className="h-8 w-8 text-[#6366F1]" />
                 </div>
                 <p className="text-lg font-semibold text-gray-700 mb-1">
                   Dosyaları sürükleyip bırakın
@@ -316,7 +316,7 @@ export default function CustomerImportPage() {
                     onChange={handleFileInput}
                     className="hidden"
                   />
-                  <span className="inline-flex items-center gap-2 rounded-lg bg-[#2B2B2B] px-4 py-2 text-sm font-medium text-white hover:bg-[#3A3A3A] cursor-pointer transition-colors">
+                  <span className="inline-flex items-center gap-2 rounded-lg bg-[#1E1E2D] px-4 py-2 text-sm font-medium text-white hover:bg-[#2A2A3C] cursor-pointer transition-colors">
                     <Upload className="h-4 w-4" />
                     Dosya Seç
                   </span>
@@ -325,7 +325,7 @@ export default function CustomerImportPage() {
                   {[
                     { label: "Resim (JPG/PNG)", color: "bg-green-100 text-green-700" },
                     { label: "Excel", color: "bg-emerald-100 text-emerald-700" },
-                    { label: "CSV", color: "bg-[#FDEDEC] text-[#9B2D18]" },
+                    { label: "CSV", color: "bg-[#E0E7FF] text-[#4F46E5]" },
                     { label: "PDF", color: "bg-red-100 text-red-700" },
                     { label: "Word", color: "bg-indigo-100 text-indigo-700" },
                   ].map((fmt) => (
@@ -377,7 +377,7 @@ export default function CustomerImportPage() {
                             <Badge className="bg-gray-100 text-gray-700">Bekliyor</Badge>
                           )}
                           {uf.status === "processing" && (
-                            <Badge className="bg-[#FDEDEC] text-[#9B2D18]">
+                            <Badge className="bg-[#E0E7FF] text-[#4F46E5]">
                               <Loader2 className="mr-1 h-3 w-3 animate-spin" />
                               İşleniyor
                             </Badge>

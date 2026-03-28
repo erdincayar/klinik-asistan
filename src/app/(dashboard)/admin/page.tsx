@@ -73,10 +73,10 @@ export default function AdminPage() {
       <div className="space-y-6">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-28 animate-pulse rounded-[4px] bg-white" />
+            <div key={i} className="h-28 animate-pulse rounded-xl bg-white" />
           ))}
         </div>
-        <div className="h-96 animate-pulse rounded-[4px] bg-white" />
+        <div className="h-96 animate-pulse rounded-xl bg-white" />
       </div>
     );
   }
@@ -113,7 +113,7 @@ export default function AdminPage() {
   ];
 
   const colorMap: Record<string, { bg: string; icon: string; text: string }> = {
-    blue: { bg: "bg-[#FFF5F3]", icon: "text-[#BE3A21]", text: "text-[#9B2D18]" },
+    blue: { bg: "bg-[#EEF2FF]", icon: "text-[#6366F1]", text: "text-[#4F46E5]" },
     green: { bg: "bg-green-50", icon: "text-green-600", text: "text-green-700" },
     purple: { bg: "bg-purple-50", icon: "text-purple-600", text: "text-purple-700" },
     orange: { bg: "bg-orange-50", icon: "text-orange-600", text: "text-orange-700" },
@@ -136,7 +136,7 @@ export default function AdminPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="flex items-center gap-2 text-xl font-bold text-gray-900">
-            <Shield className="h-6 w-6 text-[#BE3A21]" />
+            <Shield className="h-6 w-6 text-[#6366F1]" />
             Admin Panel
           </h2>
           <p className="mt-1 text-sm text-gray-500">
@@ -146,14 +146,14 @@ export default function AdminPage() {
         <div className="flex gap-2">
           <Link
             href="/admin/users"
-            className="flex items-center gap-2 rounded-[4px] bg-[#2B2B2B] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#3A3A3A]"
+            className="flex items-center gap-2 rounded-xl bg-[#1E1E2D] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#2A2A3C]"
           >
             <UserPlus className="h-4 w-4" />
             Kullanıcılar
           </Link>
           <Link
             href="/admin/activity"
-            className="flex items-center gap-2 rounded-[4px] border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
           >
             <BarChart3 className="h-4 w-4" />
             Aktivite
@@ -175,9 +175,9 @@ export default function AdminPage() {
             >
               <Link
                 href={card.href}
-                className="flex items-center gap-4 rounded-[4px] border border-gray-100 bg-white p-5 transition-shadow hover:shadow-md"
+                className="flex items-center gap-4 rounded-xl border border-gray-100 bg-white p-5 transition-shadow hover:shadow-md"
               >
-                <div className={`rounded-[4px] ${colors.bg} p-3`}>
+                <div className={`rounded-xl ${colors.bg} p-3`}>
                   <Icon className={`h-5 w-5 ${colors.icon}`} />
                 </div>
                 <div>
@@ -197,13 +197,13 @@ export default function AdminPage() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="rounded-[4px] border border-gray-100 bg-white"
+        className="rounded-xl border border-gray-100 bg-white"
       >
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
           <h3 className="font-semibold text-gray-900">Son Kullanıcılar</h3>
           <Link
             href="/admin/users"
-            className="flex items-center gap-1 text-sm font-medium text-[#BE3A21] hover:text-[#9B2D18]"
+            className="flex items-center gap-1 text-sm font-medium text-[#6366F1] hover:text-[#4F46E5]"
           >
             Tümünü gör <ArrowRight className="h-4 w-4" />
           </Link>

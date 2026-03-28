@@ -134,7 +134,7 @@ export default function AlarmsTab() {
                         <div className="flex items-center justify-center gap-1">
                           <button
                             onClick={() => { setEditTarget(alarm); setShowDialog(true); }}
-                            className="inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-[#BE3A21] hover:bg-[#FFF5F3] transition-colors"
+                            className="inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-[#6366F1] hover:bg-[#EEF2FF] transition-colors"
                             title="Düzenle"
                           >
                             <Pencil className="h-4 w-4" />

@@ -47,6 +47,7 @@ import {
   CreditCard,
   Lock,
   ClipboardList,
+  Search,
   type LucideIcon,
 } from "lucide-react";
 import { ToastProvider, Toaster, useToast } from "@/components/ui/toast";
@@ -200,19 +201,19 @@ function SortableNavItem({
           type="button"
           onClick={onLockedClick}
           title={collapsed ? `${item.label} (${isYakinda ? "Yakında" : "Kilitli"})` : undefined}
-          className={`group relative flex w-full items-center gap-3 rounded-[2px] px-3 py-2.5 text-[13px] uppercase tracking-wider font-medium opacity-30 cursor-not-allowed ${
+          className={`group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium opacity-30 cursor-not-allowed ${
             collapsed ? "lg:justify-center lg:px-0" : ""
           }`}
         >
           <div className="relative shrink-0">
-            <Icon className="h-[18px] w-[18px] text-[#666]" />
-            <Lock className="absolute -right-1 -top-1 h-2.5 w-2.5 text-[#666]" />
+            <Icon className="h-5 w-5 text-[#6C7293]" />
+            <Lock className="absolute -right-1 -top-1 h-2.5 w-2.5 text-[#6C7293]" />
           </div>
-          <span className={collapsed ? "lg:hidden" : "text-[#666]"}>
+          <span className={collapsed ? "lg:hidden" : "text-[#6C7293]"}>
             {item.label}
           </span>
           {isYakinda && !collapsed && (
-            <span className="ml-auto rounded-full bg-white/10 px-1.5 py-0.5 text-[9px] font-semibold text-[#666]">
+            <span className="ml-auto rounded-full bg-white/10 px-1.5 py-0.5 text-[9px] font-medium text-[#6C7293]">
               Yakında
             </span>
           )}
@@ -232,15 +233,15 @@ function SortableNavItem({
         href={item.href}
         onClick={onClose}
         title={collapsed ? item.label : undefined}
-        className={`group relative flex items-center gap-3 rounded-[2px] px-3 py-2.5 text-[13px] uppercase tracking-wider font-medium transition-all duration-200 ${
+        className={`group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
           isActive
-            ? "bg-[rgba(190,58,33,0.2)] text-white border-l-[3px] border-[#BE3A21]"
-            : "text-[#AAA] hover:bg-white/5 hover:text-white"
+            ? "bg-[rgba(99,102,241,0.12)] text-white"
+            : "text-[#8E8EA0] hover:bg-white/5 hover:text-white"
         } ${collapsed ? "lg:justify-center lg:px-0" : ""}`}
       >
         <Icon
-          className={`h-[18px] w-[18px] shrink-0 ${
-            isActive ? "text-white" : "text-[#AAA] group-hover:text-white"
+          className={`h-5 w-5 shrink-0 ${
+            isActive ? "text-[#818CF8]" : "text-[#8E8EA0] group-hover:text-white"
           }`}
         />
         <span className={collapsed ? "lg:hidden" : ""}>
@@ -251,7 +252,7 @@ function SortableNavItem({
         {isActive && (
           <motion.div
             layoutId="sidebar-active"
-            className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[#BE3A21]"
+            className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-full bg-[#6366F1]"
             transition={{ type: "spring", stiffness: 350, damping: 30 }}
           />
         )}
@@ -406,24 +407,24 @@ function Sidebar({
       </AnimatePresence>
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col bg-[#2B2B2B] transition-all duration-300 lg:static lg:z-auto ${
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col bg-[#1E1E2D] transition-all duration-300 lg:static lg:z-auto ${
           open ? "translate-x-0" : "-translate-x-full"
-        } lg:translate-x-0 ${collapsed ? "lg:w-[72px]" : "lg:w-[240px]"} w-[240px]`}
+        } lg:translate-x-0 ${collapsed ? "lg:w-[72px]" : "lg:w-[260px]"} w-[260px]`}
       >
         {/* Logo */}
-        <div className="flex h-16 shrink-0 items-center justify-between border-b border-white/10 bg-[#1A1A1A] px-5">
-          <Link href="/dashboard" className="flex items-center gap-2">
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-white/[0.06] px-5">
+          <Link href="/dashboard" className="flex items-center gap-2.5">
             {collapsed ? (
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#BE3A21]">
-                <span className="text-sm font-extrabold text-white">P</span>
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#6366F1]">
+                <span className="text-sm font-bold text-white">P</span>
               </div>
             ) : (
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#BE3A21]">
-                  <span className="text-sm font-extrabold text-white">P</span>
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#6366F1]">
+                  <span className="text-sm font-bold text-white">P</span>
                 </div>
-                <span className="text-xl font-extrabold tracking-tight text-white">
-                  poby<span className="text-[#BE3A21]">.</span>
+                <span className="text-lg font-bold tracking-tight text-white">
+                  poby<span className="text-[#818CF8]">.</span>
                 </span>
               </div>
             )}
@@ -432,7 +433,7 @@ function Sidebar({
           {/* Mobile close */}
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-[#AAA] transition-colors hover:bg-white/10 hover:text-white lg:hidden"
+            className="rounded-lg p-1.5 text-[#8E8EA0] transition-colors hover:bg-white/10 hover:text-white lg:hidden"
           >
             <X className="h-5 w-5" />
           </button>
@@ -440,7 +441,7 @@ function Sidebar({
           {/* Desktop collapse toggle */}
           <button
             onClick={onToggleCollapse}
-            className="hidden rounded-lg p-1.5 text-[#AAA] transition-colors hover:bg-white/10 hover:text-white lg:block"
+            className="hidden rounded-lg p-1.5 text-[#8E8EA0] transition-colors hover:bg-white/10 hover:text-white lg:block"
           >
             {collapsed ? (
               <ChevronsRight className="h-4 w-4" />
@@ -451,7 +452,7 @@ function Sidebar({
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-3 py-3">
+        <nav className="flex-1 overflow-y-auto px-3 py-4">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -475,7 +476,7 @@ function Sidebar({
                   return (
                     <div key={item.href}>
                       {NAV_GROUP_BREAKS.has(item.href) && (
-                        <div className="border-t border-white/10 mt-3 pt-3" />
+                        <div className="border-t border-white/[0.06] mt-3 pt-3" />
                       )}
                       <div className="relative">
                         <SortableNavItem
@@ -488,7 +489,7 @@ function Sidebar({
                           onLockedClick={() => handleLockedClick(item)}
                         />
                         {item.href === "/alarmlar" && unreadAlarmCount > 0 && !isLocked && (
-                          <span className="absolute right-2 top-1/2 -translate-y-1/2 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#EF4444] px-1 text-[10px] font-bold text-white">
                             {unreadAlarmCount > 99 ? "99+" : unreadAlarmCount}
                           </span>
                         )}
@@ -502,9 +503,9 @@ function Sidebar({
 
           {/* Admin Section - only visible to ADMIN role */}
           {(session?.user as any)?.role === "ADMIN" && (
-            <div className="mt-4 border-t border-white/10 pt-4">
+            <div className="mt-4 border-t border-white/[0.06] pt-4">
               {!collapsed && (
-                <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#555]">
+                <p className="mb-2 px-3 text-[11px] font-medium uppercase tracking-wider text-[#6C7293]">
                   Yönetim
                 </p>
               )}
@@ -521,15 +522,15 @@ function Sidebar({
                       href={item.href}
                       onClick={onClose}
                       title={collapsed ? item.label : undefined}
-                      className={`group relative flex items-center gap-3 rounded-[2px] px-3 py-2.5 text-[13px] uppercase tracking-wider font-medium transition-all duration-200 ${
+                      className={`group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
                         isActive
-                          ? "bg-[rgba(190,58,33,0.2)] text-white border-l-[3px] border-[#BE3A21]"
-                          : "text-[#AAA] hover:bg-white/5 hover:text-white"
+                          ? "bg-[rgba(99,102,241,0.12)] text-white"
+                          : "text-[#8E8EA0] hover:bg-white/5 hover:text-white"
                       } ${collapsed ? "lg:justify-center lg:px-0" : ""}`}
                     >
                       <Icon
-                        className={`h-[18px] w-[18px] shrink-0 ${
-                          isActive ? "text-white" : "text-[#AAA] group-hover:text-white"
+                        className={`h-5 w-5 shrink-0 ${
+                          isActive ? "text-[#818CF8]" : "text-[#8E8EA0] group-hover:text-white"
                         }`}
                       />
                       <span className={collapsed ? "lg:hidden" : ""}>
@@ -538,7 +539,7 @@ function Sidebar({
                       {isActive && (
                         <motion.div
                           layoutId="sidebar-admin-active"
-                          className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[#BE3A21]"
+                          className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-full bg-[#6366F1]"
                           transition={{ type: "spring", stiffness: 350, damping: 30 }}
                         />
                       )}
@@ -551,31 +552,31 @@ function Sidebar({
         </nav>
 
         {/* Settings + Plan badge + User section */}
-        <div className="shrink-0 border-t border-white/10 px-3 py-3">
+        <div className="shrink-0 border-t border-white/[0.06] px-3 py-3">
           {/* Fixed Settings link */}
           <div className="mb-2">
             <Link
               href="/settings"
               onClick={onClose}
               title={collapsed ? "Ayarlar" : undefined}
-              className={`group relative flex items-center gap-3 rounded-[2px] px-3 py-2.5 text-[13px] uppercase tracking-wider font-medium transition-all duration-200 ${
+              className={`group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
                 pathname === "/settings" || pathname.startsWith("/settings/")
-                  ? "bg-[rgba(190,58,33,0.2)] text-white border-l-[3px] border-[#BE3A21]"
-                  : "text-[#AAA] hover:bg-white/5 hover:text-white"
+                  ? "bg-[rgba(99,102,241,0.12)] text-white"
+                  : "text-[#8E8EA0] hover:bg-white/5 hover:text-white"
               } ${collapsed ? "lg:justify-center lg:px-0" : ""}`}
             >
               <Settings
-                className={`h-[18px] w-[18px] shrink-0 ${
+                className={`h-5 w-5 shrink-0 ${
                   pathname === "/settings" || pathname.startsWith("/settings/")
-                    ? "text-white"
-                    : "text-[#AAA] group-hover:text-white"
+                    ? "text-[#818CF8]"
+                    : "text-[#8E8EA0] group-hover:text-white"
                 }`}
               />
               <span className={collapsed ? "lg:hidden" : ""}>Ayarlar</span>
               {(pathname === "/settings" || pathname.startsWith("/settings/")) && (
                 <motion.div
                   layoutId="sidebar-settings-active"
-                  className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[#BE3A21]"
+                  className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-full bg-[#6366F1]"
                   transition={{ type: "spring", stiffness: 350, damping: 30 }}
                 />
               )}
@@ -584,37 +585,41 @@ function Sidebar({
 
           {/* Plan badge */}
           {!collapsed && (
-            <div className="mb-3 rounded-[4px] bg-white/5 px-3 py-2.5">
+            <div className="mb-3 rounded-xl bg-white/[0.04] px-3 py-3">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-[#BE3A21]" />
-                <span className="text-xs font-semibold text-white">
-                  {activeModules.length} modül aktif
-                </span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6366F1]/20">
+                  <Sparkles className="h-4 w-4 text-[#818CF8]" />
+                </div>
+                <div>
+                  <span className="text-xs font-semibold text-white">
+                    {activeModules.length} modül aktif
+                  </span>
+                  <p className="text-[11px] text-[#8E8EA0]">
+                    {subscriptionStatus === "trial" && trialEnd
+                      ? `Deneme: ${Math.max(0, Math.ceil((new Date(trialEnd).getTime() - Date.now()) / 86400000))} gün kaldı`
+                      : subscriptionStatus === "suspended"
+                        ? "Abonelik askıda"
+                        : "Abonelik aktif"}
+                  </p>
+                </div>
               </div>
-              <p className="mt-0.5 text-[11px] text-[#AAA]">
-                {subscriptionStatus === "trial" && trialEnd
-                  ? `Deneme: ${Math.max(0, Math.ceil((new Date(trialEnd).getTime() - Date.now()) / 86400000))} gün kaldı`
-                  : subscriptionStatus === "suspended"
-                    ? "Abonelik askıda"
-                    : "Abonelik aktif"}
-              </p>
             </div>
           )}
           {collapsed && (
             <div className="mb-3 flex justify-center">
-              <div className="rounded-lg bg-white/10 p-2" title={`${activeModules.length} modül aktif`}>
-                <Sparkles className="h-4 w-4 text-[#BE3A21]" />
+              <div className="rounded-lg bg-[#6366F1]/20 p-2" title={`${activeModules.length} modül aktif`}>
+                <Sparkles className="h-4 w-4 text-[#818CF8]" />
               </div>
             </div>
           )}
 
           {/* User */}
           <div
-            className={`flex items-center gap-3 rounded-[4px] bg-white/5 px-2 py-2 ${
+            className={`flex items-center gap-3 rounded-xl bg-white/[0.04] px-3 py-2.5 ${
               collapsed ? "lg:justify-center" : ""
             }`}
           >
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#BE3A21] text-xs font-semibold text-white">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#6366F1] to-[#818CF8] text-xs font-semibold text-white">
               {(session?.user?.name || "K")
                 .split(" ")
                 .map((n) => n[0])
@@ -628,13 +633,13 @@ function Sidebar({
                   <p className="truncate text-sm font-medium text-white">
                     {session?.user?.name || "Kullanıcı"}
                   </p>
-                  <p className="truncate text-[11px] text-[#777]">
+                  <p className="truncate text-[11px] text-[#8E8EA0]">
                     {session?.user?.email || ""}
                   </p>
                 </div>
                 <button
                   onClick={() => signOut({ callbackUrl: "/" })}
-                  className="rounded-lg p-1.5 text-[#AAA] transition-colors hover:bg-white/10 hover:text-red-400"
+                  className="rounded-lg p-1.5 text-[#8E8EA0] transition-colors hover:bg-white/10 hover:text-red-400"
                   title="Çıkış Yap"
                 >
                   <LogOut className="h-4 w-4" />
@@ -648,8 +653,6 @@ function Sidebar({
   );
 }
 
-/* ──────────────────────── MAIN CONTENT ──────────────────────── */
-
 /* ──────────────────────── TRIAL BANNER ──────────────────────── */
 
 function TrialBanner({ status, trialEnd }: { status: string; trialEnd?: string | null }) {
@@ -659,7 +662,7 @@ function TrialBanner({ status, trialEnd }: { status: string; trialEnd?: string |
     return (
       <div className="bg-red-50 border-b border-red-200 px-4 py-3 flex items-center justify-between text-sm">
         <span className="text-red-700 font-medium">Aboneliğiniz askıya alındı. Hizmetlerin devam etmesi için ödeme yöntemini güncelleyin.</span>
-        <Link href="/billing" className="rounded-lg bg-red-600 px-3 py-1 text-xs font-semibold text-white hover:bg-red-700">
+        <Link href="/billing" className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700">
           Ödeme Yöntemini Güncelle
         </Link>
       </div>
@@ -671,13 +674,13 @@ function TrialBanner({ status, trialEnd }: { status: string; trialEnd?: string |
     const isUrgent = daysLeft <= 3;
     return (
       <div className={`border-b px-4 py-2.5 flex items-center justify-between text-sm ${
-        isUrgent ? "bg-red-50 border-red-200" : "bg-[#FFF5F3] border-[#FDEDEC]"
+        isUrgent ? "bg-red-50 border-red-200" : "bg-[#EEF2FF] border-[#E0E7FF]"
       }`}>
-        <span className={isUrgent ? "text-red-700 font-medium" : "text-[#9B2D18]"}>
-          {isUrgent ? "🔴" : "⏱"} Deneme süreniz: {daysLeft} gün kaldı
+        <span className={isUrgent ? "text-red-700 font-medium" : "text-[#4F46E5] font-medium"}>
+          Deneme süreniz: {daysLeft} gün kaldı
         </span>
-        <Link href="/billing" className={`rounded-[2px] px-3 py-1 text-xs font-bold uppercase tracking-wider text-white ${
-          isUrgent ? "bg-red-600 hover:bg-red-700" : "bg-[#BE3A21] hover:bg-[#9B2D18]"
+        <Link href="/billing" className={`rounded-lg px-3 py-1.5 text-xs font-semibold text-white ${
+          isUrgent ? "bg-red-600 hover:bg-red-700" : "bg-[#6366F1] hover:bg-[#4F46E5]"
         }`}>
           {isUrgent ? "Hemen Aktif Et" : "Planımı Aktif Et"}
         </Link>
@@ -686,6 +689,8 @@ function TrialBanner({ status, trialEnd }: { status: string; trialEnd?: string |
   }
   return null;
 }
+
+/* ──────────────────────── MAIN CONTENT ──────────────────────── */
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -709,7 +714,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <div className="flex h-screen bg-[#F9F9F9]">
+    <div className="flex h-screen bg-[#F4F6FA]">
       <Sidebar
         open={sidebarOpen}
         collapsed={collapsed}
@@ -722,31 +727,39 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         <TrialBanner status={subStatus} trialEnd={subTrialEnd} />
 
         {/* Top header */}
-        <header className="flex h-[60px] shrink-0 items-center justify-between border-b border-[#E8E8E8] bg-white px-6">
+        <header className="flex h-16 shrink-0 items-center justify-between border-b border-[#E5E7EB] bg-white px-6">
           {/* Left side */}
           <div className="flex items-center gap-4">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 lg:hidden"
+              className="rounded-lg p-2 text-[#6C7293] transition-colors hover:bg-[#F3F4F6] hover:text-[#1A1A2E] lg:hidden"
             >
               <Menu className="h-5 w-5" />
             </button>
-            <h1 className="text-lg font-semibold text-gray-900">
+            <h1 className="text-lg font-semibold text-[#1A1A2E]">
               {pageTitle}
             </h1>
           </div>
 
           {/* Right side */}
           <div className="flex items-center gap-2">
-            {/* Notifications */}
-            <button className="relative rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600">
-              <Bell className="h-5 w-5" />
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#BE3A21]" />
+            {/* Search */}
+            <button className="rounded-lg p-2 text-[#6C7293] transition-colors hover:bg-[#F3F4F6] hover:text-[#1A1A2E]">
+              <Search className="h-5 w-5" />
             </button>
 
+            {/* Notifications */}
+            <button className="relative rounded-lg p-2 text-[#6C7293] transition-colors hover:bg-[#F3F4F6] hover:text-[#1A1A2E]">
+              <Bell className="h-5 w-5" />
+              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#6366F1]" />
+            </button>
+
+            {/* Divider */}
+            <div className="mx-2 h-8 w-px bg-[#E5E7EB] hidden sm:block" />
+
             {/* User (desktop) */}
-            <div className="hidden items-center gap-3 rounded-[4px] px-3 py-1.5 sm:flex">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#BE3A21] text-xs font-semibold text-white">
+            <div className="hidden items-center gap-3 rounded-lg px-2 py-1.5 sm:flex">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#6366F1] to-[#818CF8] text-xs font-semibold text-white">
                 {(session?.user?.name || "K")
                   .split(" ")
                   .map((n) => n[0])
@@ -754,7 +767,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                   .toUpperCase()
                   .slice(0, 2)}
               </div>
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-[#1A1A2E]">
                 {session?.user?.name || "Kullanıcı"}
               </span>
             </div>
@@ -762,7 +775,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             {/* Logout (tablet only, sidebar has its own) */}
             <button
               onClick={() => signOut({ callbackUrl: "/" })}
-              className="hidden rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 sm:block lg:hidden"
+              className="hidden rounded-lg p-2 text-[#6C7293] transition-colors hover:bg-red-50 hover:text-red-500 sm:block lg:hidden"
               title="Çıkış Yap"
             >
               <LogOut className="h-5 w-5" />

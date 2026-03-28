@@ -117,7 +117,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
 };
 
 function Skeleton({ className }: { className?: string }) {
-  return <div className={`animate-pulse rounded-[4px] bg-gray-100 ${className || ""}`} />;
+  return <div className={`animate-pulse rounded-xl bg-gray-100 ${className || ""}`} />;
 }
 
 // ── Main Component ──
@@ -145,7 +145,7 @@ export default function PobyAssistantContent() {
       </motion.div>
 
       {/* Sub-tabs */}
-      <div className="flex gap-1 rounded-[4px] bg-gray-100 p-1">
+      <div className="flex gap-1 rounded-xl bg-gray-100 p-1">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           return (
@@ -254,7 +254,7 @@ function SetupTab() {
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between rounded-[4px] border border-gray-100 bg-white px-6 py-4"
+        className="flex items-center justify-between rounded-xl border border-gray-100 bg-white px-6 py-4"
       >
         <div>
           <h3 className="text-sm font-semibold text-gray-900">Asistan Durumu</h3>
@@ -282,7 +282,7 @@ function SetupTab() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex items-center justify-between rounded-[4px] border border-green-200 bg-green-50 px-4 py-3"
+          className="flex items-center justify-between rounded-xl border border-green-200 bg-green-50 px-4 py-3"
         >
           <div className="flex items-center gap-2">
             <Check className="h-4 w-4 text-green-600" />
@@ -302,7 +302,7 @@ function SetupTab() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.05 }}
-        className="rounded-[4px] border border-gray-100 bg-white"
+        className="rounded-xl border border-gray-100 bg-white"
       >
         <div className="border-b border-gray-100 px-6 py-4">
           <h3 className="text-sm font-semibold text-gray-900">Kişilik Ayarları</h3>
@@ -315,7 +315,7 @@ function SetupTab() {
               value={config.assistantName}
               onChange={(e) => setConfig({ ...config, assistantName: e.target.value })}
               maxLength={100}
-              className="block w-full rounded-[4px] border border-gray-200 px-4 py-2.5 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/20"
+              className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/20"
             />
           </div>
 
@@ -327,7 +327,7 @@ function SetupTab() {
                 <button
                   key={opt.value}
                   onClick={() => setConfig({ ...config, tone: opt.value })}
-                  className={`rounded-[4px] border-2 p-3 text-left transition-colors ${
+                  className={`rounded-xl border-2 p-3 text-left transition-colors ${
                     config.tone === opt.value
                       ? "border-indigo-600 bg-indigo-50"
                       : "border-gray-100 hover:border-gray-300"
@@ -343,7 +343,7 @@ function SetupTab() {
           {/* Response length */}
           <div>
             <label className="mb-2 block text-xs font-medium text-gray-600">Cevap Uzunluğu</label>
-            <div className="flex gap-1 rounded-[4px] bg-gray-100 p-1">
+            <div className="flex gap-1 rounded-xl bg-gray-100 p-1">
               {[
                 { value: "short", label: "Kısa" },
                 { value: "medium", label: "Orta" },
@@ -367,7 +367,7 @@ function SetupTab() {
           {/* Emoji */}
           <div>
             <label className="mb-2 block text-xs font-medium text-gray-600">Emoji Kullanımı</label>
-            <div className="flex gap-1 rounded-[4px] bg-gray-100 p-1">
+            <div className="flex gap-1 rounded-xl bg-gray-100 p-1">
               {[
                 { value: "none", label: "Hiç" },
                 { value: "minimal", label: "Az" },
@@ -391,7 +391,7 @@ function SetupTab() {
           {/* Language */}
           <div>
             <label className="mb-2 block text-xs font-medium text-gray-600">Dil</label>
-            <div className="flex gap-1 rounded-[4px] bg-gray-100 p-1">
+            <div className="flex gap-1 rounded-xl bg-gray-100 p-1">
               {[
                 { value: "tr", label: "Türkçe" },
                 { value: "en", label: "İngilizce" },
@@ -419,7 +419,7 @@ function SetupTab() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="rounded-[4px] border border-gray-100 bg-white"
+        className="rounded-xl border border-gray-100 bg-white"
       >
         <div className="border-b border-gray-100 px-6 py-4">
           <h3 className="text-sm font-semibold text-gray-900">Yetenekler</h3>
@@ -428,7 +428,7 @@ function SetupTab() {
           {CAPABILITIES.map((cap) => (
             <label
               key={cap.key}
-              className="flex cursor-pointer items-center gap-2.5 rounded-[4px] border border-gray-100 p-3 transition-colors hover:bg-gray-50"
+              className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-gray-100 p-3 transition-colors hover:bg-gray-50"
             >
               <input
                 type="checkbox"
@@ -451,7 +451,7 @@ function SetupTab() {
       <button
         onClick={handleSave}
         disabled={saving}
-        className="flex w-full items-center justify-center gap-2 rounded-[4px] bg-indigo-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
       >
         {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
         {saving ? "Kaydediliyor..." : "Kaydet"}
@@ -586,7 +586,7 @@ function KnowledgeTab() {
   return (
     <div className="space-y-4">
       {error && (
-        <div className="rounded-[4px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
           <button onClick={() => setError("")} className="ml-2"><X className="inline h-3.5 w-3.5" /></button>
         </div>
@@ -596,7 +596,7 @@ function KnowledgeTab() {
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-[4px] border-2 border-dashed border-green-200 bg-green-50/50"
+        className="rounded-xl border-2 border-dashed border-green-200 bg-green-50/50"
       >
         <div className="p-6">
           <div className="flex items-center gap-2 mb-2">
@@ -616,13 +616,13 @@ function KnowledgeTab() {
           </button>
 
           {showExportHelp && (
-            <div className="mb-4 rounded-[4px] bg-white p-4 text-xs text-gray-600 space-y-2">
+            <div className="mb-4 rounded-xl bg-white p-4 text-xs text-gray-600 space-y-2">
               <p><strong>Android:</strong> WhatsApp → Sohbet → 3 nokta → Daha fazla → Sohbeti dışa aktar → Medyasız</p>
               <p><strong>iPhone:</strong> WhatsApp → Sohbet → Kişi adı → Sohbeti Dışa Aktar → Medyasız</p>
             </div>
           )}
 
-          <label className="flex cursor-pointer items-center justify-center gap-2 rounded-[4px] border-2 border-dashed border-green-300 bg-white px-4 py-6 transition-colors hover:border-green-400">
+          <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-green-300 bg-white px-4 py-6 transition-colors hover:border-green-400">
             {uploadingWA ? <Loader2 className="h-5 w-5 animate-spin text-green-600" /> : <Upload className="h-5 w-5 text-green-600" />}
             <span className="text-xs font-semibold text-green-700">
               {uploadingWA ? "İşleniyor..." : ".txt dosyası yükle"}
@@ -637,7 +637,7 @@ function KnowledgeTab() {
           </label>
 
           {waResult && (
-            <div className="mt-3 flex items-center gap-2 rounded-[4px] bg-green-100 px-4 py-2.5 text-xs font-medium text-green-700">
+            <div className="mt-3 flex items-center gap-2 rounded-xl bg-green-100 px-4 py-2.5 text-xs font-medium text-green-700">
               <Check className="h-4 w-4" />
               {waResult}
             </div>
@@ -654,7 +654,7 @@ function KnowledgeTab() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="rounded-[4px] border border-gray-100 bg-white"
+          className="rounded-xl border border-gray-100 bg-white"
         >
           <div className="border-b border-gray-100 px-6 py-4">
             <h3 className="text-sm font-semibold text-gray-900">Yazarak Ekle</h3>
@@ -664,14 +664,14 @@ function KnowledgeTab() {
               value={manualTitle}
               onChange={(e) => setManualTitle(e.target.value)}
               placeholder="Başlık (opsiyonel)"
-              className="block w-full rounded-[4px] border border-gray-200 px-4 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/20"
+              className="block w-full rounded-xl border border-gray-200 px-4 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/20"
             />
             <textarea
               value={manualText}
               onChange={(e) => setManualText(e.target.value)}
               rows={5}
               placeholder="Hizmetlerinizi, fiyatlarınızı, SSS'leri buraya yazın..."
-              className="block w-full rounded-[4px] border border-gray-200 px-4 py-2.5 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/20"
+              className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/20"
             />
             <div className="flex flex-wrap gap-1.5">
               {["SSS Formatı", "Hizmet Listesi", "Genel Bilgi"].map((chip) => (
@@ -694,7 +694,7 @@ function KnowledgeTab() {
             <button
               onClick={handleManualAdd}
               disabled={addingManual || !manualText.trim()}
-              className="flex w-full items-center justify-center gap-2 rounded-[4px] bg-indigo-600 py-2 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-2 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
             >
               {addingManual ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
               Ekle
@@ -707,13 +707,13 @@ function KnowledgeTab() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="rounded-[4px] border border-gray-100 bg-white"
+          className="rounded-xl border border-gray-100 bg-white"
         >
           <div className="border-b border-gray-100 px-6 py-4">
             <h3 className="text-sm font-semibold text-gray-900">Belge Yükle</h3>
           </div>
           <div className="p-6">
-            <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-[4px] border-2 border-dashed border-gray-200 px-4 py-12 transition-colors hover:border-indigo-300 hover:bg-indigo-50/30">
+            <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-gray-200 px-4 py-12 transition-colors hover:border-indigo-300 hover:bg-indigo-50/30">
               {uploading ? (
                 <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
               ) : (
@@ -743,7 +743,7 @@ function KnowledgeTab() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="rounded-[4px] border border-gray-100 bg-white"
+          className="rounded-xl border border-gray-100 bg-white"
         >
           <div className="border-b border-gray-100 px-6 py-4">
             <h3 className="text-sm font-semibold text-gray-900">Kayıtlı Kaynaklar</h3>
@@ -820,7 +820,7 @@ function ConversationsTab() {
   return (
     <div className="space-y-4">
       {/* Filter */}
-      <div className="flex gap-1 rounded-[4px] bg-gray-100 p-1">
+      <div className="flex gap-1 rounded-xl bg-gray-100 p-1">
         {[
           { value: "all", label: "Tümü" },
           { value: "whatsapp", label: "WhatsApp" },
@@ -848,7 +848,7 @@ function ConversationsTab() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="mx-4 max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-[4px] bg-white shadow-xl"
+            className="mx-4 max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
@@ -866,7 +866,7 @@ function ConversationsTab() {
                   className={`flex ${msg.role === "user" ? "justify-start" : "justify-end"}`}
                 >
                   <div
-                    className={`max-w-[80%] rounded-[4px] px-4 py-2.5 text-xs ${
+                    className={`max-w-[80%] rounded-xl px-4 py-2.5 text-xs ${
                       msg.role === "user"
                         ? "bg-gray-100 text-gray-900"
                         : "bg-indigo-600 text-white"
@@ -888,7 +888,7 @@ function ConversationsTab() {
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-[4px] border border-gray-100 bg-white"
+        className="rounded-xl border border-gray-100 bg-white"
       >
         {conversations.length === 0 ? (
           <div className="flex min-h-[200px] items-center justify-center">
@@ -908,7 +908,7 @@ function ConversationsTab() {
                   className="flex w-full items-center justify-between px-6 py-4 text-left transition-colors hover:bg-gray-50"
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`flex h-9 w-9 items-center justify-center rounded-[4px] ${CHANNEL_COLORS[conv.channel] || "bg-gray-50"}`}>
+                    <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${CHANNEL_COLORS[conv.channel] || "bg-gray-50"}`}>
                       <ChannelIcon className="h-4 w-4" />
                     </div>
                     <div>
@@ -986,7 +986,7 @@ function AppointmentsTab() {
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-[4px] border border-gray-100 bg-white"
+      className="rounded-xl border border-gray-100 bg-white"
     >
       <div className="border-b border-gray-100 px-6 py-4">
         <h3 className="text-sm font-semibold text-gray-900">Asistan Randevuları</h3>
@@ -1006,7 +1006,7 @@ function AppointmentsTab() {
             return (
               <div key={appt.id} className="flex items-center justify-between px-6 py-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-[4px] bg-indigo-50">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50">
                     <CalendarCheck className="h-4 w-4 text-indigo-600" />
                   </div>
                   <div>

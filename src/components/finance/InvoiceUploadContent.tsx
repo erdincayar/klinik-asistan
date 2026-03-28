@@ -85,14 +85,14 @@ interface ProductOption {
 
 const statusConfig: Record<string, { label: string; color: string; icon: typeof Clock }> = {
   PENDING: { label: "Bekliyor", color: "bg-yellow-100 text-yellow-700", icon: Clock },
-  PROCESSING: { label: "İşleniyor", color: "bg-[#FDEDEC] text-[#9B2D18]", icon: Loader2 },
+  PROCESSING: { label: "İşleniyor", color: "bg-[#E0E7FF] text-[#4F46E5]", icon: Loader2 },
   COMPLETED: { label: "Tamamlandı", color: "bg-green-100 text-green-700", icon: CheckCircle },
   FAILED: { label: "Hata", color: "bg-red-100 text-red-700", icon: XCircle },
   REJECTED: { label: "Reddedildi", color: "bg-orange-100 text-orange-700", icon: XCircle },
 };
 
 function Skeleton({ className }: { className?: string }) {
-  return <div className={`animate-pulse rounded-[4px] bg-gray-100 ${className || ""}`} />;
+  return <div className={`animate-pulse rounded-xl bg-gray-100 ${className || ""}`} />;
 }
 
 export default function InvoiceUploadContent() {
@@ -393,7 +393,7 @@ export default function InvoiceUploadContent() {
       <div className="flex gap-2">
         <button
           onClick={() => setActiveTab("EXPENSE")}
-          className={`flex items-center gap-2 rounded-[4px] px-5 py-2.5 text-sm font-semibold transition-all ${
+          className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all ${
             activeTab === "EXPENSE"
               ? "bg-red-50 text-red-700 ring-1 ring-red-200"
               : "bg-white text-gray-500 hover:bg-gray-50"
@@ -404,7 +404,7 @@ export default function InvoiceUploadContent() {
         </button>
         <button
           onClick={() => setActiveTab("INCOME")}
-          className={`flex items-center gap-2 rounded-[4px] px-5 py-2.5 text-sm font-semibold transition-all ${
+          className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all ${
             activeTab === "INCOME"
               ? "bg-green-50 text-green-700 ring-1 ring-green-200"
               : "bg-white text-gray-500 hover:bg-gray-50"
@@ -425,21 +425,21 @@ export default function InvoiceUploadContent() {
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
-          className={`relative rounded-[4px] border-2 border-dashed p-12 text-center transition-all ${
+          className={`relative rounded-xl border-2 border-dashed p-12 text-center transition-all ${
             dragOver
-              ? "border-[#BE3A21] bg-[#FFF5F3]"
+              ? "border-[#6366F1] bg-[#EEF2FF]"
               : "border-gray-200 bg-white hover:border-gray-300"
           }`}
         >
           {uploading ? (
             <div className="flex flex-col items-center gap-3">
-              <Loader2 className="h-10 w-10 animate-spin text-[#BE3A21]" />
+              <Loader2 className="h-10 w-10 animate-spin text-[#6366F1]" />
               <p className="text-sm font-medium text-gray-600">Fatura işleniyor...</p>
               <p className="text-xs text-gray-400">AI ile fatura okunuyor</p>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-3">
-              <div className={`flex h-14 w-14 items-center justify-center rounded-[4px] ${
+              <div className={`flex h-14 w-14 items-center justify-center rounded-xl ${
                 activeTab === "EXPENSE" ? "bg-red-50" : "bg-green-50"
               }`}>
                 <Upload className={`h-6 w-6 ${activeTab === "EXPENSE" ? "text-red-600" : "text-green-600"}`} />
@@ -452,7 +452,7 @@ export default function InvoiceUploadContent() {
                   veya dosya seçmek için tıklayın (PDF, JPG, PNG)
                 </p>
               </div>
-              <label className={`cursor-pointer rounded-[4px] px-6 py-2.5 text-sm font-semibold text-white transition-colors ${
+              <label className={`cursor-pointer rounded-xl px-6 py-2.5 text-sm font-semibold text-white transition-colors ${
                 activeTab === "EXPENSE"
                   ? "bg-red-600 hover:bg-red-700"
                   : "bg-green-600 hover:bg-green-700"
@@ -474,7 +474,7 @@ export default function InvoiceUploadContent() {
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-3 flex items-center gap-2 rounded-[4px] bg-red-50 px-4 py-3 text-sm text-red-600"
+            className="mt-3 flex items-center gap-2 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600"
           >
             <XCircle className="h-4 w-4 shrink-0" />
             {uploadError}
@@ -484,7 +484,7 @@ export default function InvoiceUploadContent() {
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-3 flex items-center gap-2 rounded-[4px] bg-green-50 px-4 py-3 text-sm text-green-600"
+            className="mt-3 flex items-center gap-2 rounded-xl bg-green-50 px-4 py-3 text-sm text-green-600"
           >
             <CheckCircle className="h-4 w-4 shrink-0" />
             {uploadSuccess}
@@ -497,7 +497,7 @@ export default function InvoiceUploadContent() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
-        className="overflow-hidden rounded-[4px] border border-gray-100 bg-white"
+        className="overflow-hidden rounded-xl border border-gray-100 bg-white"
       >
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
           <div className="flex items-center gap-2">
@@ -551,7 +551,7 @@ export default function InvoiceUploadContent() {
                   className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-gray-50/70"
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`flex h-10 w-10 items-center justify-center rounded-[4px] ${
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${
                       inv.invoiceType === "EXPENSE" ? "bg-red-50" : "bg-green-50"
                     }`}>
                       {inv.invoiceType === "EXPENSE" ? (
@@ -599,7 +599,7 @@ export default function InvoiceUploadContent() {
                         <button
                           onClick={(e) => { e.stopPropagation(); handleRecalculate(inv); }}
                           disabled={recalculating === inv.id}
-                          className="inline-flex items-center gap-1 rounded-lg bg-[#FFF5F3] px-2 py-1 text-[11px] font-medium text-[#BE3A21] transition-colors hover:bg-[#FDEDEC] disabled:opacity-50"
+                          className="inline-flex items-center gap-1 rounded-lg bg-[#EEF2FF] px-2 py-1 text-[11px] font-medium text-[#6366F1] transition-colors hover:bg-[#E0E7FF] disabled:opacity-50"
                           title="Kârı Güncelle"
                         >
                           <RefreshCw className={`h-3 w-3 ${recalculating === inv.id ? "animate-spin" : ""}`} />
@@ -682,7 +682,7 @@ export default function InvoiceUploadContent() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="mx-4 max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-[4px] bg-white p-6 shadow-xl"
+              className="mx-4 max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white p-6 shadow-xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-4">
@@ -702,7 +702,7 @@ export default function InvoiceUploadContent() {
 
               <div className="space-y-4">
                 {/* Invoice info */}
-                <div className="rounded-[4px] bg-gray-50 p-4">
+                <div className="rounded-xl bg-gray-50 p-4">
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
                       <p className="text-xs text-gray-400">Tedarikçi / Satıcı</p>
@@ -743,7 +743,7 @@ export default function InvoiceUploadContent() {
 
                 {/* Invoice type selector */}
                 {!selectedInvoice.approved && selectedInvoice.status === "COMPLETED" && (
-                  <div className="rounded-[4px] border border-[#FDEDEC] bg-[#FFF5F3]/50 p-4">
+                  <div className="rounded-xl border border-[#E0E7FF] bg-[#EEF2FF]/50 p-4">
                     <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Fatura Türü</p>
                     <div className="flex gap-2">
                       <button
@@ -793,7 +793,7 @@ export default function InvoiceUploadContent() {
                 {selectedInvoice.ocrData && (selectedInvoice.ocrData as any).items && (
                   <div>
                     <div className="flex items-center gap-2 mb-3">
-                      <Package className="h-4 w-4 text-[#BE3A21]" />
+                      <Package className="h-4 w-4 text-[#6366F1]" />
                       <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
                         Kalemler & Stok Eşleştirme
                       </p>
@@ -801,7 +801,7 @@ export default function InvoiceUploadContent() {
 
                     {matchLoading ? (
                       <div className="flex items-center justify-center py-8">
-                        <Loader2 className="h-6 w-6 animate-spin text-[#BE3A21]" />
+                        <Loader2 className="h-6 w-6 animate-spin text-[#6366F1]" />
                         <span className="ml-2 text-sm text-gray-500">Ürünler eşleştiriliyor...</span>
                       </div>
                     ) : (
@@ -809,7 +809,7 @@ export default function InvoiceUploadContent() {
                         {stockMappings.map((mapping, idx) => (
                           <div
                             key={idx}
-                            className="rounded-[4px] border border-gray-100 p-3"
+                            className="rounded-xl border border-gray-100 p-3"
                           >
                             <div className="flex items-start justify-between gap-3">
                               <div className="flex-1 min-w-0">
@@ -874,7 +874,7 @@ export default function InvoiceUploadContent() {
                                   </button>
 
                                   {openDropdown === idx && (
-                                    <div className="absolute left-0 right-0 top-full z-10 mt-1 max-h-48 overflow-y-auto rounded-[4px] border border-gray-200 bg-white shadow-lg">
+                                    <div className="absolute left-0 right-0 top-full z-10 mt-1 max-h-48 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
                                       <button
                                         onClick={() => updateMapping(idx, null, null)}
                                         className="flex w-full items-center gap-2 px-3 py-2 text-xs text-gray-500 hover:bg-gray-50"
@@ -886,8 +886,8 @@ export default function InvoiceUploadContent() {
                                         <button
                                           key={product.id}
                                           onClick={() => updateMapping(idx, product.id, product.name)}
-                                          className={`flex w-full items-center justify-between px-3 py-2 text-xs hover:bg-[#FFF5F3] ${
-                                            mapping.productId === product.id ? "bg-[#FFF5F3] text-[#9B2D18]" : "text-gray-700"
+                                          className={`flex w-full items-center justify-between px-3 py-2 text-xs hover:bg-[#EEF2FF] ${
+                                            mapping.productId === product.id ? "bg-[#EEF2FF] text-[#4F46E5]" : "text-gray-700"
                                           }`}
                                         >
                                           <span className="truncate">{product.name}</span>
@@ -919,7 +919,7 @@ export default function InvoiceUploadContent() {
 
                 {/* Income Preview - Profit Analysis */}
                 {!selectedInvoice.approved && selectedInvoice.status === "COMPLETED" && (invoiceTypeOverride || selectedInvoice.invoiceType) === "INCOME" && stockMappings.length > 0 && (
-                  <div className="rounded-[4px] border border-green-100 bg-green-50/30 p-4">
+                  <div className="rounded-xl border border-green-100 bg-green-50/30 p-4">
                     <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Kar Önizleme</p>
                     <div className="space-y-2">
                       {stockMappings.map((mapping, idx) => {
@@ -998,7 +998,7 @@ export default function InvoiceUploadContent() {
 
                 {/* Expense Preview - Stock Impact */}
                 {!selectedInvoice.approved && selectedInvoice.status === "COMPLETED" && (invoiceTypeOverride || selectedInvoice.invoiceType) === "EXPENSE" && stockMappings.length > 0 && (
-                  <div className="rounded-[4px] border border-[#FDEDEC] bg-[#FFF5F3]/30 p-4">
+                  <div className="rounded-xl border border-[#E0E7FF] bg-[#EEF2FF]/30 p-4">
                     <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Stok Etkisi</p>
                     <div className="space-y-2">
                       {stockMappings.map((mapping, idx) => {
@@ -1013,8 +1013,8 @@ export default function InvoiceUploadContent() {
                                 </div>
                               ) : (
                                 <div className="flex items-center gap-1 mt-0.5">
-                                  <Package className="h-3 w-3 text-[#BE3A21]" />
-                                  <span className="text-[11px] text-[#BE3A21]">Yeni ürün oluşturulacak (+{mapping.quantity})</span>
+                                  <Package className="h-3 w-3 text-[#6366F1]" />
+                                  <span className="text-[11px] text-[#6366F1]">Yeni ürün oluşturulacak (+{mapping.quantity})</span>
                                 </div>
                               )}
                             </div>
@@ -1026,7 +1026,7 @@ export default function InvoiceUploadContent() {
                       const matched = stockMappings.filter(m => m.productId);
                       const unmatched = stockMappings.filter(m => !m.productId);
                       return (matched.length > 0 || unmatched.length > 0) ? (
-                        <div className="mt-3 border-t border-[#FDEDEC] pt-3 text-xs text-gray-500">
+                        <div className="mt-3 border-t border-[#E0E7FF] pt-3 text-xs text-gray-500">
                           {matched.length > 0 && <span>{matched.length} ürün güncellenecek</span>}
                           {matched.length > 0 && unmatched.length > 0 && <span> · </span>}
                           {unmatched.length > 0 && <span>{unmatched.length} yeni ürün oluşturulacak</span>}
@@ -1040,7 +1040,7 @@ export default function InvoiceUploadContent() {
                 {!selectedInvoice.approved && selectedInvoice.status === "COMPLETED" && (
                   <div className="border-t border-gray-100 pt-4">
                     <div className="flex items-center gap-2 mb-3">
-                      <Check className="h-4 w-4 text-[#BE3A21]" />
+                      <Check className="h-4 w-4 text-[#6366F1]" />
                       <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
                         Onay
                       </p>
@@ -1068,7 +1068,7 @@ export default function InvoiceUploadContent() {
                       <button
                         onClick={handleApprove}
                         disabled={approving || rejecting}
-                        className="flex-1 rounded-[4px] bg-emerald-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                        className="flex-1 rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50 flex items-center justify-center gap-2"
                       >
                         {approving ? (
                           <>
@@ -1085,7 +1085,7 @@ export default function InvoiceUploadContent() {
                       <button
                         onClick={() => setConfirmReject(true)}
                         disabled={approving || rejecting}
-                        className="flex-1 rounded-[4px] bg-red-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                        className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2"
                       >
                         {rejecting ? (
                           <>
@@ -1104,7 +1104,7 @@ export default function InvoiceUploadContent() {
                 )}
 
                 {selectedInvoice.approved && (
-                  <div className="rounded-[4px] bg-emerald-50 p-3 flex items-center gap-2">
+                  <div className="rounded-xl bg-emerald-50 p-3 flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-emerald-600" />
                     <p className="text-sm font-medium text-emerald-700">Bu fatura onaylanmış</p>
                   </div>
@@ -1113,7 +1113,7 @@ export default function InvoiceUploadContent() {
 
               <button
                 onClick={() => { setSelectedInvoice(null); setOpenDropdown(null); }}
-                className="mt-4 w-full rounded-[4px] bg-gray-100 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-200"
+                className="mt-4 w-full rounded-xl bg-gray-100 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-200"
               >
                 Kapat
               </button>
@@ -1133,11 +1133,11 @@ export default function InvoiceUploadContent() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="mx-4 w-full max-w-sm rounded-[4px] bg-white p-6 shadow-xl"
+              className="mx-4 w-full max-w-sm rounded-xl bg-white p-6 shadow-xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center gap-3 mb-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-[4px] bg-red-50">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50">
                   <AlertTriangle className="h-5 w-5 text-red-600" />
                 </div>
                 <div>
@@ -1157,14 +1157,14 @@ export default function InvoiceUploadContent() {
               <div className="flex gap-3">
                 <button
                   onClick={() => { setConfirmDelete(null); setDeleteError(""); }}
-                  className="flex-1 rounded-[4px] bg-gray-100 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-200"
+                  className="flex-1 rounded-xl bg-gray-100 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-200"
                 >
                   İptal
                 </button>
                 <button
                   onClick={() => handleDelete(confirmDelete)}
                   disabled={deleting === confirmDelete.id}
-                  className="flex-1 rounded-[4px] bg-red-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {deleting === confirmDelete.id ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -1190,11 +1190,11 @@ export default function InvoiceUploadContent() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="mx-4 w-full max-w-sm rounded-[4px] bg-white p-6 shadow-xl"
+              className="mx-4 w-full max-w-sm rounded-xl bg-white p-6 shadow-xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center gap-3 mb-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-[4px] bg-orange-50">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50">
                   <AlertTriangle className="h-5 w-5 text-orange-600" />
                 </div>
                 <div>
@@ -1208,14 +1208,14 @@ export default function InvoiceUploadContent() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setConfirmReject(false)}
-                  className="flex-1 rounded-[4px] bg-gray-100 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-200"
+                  className="flex-1 rounded-xl bg-gray-100 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-200"
                 >
                   İptal
                 </button>
                 <button
                   onClick={handleReject}
                   disabled={rejecting}
-                  className="flex-1 rounded-[4px] bg-orange-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 rounded-xl bg-orange-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-700 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {rejecting ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

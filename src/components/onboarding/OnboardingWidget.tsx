@@ -217,7 +217,7 @@ export default function OnboardingWidget() {
         animate={{ scale: 1 }}
         transition={{ delay: 2, type: "spring", stiffness: 200 }}
         onClick={() => setOpen(!open)}
-        className="fixed bottom-6 right-6 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-[#BE3A21] text-white shadow-lg shadow-[#BE3A21]/30 transition-transform hover:scale-105"
+        className="fixed bottom-6 right-6 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-[#6366F1] text-white shadow-lg shadow-[#6366F1]/30 transition-transform hover:scale-105"
       >
         {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
       </motion.button>
@@ -229,11 +229,11 @@ export default function OnboardingWidget() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="fixed bottom-24 right-6 z-[60] flex w-[420px] max-w-[calc(100vw-48px)] flex-col overflow-hidden rounded-[4px] border border-gray-200 bg-white shadow-2xl shadow-black/10 max-sm:inset-0 max-sm:bottom-0 max-sm:right-0 max-sm:w-full max-sm:max-w-full max-sm:rounded-none"
+            className="fixed bottom-24 right-6 z-[60] flex w-[420px] max-w-[calc(100vw-48px)] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl shadow-black/10 max-sm:inset-0 max-sm:bottom-0 max-sm:right-0 max-sm:w-full max-sm:max-w-full max-sm:rounded-none"
             style={{ height: "min(600px, calc(100vh - 120px))" }}
           >
             {/* Header */}
-            <div className="flex items-center gap-3 border-b border-gray-100 bg-[#BE3A21] px-5 py-4">
+            <div className="flex items-center gap-3 border-b border-gray-100 bg-[#6366F1] px-5 py-4">
               {step > 0 && (
                 <button onClick={goBack} className="mr-1 text-white/80 hover:text-white">
                   <ChevronLeft className="h-5 w-5" />
@@ -258,9 +258,9 @@ export default function OnboardingWidget() {
                   key={i}
                   className={`h-2 rounded-full transition-all ${
                     i === step
-                      ? "w-6 bg-[#BE3A21]"
+                      ? "w-6 bg-[#6366F1]"
                       : i < step
-                      ? "w-2 bg-[#D4502E]"
+                      ? "w-2 bg-[#818CF8]"
                       : "w-2 bg-gray-200"
                   }`}
                 />
@@ -290,9 +290,9 @@ export default function OnboardingWidget() {
                         <button
                           key={s.id}
                           onClick={() => handleSectorSelect(s.id)}
-                          className={`flex items-center gap-3 rounded-[4px] border-2 p-4 text-left transition-all hover:border-[#D4502E] hover:bg-[#FFF5F3] ${
+                          className={`flex items-center gap-3 rounded-xl border-2 p-4 text-left transition-all hover:border-[#818CF8] hover:bg-[#EEF2FF] ${
                             sector === s.id
-                              ? "border-[#BE3A21] bg-[#FFF5F3]"
+                              ? "border-[#6366F1] bg-[#EEF2FF]"
                               : "border-gray-100"
                           }`}
                         >
@@ -304,8 +304,8 @@ export default function OnboardingWidget() {
                     <div className="mt-3">
                       <button
                         onClick={() => handleSectorSelect("other")}
-                        className={`flex w-full items-center gap-3 rounded-[4px] border-2 p-4 text-left transition-all hover:border-[#D4502E] hover:bg-[#FFF5F3] ${
-                          sector === "other" ? "border-[#BE3A21] bg-[#FFF5F3]" : "border-gray-100"
+                        className={`flex w-full items-center gap-3 rounded-xl border-2 p-4 text-left transition-all hover:border-[#818CF8] hover:bg-[#EEF2FF] ${
+                          sector === "other" ? "border-[#6366F1] bg-[#EEF2FF]" : "border-gray-100"
                         }`}
                       >
                         <span className="text-2xl">✏️</span>
@@ -322,13 +322,13 @@ export default function OnboardingWidget() {
                             onChange={(e) => setSectorCustom(e.target.value)}
                             onKeyDown={(e) => e.key === "Enter" && handleSectorCustomSubmit()}
                             placeholder="Sektörünüzü yazın..."
-                            className="flex-1 rounded-[4px] border border-gray-200 px-4 py-2.5 text-sm focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
+                            className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
                             autoFocus
                           />
                           <button
                             onClick={handleSectorCustomSubmit}
                             disabled={!sectorCustom.trim()}
-                            className="rounded-[4px] bg-[#BE3A21] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+                            className="rounded-xl bg-[#6366F1] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
                           >
                             <ArrowRight className="h-4 w-4" />
                           </button>
@@ -358,9 +358,9 @@ export default function OnboardingWidget() {
                         <button
                           key={t.id}
                           onClick={() => handleTeamSizeSelect(t.id)}
-                          className={`flex w-full items-center gap-4 rounded-[4px] border-2 p-5 text-left transition-all hover:border-[#D4502E] hover:bg-[#FFF5F3] ${
+                          className={`flex w-full items-center gap-4 rounded-xl border-2 p-5 text-left transition-all hover:border-[#818CF8] hover:bg-[#EEF2FF] ${
                             teamSize === t.id
-                              ? "border-[#BE3A21] bg-[#FFF5F3]"
+                              ? "border-[#6366F1] bg-[#EEF2FF]"
                               : "border-gray-100"
                           }`}
                         >
@@ -394,7 +394,7 @@ export default function OnboardingWidget() {
                           onClick={() => togglePainPoint(p.id)}
                           className={`inline-flex items-center gap-2 rounded-full border-2 px-4 py-2.5 text-sm font-medium transition-all ${
                             painPoints.has(p.id)
-                              ? "border-[#BE3A21] bg-[#FFF5F3] text-[#9B2D18]"
+                              ? "border-[#6366F1] bg-[#EEF2FF] text-[#4F46E5]"
                               : "border-gray-200 text-gray-600 hover:border-gray-300"
                           }`}
                         >
@@ -406,7 +406,7 @@ export default function OnboardingWidget() {
                     <button
                       onClick={handleAnalyze}
                       disabled={painPoints.size === 0}
-                      className="mt-6 flex w-full items-center justify-center gap-2 rounded-[4px] bg-[#BE3A21] py-3.5 text-sm font-semibold text-white transition-all hover:bg-[#9B2D18] disabled:opacity-40"
+                      className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#6366F1] py-3.5 text-sm font-semibold text-white transition-all hover:bg-[#4F46E5] disabled:opacity-40"
                     >
                       Analiz Et
                       <ArrowRight className="h-4 w-4" />
@@ -427,14 +427,14 @@ export default function OnboardingWidget() {
                   >
                     {analyzing ? (
                       <div className="flex flex-col items-center justify-center py-16">
-                        <Loader2 className="mb-4 h-10 w-10 animate-spin text-[#BE3A21]" />
+                        <Loader2 className="mb-4 h-10 w-10 animate-spin text-[#6366F1]" />
                         <p className="text-sm font-medium text-gray-600">Profiliniz analiz ediliyor...</p>
                         <p className="mt-1 text-xs text-gray-400">Bu birkaç saniye sürebilir</p>
                       </div>
                     ) : analysisResult ? (
                       <div>
                         {/* Custom message */}
-                        <div className="mb-5 rounded-[4px] bg-[#FFF5F3] p-4">
+                        <div className="mb-5 rounded-xl bg-[#EEF2FF] p-4">
                           <p className="text-sm leading-relaxed text-[#5C1B0F]">
                             {analysisResult.customMessage}
                           </p>
@@ -482,7 +482,7 @@ export default function OnboardingWidget() {
                         <button
                           onClick={handleBuildPackage}
                           disabled={selectedModules.size === 0}
-                          className="mt-2 flex w-full items-center justify-center gap-2 rounded-[4px] bg-[#BE3A21] py-3.5 text-sm font-semibold text-white transition-all hover:bg-[#9B2D18] disabled:opacity-40"
+                          className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#6366F1] py-3.5 text-sm font-semibold text-white transition-all hover:bg-[#4F46E5] disabled:opacity-40"
                         >
                           Paketimi Oluştur
                           <ArrowRight className="h-4 w-4" />
@@ -491,7 +491,7 @@ export default function OnboardingWidget() {
                     ) : (
                       <div className="flex flex-col items-center justify-center py-16">
                         <p className="text-sm text-gray-500">Bir hata oluştu. Lütfen tekrar deneyin.</p>
-                        <button onClick={goBack} className="mt-3 text-sm font-medium text-[#BE3A21]">
+                        <button onClick={goBack} className="mt-3 text-sm font-medium text-[#6366F1]">
                           Geri Dön
                         </button>
                       </div>
@@ -519,7 +519,7 @@ export default function OnboardingWidget() {
                       {selectedList.map((mod) => (
                         <div
                           key={mod.slug}
-                          className="flex items-center gap-3 rounded-[4px] border border-gray-100 p-3"
+                          className="flex items-center gap-3 rounded-xl border border-gray-100 p-3"
                         >
                           <div
                             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
@@ -535,7 +535,7 @@ export default function OnboardingWidget() {
                       ))}
                     </div>
 
-                    <div className="mt-4 rounded-[4px] bg-gray-50 p-4">
+                    <div className="mt-4 rounded-xl bg-gray-50 p-4">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-gray-600">Toplam</span>
                         <span className="text-xl font-bold text-gray-900">₺{totalPrice}/ay</span>
@@ -547,7 +547,7 @@ export default function OnboardingWidget() {
 
                     <button
                       onClick={handleComplete}
-                      className="mt-4 flex w-full items-center justify-center gap-2 rounded-[4px] bg-[#BE3A21] py-3.5 text-sm font-semibold text-white transition-all hover:bg-[#9B2D18]"
+                      className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#6366F1] py-3.5 text-sm font-semibold text-white transition-all hover:bg-[#4F46E5]"
                     >
                       Hemen Başla — Ücretsiz Dene
                       <ArrowRight className="h-4 w-4" />
@@ -555,7 +555,7 @@ export default function OnboardingWidget() {
 
                     <button
                       onClick={() => (window.location.href = "/demo")}
-                      className="mt-2 flex w-full items-center justify-center gap-2 rounded-[4px] border border-gray-200 py-3 text-sm font-medium text-gray-600 transition-all hover:bg-gray-50"
+                      className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 py-3 text-sm font-medium text-gray-600 transition-all hover:bg-gray-50"
                     >
                       Demo Talep Et
                     </button>
@@ -591,9 +591,9 @@ function ModuleCard({
 
   return (
     <div
-      className={`rounded-[4px] border-2 p-3 transition-all ${
+      className={`rounded-xl border-2 p-3 transition-all ${
         selected
-          ? "border-[#D4502E] bg-[#FFF5F3]/50"
+          ? "border-[#818CF8] bg-[#EEF2FF]/50"
           : muted
           ? "border-gray-100 bg-gray-50/50"
           : "border-gray-100"
@@ -603,7 +603,7 @@ function ModuleCard({
         <button
           onClick={onToggle}
           className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors ${
-            selected ? "border-[#BE3A21] bg-[#BE3A21]" : "border-gray-300"
+            selected ? "border-[#6366F1] bg-[#6366F1]" : "border-gray-300"
           }`}
         >
           {selected && <Check className="h-3 w-3 text-white" />}
@@ -620,13 +620,13 @@ function ModuleCard({
               </div>
               <span className="text-[13px] font-semibold text-gray-800">{mod.name}</span>
             </div>
-            <span className="text-[13px] font-bold text-[#BE3A21]">₺{mod.basePrice}/ay</span>
+            <span className="text-[13px] font-bold text-[#6366F1]">₺{mod.basePrice}/ay</span>
           </div>
           <p className="mt-1 text-[11px] text-gray-500">{mod.reasoning}</p>
 
           <button
             onClick={() => setExpanded(!expanded)}
-            className="mt-1 text-[11px] font-medium text-[#9B2D18] hover:underline"
+            className="mt-1 text-[11px] font-medium text-[#4F46E5] hover:underline"
           >
             {expanded ? "Gizle" : "Detaylar"}
           </button>

@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Open_Sans } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
-const openSans = Open_Sans({ subsets: ["latin"], weight: ["400", "600", "700", "800"] });
+const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600", "700"] });
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -91,7 +91,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="tr">
-      <body className={openSans.className}>
+      <body className={inter.className}>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}

@@ -18,7 +18,7 @@ function IconBox({ className, size = "md", active = false, children, ...props }:
       className={cn(
         "inline-flex items-center justify-center rounded-full transition-colors",
         sizeMap[size],
-        active ? "bg-[#BE3A21] text-white" : "bg-[#EEE] text-[#555]",
+        active ? "bg-[#6366F1] text-white" : "bg-[#EEF2FF] text-[#6366F1]",
         className
       )}
       {...props}

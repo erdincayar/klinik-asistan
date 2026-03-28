@@ -487,7 +487,7 @@ export default function RemindersPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Bu Ay Gonderilen
             </CardTitle>
-            <Users className="h-4 w-4 text-[#BE3A21]" />
+            <Users className="h-4 w-4 text-[#6366F1]" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">

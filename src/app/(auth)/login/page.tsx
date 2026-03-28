@@ -79,11 +79,11 @@ export default function LoginPage() {
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-[4px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
+            className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
           >
             {error}
             {googleError && (
-              <Link href="/register" className="ml-1 font-semibold text-[#BE3A21] hover:text-[#9B2D18] underline">
+              <Link href="/register" className="ml-1 font-semibold text-[#6366F1] hover:text-[#4F46E5] underline">
                 Kayıt Ol
               </Link>
             )}
@@ -103,7 +103,7 @@ export default function LoginPage() {
             type="email"
             autoComplete="email"
             placeholder="ornek@email.com"
-            className="block w-full rounded-[4px] border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
+            className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
             {...register("email")}
           />
           {errors.email && (
@@ -122,7 +122,7 @@ export default function LoginPage() {
             </label>
             <Link
               href="/forgot-password"
-              className="text-xs font-medium text-[#BE3A21] hover:text-[#9B2D18]"
+              className="text-xs font-medium text-[#6366F1] hover:text-[#4F46E5]"
             >
               Şifremi Unuttum
             </Link>
@@ -133,7 +133,7 @@ export default function LoginPage() {
               type={showPassword ? "text" : "password"}
               autoComplete="current-password"
               placeholder="••••••••"
-              className="block w-full rounded-[4px] border border-gray-200 bg-white px-4 py-3 pr-11 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20"
+              className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 pr-11 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
               {...register("password")}
             />
             <button
@@ -161,7 +161,7 @@ export default function LoginPage() {
             type="checkbox"
             checked={rememberMe}
             onChange={(e) => setRememberMe(e.target.checked)}
-            className="h-4 w-4 rounded border-gray-300 text-[#BE3A21] focus:ring-[#BE3A21]/20"
+            className="h-4 w-4 rounded border-gray-300 text-[#6366F1] focus:ring-[#6366F1]/20"
           />
           <label
             htmlFor="rememberMe"
@@ -175,7 +175,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="flex w-full items-center justify-center gap-2 rounded-[4px] bg-[#2B2B2B] px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-[#3A3A3A] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1E1E2D] px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-[#2A2A3C] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? (
             <>
@@ -210,7 +210,7 @@ export default function LoginPage() {
             signIn("google", { callbackUrl: "/dashboard" });
           }}
           disabled={loading}
-          className="flex w-full items-center justify-center gap-2 rounded-[4px] border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 disabled:opacity-60"
         >
           <svg className="h-4 w-4" viewBox="0 0 24 24">
             <path
@@ -238,7 +238,7 @@ export default function LoginPage() {
         Hesabınız yok mu?{" "}
         <Link
           href="/register"
-          className="font-semibold text-[#BE3A21] hover:text-[#9B2D18]"
+          className="font-semibold text-[#6366F1] hover:text-[#4F46E5]"
         >
           Kayıt Ol
         </Link>

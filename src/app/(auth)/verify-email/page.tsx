@@ -10,7 +10,7 @@ export default function VerifyEmailPage() {
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-[#BE3A21]" />
+        <Loader2 className="h-6 w-6 animate-spin text-[#6366F1]" />
       </div>
     }>
       <VerifyEmailContent />
@@ -186,8 +186,8 @@ function VerifyEmailContent() {
   return (
     <>
       <div className="mb-8 text-center">
-        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#FDEDEC]">
-          <MailOpen className="h-7 w-7 text-[#BE3A21]" />
+        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#E0E7FF]">
+          <MailOpen className="h-7 w-7 text-[#6366F1]" />
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-gray-900">
           Email Doğrulama
@@ -202,7 +202,7 @@ function VerifyEmailContent() {
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6 rounded-[4px] border border-red-200 bg-red-50 px-4 py-3 text-center text-sm text-red-600"
+          className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center text-sm text-red-600"
         >
           {error}
         </motion.div>
@@ -221,7 +221,7 @@ function VerifyEmailContent() {
             onChange={(e) => handleChange(i, e.target.value)}
             onKeyDown={(e) => handleKeyDown(i, e)}
             disabled={loading}
-            className="h-14 w-12 rounded-[4px] border-2 border-gray-200 bg-white text-center text-xl font-bold text-gray-900 transition-all focus:border-[#BE3A21] focus:outline-none focus:ring-2 focus:ring-[#BE3A21]/20 disabled:opacity-50"
+            className="h-14 w-12 rounded-xl border-2 border-gray-200 bg-white text-center text-xl font-bold text-gray-900 transition-all focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20 disabled:opacity-50"
           />
         ))}
       </div>
@@ -246,7 +246,7 @@ function VerifyEmailContent() {
             <button
               onClick={handleResend}
               disabled={resending}
-              className="inline-flex items-center gap-1 font-semibold text-[#BE3A21] hover:text-[#9B2D18] disabled:opacity-50"
+              className="inline-flex items-center gap-1 font-semibold text-[#6366F1] hover:text-[#4F46E5] disabled:opacity-50"
             >
               {resending ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />

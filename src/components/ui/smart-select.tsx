@@ -224,7 +224,7 @@ export function SmartSelect({
           disabled={disabled}
           autoComplete="off"
           className={cn(
-            "flex h-10 w-full rounded-[2px] border border-[#DDD] bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-[#BE3A21] focus-visible:shadow-[0_0_0_3px_rgba(190,58,33,0.1)] disabled:cursor-not-allowed disabled:opacity-50",
+            "flex h-10 w-full rounded-lg border border-[#E5E7EB] bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-[#6366F1] focus-visible:shadow-[0_0_0_3px_rgba(99,102,241,0.1)] disabled:cursor-not-allowed disabled:opacity-50",
             loading && "pr-9",
           )}
         />
@@ -237,7 +237,7 @@ export function SmartSelect({
       {open && (navigableCount > 0 || (hasCreate && !freetext)) && (
         <div
           ref={listRef}
-          className="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 overflow-y-auto rounded-[4px] border border-[#E8E8E8] bg-white shadow-lg"
+          className="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 overflow-y-auto rounded-xl border border-[#E5E7EB] bg-white shadow-lg"
         >
           {/* Entity create row */}
           {hasCreate && !freetext && (
@@ -245,8 +245,8 @@ export function SmartSelect({
               type="button"
               data-idx={idx}
               className={cn(
-                "flex w-full items-center gap-2 border-b border-[#E8E8E8] bg-[#FFF5F3]/50 px-3 py-2 text-sm font-medium text-[#BE3A21] transition-colors hover:bg-[#FDEDEC]/50",
-                highlightIndex === idx && "bg-[#FDEDEC]/70",
+                "flex w-full items-center gap-2 border-b border-[#E5E7EB] bg-[#EEF2FF]/50 px-3 py-2 text-sm font-medium text-[#6366F1] transition-colors hover:bg-[#E0E7FF]/50",
+                highlightIndex === idx && "bg-[#E0E7FF]/70",
               )}
               onMouseDown={(e) => {
                 e.preventDefault();
@@ -270,8 +270,8 @@ export function SmartSelect({
                 type="button"
                 data-idx={myIdx}
                 className={cn(
-                  "flex w-full items-center gap-2 border-b border-[#E8E8E8] bg-[#FFF5F3]/50 px-3 py-2 text-sm font-medium text-[#BE3A21] transition-colors hover:bg-[#FDEDEC]/50",
-                  highlightIndex === myIdx && "bg-[#FDEDEC]/70",
+                  "flex w-full items-center gap-2 border-b border-[#E5E7EB] bg-[#EEF2FF]/50 px-3 py-2 text-sm font-medium text-[#6366F1] transition-colors hover:bg-[#E0E7FF]/50",
+                  highlightIndex === myIdx && "bg-[#E0E7FF]/70",
                 )}
                 onMouseDown={(e) => {
                   e.preventDefault();
@@ -295,8 +295,8 @@ export function SmartSelect({
                 type="button"
                 data-idx={myIdx}
                 className={cn(
-                  "w-full px-3 py-2 text-left text-sm transition-colors hover:bg-[#FFF5F3]",
-                  highlightIndex === myIdx && "bg-[#FFF5F3] text-[#BE3A21]",
+                  "w-full px-3 py-2 text-left text-sm transition-colors hover:bg-[#EEF2FF]",
+                  highlightIndex === myIdx && "bg-[#EEF2FF] text-[#6366F1]",
                 )}
                 onMouseDown={(e) => {
                   e.preventDefault();
@@ -321,7 +321,7 @@ export function SmartSelect({
 
       {/* Inline create form */}
       {showCreateForm && createForm && (
-        <div className="mt-2 space-y-3 rounded-[4px] border border-[#FDEDEC] bg-[#FFF5F3]/50 p-4">
+        <div className="mt-2 space-y-3 rounded-xl border border-[#E0E7FF] bg-[#EEF2FF]/50 p-4">
           {createForm}
         </div>
       )}

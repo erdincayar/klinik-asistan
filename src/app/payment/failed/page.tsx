@@ -8,7 +8,7 @@ export default function PaymentFailedPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-sm rounded-[4px] bg-white p-8 text-center shadow-lg">
+      <div className="w-full max-w-sm rounded-xl bg-white p-8 text-center shadow-lg">
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
           <XCircle className="h-8 w-8 text-red-600" />
         </div>
@@ -21,13 +21,13 @@ export default function PaymentFailedPage() {
         <div className="space-y-2">
           <button
             onClick={() => router.push("/settings")}
-            className="w-full rounded-[4px] bg-[#2B2B2B] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#3A3A3A]"
+            className="w-full rounded-xl bg-[#1E1E2D] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2A2A3C]"
           >
             Tekrar Dene
           </button>
           <button
             onClick={() => router.push("/dashboard")}
-            className="w-full rounded-[4px] border border-gray-200 bg-white px-6 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+            className="w-full rounded-xl border border-gray-200 bg-white px-6 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
           >
             Dashboard&apos;a Dön
           </button>

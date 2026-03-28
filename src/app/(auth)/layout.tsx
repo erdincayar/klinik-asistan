@@ -20,7 +20,7 @@ export default function AuthLayout({
   return (
     <div className="flex min-h-screen">
       {/* ── Left panel (hidden on mobile) ── */}
-      <div className="relative hidden w-[480px] shrink-0 overflow-hidden bg-gradient-to-br from-[#BE3A21] via-[#9B2D18] to-[#9B2D18] lg:flex lg:flex-col lg:justify-between">
+      <div className="relative hidden w-[480px] shrink-0 overflow-hidden bg-gradient-to-br from-[#6366F1] via-[#4F46E5] to-[#3730A3] lg:flex lg:flex-col lg:justify-between">
         {/* Decorative elements */}
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -left-20 -top-20 h-64 w-64 rounded-full bg-white/5" />
@@ -30,7 +30,7 @@ export default function AuthLayout({
             className="absolute inset-0"
             style={{
               backgroundImage:
-                "radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px)",
+                "radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px)",
               backgroundSize: "24px 24px",
             }}
           />
@@ -38,9 +38,13 @@ export default function AuthLayout({
 
         {/* Content */}
         <div className="relative z-10 flex flex-1 flex-col justify-center px-12">
-          <Link href="/" className="mb-10 text-2xl font-extrabold tracking-tight">
-            <span className="text-white">Po</span>
-            <span className="text-white/80">by</span>
+          <Link href="/" className="mb-10 flex items-center gap-2.5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20">
+              <span className="text-base font-bold text-white">P</span>
+            </div>
+            <span className="text-2xl font-bold tracking-tight text-white">
+              poby<span className="text-white/60">.</span>
+            </span>
           </Link>
 
           <h2 className="mb-3 text-2xl font-bold leading-snug text-white">
@@ -85,7 +89,7 @@ export default function AuthLayout({
       </div>
 
       {/* ── Right panel ── */}
-      <div className="flex flex-1 items-center justify-center bg-white px-6 py-12">
+      <div className="flex flex-1 items-center justify-center bg-[#F9FAFB] px-6 py-12">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -94,9 +98,13 @@ export default function AuthLayout({
         >
           {/* Mobile-only logo */}
           <div className="mb-8 lg:hidden">
-            <Link href="/" className="text-2xl font-extrabold tracking-tight">
-              <span className="text-[#BE3A21]">Po</span>
-              <span className="text-gray-800">by</span>
+            <Link href="/" className="flex items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#6366F1]">
+                <span className="text-sm font-bold text-white">P</span>
+              </div>
+              <span className="text-xl font-bold tracking-tight text-[#1A1A2E]">
+                poby<span className="text-[#6366F1]">.</span>
+              </span>
             </Link>
           </div>
 

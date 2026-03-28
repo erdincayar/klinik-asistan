@@ -3,22 +3,22 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-[2px] border px-2 py-[3px] text-[11px] font-bold uppercase tracking-wider transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
   {
     variants: {
       variant: {
-        default: "border-transparent bg-[#F5F5F5] text-[#777]",
+        default: "border-transparent bg-[#F3F4F6] text-[#6C7293]",
         secondary: "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
         destructive: "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
         outline: "text-foreground",
-        success: "border-transparent bg-[#EAF7EF] text-[#27AE60]",
-        warning: "border-transparent bg-[#FEF9E7] text-[#F39C12]",
-        danger: "border-transparent bg-[#FDEDEC] text-[#E74C3C]",
-        info: "border-transparent bg-[#EAF2F8] text-[#2980B9]",
-        amber: "border-transparent bg-[#FFF5F3] text-[#BE3A21]",
-        green: "border-transparent bg-[#EAF7EF] text-[#27AE60]",
-        red: "border-transparent bg-[#FDEDEC] text-[#E74C3C]",
-        blue: "border-transparent bg-[#EAF2F8] text-[#2980B9]",
+        success: "border-transparent bg-[#ECFDF5] text-[#059669]",
+        warning: "border-transparent bg-[#FFFBEB] text-[#D97706]",
+        danger: "border-transparent bg-[#FEF2F2] text-[#DC2626]",
+        info: "border-transparent bg-[#EFF6FF] text-[#2563EB]",
+        amber: "border-transparent bg-[#EEF2FF] text-[#6366F1]",
+        green: "border-transparent bg-[#ECFDF5] text-[#059669]",
+        red: "border-transparent bg-[#FEF2F2] text-[#DC2626]",
+        blue: "border-transparent bg-[#EFF6FF] text-[#2563EB]",
       },
     },
     defaultVariants: {

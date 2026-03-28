@@ -78,7 +78,7 @@ const PRESET_COLORS = [
 ];
 
 function Skeleton({ className }: { className?: string }) {
-  return <div className={`animate-pulse rounded-[4px] bg-gray-100 ${className || ""}`} />;
+  return <div className={`animate-pulse rounded-xl bg-gray-100 ${className || ""}`} />;
 }
 
 export default function AiStudioContent() {
@@ -260,7 +260,7 @@ export default function AiStudioContent() {
         {profile && (
           <button
             onClick={() => setShowStyleSetup(true)}
-            className="inline-flex items-center gap-1.5 rounded-[4px] border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50"
           >
             <Settings2 className="h-3.5 w-3.5" />
             Stili Güncelle
@@ -272,7 +272,7 @@ export default function AiStudioContent() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="rounded-[4px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+          className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
         >
           {error}
           <button onClick={() => setError("")} className="ml-2 text-red-500 hover:text-red-700">
@@ -287,7 +287,7 @@ export default function AiStudioContent() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.05 }}
-          className="overflow-hidden rounded-[4px] border border-gray-100 bg-white"
+          className="overflow-hidden rounded-xl border border-gray-100 bg-white"
         >
           <div className="border-b border-gray-100 px-6 py-4">
             <h3 className="text-sm font-semibold text-gray-900">Stil Kurulumu</h3>
@@ -299,7 +299,7 @@ export default function AiStudioContent() {
             <button
               onClick={handleAnalyzeInstagram}
               disabled={analyzing}
-              className="flex flex-col items-center gap-3 rounded-[4px] border-2 border-dashed border-gray-200 p-6 transition-colors hover:border-pink-300 hover:bg-pink-50/50"
+              className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-gray-200 p-6 transition-colors hover:border-pink-300 hover:bg-pink-50/50"
             >
               {analyzing ? (
                 <Loader2 className="h-8 w-8 animate-spin text-pink-500" />
@@ -319,7 +319,7 @@ export default function AiStudioContent() {
 
             <button
               onClick={() => setShowStyleSetup(true)}
-              className="flex flex-col items-center gap-3 rounded-[4px] border-2 border-dashed border-gray-200 p-6 transition-colors hover:border-purple-300 hover:bg-purple-50/50"
+              className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-gray-200 p-6 transition-colors hover:border-purple-300 hover:bg-purple-50/50"
             >
               <Palette className="h-8 w-8 text-purple-500" />
               <div className="text-center">
@@ -342,7 +342,7 @@ export default function AiStudioContent() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.05 }}
-          className="overflow-hidden rounded-[4px] border border-gray-100 bg-white"
+          className="overflow-hidden rounded-xl border border-gray-100 bg-white"
         >
           <div className="border-b border-gray-100 px-6 py-4">
             <div className="flex items-center justify-between">
@@ -391,7 +391,7 @@ export default function AiStudioContent() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="overflow-hidden rounded-[4px] border border-gray-100 bg-white"
+          className="overflow-hidden rounded-xl border border-gray-100 bg-white"
         >
           <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
             <h3 className="text-sm font-semibold text-gray-900">Stil Ayarları</h3>
@@ -492,7 +492,7 @@ export default function AiStudioContent() {
             <button
               onClick={handleSaveManualStyle}
               disabled={savingStyle || styleForm.colorPalette.length === 0}
-              className="flex w-full items-center justify-center gap-2 rounded-[4px] bg-purple-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-purple-700 disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-purple-700 disabled:opacity-50"
             >
               {savingStyle ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -510,7 +510,7 @@ export default function AiStudioContent() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
-        className="overflow-hidden rounded-[4px] border border-gray-100 bg-white"
+        className="overflow-hidden rounded-xl border border-gray-100 bg-white"
       >
         <div className="border-b border-gray-100 px-6 py-4">
           <div className="flex items-center gap-2">
@@ -545,7 +545,7 @@ export default function AiStudioContent() {
               onChange={(e) => setPrompt(e.target.value)}
               rows={3}
               placeholder="Örn: Instagram için modern bir yılbaşı kutlama görseli, lacivert ve altın tonlarında..."
-              className="block w-full rounded-[4px] border border-gray-200 px-4 py-2.5 text-sm focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-400/20"
+              className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-400/20"
               disabled={generating}
             />
           </div>
@@ -553,7 +553,7 @@ export default function AiStudioContent() {
           <button
             onClick={handleGenerate}
             disabled={generating || !prompt.trim()}
-            className="flex w-full items-center justify-center gap-2 rounded-[4px] bg-purple-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-purple-700 disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-purple-700 disabled:opacity-50"
           >
             {generating ? (
               <>
@@ -575,7 +575,7 @@ export default function AiStudioContent() {
         {/* Last Result */}
         {lastResult && (
           <div className="border-t border-gray-100 p-6">
-            <div className="overflow-hidden rounded-[4px] border border-gray-200">
+            <div className="overflow-hidden rounded-xl border border-gray-200">
               <img
                 src={lastResult.imageUrl}
                 alt="AI Generated"
@@ -611,7 +611,7 @@ export default function AiStudioContent() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.15 }}
-          className="overflow-hidden rounded-[4px] border border-gray-100 bg-white"
+          className="overflow-hidden rounded-xl border border-gray-100 bg-white"
         >
           <div className="border-b border-gray-100 px-6 py-4">
             <div className="flex items-center gap-2">
@@ -629,7 +629,7 @@ export default function AiStudioContent() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3, delay: i * 0.03 }}
-                className="group relative overflow-hidden rounded-[4px] border border-gray-100"
+                className="group relative overflow-hidden rounded-xl border border-gray-100"
               >
                 {item.imageUrl && (
                   <img

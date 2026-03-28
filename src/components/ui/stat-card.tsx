@@ -9,28 +9,30 @@ interface StatCardProps extends React.HTMLAttributes<HTMLDivElement> {
   color?: string
 }
 
-function StatCard({ label, value, icon, trend, color = "#BE3A21", className, ...props }: StatCardProps) {
+function StatCard({ label, value, icon, trend, color = "#6366F1", className, ...props }: StatCardProps) {
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-[4px] border border-[#E8E8E8] bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)]",
+        "relative overflow-hidden rounded-xl border border-[#E5E7EB] bg-white p-5 shadow-craft",
         className
       )}
-      style={{ borderLeftWidth: "4px", borderLeftColor: color }}
       {...props}
     >
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-wider text-[#777]">{label}</p>
-          <p className="mt-1 text-2xl font-bold text-[#333]">{value}</p>
+          <p className="text-xs font-medium text-[#6C7293]">{label}</p>
+          <p className="mt-2 text-2xl font-bold text-[#1A1A2E]">{value}</p>
           {trend && (
-            <p className={cn("mt-1 text-xs font-medium", trend.positive ? "text-[#27AE60]" : "text-[#E74C3C]")}>
+            <p className={cn("mt-1 text-xs font-medium", trend.positive ? "text-[#059669]" : "text-[#DC2626]")}>
               {trend.value}
             </p>
           )}
         </div>
         {icon && (
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F5F5F5] text-[#777]">
+          <div
+            className="flex h-10 w-10 items-center justify-center rounded-lg"
+            style={{ backgroundColor: `${color}15`, color }}
+          >
             {icon}
           </div>
         )}

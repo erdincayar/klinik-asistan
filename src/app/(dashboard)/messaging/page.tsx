@@ -23,11 +23,11 @@ function TelegramStatus() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
-        <Send className="h-5 w-5 text-[#BE3A21]" />
+        <Send className="h-5 w-5 text-[#6366F1]" />
         <h2 className="text-lg font-semibold text-gray-900">Telegram</h2>
       </div>
 
-      <div className="rounded-[4px] border border-gray-100 bg-white p-6">
+      <div className="rounded-xl border border-gray-100 bg-white p-6">
         {connected === null ? (
           <p className="text-sm text-gray-400">Yükleniyor...</p>
         ) : connected ? (
@@ -52,7 +52,7 @@ function TelegramStatus() {
             </p>
             <a
               href="/settings"
-              className="inline-flex items-center gap-2 rounded-[4px] bg-[#2B2B2B] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#3A3A3A]"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#1E1E2D] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#2A2A3C]"
             >
               Ayarlara Git
             </a>
@@ -88,7 +88,7 @@ export default function MessagingPage() {
       </TabsContent>
 
       <TabsContent value="whatsapp">
-        <div className="rounded-[4px] border border-gray-100 bg-white p-8 text-center">
+        <div className="rounded-xl border border-gray-100 bg-white p-8 text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
             <MessageCircle className="h-8 w-8 text-gray-400" />
           </div>

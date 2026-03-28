@@ -1012,11 +1012,11 @@ export default function EmployeesPage() {
               onClick={() => setForm({ ...form, roleTemplate: "view_only", permissions: { ...viewOnlyPermissions } })}
               className={`flex flex-col items-center gap-1.5 rounded-lg border-2 p-3 text-center transition-all ${
                 form.roleTemplate === "view_only"
-                  ? "border-[#BE3A21] bg-[#FFF5F3]"
+                  ? "border-[#6366F1] bg-[#EEF2FF]"
                   : "border-gray-200 hover:border-gray-300"
               }`}
             >
-              <Eye className={`h-5 w-5 ${form.roleTemplate === "view_only" ? "text-[#BE3A21]" : "text-gray-400"}`} />
+              <Eye className={`h-5 w-5 ${form.roleTemplate === "view_only" ? "text-[#6366F1]" : "text-gray-400"}`} />
               <span className="text-xs font-semibold">Sadece Görüntüle</span>
               <span className="text-[10px] text-gray-500">Düzenleme yok</span>
             </button>
@@ -1617,7 +1617,7 @@ export default function EmployeesPage() {
               <span className="text-sm font-medium">Maaş değişikliği nasıl uygulanacak?</span>
             </div>
             <div className="space-y-3">
-              <label className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${salaryUpdateMode === "forward_only" ? "border-[#FDEDEC] bg-[#FFF5F3]/50" : "border-gray-200"}`}>
+              <label className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${salaryUpdateMode === "forward_only" ? "border-[#E0E7FF] bg-[#EEF2FF]/50" : "border-gray-200"}`}>
                 <input type="radio" name="salaryUpdateMode" checked={salaryUpdateMode === "forward_only"} onChange={() => setSalaryUpdateMode("forward_only")} className="mt-0.5" />
                 <div>
                   <span className="text-sm font-medium text-gray-800">Sadece ileriye dönük güncelle</span>
@@ -1681,7 +1681,7 @@ export default function EmployeesPage() {
                 <button type="button" onClick={() => setForm({ ...form, roleTemplate: "full", permissions: { ...fullPermissions } })} className={`text-xs font-medium rounded-lg border-2 p-2 transition-all ${form.roleTemplate === "full" ? "border-green-500 bg-green-50 text-green-700" : "border-gray-200"}`}>
                   Tam Yetkili
                 </button>
-                <button type="button" onClick={() => setForm({ ...form, roleTemplate: "view_only", permissions: { ...viewOnlyPermissions } })} className={`text-xs font-medium rounded-lg border-2 p-2 transition-all ${form.roleTemplate === "view_only" ? "border-[#BE3A21] bg-[#FFF5F3] text-[#9B2D18]" : "border-gray-200"}`}>
+                <button type="button" onClick={() => setForm({ ...form, roleTemplate: "view_only", permissions: { ...viewOnlyPermissions } })} className={`text-xs font-medium rounded-lg border-2 p-2 transition-all ${form.roleTemplate === "view_only" ? "border-[#6366F1] bg-[#EEF2FF] text-[#4F46E5]" : "border-gray-200"}`}>
                   Sadece Görüntüle
                 </button>
                 <button type="button" onClick={() => setForm({ ...form, roleTemplate: "custom" })} className={`text-xs font-medium rounded-lg border-2 p-2 transition-all ${form.roleTemplate === "custom" ? "border-orange-500 bg-orange-50 text-orange-700" : "border-gray-200"}`}>
