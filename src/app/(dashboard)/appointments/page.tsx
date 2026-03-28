@@ -664,14 +664,15 @@ export default function AppointmentsPage() {
             type="date"
             value={formatDateISO(selectedDate)}
             onChange={(e) => setSelectedDate(new Date(e.target.value + "T00:00:00"))}
-            className="rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm text-gray-700 transition-shadow focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
+            className="rounded-xl border border-gray-200 bg-white px-2 py-1.5 text-xs sm:px-3.5 sm:py-2 sm:text-sm text-gray-700 transition-shadow focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
           />
           <button
             onClick={openCreateDialog}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#1E1E2D] px-4 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-[#2A2A3C] hover:shadow-lg hover:shadow-[#1E1E2D]/20"
+            className="inline-flex items-center gap-1.5 sm:gap-2 rounded-xl bg-[#1E1E2D] px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-[#2A2A3C] hover:shadow-lg hover:shadow-[#1E1E2D]/20"
           >
-            <Plus className="h-4 w-4" />
-            Yeni Randevu
+            <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Yeni Randevu</span>
+            <span className="sm:hidden">Ekle</span>
           </button>
         </div>
       </motion.div>
@@ -698,14 +699,14 @@ export default function AppointmentsPage() {
       </motion.div>
 
       {/* Filter block */}
-      <motion.div variants={fadeUp} initial="hidden" animate="visible" className="sticky top-0 z-10 space-y-2 rounded-xl border border-gray-100 bg-white p-3">
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" className="sticky top-0 z-10 space-y-2 rounded-xl border border-gray-100 bg-white p-2 sm:p-3">
         {/* Employee filter row */}
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-medium text-gray-500">Çalışan:</span>
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+          <span className="text-xs sm:text-sm font-medium text-gray-500">Çalışan:</span>
           <button
             onClick={() => setSelectedEmployee("all")}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+              "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm font-medium transition-colors",
               selectedEmployee === "all"
                 ? "bg-gray-900 text-white"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -718,14 +719,14 @@ export default function AppointmentsPage() {
               key={emp.id}
               onClick={() => setSelectedEmployee(emp.id)}
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+                "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm font-medium transition-colors",
                 selectedEmployee === emp.id
                   ? "bg-gray-900 text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               )}
             >
               <span
-                className="inline-block h-2.5 w-2.5 rounded-full"
+                className="inline-block h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full"
                 style={{ backgroundColor: emp.color }}
               />
               {emp.name}
@@ -793,12 +794,12 @@ export default function AppointmentsPage() {
         </div>
 
         {/* Service filter row */}
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-medium text-gray-500">İşlem:</span>
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+          <span className="text-xs sm:text-sm font-medium text-gray-500">İşlem:</span>
           <button
             onClick={() => setSelectedService("all")}
             className={cn(
-              "inline-flex items-center rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+              "inline-flex items-center rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm font-medium transition-colors",
               selectedService === "all"
                 ? "bg-gray-900 text-white"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -811,7 +812,7 @@ export default function AppointmentsPage() {
               key={name}
               onClick={() => setSelectedService(name)}
               className={cn(
-                "inline-flex items-center rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+                "inline-flex items-center rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm font-medium transition-colors",
                 selectedService === name
                   ? "bg-gray-900 text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -897,11 +898,11 @@ export default function AppointmentsPage() {
           )}
 
           {/* Hide empty toggle */}
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
             <button
               onClick={() => { const v = !hideEmpty; setHideEmpty(v); savePrefs({ hideEmpty: v }); }}
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] sm:px-3 sm:py-1.5 sm:text-xs font-medium transition-colors",
                 hideEmpty ? "bg-[#E0E7FF] text-[#4F46E5]" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
               )}
             >
@@ -1034,26 +1035,28 @@ export default function AppointmentsPage() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full table-fixed">
+                <table className="w-full" style={{ minWidth: "640px" }}>
                   <thead>
                     <tr className="border-b border-gray-100">
-                      <th className="w-20 border-r border-gray-50 px-2 py-3 text-left text-xs font-medium text-gray-500">Saat</th>
+                      <th className="w-14 sm:w-20 border-r border-gray-50 px-1 sm:px-2 py-2 sm:py-3 text-left text-[10px] sm:text-xs font-medium text-gray-500">Saat</th>
                       {Array.from({ length: 7 }, (_, i) => {
                         const monday = getMonday(selectedDate);
                         const d = new Date(monday);
                         d.setDate(monday.getDate() + i);
                         const dateStr = formatDateISO(d);
                         const isTodayCol = dateStr === formatDateISO(new Date());
+                        const shortDays = ["Pz", "Pt", "Sa", "Ça", "Pe", "Cu", "Ct"];
                         return (
                           <th
                             key={i}
                             className={cn(
-                              "px-1 py-3 text-center text-xs font-medium",
+                              "px-0.5 sm:px-1 py-2 sm:py-3 text-center text-[10px] sm:text-xs font-medium",
                               isTodayCol ? "bg-[#EEF2FF] text-[#4F46E5]" : "text-gray-500"
                             )}
                           >
-                            <div>{DAY_NAMES[d.getDay()]}</div>
-                            <div className="text-sm font-semibold">{d.getDate()}</div>
+                            <div className="hidden sm:block">{DAY_NAMES[d.getDay()]}</div>
+                            <div className="sm:hidden">{shortDays[d.getDay()]}</div>
+                            <div className="text-xs sm:text-sm font-semibold">{d.getDate()}</div>
                           </th>
                         );
                       })}
@@ -1064,7 +1067,7 @@ export default function AppointmentsPage() {
                       const isOffHours = isOutsideWorkHours(time, workStartTime, workEndTime);
                       return (
                       <tr key={time} data-time={time} className={cn("border-b border-gray-50", isOffHours && "bg-gray-50/70")}>
-                        <td className={cn("border-r border-gray-50 px-2 py-1 text-xs", isOffHours ? "text-gray-300" : "text-gray-400")}>{time}</td>
+                        <td className={cn("border-r border-gray-50 px-1 sm:px-2 py-1 text-[10px] sm:text-xs", isOffHours ? "text-gray-300" : "text-gray-400")}>{time}</td>
                         {Array.from({ length: 7 }, (_, i) => {
                           const monday = getMonday(selectedDate);
                           const d = new Date(monday);
@@ -1084,8 +1087,8 @@ export default function AppointmentsPage() {
                                       key={appt.id}
                                       onClick={() => { setSelectedAppointment(appt); setDialogOpen(true); }}
                                       className={cn(
-                                        "w-full rounded-lg text-left text-xs transition-all hover:shadow-sm",
-                                        "px-2 py-1.5",
+                                        "w-full rounded-md text-left transition-all hover:shadow-sm",
+                                        "px-1.5 py-1 text-[10px] sm:text-xs",
                                         appt.status === "CANCELLED" && "opacity-50"
                                       )}
                                       style={{
@@ -1093,18 +1096,18 @@ export default function AppointmentsPage() {
                                         borderLeft: `2px solid ${appt.employeeColor || "#9ca3af"}`,
                                       }}
                                     >
-                                      <div className="flex items-center gap-1 font-semibold text-gray-900 truncate">
+                                      <div className="flex items-center gap-0.5 font-semibold text-gray-900 truncate">
                                         <span
-                                          className="inline-block h-2 w-2 shrink-0 rounded-full"
+                                          className="inline-block h-1.5 w-1.5 sm:h-2 sm:w-2 shrink-0 rounded-full"
                                           style={{ backgroundColor: appt.employeeColor || "#9ca3af" }}
                                         />
                                         <span className="truncate">{appt.patientName || "?"}</span>
                                       </div>
-                                      <div className="truncate text-gray-500 mt-0.5">
+                                      <div className="truncate text-gray-500">
                                         {getTreatmentLabel(appt.treatmentType)}
                                       </div>
                                       {statusInfo && (
-                                        <span className={cn("mt-1 inline-block rounded-full px-1.5 py-0 text-[9px] font-semibold", statusInfo.color)}>
+                                        <span className={cn("mt-0.5 inline-block rounded-full px-1 py-0 text-[8px] sm:text-[9px] font-semibold", statusInfo.color)}>
                                           {statusInfo.label}
                                         </span>
                                       )}
