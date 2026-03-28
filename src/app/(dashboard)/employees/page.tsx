@@ -1428,10 +1428,6 @@ export default function EmployeesPage() {
                           <p className="font-medium">{formatTL(emp.monthlyRevenue)}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-muted-foreground">Aylık Komisyon</p>
-                          <p className="font-medium text-green-600">{formatTL(emp.monthlyCommission)}</p>
-                        </div>
-                        <div className="text-right">
                           <p className="text-muted-foreground">Maaş</p>
                           <p className="font-medium">
                             {(() => {

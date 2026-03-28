@@ -2,6 +2,15 @@ import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+function toTitleCase(str: string): string {
+  return str
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)
+    .map((w) => w.charAt(0).toLocaleUpperCase("tr-TR") + w.slice(1))
+    .join(" ");
+}
+
 export async function GET() {
   try {
     const session = await auth();
@@ -160,7 +169,7 @@ export async function POST(req: NextRequest) {
 
         const employee = await prisma.employee.create({
           data: {
-            name,
+            name: toTitleCase(name),
             role: role || "",
             phone: phone || null,
             email: email || null,
@@ -209,7 +218,7 @@ export async function POST(req: NextRequest) {
         }
 
         const updateData: Record<string, any> = {};
-        if (name !== undefined) updateData.name = name;
+        if (name !== undefined) updateData.name = toTitleCase(name);
         if (role !== undefined) updateData.role = role;
         if (phone !== undefined) updateData.phone = phone;
         if (email !== undefined) updateData.email = email;
