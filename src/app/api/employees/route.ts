@@ -14,6 +14,7 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
       include: {
         customValues: true,
+        commissionTiers: { orderBy: { sortOrder: "asc" } },
       },
     });
 
@@ -47,14 +48,29 @@ export async function GET() {
         // Collect distinct treatment types from appointments
         const appointmentTypes = Array.from(new Set(monthlyAppointments.map((a) => a.treatmentType)));
 
+        // Calculate commission — tiered or flat
+        function calcCommission(revenue: number): number {
+          if (emp.tieredCommission && emp.commissionTiers.length > 0) {
+            // Find the highest tier that the revenue qualifies for
+            const tiers = [...emp.commissionTiers].sort((a, b) => b.minRevenue - a.minRevenue);
+            for (const tier of tiers) {
+              if (revenue * 100 >= tier.minRevenue) {
+                return Math.round(revenue * tier.commissionPct / 100);
+              }
+            }
+            return 0; // Below minimum tier
+          }
+          return Math.round(revenue * emp.commissionRate / 100);
+        }
+
         return {
           ...emp,
           totalRevenue,
           totalTreatmentCount: totalTreatments._count.id || 0,
           monthlyRevenue,
           monthlyTreatmentCount: monthlyTreatments._count.id || 0,
-          totalCommission: Math.round(totalRevenue * emp.commissionRate / 100),
-          monthlyCommission: Math.round(monthlyRevenue * emp.commissionRate / 100),
+          totalCommission: calcCommission(totalRevenue),
+          monthlyCommission: calcCommission(monthlyRevenue),
           monthlyAppointmentCount: monthlyAppointments.length,
           appointmentTypes,
         };
@@ -133,6 +149,7 @@ export async function POST(req: NextRequest) {
         const {
           name, role, phone, email, commissionRate, color, permissions,
           salaryGross, salaryNet, salarySSI, salaryPayDay, manualSalaryEntry,
+          tieredCommission, commissionTiers,
         } = body;
         if (!name) return Response.json({ error: "Name required" }, { status: 400 });
 
@@ -148,6 +165,7 @@ export async function POST(req: NextRequest) {
             phone: phone || null,
             email: email || null,
             commissionRate: parseInt(commissionRate) || 0,
+            tieredCommission: tieredCommission || false,
             color: color || "#3b82f6",
             permissions: permissions || null,
             isActive: true,
@@ -159,6 +177,18 @@ export async function POST(req: NextRequest) {
             clinicId,
           },
         });
+
+        // Create commission tiers if tiered commission is enabled
+        if (tieredCommission && Array.isArray(commissionTiers) && commissionTiers.length > 0) {
+          await prisma.commissionTier.createMany({
+            data: commissionTiers.map((tier: any, i: number) => ({
+              employeeId: employee.id,
+              minRevenue: Math.round(parseFloat(tier.minRevenue) * 100),
+              commissionPct: parseFloat(tier.commissionPct),
+              sortOrder: i,
+            })),
+          });
+        }
 
         await upsertSalaryRecurring(clinicId, employee.id, name, grossVal, netVal, ssiVal, payDayVal);
 
@@ -184,6 +214,7 @@ export async function POST(req: NextRequest) {
         if (phone !== undefined) updateData.phone = phone;
         if (email !== undefined) updateData.email = email;
         if (commissionRate !== undefined) updateData.commissionRate = parseInt(commissionRate);
+        if (body.tieredCommission !== undefined) updateData.tieredCommission = body.tieredCommission;
         if (isActive !== undefined) updateData.isActive = isActive;
         if (color !== undefined) updateData.color = color;
         if (permissions !== undefined) updateData.permissions = permissions;
@@ -198,6 +229,23 @@ export async function POST(req: NextRequest) {
           where: { id },
           data: updateData,
         });
+
+        // Update commission tiers if provided
+        if (body.commissionTiers !== undefined) {
+          // Delete existing tiers
+          await prisma.commissionTier.deleteMany({ where: { employeeId: id } });
+          // Create new tiers
+          if (body.tieredCommission && Array.isArray(body.commissionTiers) && body.commissionTiers.length > 0) {
+            await prisma.commissionTier.createMany({
+              data: body.commissionTiers.map((tier: any, i: number) => ({
+                employeeId: id,
+                minRevenue: Math.round(parseFloat(tier.minRevenue) * 100),
+                commissionPct: parseFloat(tier.commissionPct),
+                sortOrder: i,
+              })),
+            });
+          }
+        }
 
         // Update recurring if salary fields were touched
         if (salaryGross !== undefined || salaryNet !== undefined || salarySSI !== undefined || salaryPayDay !== undefined) {

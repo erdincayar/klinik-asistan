@@ -95,6 +95,7 @@ model Clinic {
   whatsappPhone         String?
   whatsappConnected     Boolean                @default(false)
   clinicModules         ClinicModule[]
+  consentForms          ConsentForm[]
   onboardingChats       OnboardingChat[]
   onboardingProfiles    OnboardingProfile[]
   uploadedInvoices      UploadedInvoice[]
@@ -156,9 +157,10 @@ model Patient {
   invoices     Invoice[]
   photos       PatientPhoto[]
   customValues CustomerCustomValue[]
-  alarms       Alarm[]
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
+  alarms                Alarm[]
+  consentFormResponses  ConsentFormResponse[]
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
 }
 
 // TreatmentCategory values: BOTOX, DOLGU, DIS_TEDAVI, GENEL
@@ -295,6 +297,7 @@ model Employee {
   userId                String?
   color                 String                 @default("#3b82f6")
   commissionRate        Int                    @default(0) // yüzde cinsinden (ör: 10 = %10)
+  tieredCommission      Boolean                @default(false) // kademeli komisyon aktif mi
   permissions           Json?
   isActive              Boolean                @default(true)
   salaryGross           Int?                   // Brüt maaş (kuruş)
@@ -314,8 +317,21 @@ model Employee {
   appointments          Appointment[]
   recurringTransactions RecurringTransaction[]
   customValues          EmployeeCustomValue[]
+  commissionTiers       CommissionTier[]
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
+}
+
+model CommissionTier {
+  id            String   @id @default(cuid())
+  employeeId    String
+  employee      Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  minRevenue    Int      // Minimum ciro eşiği (kuruş) — bu cirodan itibaren geçerli
+  commissionPct Float    // Komisyon yüzdesi (ör: 5.0 = %5)
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  @@index([employeeId])
 }
 
 model EmployeeRole {
@@ -326,6 +342,42 @@ model EmployeeRole {
   createdAt DateTime @default(now())
 
   @@unique([clinicId, name])
+}
+
+// Onam Formu şablonu — merkez tarafından oluşturulur
+model ConsentForm {
+  id          String   @id @default(cuid())
+  clinicId    String
+  clinic      Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  title       String   // Form başlığı (ör: "Botox Onam Formu")
+  description String?  // Açıklama
+  content     String   @db.Text // Form HTML/markdown içeriği
+  fields      Json?    // Ek alanlar [{label, type, required}]
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  responses   ConsentFormResponse[]
+
+  @@index([clinicId])
+}
+
+// Müşteri tarafından doldurulan onam formu yanıtı
+model ConsentFormResponse {
+  id            String      @id @default(cuid())
+  consentFormId String
+  consentForm   ConsentForm @relation(fields: [consentFormId], references: [id], onDelete: Cascade)
+  patientId     String?
+  patient       Patient?    @relation(fields: [patientId], references: [id])
+  patientName   String      // İsim (giriş yapmamış müşteri için)
+  patientTc     String?     // TC Kimlik No
+  signature     String?     @db.Text // Base64 imza verisi
+  fieldValues   Json?       // Ek alan yanıtları
+  signedAt      DateTime    @default(now())
+  ipAddress     String?
+  clinicId      String
+
+  @@index([consentFormId])
+  @@index([patientId])
 }
 
 model EmployeeCustomField {

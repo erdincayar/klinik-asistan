@@ -103,6 +103,13 @@ interface CustomFieldDef {
   sortOrder: number;
 }
 
+interface CommissionTierItem {
+  id?: string;
+  minRevenue: number; // kuruş
+  commissionPct: number;
+  sortOrder: number;
+}
+
 interface Employee {
   id: string;
   name: string;
@@ -111,6 +118,8 @@ interface Employee {
   email: string | null;
   color: string;
   commissionRate: number;
+  tieredCommission: boolean;
+  commissionTiers: CommissionTierItem[];
   permissions: ModulePermissions | null;
   roleTemplate: string | null;
   isActive: boolean;
@@ -135,12 +144,19 @@ interface Employee {
   appointmentTypes: string[];
 }
 
+interface TierFormItem {
+  minRevenue: string; // TL string (kullanıcı girişi)
+  commissionPct: string;
+}
+
 interface EmployeeForm {
   name: string;
   role: string;
   phone: string;
   email: string;
   commissionRate: string;
+  tieredCommission: boolean;
+  commissionTiers: TierFormItem[];
   color: string;
   permissions: ModulePermissions;
   roleTemplate: string;
@@ -168,6 +184,8 @@ const emptyForm: EmployeeForm = {
   phone: "",
   email: "",
   commissionRate: "0",
+  tieredCommission: false,
+  commissionTiers: [],
   color: "#3b82f6",
   permissions: { ...defaultPermissions },
   roleTemplate: "custom",
@@ -403,6 +421,11 @@ export default function EmployeesPage() {
           phone: form.phone,
           email: form.email,
           commissionRate: form.commissionRate,
+          tieredCommission: form.tieredCommission,
+          commissionTiers: form.tieredCommission ? form.commissionTiers.map((t) => ({
+            minRevenue: parseFloat(t.minRevenue) || 0,
+            commissionPct: parseFloat(t.commissionPct) || 0,
+          })) : [],
           color: form.color,
           permissions: form.permissions,
           ...salary,
@@ -460,6 +483,11 @@ export default function EmployeesPage() {
           phone: form.phone,
           email: form.email,
           commissionRate: form.commissionRate,
+          tieredCommission: form.tieredCommission,
+          commissionTiers: form.tieredCommission ? form.commissionTiers.map((t) => ({
+            minRevenue: parseFloat(t.minRevenue) || 0,
+            commissionPct: parseFloat(t.commissionPct) || 0,
+          })) : [],
           color: form.color,
           permissions: form.permissions,
           ...salary,
@@ -481,6 +509,11 @@ export default function EmployeesPage() {
           phone: form.phone,
           email: form.email,
           commissionRate: form.commissionRate,
+          tieredCommission: form.tieredCommission,
+          commissionTiers: form.tieredCommission ? form.commissionTiers.map((t) => ({
+            minRevenue: parseFloat(t.minRevenue) || 0,
+            commissionPct: parseFloat(t.commissionPct) || 0,
+          })) : [],
           color: form.color,
           permissions: form.permissions,
           ...salary,
@@ -548,6 +581,11 @@ export default function EmployeesPage() {
       phone: emp.phone || "",
       email: emp.email || "",
       commissionRate: String(emp.commissionRate),
+      tieredCommission: emp.tieredCommission || false,
+      commissionTiers: (emp.commissionTiers || []).map((t) => ({
+        minRevenue: String(t.minRevenue / 100),
+        commissionPct: String(t.commissionPct),
+      })),
       color: emp.color || "#3b82f6",
       permissions: emp.permissions
         ? { ...defaultPermissions, ...emp.permissions }
@@ -722,17 +760,128 @@ export default function EmployeesPage() {
             onChange={(e) => setForm({ ...form, email: e.target.value })}
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor={`${idPrefix}-commission`}>Komisyon Oranı (%)</Label>
-          <Input
-            id={`${idPrefix}-commission`}
-            type="number"
-            min="0"
-            max="100"
-            placeholder="0"
-            value={form.commissionRate}
-            onChange={(e) => setForm({ ...form, commissionRate: e.target.value })}
-          />
+        {/* Commission Section */}
+        <div className="space-y-3 rounded-lg border p-4">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-semibold flex items-center gap-2">
+              <Percent className="h-4 w-4" />
+              Komisyon
+            </h4>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.tieredCommission}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setForm({
+                    ...form,
+                    tieredCommission: checked,
+                    commissionTiers: checked && form.commissionTiers.length === 0
+                      ? [{ minRevenue: "", commissionPct: "" }]
+                      : form.commissionTiers,
+                  });
+                }}
+                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              <span className="text-xs font-medium text-gray-600">Kademeli komisyon</span>
+            </label>
+          </div>
+
+          {!form.tieredCommission ? (
+            <div className="space-y-1">
+              <Label htmlFor={`${idPrefix}-commission`}>Komisyon Oranı (%)</Label>
+              <Input
+                id={`${idPrefix}-commission`}
+                type="number"
+                min="0"
+                max="100"
+                placeholder="0"
+                value={form.commissionRate}
+                onChange={(e) => setForm({ ...form, commissionRate: e.target.value })}
+              />
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Ciro eşiklerine göre farklı komisyon oranları belirleyin. Çalışanın aylık cirosu hangi kademeye ulaşırsa o oran uygulanır.
+              </p>
+              {form.commissionTiers.map((tier, idx) => (
+                <div key={idx} className="flex items-end gap-2">
+                  <div className="flex-1 space-y-1">
+                    <Label className="text-xs">Min. Ciro (TL)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      placeholder="100000"
+                      value={tier.minRevenue}
+                      onChange={(e) => {
+                        const tiers = [...form.commissionTiers];
+                        tiers[idx] = { ...tiers[idx], minRevenue: e.target.value };
+                        setForm({ ...form, commissionTiers: tiers });
+                      }}
+                    />
+                  </div>
+                  <div className="w-24 space-y-1">
+                    <Label className="text-xs">Oran (%)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.5"
+                      placeholder="5"
+                      value={tier.commissionPct}
+                      onChange={(e) => {
+                        const tiers = [...form.commissionTiers];
+                        tiers[idx] = { ...tiers[idx], commissionPct: e.target.value };
+                        setForm({ ...form, commissionTiers: tiers });
+                      }}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const tiers = form.commissionTiers.filter((_, i) => i !== idx);
+                      setForm({ ...form, commissionTiers: tiers.length === 0 ? [{ minRevenue: "", commissionPct: "" }] : tiers });
+                    }}
+                    className="mb-0.5 rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => setForm({
+                  ...form,
+                  commissionTiers: [...form.commissionTiers, { minRevenue: "", commissionPct: "" }],
+                })}
+                className="flex items-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-500 hover:border-[#6366F1] hover:text-[#6366F1] transition-colors"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Kademe Ekle
+              </button>
+
+              {/* Preview */}
+              {form.commissionTiers.some((t) => t.minRevenue && t.commissionPct) && (
+                <div className="mt-2 rounded-lg bg-[#F9FAFB] p-3">
+                  <p className="text-[11px] font-medium text-[#6C7293] mb-2">Önizleme</p>
+                  <div className="space-y-1">
+                    {form.commissionTiers
+                      .filter((t) => t.minRevenue && t.commissionPct)
+                      .sort((a, b) => (parseFloat(a.minRevenue) || 0) - (parseFloat(b.minRevenue) || 0))
+                      .map((t, i) => (
+                        <div key={i} className="flex items-center justify-between text-xs">
+                          <span className="text-gray-600">
+                            {parseFloat(t.minRevenue).toLocaleString("tr-TR")} TL ve üzeri
+                          </span>
+                          <span className="font-semibold text-[#6366F1]">%{t.commissionPct}</span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <div className="space-y-2">
           <Label htmlFor={`${idPrefix}-color`}>Renk</Label>
@@ -1219,7 +1368,9 @@ export default function EmployeesPage() {
                       <div className="flex items-center gap-4 text-sm flex-wrap">
                         <div className="text-right">
                           <p className="text-muted-foreground">Komisyon</p>
-                          <p className="font-medium">%{emp.commissionRate}</p>
+                          <p className="font-medium">
+                            {emp.tieredCommission ? "Kademeli" : `%${emp.commissionRate}`}
+                          </p>
                         </div>
                         <div className="text-right">
                           <p className="text-muted-foreground">Aylık Ciro</p>
@@ -1317,8 +1468,27 @@ export default function EmployeesPage() {
                   )}
                   <div className="flex items-center gap-2 text-sm">
                     <Percent className="h-4 w-4 text-muted-foreground" />
-                    <span>Komisyon Oranı: %{selectedEmployee.commissionRate}</span>
+                    {selectedEmployee.tieredCommission ? (
+                      <span>Kademeli Komisyon</span>
+                    ) : (
+                      <span>Komisyon Oranı: %{selectedEmployee.commissionRate}</span>
+                    )}
                   </div>
+                  {selectedEmployee.tieredCommission && selectedEmployee.commissionTiers?.length > 0 && (
+                    <div className="rounded-lg bg-[#F9FAFB] p-3 space-y-1.5">
+                      <p className="text-xs font-medium text-[#6C7293]">Komisyon Kademeleri</p>
+                      {[...selectedEmployee.commissionTiers]
+                        .sort((a, b) => a.minRevenue - b.minRevenue)
+                        .map((tier, i) => (
+                          <div key={i} className="flex items-center justify-between text-xs">
+                            <span className="text-gray-600">
+                              {(tier.minRevenue / 100).toLocaleString("tr-TR")} TL ve üzeri
+                            </span>
+                            <span className="font-semibold text-[#6366F1]">%{tier.commissionPct}</span>
+                          </div>
+                        ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Salary Info with Monthly Breakdown */}

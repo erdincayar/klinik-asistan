@@ -17,8 +17,16 @@ import {
   Sparkles,
   FolderOpen,
   File,
+  ClipboardCheck,
+  Send,
+  Link2,
+  Copy,
+  ToggleLeft,
+  ToggleRight,
+  X,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -98,7 +106,7 @@ const categoryLabels: Record<string, string> = {
 
 /* ──────────────────────── PAGE ──────────────────────── */
 
-export default function HRPage() {
+function HRDocumentsTab() {
   // Selection state
   const [activeCategory, setActiveCategory] = useState("hire");
   const [selectedDoc, setSelectedDoc] = useState<DocumentDef | null>(null);
@@ -442,18 +450,7 @@ export default function HRPage() {
   const isAnythingSelected = selectedDoc || selectedDbDoc;
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-6"
-      >
-        <h1 className="text-2xl font-bold text-gray-900">İnsan Kaynakları</h1>
-        <p className="text-gray-500 mt-1">
-          İK belgeleri oluşturun, yükleyin ve çalışan bilgileriyle doldurun
-        </p>
-      </motion.div>
-
+    <div>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* ──── SOL PANEL ──── */}
         <motion.div
@@ -1099,4 +1096,476 @@ function formatContentToHTML(markdown: string): string {
   );
 
   return `<p>${html}</p>`;
+}
+
+/* ══════════════════════════════════════════════════════════════ */
+/*  ONAM FORMLARI TAB                                           */
+/* ══════════════════════════════════════════════════════════════ */
+
+interface ConsentFormItem {
+  id: string;
+  title: string;
+  description: string | null;
+  content: string;
+  fields: any;
+  isActive: boolean;
+  createdAt: string;
+  _count: { responses: number };
+}
+
+function ConsentFormsTab() {
+  const [forms, setForms] = useState<ConsentFormItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [editingForm, setEditingForm] = useState<ConsentFormItem | null>(null);
+  const [selectedForm, setSelectedForm] = useState<any>(null);
+  const [saving, setSaving] = useState(false);
+  const [copiedId, setCopiedId] = useState("");
+
+  // Form fields
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [content, setContent] = useState("");
+  const [extraFields, setExtraFields] = useState<{ label: string; type: string; required: boolean }[]>([]);
+
+  const fetchForms = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/consent-forms");
+      if (res.ok) {
+        const data = await res.json();
+        setForms(data.forms || []);
+      }
+    } catch {
+      // silent
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchForms(); }, [fetchForms]);
+
+  const resetFormFields = () => {
+    setTitle("");
+    setDescription("");
+    setContent("");
+    setExtraFields([]);
+  };
+
+  const openCreate = () => {
+    resetFormFields();
+    setEditingForm(null);
+    setShowCreateDialog(true);
+  };
+
+  const openEdit = (form: ConsentFormItem) => {
+    setTitle(form.title);
+    setDescription(form.description || "");
+    setContent(form.content);
+    setExtraFields(Array.isArray(form.fields) ? form.fields : []);
+    setEditingForm(form);
+    setShowCreateDialog(true);
+  };
+
+  const handleSave = async () => {
+    if (!title.trim() || !content.trim()) return;
+    setSaving(true);
+    try {
+      const payload = {
+        title: title.trim(),
+        description: description.trim() || null,
+        content: content.trim(),
+        fields: extraFields.length > 0 ? extraFields : null,
+      };
+
+      const url = editingForm ? `/api/consent-forms/${editingForm.id}` : "/api/consent-forms";
+      const method = editingForm ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        setShowCreateDialog(false);
+        resetFormFields();
+        setEditingForm(null);
+        fetchForms();
+      }
+    } catch {
+      // silent
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleToggleActive = async (form: ConsentFormItem) => {
+    try {
+      await fetch(`/api/consent-forms/${form.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: !form.isActive }),
+      });
+      fetchForms();
+    } catch {
+      // silent
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Bu onam formunu silmek istediğinize emin misiniz?")) return;
+    try {
+      await fetch(`/api/consent-forms/${id}`, { method: "DELETE" });
+      if (selectedForm?.id === id) setSelectedForm(null);
+      fetchForms();
+    } catch {
+      // silent
+    }
+  };
+
+  const handleViewResponses = async (form: ConsentFormItem) => {
+    try {
+      const res = await fetch(`/api/consent-forms/${form.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setSelectedForm(data.form);
+      }
+    } catch {
+      // silent
+    }
+  };
+
+  const copyLink = (formId: string) => {
+    const url = `${window.location.origin}/onam/${formId}`;
+    navigator.clipboard.writeText(url);
+    setCopiedId(formId);
+    setTimeout(() => setCopiedId(""), 2000);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-gray-500">
+          Müşterilerinize dijital onam formu gönderin, imzalatın ve yönetin
+        </p>
+        <button
+          onClick={openCreate}
+          className="flex items-center gap-1.5 rounded-lg bg-[#6366F1] px-3 py-2 text-xs font-semibold text-white hover:bg-[#4F46E5] transition-colors"
+        >
+          <Plus className="h-4 w-4" />
+          Yeni Onam Formu
+        </button>
+      </div>
+
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
+        {/* Form Listesi */}
+        <div className="lg:col-span-2 space-y-3">
+          {loading ? (
+            <div className="flex items-center justify-center py-12 text-gray-400">
+              <Loader2 className="h-5 w-5 animate-spin mr-2" />
+              Yükleniyor...
+            </div>
+          ) : forms.length === 0 ? (
+            <div className="rounded-xl border border-gray-200 bg-white p-12 text-center">
+              <div className="mx-auto h-16 w-16 rounded-full bg-[#EEF2FF] flex items-center justify-center mb-4">
+                <ClipboardCheck className="h-8 w-8 text-[#6366F1]" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Henüz onam formu yok</h3>
+              <p className="text-sm text-gray-500 mb-4">
+                Müşterilerinize göndermek için ilk onam formunuzu oluşturun
+              </p>
+              <button
+                onClick={openCreate}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-[#6366F1] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4F46E5]"
+              >
+                <Plus className="h-4 w-4" />
+                Onam Formu Oluştur
+              </button>
+            </div>
+          ) : (
+            forms.map((form) => (
+              <div
+                key={form.id}
+                className={`rounded-xl border bg-white p-4 transition-colors ${
+                  selectedForm?.id === form.id ? "border-[#6366F1] ring-1 ring-[#6366F1]/20" : "border-gray-200"
+                }`}
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-gray-900">{form.title}</h3>
+                      <Badge variant={form.isActive ? "success" : "default"}>
+                        {form.isActive ? "Aktif" : "Pasif"}
+                      </Badge>
+                    </div>
+                    {form.description && (
+                      <p className="text-sm text-gray-500 mt-0.5">{form.description}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleToggleActive(form)}
+                      className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 transition-colors"
+                      title={form.isActive ? "Pasife Al" : "Aktif Et"}
+                    >
+                      {form.isActive ? <ToggleRight className="h-4 w-4 text-green-600" /> : <ToggleLeft className="h-4 w-4" />}
+                    </button>
+                    <button
+                      onClick={() => openEdit(form)}
+                      className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 transition-colors"
+                      title="Düzenle"
+                    >
+                      <FileText className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(form.id)}
+                      className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                      title="Sil"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 mt-3">
+                  <button
+                    onClick={() => copyLink(form.id)}
+                    className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+                  >
+                    {copiedId === form.id ? <Copy className="h-3.5 w-3.5 text-green-600" /> : <Link2 className="h-3.5 w-3.5" />}
+                    {copiedId === form.id ? "Kopyalandı!" : "Link Kopyala"}
+                  </button>
+                  <button
+                    onClick={() => handleViewResponses(form)}
+                    className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                    Yanıtlar ({form._count.responses})
+                  </button>
+                  <a
+                    href={`/onam/${form.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 rounded-lg border border-[#E0E7FF] bg-[#EEF2FF] px-3 py-1.5 text-xs font-medium text-[#4F46E5] hover:bg-[#E0E7FF] transition-colors"
+                  >
+                    <Send className="h-3.5 w-3.5" />
+                    Önizle
+                  </a>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Yanıt Detayları */}
+        <div>
+          {selectedForm ? (
+            <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+              <div className="border-b border-gray-100 px-4 py-3">
+                <h3 className="font-semibold text-gray-900 text-sm">{selectedForm.title} — Yanıtlar</h3>
+                <p className="text-xs text-gray-500">{selectedForm.responses?.length || 0} yanıt</p>
+              </div>
+              <div className="max-h-[500px] overflow-y-auto divide-y divide-gray-100">
+                {(selectedForm.responses || []).length === 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-8">Henüz yanıt yok</p>
+                ) : (
+                  selectedForm.responses.map((resp: any) => (
+                    <div key={resp.id} className="px-4 py-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-gray-900">{resp.patientName}</p>
+                        <span className="text-[11px] text-gray-400">
+                          {new Date(resp.signedAt).toLocaleDateString("tr-TR")}
+                        </span>
+                      </div>
+                      {resp.patientTc && (
+                        <p className="text-xs text-gray-500 mt-0.5">TC: {resp.patientTc}</p>
+                      )}
+                      {resp.signature && (
+                        <Badge variant="success" className="mt-1">İmzalandı</Badge>
+                      )}
+                      {resp.patient && (
+                        <p className="text-xs text-[#6366F1] mt-1">
+                          Kayıtlı müşteri: {resp.patient.name}
+                        </p>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-gray-200 bg-white p-8 text-center">
+              <ClipboardCheck className="h-8 w-8 text-gray-300 mx-auto mb-3" />
+              <p className="text-sm text-gray-400">Yanıtları görmek için bir form seçin</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Create/Edit Dialog */}
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {editingForm ? "Onam Formunu Düzenle" : "Yeni Onam Formu"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700">Form Başlığı *</label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="ör: Botox Onam Formu"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/20 outline-none"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700">Açıklama</label>
+              <input
+                type="text"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Form hakkında kısa açıklama"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/20 outline-none"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700">Form İçeriği *</label>
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                rows={10}
+                placeholder="Onam formunun tam metnini buraya yazın..."
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/20 outline-none resize-y"
+              />
+            </div>
+
+            {/* Extra Fields */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-gray-700">Ek Alanlar</label>
+                <button
+                  type="button"
+                  onClick={() => setExtraFields([...extraFields, { label: "", type: "text", required: false }])}
+                  className="text-xs font-medium text-[#6366F1] hover:underline"
+                >
+                  + Alan Ekle
+                </button>
+              </div>
+              {extraFields.map((field, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={field.label}
+                    onChange={(e) => {
+                      const fields = [...extraFields];
+                      fields[idx] = { ...fields[idx], label: e.target.value };
+                      setExtraFields(fields);
+                    }}
+                    placeholder="Alan adı"
+                    className="flex-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:border-[#6366F1] outline-none"
+                  />
+                  <select
+                    value={field.type}
+                    onChange={(e) => {
+                      const fields = [...extraFields];
+                      fields[idx] = { ...fields[idx], type: e.target.value };
+                      setExtraFields(fields);
+                    }}
+                    className="rounded-lg border border-gray-200 px-2 py-1.5 text-sm"
+                  >
+                    <option value="text">Metin</option>
+                    <option value="number">Sayı</option>
+                    <option value="date">Tarih</option>
+                    <option value="checkbox">Onay Kutusu</option>
+                  </select>
+                  <label className="flex items-center gap-1 text-xs text-gray-500">
+                    <input
+                      type="checkbox"
+                      checked={field.required}
+                      onChange={(e) => {
+                        const fields = [...extraFields];
+                        fields[idx] = { ...fields[idx], required: e.target.checked };
+                        setExtraFields(fields);
+                      }}
+                      className="rounded"
+                    />
+                    Zorunlu
+                  </label>
+                  <button
+                    onClick={() => setExtraFields(extraFields.filter((_, i) => i !== idx))}
+                    className="p-1 text-gray-400 hover:text-red-500"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => setShowCreateDialog(false)}
+              className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+            >
+              İptal
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving || !title.trim() || !content.trim()}
+              className="rounded-lg bg-[#6366F1] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4F46E5] disabled:opacity-50"
+            >
+              {saving ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : editingForm ? "Güncelle" : "Oluştur"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════ */
+/*  ANA SAYFA WRAPPER                                           */
+/* ══════════════════════════════════════════════════════════════ */
+
+export default function DocumentsPage() {
+  const [activeMainTab, setActiveMainTab] = useState("hr");
+
+  return (
+    <div className="p-4 md:p-6 max-w-7xl mx-auto">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-6"
+      >
+        <h1 className="text-2xl font-bold text-gray-900">Belgeler</h1>
+        <p className="text-gray-500 mt-1">
+          İK belgeleri, onam formları ve özel belgelerinizi tek yerden yönetin
+        </p>
+      </motion.div>
+
+      <Tabs value={activeMainTab} onValueChange={setActiveMainTab}>
+        <TabsList className="mb-6">
+          <TabsTrigger value="hr" className="gap-1.5">
+            <FileText className="h-4 w-4" />
+            İK Belgeleri
+          </TabsTrigger>
+          <TabsTrigger value="consent" className="gap-1.5">
+            <ClipboardCheck className="h-4 w-4" />
+            Onam Formları
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="hr">
+          <HRDocumentsTab />
+        </TabsContent>
+
+        <TabsContent value="consent">
+          <ConsentFormsTab />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
 }

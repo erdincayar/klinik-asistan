@@ -1041,7 +1041,7 @@ export default function SettingsPage() {
         </div>
       </motion.div>
 
-      {/* Subscription Plans */}
+      {/* Subscription — Module-based */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -1049,79 +1049,24 @@ export default function SettingsPage() {
         className="overflow-hidden rounded-xl border border-gray-100 bg-white"
       >
         <div className="flex items-center gap-2 border-b border-gray-100 px-6 py-4">
-          <Crown className="h-4 w-4 text-orange-500" />
-          <h2 className="text-sm font-semibold text-gray-900">Abonelik Planları</h2>
+          <Crown className="h-4 w-4 text-[#6366F1]" />
+          <h2 className="text-sm font-semibold text-gray-900">Abonelik</h2>
         </div>
         <div className="p-6">
-          <div className="grid gap-4 sm:grid-cols-3">
-            {[
-              { id: "STARTER", name: "Başlangıç", price: "₺499", tokens: "50K", storage: "1 GB", features: ["AI Asistan", "Temel Raporlar"] },
-              { id: "PRO", name: "Profesyonel", price: "₺999", tokens: "200K", storage: "5 GB", popular: true, features: ["Gelişmiş AI", "WhatsApp", "Reklam"] },
-              { id: "BUSINESS", name: "İşletme", price: "₺1.999", tokens: "500K", storage: "20 GB", features: ["Sınırsız AI", "Öncelikli Destek", "API"] },
-            ].map((plan) => {
-              const isCurrent = settings.plan === plan.id;
-              const planOrder = ["STARTER", "PRO", "BUSINESS"];
-              const currentIndex = planOrder.indexOf(settings.plan || "STARTER");
-              const planIndex = planOrder.indexOf(plan.id);
-              const isUpgrade = planIndex > currentIndex;
-
-              return (
-                <div
-                  key={plan.id}
-                  className={`relative rounded-xl border p-5 ${
-                    plan.popular
-                      ? "border-[#E0E7FF] bg-[#EEF2FF]/30 ring-1 ring-[#6366F1]/20"
-                      : isCurrent
-                      ? "border-green-200 bg-green-50/30"
-                      : "border-gray-100"
-                  }`}
-                >
-                  {plan.popular && (
-                    <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-[#1E1E2D] px-3 py-0.5 text-[10px] font-semibold text-white">
-                      Popüler
-                    </span>
-                  )}
-                  <p className="text-base font-bold text-gray-900">{plan.name}</p>
-                  <p className="mt-1 text-2xl font-bold text-gray-900">
-                    {plan.price}<span className="text-xs font-normal text-gray-400">/ay</span>
-                  </p>
-                  <div className="mt-3 space-y-1.5 text-xs text-gray-600">
-                    <p>{plan.tokens} token/ay</p>
-                    <p>{plan.storage} depolama</p>
-                    {plan.features.map((f) => (
-                      <p key={f} className="flex items-center gap-1">
-                        <CheckCircle className="h-3 w-3 text-green-500" />
-                        {f}
-                      </p>
-                    ))}
-                  </div>
-                  <div className="mt-4">
-                    {isCurrent ? (
-                      <span className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-green-100 px-3 py-2 text-xs font-semibold text-green-700">
-                        <CheckCircle className="h-3.5 w-3.5" />
-                        Mevcut Plan
-                      </span>
-                    ) : isUpgrade ? (
-                      <button
-                        onClick={() => handlePayment("SUBSCRIPTION", plan.id)}
-                        disabled={paymentLoading === `SUBSCRIPTION_${plan.id}`}
-                        className="w-full rounded-lg bg-[#1E1E2D] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#2A2A3C] disabled:opacity-50"
-                      >
-                        {paymentLoading === `SUBSCRIPTION_${plan.id}` ? (
-                          <Loader2 className="mx-auto h-4 w-4 animate-spin" />
-                        ) : (
-                          "Yükselt"
-                        )}
-                      </button>
-                    ) : (
-                      <span className="inline-flex w-full items-center justify-center rounded-lg bg-gray-100 px-3 py-2 text-xs font-medium text-gray-400">
-                        Mevcut planınız daha üst
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+          <div className="flex items-center justify-between rounded-xl bg-[#EEF2FF]/50 border border-[#E0E7FF] p-5">
+            <div>
+              <p className="text-sm font-semibold text-gray-900">Modül Bazlı Abonelik</p>
+              <p className="mt-1 text-xs text-gray-500">
+                İhtiyacınız olan modülleri seçin, sadece kullandıklarınız için ödeyin.
+                Modül ekleme/çıkarma, depolama yükseltme ve ödeme yönetimi için abonelik sayfasını kullanın.
+              </p>
+            </div>
+            <a
+              href="/billing"
+              className="shrink-0 rounded-lg bg-[#6366F1] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#4F46E5]"
+            >
+              Aboneliği Yönet
+            </a>
           </div>
         </div>
       </motion.div>
