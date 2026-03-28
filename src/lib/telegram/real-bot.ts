@@ -80,8 +80,21 @@ async function getMe(): Promise<{ username: string }> {
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 async function getClinicIdForChat(chatId: number): Promise<string | null> {
+  const chatIdStr = chatId.toString();
+
+  // 1. Önce User bazlı ara (yeni sistem)
+  const user = await prisma.user.findFirst({
+    where: { telegramChatId: chatIdStr },
+    select: { clinicId: true },
+  });
+  if (user?.clinicId) {
+    console.log(`[Bot] getClinicIdForChat chatId=${chatId} → clinicId=${user.clinicId} (via User)`);
+    return user.clinicId;
+  }
+
+  // 2. Fallback: Clinic bazlı ara (eski sistem / geriye uyumluluk)
   const clinic = await prisma.clinic.findFirst({
-    where: { telegramChatId: chatId.toString() },
+    where: { telegramChatId: chatIdStr },
     select: { id: true },
   });
 

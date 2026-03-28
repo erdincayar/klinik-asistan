@@ -883,11 +883,16 @@ export default function SettingsPage() {
 
             {/* Link */}
             <div className="mb-4 rounded-xl bg-gray-50 p-3">
-              <p className="mb-1 text-xs text-gray-500">veya bu linki kullanın:</p>
+              <p className="mb-1 text-xs text-gray-500">veya bu linke tıklayın:</p>
               <div className="flex items-center gap-2">
-                <code className="flex-1 truncate text-xs text-[#6366F1]">
+                <a
+                  href={telegramLink.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 truncate text-sm font-medium text-[#6366F1] hover:underline"
+                >
                   {telegramLink.link}
-                </code>
+                </a>
                 <button
                   onClick={() => copyToClipboard(telegramLink.link)}
                   className="shrink-0 rounded-lg p-1.5 text-gray-400 hover:bg-gray-200"
