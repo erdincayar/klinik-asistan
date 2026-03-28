@@ -106,6 +106,22 @@ Kullanıcının isteği: ${message}`;
           isActive: true,
         },
       });
+
+      // STOCK tipli alarm ise envanter kısmındaki StockAlarm tablosuna da yaz
+      if (alarm.type === "STOCK") {
+        const conditions = alarm.conditions || {};
+        await prisma.stockAlarm.create({
+          data: {
+            clinicId,
+            name: alarm.name,
+            type: "STOCK",
+            threshold: conditions.thresholdQuantity || conditions.threshold || 5,
+            productId: conditions.productId || null,
+            isActive: true,
+          },
+        }).catch(() => {}); // Hata olursa sessiz geç, ana alarm zaten oluştu
+      }
+
       created.push({ ...newAlarm, explanation: alarm.explanation });
     }
 
