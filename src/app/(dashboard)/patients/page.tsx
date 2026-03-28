@@ -403,12 +403,6 @@ export default function PatientsPage() {
             <Download className="h-4 w-4" />
             <span className="hidden sm:inline">Dışa Aktar</span>
           </Button>
-          <Link href="/patients/new">
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Yeni Müşteri
-            </Button>
-          </Link>
         </div>
       </motion.div>
 
@@ -571,20 +565,28 @@ export default function PatientsPage() {
                   </span>
                 )}
               </div>
-              {customColumns.length > 0 && (
-                <button
-                  onClick={() => setColumnEditMode(!columnEditMode)}
-                  className={cn(
-                    "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
-                    columnEditMode
-                      ? "bg-[#1E1E2D] text-white"
-                      : "border border-gray-200 text-gray-600 hover:bg-gray-50",
-                  )}
-                >
-                  <Settings2 className="h-3.5 w-3.5" />
-                  {columnEditMode ? "Tamam" : "Düzenle"}
-                </button>
-              )}
+              <div className="flex items-center gap-2">
+                <Link href="/patients/new">
+                  <Button size="sm" className="gap-1.5">
+                    <Plus className="h-3.5 w-3.5" />
+                    Yeni Müşteri
+                  </Button>
+                </Link>
+                {customColumns.length > 0 && (
+                  <button
+                    onClick={() => setColumnEditMode(!columnEditMode)}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+                      columnEditMode
+                        ? "bg-[#1E1E2D] text-white"
+                        : "border border-gray-200 text-gray-600 hover:bg-gray-50",
+                    )}
+                  >
+                    <Settings2 className="h-3.5 w-3.5" />
+                    {columnEditMode ? "Tamam" : "Düzenle"}
+                  </button>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent>
