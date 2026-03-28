@@ -1376,7 +1376,7 @@ export default function EmployeesPage() {
                     <div
                       key={emp.id}
                       onClick={() => { setSelectedEmployee(emp); setShowMonthlyTable(false); }}
-                      className={`flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors hover:bg-accent/50 ${
+                      className={`flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors hover:bg-accent/50 overflow-hidden ${
                         selectedEmployee?.id === emp.id ? "border-primary bg-accent/30" : ""
                       }`}
                     >
@@ -1416,20 +1416,20 @@ export default function EmployeesPage() {
                       </div>
 
                       {/* Commission, Revenue & Salary */}
-                      <div className="flex items-center gap-4 text-sm flex-wrap">
-                        <div className="text-right">
-                          <p className="text-muted-foreground">Komisyon</p>
-                          <p className="font-medium">
+                      <div className="flex items-center gap-3 text-sm shrink-0">
+                        <div className="text-right w-16">
+                          <p className="text-[11px] text-muted-foreground">Komisyon</p>
+                          <p className="font-medium text-xs truncate">
                             {emp.tieredCommission ? "Kademeli" : `%${emp.commissionRate}`}
                           </p>
                         </div>
-                        <div className="text-right">
-                          <p className="text-muted-foreground">Aylık Ciro</p>
-                          <p className="font-medium">{formatTL(emp.monthlyRevenue)}</p>
+                        <div className="text-right w-20">
+                          <p className="text-[11px] text-muted-foreground">Aylık Ciro</p>
+                          <p className="font-medium text-xs truncate">{formatTL(emp.monthlyRevenue)}</p>
                         </div>
-                        <div className="text-right">
-                          <p className="text-muted-foreground">Maaş</p>
-                          <p className="font-medium">
+                        <div className="text-right w-20">
+                          <p className="text-[11px] text-muted-foreground">Maaş</p>
+                          <p className="font-medium text-xs truncate">
                             {(() => {
                               const info = getSalaryTypeAndAmount(emp);
                               return info ? formatTL(info.amount) : "-";
