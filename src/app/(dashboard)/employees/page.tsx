@@ -178,6 +178,40 @@ interface RoleItem {
   name: string;
 }
 
+// 20 birbirinden net ayrışan renk — randevu takviminde karışmaz
+const DISTINCT_COLORS = [
+  "#3B82F6", // blue
+  "#EF4444", // red
+  "#10B981", // emerald
+  "#F59E0B", // amber
+  "#8B5CF6", // violet
+  "#EC4899", // pink
+  "#14B8A6", // teal
+  "#F97316", // orange
+  "#6366F1", // indigo
+  "#84CC16", // lime
+  "#06B6D4", // cyan
+  "#D946EF", // fuchsia
+  "#0EA5E9", // sky
+  "#A855F7", // purple
+  "#22C55E", // green
+  "#E11D48", // rose
+  "#2563EB", // blue-700
+  "#CA8A04", // yellow-600
+  "#DC2626", // red-600
+  "#059669", // emerald-600
+];
+
+function getNextAvailableColor(usedColors: string[]): string {
+  const used = new Set(usedColors.map((c) => c.toUpperCase()));
+  for (const color of DISTINCT_COLORS) {
+    if (!used.has(color.toUpperCase())) return color;
+  }
+  // Tüm renkler kullanıldıysa rastgele üret
+  const hue = Math.floor(Math.random() * 360);
+  return `hsl(${hue}, 70%, 50%)`;
+}
+
 const emptyForm: EmployeeForm = {
   name: "",
   role: "",
@@ -884,16 +918,29 @@ export default function EmployeesPage() {
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor={`${idPrefix}-color`}>Renk</Label>
-          <div className="flex items-center gap-3">
-            <input
-              id={`${idPrefix}-color`}
-              type="color"
-              value={form.color}
-              onChange={(e) => setForm({ ...form, color: e.target.value })}
-              className="h-10 w-14 cursor-pointer rounded-md border border-input bg-background p-1"
-            />
-            <span className="text-sm text-muted-foreground">{form.color}</span>
+          <Label>Renk</Label>
+          <div className="flex flex-wrap gap-2">
+            {DISTINCT_COLORS.map((c) => {
+              const isUsed = employees.some((e) => e.color?.toUpperCase() === c.toUpperCase() && e.id !== editingEmployee?.id);
+              const isSelected = form.color.toUpperCase() === c.toUpperCase();
+              return (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => !isUsed && setForm({ ...form, color: c })}
+                  disabled={isUsed}
+                  className={`h-8 w-8 rounded-full border-2 transition-all ${
+                    isSelected
+                      ? "border-gray-900 scale-110 ring-2 ring-offset-1 ring-gray-400"
+                      : isUsed
+                      ? "border-transparent opacity-20 cursor-not-allowed"
+                      : "border-transparent hover:scale-110 hover:border-gray-300"
+                  }`}
+                  style={{ backgroundColor: c }}
+                  title={isUsed ? "Bu renk başka çalışanda kullanılıyor" : c}
+                />
+              );
+            })}
           </div>
         </div>
 
@@ -1241,7 +1288,11 @@ export default function EmployeesPage() {
             <Plus className="mr-2 h-4 w-4" />
             Alan Ekle
           </Button>
-          <Button onClick={() => { setForm(emptyForm); setShowAddDialog(true); }}>
+          <Button onClick={() => {
+            const usedColors = employees.map((e) => e.color);
+            setForm({ ...emptyForm, color: getNextAvailableColor(usedColors) });
+            setShowAddDialog(true);
+          }}>
             <Plus className="mr-2 h-4 w-4" />
             Yeni Çalışan Ekle
           </Button>
