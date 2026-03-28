@@ -29,7 +29,6 @@ import {
   setConversationState,
   clearConversationState,
   type ConversationState,
-  type PendingAppointmentData,
 } from "./bot-conversation-state";
 // TOKEN_SYSTEM_DISABLED - import { TOKEN_COSTS } from "./token-costs";
 // TOKEN_SYSTEM_DISABLED - import { checkBalance, deductTokens } from "./token-service";
@@ -414,7 +413,7 @@ async function createAppointmentWithEmployee(
   employeeName: string | undefined,
   clinicId: string
 ): Promise<string> {
-  const appointment = await prisma.appointment.create({
+  await prisma.appointment.create({
     data: {
       patientId,
       clinicId,

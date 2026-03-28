@@ -171,7 +171,7 @@ export default function MetaAdsContent() {
 
   // Campaigns data
   const [allCampaigns, setAllCampaigns] = useState<Campaign[]>([]);
-  const [accountSummary, setAccountSummary] = useState<AccountSummary | null>(null);
+  const [, setAccountSummary] = useState<AccountSummary | null>(null);
   const [campaignsDatePreset, setCampaignsDatePreset] = useState("maximum");
   const [objectiveFilter, setObjectiveFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
@@ -185,7 +185,7 @@ export default function MetaAdsContent() {
   const [insightsLoading, setInsightsLoading] = useState(false);
   const [insightsError, setInsightsError] = useState("");
   const [insightsCampaigns, setInsightsCampaigns] = useState<Campaign[]>([]);
-  const [insightsSummary, setInsightsSummary] = useState<AccountSummary | null>(null);
+  const [, setInsightsSummary] = useState<AccountSummary | null>(null);
 
   // AI
   const [analysis, setAnalysis] = useState("");

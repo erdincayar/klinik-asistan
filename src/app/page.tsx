@@ -550,7 +550,7 @@ export default function Home() {
   /* ── Inline onboarding state ── */
   const [obStep, setObStep] = useState(0); // 0=sector, 1=team, 2=pain, 3=analysis, 4=package
   const [obDirection, setObDirection] = useState(1);
-  const [obSessionId, setObSessionId] = useState<string | null>(null);
+  const [, setObSessionId] = useState<string | null>(null);
   const [obSector, setObSector] = useState<string | null>(null);
   const [obSectorCustom, setObSectorCustom] = useState("");
   const [obTeamSize, setObTeamSize] = useState<string | null>(null);

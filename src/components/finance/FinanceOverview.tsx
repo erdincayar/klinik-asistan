@@ -12,7 +12,6 @@ import {
   ArrowRight,
   RefreshCw,
   CalendarDays,
-  Upload,
   Download,
   AlertTriangle,
   Pencil,
@@ -47,7 +46,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { cn, formatCurrency, formatDate } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { TREATMENT_CATEGORIES, EXPENSE_CATEGORIES } from "@/lib/types";
 import {
   BarChart,
@@ -58,9 +57,6 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-  PieChart,
-  Pie,
-  Cell,
 } from "recharts";
 
 /* ──────────────────────── TYPES ──────────────────────── */
@@ -130,8 +126,6 @@ interface RecurringTransaction {
 
 /* ──────────────────────── HELPERS ──────────────────────── */
 
-const PIE_COLORS = ["#22c55e", "#3b82f6", "#f59e0b", "#8b5cf6", "#ec4899"];
-
 const TURKISH_MONTHS = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
 const MONTHS_FULL = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
 
@@ -141,14 +135,6 @@ const EXPENSE_BADGE: Record<string, string> = {
   MALZEME: "bg-orange-50 text-orange-700",
   FATURA: "bg-orange-50 text-orange-700",
   DIGER: "bg-gray-100 text-gray-700",
-};
-
-const EXPENSE_CATEGORY_COLORS: Record<string, string> = {
-  KIRA: "bg-purple-100 text-purple-800",
-  MAAS: "bg-[#E0E7FF] text-[#7A2414]",
-  MALZEME: "bg-orange-100 text-orange-800",
-  FATURA: "bg-orange-100 text-orange-800",
-  DIGER: "bg-gray-100 text-gray-800",
 };
 
 function formatTurkishDate(dateStr: string) {

@@ -77,7 +77,7 @@ async function main() {
     });
 
     // Kullanıcı oluştur
-    const user = await prisma.user.upsert({
+    await prisma.user.upsert({
       where: { email: u.email },
       update: {
         name: u.name,

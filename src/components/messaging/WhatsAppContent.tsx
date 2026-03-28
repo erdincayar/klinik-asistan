@@ -14,7 +14,6 @@ import {
   FileText,
   Users,
   HelpCircle,
-  ChevronUp,
   X,
   Terminal,
   Wallet,
