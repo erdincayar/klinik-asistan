@@ -57,6 +57,11 @@ interface Alarm {
   groupName: string | null;
   customerId: string | null;
   customer?: { id: string; name: string } | null;
+  aiGenerated?: boolean;
+  schedule?: string | null;
+  messageTemplate?: string | null;
+  triggerAction?: string;
+  targetChannel?: string | null;
   lastTriggeredAt: string | null;
   createdAt: string;
   _count?: { logs: number };
@@ -80,11 +85,14 @@ interface Product {
 
 /* ──────────────────────── HELPERS ──────────────────────── */
 
-const typeConfig: Record<string, { label: string; icon: typeof Package; color: string }> = {
-  STOCK: { label: "Stok", icon: Package, color: "bg-[#EEF2FF] text-[#4F46E5]" },
-  CUSTOMER_VISIT: { label: "Müşteri Ziyareti", icon: Users, color: "bg-purple-50 text-purple-700" },
-  CUSTOMER_BIRTHDAY: { label: "Doğum Günü", icon: Cake, color: "bg-pink-50 text-pink-700" },
-  FINANCE: { label: "Finans", icon: DollarSign, color: "bg-green-50 text-green-700" },
+const typeConfig: Record<string, { label: string; icon: typeof Package; color: string; category: string }> = {
+  STOCK: { label: "Stok", icon: Package, color: "bg-[#EEF2FF] text-[#4F46E5]", category: "Stok & Envanter" },
+  CUSTOMER_VISIT: { label: "Müşteri Ziyareti", icon: Users, color: "bg-purple-50 text-purple-700", category: "Müşteri Takip" },
+  CUSTOMER_BIRTHDAY: { label: "Doğum Günü", icon: Cake, color: "bg-pink-50 text-pink-700", category: "Müşteri Takip" },
+  FINANCE: { label: "Finans", icon: DollarSign, color: "bg-green-50 text-green-700", category: "Finans" },
+  SCHEDULED: { label: "Zamanlanmış", icon: Clock, color: "bg-blue-50 text-blue-700", category: "Zamanlanmış" },
+  AUTO_MESSAGE: { label: "Otomatik Mesaj", icon: MessageCircle, color: "bg-teal-50 text-teal-700", category: "Otomatik Mesajlar" },
+  CUSTOM: { label: "Özel", icon: Sparkles, color: "bg-orange-50 text-orange-700", category: "Özel Alarmlar" },
 };
 
 function getConditionSummary(type: string, conditions: Record<string, any>): string {
@@ -96,6 +104,13 @@ function getConditionSummary(type: string, conditions: Record<string, any>): str
       return `Sıklık katı: ${conditions.multiplier ?? 2}x`;
     case "CUSTOMER_BIRTHDAY":
       return `${conditions.daysBefore ?? 3} gün öncesinden`;
+    case "SCHEDULED":
+      return conditions.schedule || "Zamanlanmış";
+    case "AUTO_MESSAGE":
+      return conditions.schedule === "after_appointment" ? "Randevu sonrası" :
+             conditions.schedule === "after_treatment" ? "Tedavi sonrası" : "Otomatik mesaj";
+    case "CUSTOM":
+      return conditions.thresholdDays ? `Eşik: ${conditions.thresholdDays} gün` : "Özel koşul";
     default:
       return "";
   }
@@ -315,17 +330,27 @@ function AlarmsPage() {
   const activeAlarmCount = alarms.filter((a) => a.isActive).length;
 
   const grouped = useMemo(() => {
-    const groups: Record<string, Alarm[]> = {};
+    const bulkGroups: Record<string, Alarm[]> = {};
     const individual: Alarm[] = [];
     for (const alarm of alarms) {
       if (alarm.isGroup && alarm.groupName) {
-        if (!groups[alarm.groupName]) groups[alarm.groupName] = [];
-        groups[alarm.groupName].push(alarm);
+        if (!bulkGroups[alarm.groupName]) bulkGroups[alarm.groupName] = [];
+        bulkGroups[alarm.groupName].push(alarm);
       } else {
         individual.push(alarm);
       }
     }
-    return { groups, individual };
+
+    // Bireysel alarmları kategoriye göre grupla
+    const categoryGroups: Record<string, Alarm[]> = {};
+    for (const alarm of individual) {
+      const tc = typeConfig[alarm.type];
+      const category = tc?.category || "Diğer";
+      if (!categoryGroups[category]) categoryGroups[category] = [];
+      categoryGroups[category].push(alarm);
+    }
+
+    return { bulkGroups, categoryGroups };
   }, [alarms]);
 
   function toggleGroup(groupName: string) {
@@ -552,10 +577,10 @@ function AlarmsPage() {
               ) : (
                 <div className="space-y-4">
                   {/* Bulk Alarm Groups */}
-                  {Object.keys(grouped.groups).length > 0 && (
+                  {Object.keys(grouped.bulkGroups).length > 0 && (
                     <div className="space-y-2">
                       <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Toplu Alarmlar</p>
-                      {Object.entries(grouped.groups).map(([gName, gAlarms]) => {
+                      {Object.entries(grouped.bulkGroups).map(([gName, gAlarms]) => {
                         const activeCount = gAlarms.filter((a) => a.isActive).length;
                         const allActive = activeCount === gAlarms.length;
                         const isExpanded = expandedGroups.has(gName);
@@ -657,15 +682,17 @@ function AlarmsPage() {
                     </div>
                   )}
 
-                  {/* Individual Alarms */}
-                  {grouped.individual.length > 0 && (
-                    <div className="space-y-2">
-                      {Object.keys(grouped.groups).length > 0 && (
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Bireysel Alarmlar</p>
-                      )}
-                      {grouped.individual.map((alarm) => {
+                  {/* Category-Grouped Individual Alarms */}
+                  {Object.entries(grouped.categoryGroups).map(([category, catAlarms]) => (
+                    <div key={category} className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{category}</p>
+                        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-500">{catAlarms.length}</span>
+                      </div>
+                      {catAlarms.map((alarm) => {
                         const tc = typeConfig[alarm.type] || typeConfig.STOCK;
                         const Icon = tc.icon;
+                        const isAI = alarm.aiGenerated;
                         return (
                           <div
                             key={alarm.id}
@@ -685,13 +712,26 @@ function AlarmsPage() {
                                     <span className={cn("rounded-md px-2 py-0.5 text-[10px] font-semibold", tc.color)}>
                                       {tc.label}
                                     </span>
+                                    {isAI && (
+                                      <span className="rounded-md bg-[#EEF2FF] px-1.5 py-0.5 text-[9px] font-semibold text-[#6366F1] flex items-center gap-0.5">
+                                        <Sparkles className="h-2.5 w-2.5" /> AI
+                                      </span>
+                                    )}
                                   </div>
                                   <p className="text-[11px] text-gray-400">
+                                    {alarm.schedule && (
+                                      <><Clock className="inline h-3 w-3 mr-0.5" />{alarm.schedule} &middot; </>
+                                    )}
                                     {getConditionSummary(alarm.type, alarm.conditions)}
                                     {alarm.lastTriggeredAt && (
                                       <> &middot; Son: {formatDate(alarm.lastTriggeredAt)}</>
                                     )}
                                   </p>
+                                  {alarm.messageTemplate && (
+                                    <p className="mt-0.5 text-[10px] text-gray-300 italic truncate max-w-xs">
+                                      {alarm.messageTemplate}
+                                    </p>
+                                  )}
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
@@ -724,7 +764,7 @@ function AlarmsPage() {
                         );
                       })}
                     </div>
-                  )}
+                  ))}
                 </div>
               )}
             </CardContent>
