@@ -697,44 +697,42 @@ function AlarmsPage() {
                           <div
                             key={alarm.id}
                             className={cn(
-                              "rounded-xl border px-4 py-3 transition-colors",
+                              "rounded-xl border px-3 sm:px-4 py-3 transition-colors overflow-hidden",
                               alarm.isActive ? "border-gray-100 bg-white" : "border-gray-100 bg-gray-50 opacity-60",
                             )}
                           >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg", tc.color.split(" ")[0])}>
-                                  <Icon className={cn("h-4 w-4", tc.color.split(" ")[1])} />
-                                </div>
-                                <div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm font-medium text-gray-900">{alarm.name}</span>
-                                    <span className={cn("rounded-md px-2 py-0.5 text-[10px] font-semibold", tc.color)}>
-                                      {tc.label}
+                            <div className="flex items-start gap-3">
+                              <div className={cn("flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg", tc.color.split(" ")[0])}>
+                                <Icon className={cn("h-4 w-4", tc.color.split(" ")[1])} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="text-sm font-medium text-gray-900 truncate">{alarm.name}</span>
+                                  <span className={cn("rounded-md px-1.5 py-0.5 text-[9px] sm:text-[10px] font-semibold shrink-0", tc.color)}>
+                                    {tc.label}
+                                  </span>
+                                  {isAI && (
+                                    <span className="rounded-md bg-[#EEF2FF] px-1.5 py-0.5 text-[9px] font-semibold text-[#6366F1] flex items-center gap-0.5 shrink-0">
+                                      <Sparkles className="h-2.5 w-2.5" /> AI
                                     </span>
-                                    {isAI && (
-                                      <span className="rounded-md bg-[#EEF2FF] px-1.5 py-0.5 text-[9px] font-semibold text-[#6366F1] flex items-center gap-0.5">
-                                        <Sparkles className="h-2.5 w-2.5" /> AI
-                                      </span>
-                                    )}
-                                  </div>
-                                  <p className="text-[11px] text-gray-400">
-                                    {alarm.schedule && (
-                                      <><Clock className="inline h-3 w-3 mr-0.5" />{alarm.schedule} &middot; </>
-                                    )}
-                                    {getConditionSummary(alarm.type, alarm.conditions)}
-                                    {alarm.lastTriggeredAt && (
-                                      <> &middot; Son: {formatDate(alarm.lastTriggeredAt)}</>
-                                    )}
-                                  </p>
-                                  {alarm.messageTemplate && (
-                                    <p className="mt-0.5 text-[10px] text-gray-300 italic truncate max-w-xs">
-                                      {alarm.messageTemplate}
-                                    </p>
                                   )}
                                 </div>
+                                <p className="text-[11px] text-gray-400 truncate">
+                                  {alarm.schedule && (
+                                    <><Clock className="inline h-3 w-3 mr-0.5" />{alarm.schedule} &middot; </>
+                                  )}
+                                  {getConditionSummary(alarm.type, alarm.conditions)}
+                                  {alarm.lastTriggeredAt && (
+                                    <> &middot; Son: {formatDate(alarm.lastTriggeredAt)}</>
+                                  )}
+                                </p>
+                                {alarm.messageTemplate && (
+                                  <p className="mt-0.5 text-[10px] text-gray-300 italic truncate">
+                                    {alarm.messageTemplate}
+                                  </p>
+                                )}
                               </div>
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1.5 shrink-0">
                                 <label className="relative inline-flex cursor-pointer items-center">
                                   <input
                                     type="checkbox"

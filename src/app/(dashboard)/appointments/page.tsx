@@ -143,7 +143,17 @@ export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [weekAppointments, setWeekAppointments] = useState<Record<string, Appointment[]>>({});
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState(() => loadPrefs().viewMode || "daily");
+  const [viewModeRaw, setViewModeRaw] = useState(() => loadPrefs().viewMode || "daily");
+  // Mobilde haftalık görünüm yerine otomatik günlük'e düş
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+  const viewMode = isMobile ? "daily" : viewModeRaw;
+  const setViewMode = (v: string) => { setViewModeRaw(v); savePrefs({ viewMode: v }); };
   const compactMode = true;
   const [hideEmpty, setHideEmpty] = useState(() => loadPrefs().hideEmpty ?? false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
@@ -685,7 +695,7 @@ export default function AppointmentsPage() {
         ].map((tab) => (
           <button
             key={tab.value}
-            onClick={() => { setViewMode(tab.value); savePrefs({ viewMode: tab.value }); }}
+            onClick={() => setViewMode(tab.value)}
             className={cn(
               "flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all",
               viewMode === tab.value
