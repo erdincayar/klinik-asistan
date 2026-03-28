@@ -2,7 +2,7 @@
 
 import { SessionProvider, useSession, signOut } from "next-auth/react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -695,6 +695,11 @@ function TrialBanner({ status, trialEnd }: { status: string; trialEnd?: string |
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<{ id: string; message: string; createdAt: string; isRead: boolean }[]>([]);
+  const [notiLoading, setNotiLoading] = useState(false);
   const pathname = usePathname();
   const pageTitle = getPageTitle(pathname);
   const { data: session } = useSession();
@@ -721,6 +726,53 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       body: JSON.stringify({ page: pathname }),
     }).catch(() => {});
   }, [pathname]);
+
+  // Close search/notifications on route change
+  useEffect(() => {
+    setShowSearch(false);
+    setShowNotifications(false);
+  }, [pathname]);
+
+  const router = useRouter();
+
+  // Fetch notifications (alarm logs)
+  function handleOpenNotifications() {
+    if (showNotifications) {
+      setShowNotifications(false);
+      return;
+    }
+    setShowNotifications(true);
+    setShowSearch(false);
+    setNotiLoading(true);
+    fetch("/api/alarms/logs?limit=10")
+      .then((r) => r.ok ? r.json() : { logs: [] })
+      .then((d) => setNotifications((d.logs || []).map((l: any) => ({ id: l.id, message: l.message, createdAt: l.createdAt, isRead: l.isRead }))))
+      .catch(() => {})
+      .finally(() => setNotiLoading(false));
+  }
+
+  // Search navigation
+  const SEARCH_PAGES = [
+    { label: "Genel Bakış", href: "/dashboard", keys: "dashboard genel bakış ana sayfa" },
+    { label: "Müşteriler", href: "/patients", keys: "müşteri hasta customer" },
+    { label: "Randevular", href: "/appointments", keys: "randevu appointment takvim" },
+    { label: "Finans", href: "/finance", keys: "finans gelir gider para" },
+    { label: "Stok/Envanter", href: "/inventory", keys: "stok envanter ürün product" },
+    { label: "Çalışanlar", href: "/employees", keys: "çalışan personel employee" },
+    { label: "Belgeler", href: "/hr", keys: "belge hr insan kaynakları onam" },
+    { label: "Pazarlama", href: "/marketing", keys: "pazarlama marketing reklam" },
+    { label: "Mesajlaşma", href: "/messaging", keys: "mesaj telegram whatsapp" },
+    { label: "AI Asistan", href: "/ai-assistant", keys: "ai yapay zeka asistan bot" },
+    { label: "Raporlar", href: "/reports", keys: "rapor analiz istatistik" },
+    { label: "Alarmlar", href: "/alarmlar", keys: "alarm uyarı bildirim notification" },
+    { label: "Hatırlatmalar", href: "/reminders", keys: "hatırlatma reminder" },
+    { label: "Abonelik", href: "/billing", keys: "abonelik fatura ödeme billing" },
+    { label: "Ayarlar", href: "/settings", keys: "ayar setting profil" },
+  ];
+
+  const searchResults = searchQuery.trim()
+    ? SEARCH_PAGES.filter((p) => p.keys.includes(searchQuery.toLowerCase()) || p.label.toLowerCase().includes(searchQuery.toLowerCase()))
+    : [];
 
   return (
     <div className="flex h-screen bg-[#F4F6FA]">
@@ -753,12 +805,18 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
           {/* Right side */}
           <div className="flex items-center gap-2">
             {/* Search */}
-            <button className="rounded-lg p-2 text-[#6C7293] transition-colors hover:bg-[#F3F4F6] hover:text-[#1A1A2E]">
+            <button
+              onClick={() => { setShowSearch(!showSearch); setShowNotifications(false); setSearchQuery(""); }}
+              className={`rounded-lg p-2 transition-colors ${showSearch ? "bg-[#EEF2FF] text-[#6366F1]" : "text-[#6C7293] hover:bg-[#F3F4F6] hover:text-[#1A1A2E]"}`}
+            >
               <Search className="h-5 w-5" />
             </button>
 
             {/* Notifications */}
-            <button className="relative rounded-lg p-2 text-[#6C7293] transition-colors hover:bg-[#F3F4F6] hover:text-[#1A1A2E]">
+            <button
+              onClick={handleOpenNotifications}
+              className={`relative rounded-lg p-2 transition-colors ${showNotifications ? "bg-[#EEF2FF] text-[#6366F1]" : "text-[#6C7293] hover:bg-[#F3F4F6] hover:text-[#1A1A2E]"}`}
+            >
               <Bell className="h-5 w-5" />
               <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#6366F1]" />
             </button>
@@ -791,6 +849,88 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             </button>
           </div>
         </header>
+
+        {/* Search overlay */}
+        {showSearch && (
+          <div className="border-b border-[#E5E7EB] bg-white px-6 py-3 shadow-sm">
+            <div className="mx-auto max-w-xl relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                autoFocus
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && searchResults.length > 0) {
+                    router.push(searchResults[0].href);
+                    setShowSearch(false);
+                  }
+                  if (e.key === "Escape") setShowSearch(false);
+                }}
+                placeholder="Sayfa veya modül ara..."
+                className="w-full rounded-lg border border-gray-200 bg-[#F9FAFB] pl-10 pr-4 py-2.5 text-sm focus:border-[#6366F1] focus:ring-2 focus:ring-[#6366F1]/20 outline-none"
+              />
+              {searchQuery.trim() && (
+                <div className="absolute top-full left-0 right-0 mt-1 rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden z-50">
+                  {searchResults.length === 0 ? (
+                    <p className="px-4 py-3 text-sm text-gray-400">Sonuç bulunamadı</p>
+                  ) : (
+                    searchResults.map((r) => (
+                      <button
+                        key={r.href}
+                        onClick={() => { router.push(r.href); setShowSearch(false); }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-[#EEF2FF] transition-colors text-left"
+                      >
+                        <Search className="h-3.5 w-3.5 text-gray-400" />
+                        {r.label}
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Notifications dropdown */}
+        {showNotifications && (
+          <div className="absolute right-4 sm:right-6 top-16 z-50 w-80 sm:w-96 rounded-xl border border-gray-200 bg-white shadow-xl overflow-hidden">
+            <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+              <h3 className="text-sm font-semibold text-gray-900">Bildirimler</h3>
+              <button
+                onClick={() => router.push("/alarmlar")}
+                className="text-xs font-medium text-[#6366F1] hover:underline"
+              >
+                Tümünü Gör
+              </button>
+            </div>
+            <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
+              {notiLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#6366F1] border-t-transparent" />
+                </div>
+              ) : notifications.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-8">Bildirim yok</p>
+              ) : (
+                notifications.map((n) => (
+                  <div
+                    key={n.id}
+                    className={`px-4 py-3 text-sm ${n.isRead ? "bg-white" : "bg-[#EEF2FF]/30"}`}
+                  >
+                    <p className="text-gray-700">{n.message}</p>
+                    <p className="text-[11px] text-gray-400 mt-1">
+                      {new Date(n.createdAt).toLocaleString("tr-TR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Click outside to close */}
+        {(showSearch || showNotifications) && (
+          <div className="fixed inset-0 z-40" onClick={() => { setShowSearch(false); setShowNotifications(false); }} />
+        )}
 
         {/* Main content */}
         <main className="flex-1 overflow-y-auto px-4 py-4 sm:p-6">
