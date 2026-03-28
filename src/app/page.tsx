@@ -831,159 +831,82 @@ export default function Home() {
 
       {/* ════════════════════════ HERO SLIDER ════════════════════════ */}
       <section
-        className="relative h-[600px] overflow-hidden pt-20"
+        className="relative overflow-hidden pt-20"
         onMouseEnter={() => setHeroHovered(true)}
         onMouseLeave={() => setHeroHovered(false)}
       >
         {/* Slides */}
         <AnimatePresence mode="wait">
-          {heroSlide === 0 && (
-            <motion.div
-              key="slide-0"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.6 }}
-              className="absolute inset-0 flex items-center"
-              style={{ background: "linear-gradient(135deg, #1a1a2e, #0f3460)" }}
-            >
-              <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between px-6">
-                <div className="max-w-[520px]">
-                  <h1 className="mb-4 text-[clamp(28px,4.5vw,52px)] font-extrabold uppercase tracking-wider leading-[1.1] text-white">
-                    AI Destekli<br />
-                    <span className="text-[#6366F1]">İşletme Yönetimi</span>
-                  </h1>
-                  <p className="mb-8 text-lg leading-relaxed text-white/70">
-                    Randevu, finans, stok, çalışan yönetimi ve daha fazlası — hepsi tek platformda, yapay zeka destekli.
-                  </p>
-                  <div className="flex gap-4">
-                    <Link href="/register" className="rounded-lg bg-[#6366F1] px-8 py-3.5 text-[13px] font-bold uppercase tracking-wider text-white transition-all hover:-translate-y-0.5 hover:bg-[#4F46E5] hover:shadow-lg">
-                      Hemen Başla
-                    </Link>
-                    <Link href="#dashboard-preview" className="rounded-lg border-2 border-white/30 px-8 py-3.5 text-[13px] font-bold uppercase tracking-wider text-white transition-all hover:border-white hover:bg-white/10">
-                      Demo Gör
-                    </Link>
-                  </div>
-                </div>
-                {/* CSS Dashboard mockup */}
-                <div className="hidden lg:block">
-                  <div className="w-[420px] rounded-xl bg-white/10 p-4 backdrop-blur-sm border border-white/10">
-                    <div className="mb-3 flex gap-2">
-                      <div className="h-2.5 w-2.5 rounded-full bg-red-400" />
-                      <div className="h-2.5 w-2.5 rounded-full bg-yellow-400" />
-                      <div className="h-2.5 w-2.5 rounded-full bg-green-400" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3 mb-3">
-                      {[
-                        { label: "Müşteri", val: "247", color: "#6366F1" },
-                        { label: "Randevu", val: "12", color: "#059669" },
-                        { label: "Gelir", val: "₺48.5K", color: "#D97706" },
-                        { label: "Stok", val: "156", color: "#3B82F6" },
-                      ].map((s) => (
-                        <div key={s.label} className="rounded-lg bg-white/10 p-3">
-                          <p className="text-[10px] text-white/50 uppercase tracking-wider">{s.label}</p>
-                          <p className="text-lg font-bold text-white">{s.val}</p>
-                          <div className="mt-1 h-1 rounded-full bg-white/10">
-                            <div className="h-1 rounded-full" style={{ width: "65%", backgroundColor: s.color }} />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="flex h-[80px] items-end gap-1.5">
-                      {[35, 50, 40, 65, 55, 80, 60, 75, 90, 70, 85, 95].map((h, i) => (
-                        <div key={i} className="flex-1 rounded-t bg-[#6366F1]/80" style={{ height: `${h}%` }} />
-                      ))}
+          {[
+            {
+              key: "slide-0",
+              image: "/images/hero-slide-1.png",
+              title: <>AI Destekli<br /><span className="text-[#6366F1]">Akıllı Yönetim</span></>,
+              desc: "Yapay zeka ile stok analizi, tedarik zinciri tahmini ve akıllı alarm sistemi. İşletmeniz 7/24 kontrol altında.",
+              cta: { label: "Hemen Başla", href: "/register" },
+              cta2: { label: "Demo Gör", href: "#dashboard-preview" },
+            },
+            {
+              key: "slide-1",
+              image: "/images/hero-slide-2.png",
+              title: <>Finanstan Stoka<br /><span className="text-[#6366F1]">Tek Platform</span></>,
+              desc: "Gelir-gider takibi, faturalama, çalışan yönetimi, raporlar ve 12+ modül tek bir ekranda.",
+              cta: { label: "Tüm Özellikleri Keşfet", href: "/ozellikler" },
+            },
+            {
+              key: "slide-2",
+              image: "/images/hero-slide-3.png",
+              title: <>Randevu & Müşteri<br /><span className="text-[#6366F1]">Yönetimi</span></>,
+              desc: "Renk kodlu takvim, müşteri takibi, otomatik hatırlatmalar ve dijital onam formları.",
+              cta: { label: "Ücretsiz Deneyin", href: "/register" },
+            },
+          ].map((slide, idx) =>
+            heroSlide === idx && (
+              <motion.div
+                key={slide.key}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.6 }}
+                className="relative"
+              >
+                {/* Background gradient */}
+                <div className="absolute inset-0 bg-gradient-to-b from-[#EEF2FF] via-[#F8F9FF] to-white" />
+
+                <div className="relative mx-auto max-w-[1200px] px-6 py-12 sm:py-16">
+                  {/* Text */}
+                  <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10">
+                    <h1 className="mb-4 text-[clamp(26px,4vw,48px)] font-extrabold leading-[1.15] text-[#1A1A2E]">
+                      {slide.title}
+                    </h1>
+                    <p className="mb-6 text-base sm:text-lg leading-relaxed text-[#6C7293] max-w-lg mx-auto">
+                      {slide.desc}
+                    </p>
+                    <div className="flex justify-center gap-3">
+                      <Link href={slide.cta.href} className="rounded-xl bg-[#6366F1] px-6 py-3 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-[#4F46E5] hover:shadow-lg hover:shadow-[#6366F1]/25">
+                        {slide.cta.label}
+                      </Link>
+                      {slide.cta2 && (
+                        <Link href={slide.cta2.href} className="rounded-xl border border-gray-200 bg-white px-6 py-3 text-sm font-semibold text-[#1A1A2E] transition-all hover:-translate-y-0.5 hover:shadow-md">
+                          {slide.cta2.label}
+                        </Link>
+                      )}
                     </div>
                   </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-          {heroSlide === 1 && (
-            <motion.div
-              key="slide-1"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.6 }}
-              className="absolute inset-0 flex items-center"
-              style={{ background: "linear-gradient(135deg, #2d1b69, #11998e)" }}
-            >
-              <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between px-6">
-                <div className="max-w-[520px]">
-                  <h1 className="mb-4 text-[clamp(28px,4.5vw,52px)] font-extrabold uppercase tracking-wider leading-[1.1] text-white">
-                    12+ Modül<br />
-                    <span className="text-[#6366F1]">Tek Platform</span>
-                  </h1>
-                  <p className="mb-8 text-lg leading-relaxed text-white/70">
-                    Müşteri yönetimi, randevu, finans, stok, çalışan, AI asistan, raporlar ve daha fazlası.
-                  </p>
-                  <Link href="/ozellikler" className="rounded-lg bg-[#6366F1] px-8 py-3.5 text-[13px] font-bold uppercase tracking-wider text-white transition-all hover:-translate-y-0.5 hover:bg-[#4F46E5] hover:shadow-lg">
-                    Tüm Özellikleri Keşfet
-                  </Link>
-                </div>
-                {/* Module grid */}
-                <div className="hidden lg:block">
-                  <div className="grid grid-cols-3 gap-3 w-[380px]">
-                    {[
-                      { icon: "🏥", label: "Müşteri" },
-                      { icon: "📅", label: "Randevu" },
-                      { icon: "💰", label: "Finans" },
-                      { icon: "📦", label: "Stok" },
-                      { icon: "🤖", label: "AI Asistan" },
-                      { icon: "📊", label: "Raporlar" },
-                    ].map((m) => (
-                      <div key={m.label} className="flex flex-col items-center gap-2 rounded-xl bg-white/10 p-5 backdrop-blur-sm border border-white/10 transition-all hover:bg-white/20">
-                        <span className="text-3xl">{m.icon}</span>
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-white/80">{m.label}</span>
-                      </div>
-                    ))}
+
+                  {/* Image */}
+                  <div className="relative mx-auto max-w-4xl">
+                    <div className="rounded-xl overflow-hidden shadow-2xl shadow-[#6366F1]/10">
+                      <img
+                        src={slide.image}
+                        alt={`Poby ${slide.key}`}
+                        className="w-full h-auto"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </motion.div>
-          )}
-          {heroSlide === 2 && (
-            <motion.div
-              key="slide-2"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.6 }}
-              className="absolute inset-0 flex items-center"
-              style={{ background: "linear-gradient(135deg, #134e5e, #71b280)" }}
-            >
-              <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between px-6">
-                <div className="max-w-[520px]">
-                  <h1 className="mb-4 text-[clamp(28px,4.5vw,52px)] font-extrabold uppercase tracking-wider leading-[1.1] text-white">
-                    Güvenli &<br />
-                    <span className="text-[#6366F1]">KVKK Uyumlu</span>
-                  </h1>
-                  <p className="mb-8 text-lg leading-relaxed text-white/70">
-                    Verileriniz şifreli, KVKK uyumlu altyapıda güvenle saklanır. İşletmenizi koruma altında tutun.
-                  </p>
-                  <Link href="/register" className="rounded-lg bg-[#6366F1] px-8 py-3.5 text-[13px] font-bold uppercase tracking-wider text-white transition-all hover:-translate-y-0.5 hover:bg-[#4F46E5] hover:shadow-lg">
-                    Güvenle Başlayın
-                  </Link>
-                </div>
-                {/* Shield animation */}
-                <div className="hidden lg:flex items-center justify-center">
-                  <motion.div
-                    animate={{ scale: [1, 1.05, 1] }}
-                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                    className="relative flex h-[220px] w-[220px] items-center justify-center"
-                  >
-                    <div className="absolute inset-0 rounded-full bg-white/5 border border-white/10" />
-                    <div className="absolute inset-4 rounded-full bg-white/5 border border-white/10" />
-                    <div className="absolute inset-8 rounded-full bg-white/10 border border-white/10" />
-                    <svg className="h-20 w-20 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                      <path d="M9 12l2 2 4-4" />
-                    </svg>
-                  </motion.div>
-                </div>
-              </div>
-            </motion.div>
+              </motion.div>
+            )
           )}
         </AnimatePresence>
 
