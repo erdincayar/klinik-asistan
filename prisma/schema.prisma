@@ -426,6 +426,12 @@ model Product {
   salePriceUSD     Float?          // Satış fiyatı döviz karşılığı
   saleCurrency     String          @default("TRY") // Satış para birimi
   customFields     Json?
+  // Tedarik zinciri alanları
+  supplier         String?         // Tedarikçi adı
+  leadTimeDays     Int?            // Tedarik süresi (gün)
+  reorderPoint     Int?            // Yeniden sipariş noktası (adet)
+  reorderQty       Int?            // Sipariş miktarı (adet)
+  autoReorder      Boolean         @default(false) // Otomatik tedarik listesine ekle
   clinicId         String
   clinic           Clinic          @relation(fields: [clinicId], references: [id])
   isActive         Boolean         @default(true)

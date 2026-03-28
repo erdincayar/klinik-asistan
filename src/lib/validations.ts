@@ -126,6 +126,11 @@ export const productSchema = z.object({
   salePriceUSD: z.number().min(0, "Fiyat negatif olamaz").nullable().optional(),
   saleCurrency: z.enum(["TRY", "USD", "EUR"]).optional(),
   customFields: z.record(z.string(), z.any()).nullable().optional(),
+  supplier: z.string().nullable().optional(),
+  leadTimeDays: z.number().int().min(0).nullable().optional(),
+  reorderPoint: z.number().int().min(0).nullable().optional(),
+  reorderQty: z.number().int().min(0).nullable().optional(),
+  autoReorder: z.boolean().optional(),
 });
 
 export const stockAlarmSchema = z.object({

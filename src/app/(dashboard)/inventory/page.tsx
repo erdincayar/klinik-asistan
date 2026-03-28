@@ -7,6 +7,7 @@ import AlarmsTab from "@/components/inventory/AlarmsTab";
 import FixedAssetsTab from "@/components/inventory/FixedAssetsTab";
 import MovementsTab from "@/components/inventory/MovementsTab";
 import ReportTab from "@/components/inventory/ReportTab";
+import SupplyChainTab from "@/components/inventory/SupplyChainTab";
 
 export default function InventoryPage() {
   const [activeTab, setActiveTab] = useState("products");
@@ -32,6 +33,7 @@ export default function InventoryPage() {
           <TabsTrigger value="assets">Demirbaş</TabsTrigger>
           <TabsTrigger value="movements">Stok Hareketleri</TabsTrigger>
           <TabsTrigger value="report">Stok Raporu</TabsTrigger>
+          <TabsTrigger value="supply-chain">Tedarik Zinciri</TabsTrigger>
         </TabsList>
 
         <TabsContent value="products">
@@ -48,6 +50,9 @@ export default function InventoryPage() {
         </TabsContent>
         <TabsContent value="report">
           <ReportTab key={`report-${refreshKey}`} />
+        </TabsContent>
+        <TabsContent value="supply-chain">
+          <SupplyChainTab />
         </TabsContent>
       </Tabs>
     </div>
