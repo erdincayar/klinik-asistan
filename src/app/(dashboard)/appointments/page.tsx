@@ -954,21 +954,21 @@ export default function AppointmentsPage() {
                       data-time={time}
                       className={cn(
                         "flex items-stretch",
-                        compactMode ? "min-h-[40px]" : "min-h-[56px]",
+                        slotAppointments.length > 0 ? "min-h-[48px]" : "min-h-[24px]",
                         isCurrentSlot && "bg-[#EEF2FF]/50",
                         isOffHours && !isCurrentSlot && "bg-gray-50/70"
                       )}
                     >
                       {/* Time label */}
                       <div className={cn(
-                        "flex w-20 shrink-0 items-center justify-center border-r border-gray-100 text-sm font-medium",
+                        "flex w-16 sm:w-20 shrink-0 items-center justify-center border-r border-gray-100 text-xs sm:text-sm font-medium",
                         isOffHours ? "text-gray-300" : "text-gray-500"
                       )}>
                         {time}
                       </div>
 
                       {/* Slot content */}
-                      <div className={cn("flex flex-1 flex-col gap-1 px-3", compactMode ? "py-1.5" : "py-3")}>
+                      <div className={cn("flex flex-1 flex-col gap-1 px-2 sm:px-3", slotAppointments.length > 0 ? "py-1.5" : "py-0.5")}>
                         {slotAppointments.length > 0 ? (
                           slotAppointments.map((appointment) => {
                             const statusInfo = getStatusInfo(appointment.status);
