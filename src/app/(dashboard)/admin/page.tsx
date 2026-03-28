@@ -14,51 +14,92 @@ import {
   ArrowRight,
   UserPlus,
   BarChart3,
+  UserX,
+  Zap,
+  TrendingUp,
+  Eye,
 } from "lucide-react";
+
+/* ──────────── Types ──────────── */
+
+interface ModuleStat {
+  module: string;
+  views: number;
+}
+
+interface UserModuleStat {
+  module: string;
+  count: number;
+}
+
+interface UserAnalytics {
+  userId: string;
+  name: string;
+  email: string;
+  total: number;
+  modules: UserModuleStat[];
+}
 
 interface Stats {
   totalUsers: number;
   activeUsers: number;
+  passiveUsers: number;
   totalClinics: number;
   todayLogins: number;
+  topModules: ModuleStat[];
+  userAnalytics: UserAnalytics[];
 }
 
-interface UserItem {
-  id: string;
-  email: string;
-  name: string;
-  role: string;
-  isActive: boolean;
-  lastLoginAt: string | null;
-  clinicId: string | null;
-  clinic: { id: string; name: string; sector?: string } | null;
-  createdAt: string;
-}
+/* ──────────── Module Labels ──────────── */
+
+const MODULE_LABELS: Record<string, string> = {
+  "/dashboard": "Genel Bakış",
+  "/patients": "Müşteriler",
+  "/appointments": "Randevular",
+  "/finance": "Finans",
+  "/inventory": "Stok/Envanter",
+  "/employees": "Çalışanlar",
+  "/hr": "Belgeler",
+  "/marketing": "Pazarlama",
+  "/messaging": "Mesajlaşma",
+  "/ai-assistant": "AI Asistan",
+  "/reports": "Raporlar",
+  "/alarmlar": "Alarmlar",
+  "/reminders": "Hatırlatmalar",
+  "/billing": "Abonelik",
+  "/settings": "Ayarlar",
+  "/admin": "Admin",
+  "/ads": "Reklamlar",
+  "/whatsapp": "WhatsApp",
+  "/social-media": "Sosyal Medya",
+  "/invoices": "Faturalar",
+};
+
+const MODULE_COLORS: string[] = [
+  "#6366F1", "#EC4899", "#10B981", "#F59E0B", "#3B82F6",
+  "#8B5CF6", "#EF4444", "#14B8A6", "#F97316", "#06B6D4",
+  "#84CC16", "#D946EF", "#0EA5E9", "#A855F7", "#22C55E",
+];
+
+/* ──────────── Page ──────────── */
 
 export default function AdminPage() {
   const { data: session } = useSession();
   const router = useRouter();
   const [stats, setStats] = useState<Stats | null>(null);
-  const [users, setUsers] = useState<UserItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedUser, setSelectedUser] = useState<UserAnalytics | null>(null);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [statsRes, usersRes] = await Promise.all([
-          fetch("/api/admin/stats"),
-          fetch("/api/admin/users"),
-        ]);
-
-        if (statsRes.status === 403 || usersRes.status === 403) {
+        const res = await fetch("/api/admin/stats");
+        if (res.status === 403) {
           router.push("/dashboard");
           return;
         }
-
-        const statsData = await statsRes.json();
-        const usersData = await usersRes.json();
-        setStats(statsData);
-        setUsers(usersData);
+        const data = await res.json();
+        setStats(data);
       } catch {
         console.error("Admin data fetch error");
       } finally {
@@ -71,8 +112,8 @@ export default function AdminPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          {[...Array(5)].map((_, i) => (
             <div key={i} className="h-28 animate-pulse rounded-xl bg-white" />
           ))}
         </div>
@@ -81,54 +122,25 @@ export default function AdminPage() {
     );
   }
 
+  if (!stats) return null;
+
   const statCards = [
-    {
-      label: "Toplam Kullanıcı",
-      value: stats?.totalUsers || 0,
-      icon: Users,
-      color: "blue",
-      href: "/admin/users",
-    },
-    {
-      label: "Aktif Kullanıcı",
-      value: stats?.activeUsers || 0,
-      icon: Activity,
-      color: "green",
-      href: "/admin/users",
-    },
-    {
-      label: "Toplam Klinik",
-      value: stats?.totalClinics || 0,
-      icon: Building2,
-      color: "purple",
-      href: "/admin/users",
-    },
-    {
-      label: "Bugün Giriş",
-      value: stats?.todayLogins || 0,
-      icon: LogIn,
-      color: "orange",
-      href: "/admin/activity",
-    },
+    { label: "Toplam Kullanıcı", value: stats.totalUsers, icon: Users, color: "blue" },
+    { label: "Aktif (24 saat)", value: stats.activeUsers, icon: Zap, color: "green" },
+    { label: "Pasif (7+ gün)", value: stats.passiveUsers, icon: UserX, color: "red" },
+    { label: "Toplam Klinik", value: stats.totalClinics, icon: Building2, color: "purple" },
+    { label: "Bugün Giriş", value: stats.todayLogins, icon: LogIn, color: "orange" },
   ];
 
   const colorMap: Record<string, { bg: string; icon: string; text: string }> = {
     blue: { bg: "bg-[#EEF2FF]", icon: "text-[#6366F1]", text: "text-[#4F46E5]" },
     green: { bg: "bg-green-50", icon: "text-green-600", text: "text-green-700" },
+    red: { bg: "bg-red-50", icon: "text-red-500", text: "text-red-600" },
     purple: { bg: "bg-purple-50", icon: "text-purple-600", text: "text-purple-700" },
     orange: { bg: "bg-orange-50", icon: "text-orange-600", text: "text-orange-700" },
   };
 
-  const getRoleBadge = (role: string) => {
-    switch (role) {
-      case "ADMIN":
-        return "bg-red-100 text-red-700";
-      case "DEMO":
-        return "bg-yellow-100 text-yellow-700";
-      default:
-        return "bg-gray-100 text-gray-700";
-    }
-  };
+  const maxModuleViews = stats.topModules[0]?.views || 1;
 
   return (
     <div className="space-y-6">
@@ -140,13 +152,13 @@ export default function AdminPage() {
             Admin Panel
           </h2>
           <p className="mt-1 text-sm text-gray-500">
-            Sistem yönetimi ve kullanıcı kontrolleri
+            Kullanıcı istatistikleri ve modül kullanım analizi
           </p>
         </div>
         <div className="flex gap-2">
           <Link
             href="/admin/users"
-            className="flex items-center gap-2 rounded-xl bg-[#1E1E2D] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#2A2A3C]"
+            className="flex items-center gap-2 rounded-xl bg-[#6366F1] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#4F46E5]"
           >
             <UserPlus className="h-4 w-4" />
             Kullanıcılar
@@ -162,7 +174,7 @@ export default function AdminPage() {
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
         {statCards.map((card, i) => {
           const Icon = card.icon;
           const colors = colorMap[card.color];
@@ -172,99 +184,125 @@ export default function AdminPage() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
+              className="flex items-center gap-4 rounded-xl border border-gray-100 bg-white p-5"
             >
-              <Link
-                href={card.href}
-                className="flex items-center gap-4 rounded-xl border border-gray-100 bg-white p-5 transition-shadow hover:shadow-md"
-              >
-                <div className={`rounded-xl ${colors.bg} p-3`}>
-                  <Icon className={`h-5 w-5 ${colors.icon}`} />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">{card.label}</p>
-                  <p className={`text-2xl font-bold ${colors.text}`}>
-                    {card.value}
-                  </p>
-                </div>
-              </Link>
+              <div className={`rounded-xl ${colors.bg} p-3`}>
+                <Icon className={`h-5 w-5 ${colors.icon}`} />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">{card.label}</p>
+                <p className={`text-2xl font-bold ${colors.text}`}>{card.value}</p>
+              </div>
             </motion.div>
           );
         })}
       </div>
 
-      {/* Recent Users Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="rounded-xl border border-gray-100 bg-white"
-      >
-        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-          <h3 className="font-semibold text-gray-900">Son Kullanıcılar</h3>
-          <Link
-            href="/admin/users"
-            className="flex items-center gap-1 text-sm font-medium text-[#6366F1] hover:text-[#4F46E5]"
-          >
-            Tümünü gör <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-50 text-left text-xs font-medium uppercase tracking-wider text-gray-400">
-                <th className="px-6 py-3">Kullanıcı</th>
-                <th className="px-6 py-3">Rol</th>
-                <th className="px-6 py-3">Klinik</th>
-                <th className="px-6 py-3">Durum</th>
-                <th className="px-6 py-3">Kayıt Tarihi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {users.slice(0, 10).map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50/50">
-                  <td className="px-6 py-3">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {user.name}
-                      </p>
-                      <p className="text-xs text-gray-400">{user.email}</p>
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* ── En Çok Kullanılan Modüller ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="rounded-xl border border-gray-100 bg-white"
+        >
+          <div className="flex items-center gap-2 border-b border-gray-100 px-6 py-4">
+            <TrendingUp className="h-4 w-4 text-[#6366F1]" />
+            <h3 className="font-semibold text-gray-900">En Çok Kullanılan Modüller</h3>
+            <span className="ml-auto text-xs text-gray-400">Son 30 gün</span>
+          </div>
+          <div className="p-6 space-y-3">
+            {stats.topModules.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-8">
+                Henüz modül kullanım verisi yok
+              </p>
+            ) : (
+              stats.topModules.slice(0, 12).map((mod, i) => {
+                const pct = (mod.views / maxModuleViews) * 100;
+                const color = MODULE_COLORS[i % MODULE_COLORS.length];
+                return (
+                  <div key={mod.module} className="space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium text-gray-700">
+                        {MODULE_LABELS[mod.module] || mod.module}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {mod.views} görüntüleme
+                      </span>
                     </div>
-                  </td>
-                  <td className="px-6 py-3">
-                    <span
-                      className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${getRoleBadge(
-                        user.role
-                      )}`}
-                    >
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="px-6 py-3 text-sm text-gray-600">
-                    {user.clinic?.name || "-"}
-                  </td>
-                  <td className="px-6 py-3">
-                    <span
-                      className={`inline-flex items-center gap-1 text-xs font-medium ${
-                        user.isActive ? "text-green-600" : "text-red-500"
-                      }`}
-                    >
-                      <span
-                        className={`h-1.5 w-1.5 rounded-full ${
-                          user.isActive ? "bg-green-500" : "bg-red-400"
-                        }`}
+                    <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{ width: `${pct}%`, backgroundColor: color }}
                       />
-                      {user.isActive ? "Aktif" : "Pasif"}
-                    </span>
-                  </td>
-                  <td className="px-6 py-3 text-sm text-gray-400">
-                    {new Date(user.createdAt).toLocaleDateString("tr-TR")}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </motion.div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </motion.div>
+
+        {/* ── Kullanıcı Bazlı Kullanım ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="rounded-xl border border-gray-100 bg-white"
+        >
+          <div className="flex items-center gap-2 border-b border-gray-100 px-6 py-4">
+            <Eye className="h-4 w-4 text-[#6366F1]" />
+            <h3 className="font-semibold text-gray-900">Kullanıcı Aktivitesi</h3>
+            <span className="ml-auto text-xs text-gray-400">Son 30 gün</span>
+          </div>
+          <div className="divide-y divide-gray-50 max-h-[500px] overflow-y-auto">
+            {stats.userAnalytics.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-8">
+                Henüz kullanıcı aktivite verisi yok
+              </p>
+            ) : (
+              stats.userAnalytics.slice(0, 30).map((ua) => (
+                <button
+                  key={ua.userId}
+                  onClick={() => setSelectedUser(selectedUser?.userId === ua.userId ? null : ua)}
+                  className="w-full text-left px-6 py-3 hover:bg-gray-50/50 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{ua.name || "İsimsiz"}</p>
+                      <p className="text-xs text-gray-400">{ua.email}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-[#6366F1]">{ua.total}</p>
+                      <p className="text-[10px] text-gray-400">sayfa</p>
+                    </div>
+                  </div>
+
+                  {/* Expanded — modül detayları */}
+                  {selectedUser?.userId === ua.userId && (
+                    <div className="mt-3 space-y-1.5 rounded-lg bg-gray-50 p-3">
+                      {ua.modules.map((m, j) => (
+                        <div key={m.module} className="flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="h-2 w-2 rounded-full"
+                              style={{ backgroundColor: MODULE_COLORS[j % MODULE_COLORS.length] }}
+                            />
+                            <span className="text-gray-600">
+                              {MODULE_LABELS[m.module] || m.module}
+                            </span>
+                          </div>
+                          <span className="font-semibold text-gray-800">{m.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </button>
+              ))
+            )}
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
 }

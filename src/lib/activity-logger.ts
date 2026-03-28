@@ -21,7 +21,8 @@ export type ActivityAction =
   | "CAMPAIGN_CREATE"
   | "CAMPAIGN_UPDATE"
   | "PHOTO_UPLOAD"
-  | "POST_SCHEDULE";
+  | "POST_SCHEDULE"
+  | "PAGE_VIEW";
 
 export async function logActivity({
   userId,
@@ -74,6 +75,7 @@ export function getActionLabel(action: string): string {
     CAMPAIGN_UPDATE: "Kampanya güncellendi",
     PHOTO_UPLOAD: "Fotoğraf yüklendi",
     POST_SCHEDULE: "Paylaşım planlandı",
+    PAGE_VIEW: "Sayfa görüntülendi",
   };
   return labels[action] || action;
 }

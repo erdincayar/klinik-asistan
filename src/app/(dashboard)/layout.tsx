@@ -713,6 +713,15 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       .catch(() => {});
   }, []);
 
+  // Log page views for analytics
+  useEffect(() => {
+    fetch("/api/activity/page-view", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ page: pathname }),
+    }).catch(() => {});
+  }, [pathname]);
+
   return (
     <div className="flex h-screen bg-[#F4F6FA]">
       <Sidebar
