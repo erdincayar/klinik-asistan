@@ -144,7 +144,7 @@ export default function AppointmentsPage() {
   const [weekAppointments, setWeekAppointments] = useState<Record<string, Appointment[]>>({});
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState(() => loadPrefs().viewMode || "daily");
-  const [compactMode, setCompactMode] = useState(() => loadPrefs().compactMode ?? false);
+  const compactMode = true;
   const [hideEmpty, setHideEmpty] = useState(() => loadPrefs().hideEmpty ?? false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -896,17 +896,8 @@ export default function AppointmentsPage() {
             </button>
           )}
 
-          {/* Compact & Hide empty toggles */}
+          {/* Hide empty toggle */}
           <div className="ml-auto flex items-center gap-2">
-            <button
-              onClick={() => { const v = !compactMode; setCompactMode(v); savePrefs({ compactMode: v }); }}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-                compactMode ? "bg-[#E0E7FF] text-[#4F46E5]" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-              )}
-            >
-              Kompakt
-            </button>
             <button
               onClick={() => { const v = !hideEmpty; setHideEmpty(v); savePrefs({ hideEmpty: v }); }}
               className={cn(
