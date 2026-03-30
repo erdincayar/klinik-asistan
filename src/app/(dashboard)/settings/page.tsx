@@ -166,6 +166,7 @@ export default function SettingsPage() {
   const [resetConfirmText, setResetConfirmText] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
   const [resetSuccess, setResetSuccess] = useState("");
+  const [resetError, setResetError] = useState("");
 
   // Telegram
   const [telegramConnected, setTelegramConnected] = useState(false);
@@ -1499,6 +1500,7 @@ export default function SettingsPage() {
           <button
             onClick={() => {
               setResetConfirmText("");
+              setResetError("");
               setShowResetDialog(true);
             }}
             disabled={resetModules.length === 0}
@@ -1553,9 +1555,15 @@ export default function SettingsPage() {
               />
             </div>
 
+            {resetError && (
+              <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-2 text-sm text-red-700">
+                {resetError}
+              </div>
+            )}
+
             <div className="flex gap-2">
               <button
-                onClick={() => setShowResetDialog(false)}
+                onClick={() => { setShowResetDialog(false); setResetError(""); }}
                 className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
               >
                 İptal
@@ -1581,7 +1589,7 @@ export default function SettingsPage() {
                     setResetSuccess("Seçili modüllerin verileri başarıyla silindi.");
                     setTimeout(() => setResetSuccess(""), 5000);
                   } catch (err) {
-                    setError(err instanceof Error ? err.message : "Sıfırlama başarısız");
+                    setResetError(err instanceof Error ? err.message : "Sıfırlama başarısız");
                   } finally {
                     setResetLoading(false);
                   }

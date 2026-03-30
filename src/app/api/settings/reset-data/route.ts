@@ -58,6 +58,7 @@ export async function POST(request: Request) {
         await tx.alarmLog.deleteMany({ where: { clinicId } });
         await tx.alarm.deleteMany({ where: { clinicId } });
         await tx.reminderLog.deleteMany({ where: { clinicId } });
+        await tx.consentFormResponse.deleteMany({ where: { clinicId } });
         await tx.transactionCustomValue.deleteMany({
           where: { treatment: { clinicId } },
         });
@@ -68,6 +69,7 @@ export async function POST(request: Request) {
         });
         await tx.patientPreference.deleteMany({ where: { clinicId } });
         await tx.patientVisitPattern.deleteMany({ where: { clinicId } });
+        await tx.assistantAppointment.deleteMany({ where: { clinicId } });
         await tx.appointment.deleteMany({ where: { clinicId } });
         await tx.customerCustomValue.deleteMany({
           where: { patient: { clinicId } },
@@ -80,7 +82,6 @@ export async function POST(request: Request) {
         await tx.appointment.deleteMany({ where: { clinicId } });
         await tx.clinicSchedule.deleteMany({ where: { clinicId } });
       } else if (modules.includes("appointments")) {
-        await tx.assistantAppointment.deleteMany({ where: { clinicId } });
         await tx.clinicSchedule.deleteMany({ where: { clinicId } });
       }
 
@@ -105,12 +106,17 @@ export async function POST(request: Request) {
       }
 
       if (modules.includes("employees")) {
+        await tx.commissionTier.deleteMany({
+          where: { employee: { clinicId } },
+        });
         await tx.employeeCustomValue.deleteMany({
           where: { employee: { clinicId } },
         });
         await tx.employeeCustomField.deleteMany({ where: { clinicId } });
         await tx.employeeRole.deleteMany({ where: { clinicId } });
         await tx.hrDocument.deleteMany({ where: { clinicId } });
+        // Recurring transactions linked to employees
+        await tx.recurringTransaction.deleteMany({ where: { clinicId, employeeId: { not: null } } });
         await tx.employee.deleteMany({ where: { clinicId } });
       }
 
@@ -137,7 +143,7 @@ export async function POST(request: Request) {
         await tx.clinicKnowledgeBase.deleteMany({ where: { clinicId } });
         await tx.clinicAssistantConfig.deleteMany({ where: { clinicId } });
       }
-    });
+    }, { timeout: 60000 }); // 60 saniye timeout
 
     return Response.json({ success: true, deletedModules: modules });
   } catch (err) {
