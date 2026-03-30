@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { checkModuleAccess } from "@/lib/subscription-guard";
 
 function toTitleCase(str: string): string {
   return str
@@ -155,6 +156,12 @@ export async function POST(req: NextRequest) {
 
     switch (action) {
       case "create": {
+        // Modül kontrolü
+        const moduleCheck = await checkModuleAccess(clinicId, "employees");
+        if (!moduleCheck.allowed) {
+          return Response.json({ error: moduleCheck.reason }, { status: 403 });
+        }
+
         const {
           name, role, phone, email, commissionRate, color, permissions,
           salaryGross, salaryNet, salarySSI, salaryPayDay, manualSalaryEntry,

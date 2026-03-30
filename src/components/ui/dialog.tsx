@@ -66,9 +66,10 @@ function DialogContent({ children, className, ...props }: React.HTMLAttributes<H
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center sm:justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="fixed inset-0 bg-black/80" onClick={() => setOpen(false)} />
       <div
+        onClick={(e) => e.stopPropagation()}
         className={cn(
           "relative z-50 grid w-full max-w-lg gap-4 border bg-background p-6 shadow-lg max-h-[90vh] overflow-y-auto",
           "rounded-xl",

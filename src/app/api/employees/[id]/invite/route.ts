@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { randomUUID } from "crypto";
+import { checkModuleAccess, checkInviteLimit } from "@/lib/subscription-guard";
 
 export async function POST(
   request: Request,
@@ -14,6 +15,18 @@ export async function POST(
     const clinicId = (session.user as any).clinicId;
     if (!clinicId) {
       return Response.json({ error: "No clinic" }, { status: 400 });
+    }
+
+    // Modül kontrolü
+    const moduleCheck = await checkModuleAccess(clinicId, "employees");
+    if (!moduleCheck.allowed) {
+      return Response.json({ error: moduleCheck.reason }, { status: 403 });
+    }
+
+    // Davet limiti kontrolü
+    const inviteCheck = await checkInviteLimit(clinicId);
+    if (!inviteCheck.allowed) {
+      return Response.json({ error: inviteCheck.reason }, { status: 403 });
     }
 
     const employee = await prisma.employee.findFirst({
