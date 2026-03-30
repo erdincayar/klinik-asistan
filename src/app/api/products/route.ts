@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { productSchema } from "@/lib/validations";
+import { getExchangeRates, convertToTRYKurus } from "@/lib/exchange-rate";
 
 export async function GET(request: Request) {
   try {
@@ -86,6 +87,22 @@ export async function POST(request: Request) {
         .replace(/[^A-Z0-9]/g, "")
         .slice(0, 5) || "PRD";
       parsed.data.sku = `${prefix}-${Date.now().toString(36).slice(-4).toUpperCase()}${Math.floor(Math.random() * 10)}`;
+    }
+
+    // Auto-convert foreign currency to TRY if needed
+    const currency = parsed.data.currency || "TRY";
+    if (currency !== "TRY" && parsed.data.purchasePrice > 0) {
+      const rates = await getExchangeRates();
+      if (parsed.data.purchasePriceUSD && parsed.data.purchasePriceUSD > 0) {
+        // purchasePriceUSD var: döviz fiyatı olarak kullan, TL'ye çevir
+        parsed.data.purchasePrice = convertToTRYKurus(parsed.data.purchasePriceUSD, currency, rates);
+      } else {
+        // purchasePriceUSD yok: purchasePrice kuruş olarak gönderilmiş, döviz tutarı olarak yorumla
+        // Frontend kuruş gönderir (ör: 24 EUR → 2400 kuruş), bunu dövize çevirip TL'ye dönüştür
+        const fxAmount = parsed.data.purchasePrice / 100; // kuruştan birime
+        parsed.data.purchasePriceUSD = fxAmount;
+        parsed.data.purchasePrice = convertToTRYKurus(fxAmount, currency, rates);
+      }
     }
 
     // Check SKU uniqueness within clinic

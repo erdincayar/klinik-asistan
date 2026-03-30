@@ -135,11 +135,20 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
     }
   }, [search, categoryFilter, brandFilter]);
 
-  // Derive brand options from products
-  useEffect(() => {
-    const brands = Array.from(new Set(products.map((p) => p.brand).filter(Boolean) as string[])).sort();
-    setBrandOptions(brands);
-  }, [products]);
+  // Fetch all brands (unfiltered)
+  const fetchBrands = useCallback(async () => {
+    try {
+      const res = await fetch("/api/products?active=all");
+      if (!res.ok) return;
+      const data: Product[] = await res.json();
+      const brands = Array.from(new Set(data.map((p) => p.brand).filter(Boolean) as string[])).sort();
+      setBrandOptions(brands);
+    } catch { /* ignore */ }
+  }, []);
+
+  useEffect(() => { fetchBrands(); }, [fetchBrands]);
+
+  const refreshAll = useCallback(() => { fetchProducts(); fetchBrands(); }, [fetchProducts, fetchBrands]);
 
   useEffect(() => {
     const timer = setTimeout(fetchProducts, 300);
@@ -594,14 +603,14 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
       </Dialog>
 
       {/* New product modal */}
-      <NewProductDialog open={showNewProduct} onOpenChange={setShowNewProduct} onSuccess={fetchProducts} />
-      <BulkAddDialog open={showBulkAdd} onOpenChange={setShowBulkAdd} onSuccess={fetchProducts} />
+      <NewProductDialog open={showNewProduct} onOpenChange={setShowNewProduct} onSuccess={refreshAll} />
+      <BulkAddDialog open={showBulkAdd} onOpenChange={setShowBulkAdd} onSuccess={refreshAll} />
 
       {/* Edit product modal */}
       <EditProductDialog
         product={editProduct}
         onOpenChange={(open) => { if (!open) setEditProduct(null); }}
-        onSuccess={fetchProducts}
+        onSuccess={refreshAll}
         customColumns={columnConfig.customColumns}
       />
 
@@ -609,12 +618,12 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
       <ImportDialog
         open={showImport}
         onOpenChange={setShowImport}
-        onSuccess={fetchProducts}
+        onSuccess={refreshAll}
         onComplete={(n) => { if (n > 0) setImportNoBrandNotice(n); }}
       />
 
       {/* AI Extract dialog */}
-      <AIExtractDialog open={showAIExtract} onOpenChange={setShowAIExtract} onSuccess={fetchProducts} />
+      <AIExtractDialog open={showAIExtract} onOpenChange={setShowAIExtract} onSuccess={refreshAll} />
 
       {/* Product detail modal */}
       <Dialog open={selectedProduct !== null} onOpenChange={(open) => { if (!open) setSelectedProduct(null); }}>
