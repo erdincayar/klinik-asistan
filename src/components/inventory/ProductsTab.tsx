@@ -1103,7 +1103,7 @@ function BulkAddDialog({
   const [currency, setCurrency] = useState("TRY");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [result, setResult] = useState<{ ok: number; fail: number } | null>(null);
+  const [result, setResult] = useState<{ ok: number; fail: number; errors: string[] } | null>(null);
 
   const updateRow = (id: string, field: keyof BulkAddRow, value: any) => {
     setRows((prev) => prev.map((r) => r.id === id ? { ...r, [field]: value } : r));
@@ -1127,32 +1127,35 @@ function BulkAddDialog({
     if (validRows.length === 0) return;
     setSaving(true);
     setError("");
-    let ok = 0, fail = 0;
-    for (const row of validRows) {
-      try {
-        const res = await fetch("/api/products", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+    try {
+      const res = await fetch("/api/products/bulk-create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          products: validRows.map((row) => ({
             name: row.name.trim(),
-            sku: "",
             brand: (row.brand || commonBrand) || null,
             category: row.category || commonCategory,
             unit: "ADET",
-            currentStock: 0,
-            minStock: 0,
             purchasePrice: toKurus(row.purchasePrice),
             salePrice: toKurus(row.salePrice),
             currency,
             vatIncluded: row.vatIncluded,
-          }),
-        });
-        if (res.ok) ok++; else fail++;
-      } catch { fail++; }
+          })),
+        }),
+      });
+      const data = await res.json();
+      setResult({
+        ok: data.ok || 0,
+        fail: data.fail || 0,
+        errors: (data.errors || []).map((e: any) => `${e.name}: ${e.reason}`),
+      });
+      if (data.ok > 0) onSuccess();
+    } catch {
+      setError("Bağlantı hatası");
+    } finally {
+      setSaving(false);
     }
-    setResult({ ok, fail });
-    setSaving(false);
-    if (ok > 0) onSuccess();
   };
 
   const handleClose = () => {
@@ -1179,6 +1182,14 @@ function BulkAddDialog({
               <p className="text-lg font-semibold text-gray-900">{result.ok} ürün eklendi</p>
               {result.fail > 0 && <p className="text-sm text-red-500 mt-1">{result.fail} ürün eklenemedi</p>}
             </div>
+            {result.errors.length > 0 && (
+              <div className="rounded-lg bg-red-50 border border-red-200 p-3 space-y-1">
+                <p className="text-xs font-semibold text-red-700">Hatalar:</p>
+                {result.errors.map((err, i) => (
+                  <p key={i} className="text-xs text-red-600">{err}</p>
+                ))}
+              </div>
+            )}
             <DialogFooter>
               <Button onClick={handleClose}>Kapat</Button>
             </DialogFooter>
