@@ -1276,12 +1276,12 @@ export default function EmployeesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <UserCog className="h-7 w-7 text-primary" />
-          <h1 className="text-2xl font-bold tracking-tight">Çalışanlar</h1>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2">
+          <UserCog className="h-5 w-5 text-primary" />
+          <h1 className="text-lg font-bold tracking-tight">Çalışanlar</h1>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setShowAddFieldDialog(true)}>
@@ -1300,48 +1300,48 @@ export default function EmployeesPage() {
       </div>
 
       {/* Stats Row */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="py-3 px-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Toplam Çalışan</p>
-                <p className="text-2xl font-bold">{totalEmployees}</p>
+                <p className="text-xs text-muted-foreground">Toplam Çalışan</p>
+                <p className="text-lg font-bold">{totalEmployees}</p>
               </div>
-              <UserCog className="h-8 w-8 text-muted-foreground/50" />
+              <UserCog className="h-5 w-5 text-muted-foreground/50" />
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="py-3 px-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Aktif Çalışan</p>
-                <p className="text-2xl font-bold">{activeEmployees}</p>
+                <p className="text-xs text-muted-foreground">Aktif Çalışan</p>
+                <p className="text-lg font-bold">{activeEmployees}</p>
               </div>
-              <ToggleRight className="h-8 w-8 text-green-500/50" />
+              <ToggleRight className="h-5 w-5 text-green-500/50" />
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="py-3 px-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Aylık Toplam Komisyon</p>
-                <p className="text-2xl font-bold">{formatTL(totalMonthlyCommission)}</p>
+                <p className="text-xs text-muted-foreground">Aylık Toplam Komisyon</p>
+                <p className="text-lg font-bold">{formatTL(totalMonthlyCommission)}</p>
               </div>
-              <DollarSign className="h-8 w-8 text-muted-foreground/50" />
+              <DollarSign className="h-5 w-5 text-muted-foreground/50" />
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="py-3 px-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Aylık Maaş Gideri</p>
-                <p className="text-2xl font-bold">{formatTL(totalMonthlySalary)}</p>
+                <p className="text-xs text-muted-foreground">Aylık Maaş Gideri</p>
+                <p className="text-lg font-bold">{formatTL(totalMonthlySalary)}</p>
               </div>
-              <Banknote className="h-8 w-8 text-muted-foreground/50" />
+              <Banknote className="h-5 w-5 text-muted-foreground/50" />
             </div>
           </CardContent>
         </Card>
@@ -1358,12 +1358,12 @@ export default function EmployeesPage() {
       )}
 
       {/* Content: Employee list + Detail panel */}
-      <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
         {/* Employee List */}
         <div className="lg:col-span-2">
           <Card>
-            <CardHeader>
-              <CardTitle>Çalışan Listesi</CardTitle>
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-sm">Çalışan Listesi</CardTitle>
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -1371,24 +1371,24 @@ export default function EmployeesPage() {
               ) : employees.length === 0 ? (
                 <p className="text-gray-500">Henüz çalışan kaydı yok</p>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {employees.map((emp) => (
                     <div
                       key={emp.id}
                       onClick={() => { setSelectedEmployee(emp); setShowMonthlyTable(false); }}
-                      className={`flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors hover:bg-accent/50 overflow-hidden ${
+                      className={`flex flex-col sm:flex-row sm:items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors hover:bg-accent/50 overflow-hidden ${
                         selectedEmployee?.id === emp.id ? "border-primary bg-accent/30" : ""
                       }`}
                     >
                       {/* Name & Role */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center gap-1.5 mb-0.5">
                           <span
-                            className="inline-block h-3 w-3 rounded-full shrink-0"
+                            className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
                             style={{ backgroundColor: emp.color || "#3b82f6" }}
                             title={`Renk: ${emp.color || "#3b82f6"}`}
                           />
-                          <p className="font-medium truncate">{emp.name}</p>
+                          <p className="font-medium text-sm truncate">{emp.name}</p>
                           {emp.role && (
                             <Badge className="bg-gray-100 text-gray-700">
                               {emp.role}
@@ -1775,10 +1775,10 @@ export default function EmployeesPage() {
             </Card>
           ) : (
             <Card>
-              <CardContent className="pt-6">
-                <div className="text-center text-muted-foreground py-8">
-                  <UserCog className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                  <p className="text-sm">Detayları görmek için bir çalışan seçin</p>
+              <CardContent className="pt-4">
+                <div className="text-center text-muted-foreground py-6">
+                  <UserCog className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                  <p className="text-xs">Detayları görmek için bir çalışan seçin</p>
                 </div>
               </CardContent>
             </Card>
