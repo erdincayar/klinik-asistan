@@ -688,27 +688,6 @@ export default function AppointmentsPage() {
         </div>
       </motion.div>
 
-      {/* View tabs */}
-      <motion.div variants={fadeUp} initial="hidden" animate="visible" className="flex gap-1 rounded-xl bg-gray-100 p-1">
-        {[
-          { value: "daily", label: "Günlük" },
-          { value: "weekly", label: "Haftalık" },
-        ].map((tab) => (
-          <button
-            key={tab.value}
-            onClick={() => setViewMode(tab.value)}
-            className={cn(
-              "flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all",
-              viewMode === tab.value
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </motion.div>
-
       {/* Filter block */}
       <motion.div variants={fadeUp} initial="hidden" animate="visible" className="space-y-2 rounded-xl border border-gray-100 bg-white p-2 sm:p-3">
         {/* Employee filter row */}
@@ -941,12 +920,31 @@ export default function AppointmentsPage() {
         </div>
       </motion.div>
 
-      {/* Content */}
+      {/* View tabs + Content */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.15 }}
       >
+        <div className="flex gap-1 rounded-xl bg-gray-100 p-1 mb-4">
+          {[
+            { value: "daily", label: "Günlük" },
+            { value: "weekly", label: "Haftalık" },
+          ].map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => setViewMode(tab.value)}
+              className={cn(
+                "flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all",
+                viewMode === tab.value
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
         {viewMode === "daily" ? (
           /* ── Daily view ── */
           <div ref={dailyScrollRef} className="max-h-[calc(100vh-280px)] overflow-y-auto rounded-xl border border-gray-100 bg-white">
