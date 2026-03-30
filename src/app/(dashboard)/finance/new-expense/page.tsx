@@ -13,7 +13,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { EXPENSE_CATEGORIES } from "@/lib/types";
-import { toKurus } from "@/lib/utils";
+import { toKurus, formatCurrency } from "@/lib/utils";
+
+const VAT_RATES = [
+  { value: 0, label: "%0" },
+  { value: 1, label: "%1" },
+  { value: 10, label: "%10" },
+  { value: 20, label: "%20" },
+];
 
 export default function NewExpensePage() {
   const router = useRouter();
@@ -24,7 +31,20 @@ export default function NewExpensePage() {
     category: "",
     amount: "",
     date: new Date().toISOString().split("T")[0],
+    vatRate: 20,
+    vatIncluded: true,
   });
+
+  const amountNum = parseFloat(form.amount) || 0;
+  const vatAmount = form.vatIncluded
+    ? amountNum - amountNum / (1 + form.vatRate / 100)
+    : amountNum * (form.vatRate / 100);
+  const netAmount = form.vatIncluded
+    ? amountNum - vatAmount
+    : amountNum;
+  const totalAmount = form.vatIncluded
+    ? amountNum
+    : amountNum + vatAmount;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -32,8 +52,7 @@ export default function NewExpensePage() {
     setError("");
 
     try {
-      const amountTL = parseFloat(form.amount);
-      if (isNaN(amountTL) || amountTL <= 0) {
+      if (isNaN(amountNum) || amountNum <= 0) {
         throw new Error("Geçerli bir tutar girin");
       }
 
@@ -43,8 +62,10 @@ export default function NewExpensePage() {
         body: JSON.stringify({
           description: form.description,
           category: form.category,
-          amount: toKurus(amountTL),
+          amount: toKurus(totalAmount),
           date: form.date,
+          vatRate: form.vatRate,
+          vatIncluded: form.vatIncluded,
         }),
       });
 
@@ -70,7 +91,7 @@ export default function NewExpensePage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="description">Açıklama *</Label>
+              <Label htmlFor="description">Açıklama <span className="text-red-500">*</span></Label>
               <Input
                 id="description"
                 value={form.description}
@@ -83,7 +104,7 @@ export default function NewExpensePage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="category">Kategori *</Label>
+              <Label htmlFor="category">Kategori <span className="text-red-500">*</span></Label>
               <select
                 id="category"
                 value={form.category}
@@ -102,29 +123,72 @@ export default function NewExpensePage() {
               </select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="amount">Tutar (TL) *</Label>
-              <Input
-                id="amount"
-                type="number"
-                step="0.01"
-                min="0"
-                value={form.amount}
-                onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                required
-                placeholder="0.00"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="amount">Tutar (TL) <span className="text-red-500">*</span></Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={form.amount}
+                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                  required
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="date">Tarih <span className="text-red-500">*</span></Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={form.date}
+                  onChange={(e) => setForm({ ...form, date: e.target.value })}
+                  required
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="date">Tarih *</Label>
-              <Input
-                id="date"
-                type="date"
-                value={form.date}
-                onChange={(e) => setForm({ ...form, date: e.target.value })}
-                required
-              />
+            {/* KDV */}
+            <div className="rounded-lg border border-gray-200 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold">KDV Ayarları</Label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.vatIncluded}
+                    onChange={(e) => setForm({ ...form, vatIncluded: e.target.checked })}
+                    className="h-4 w-4 rounded border-gray-300 text-[#6366F1]"
+                  />
+                  <span className="text-sm text-gray-600">KDV Dahil</span>
+                </label>
+              </div>
+              <div className="flex items-center gap-3">
+                <Label className="text-xs text-gray-500 shrink-0">KDV Oranı</Label>
+                <div className="flex gap-1.5">
+                  {VAT_RATES.map((r) => (
+                    <button
+                      key={r.value}
+                      type="button"
+                      onClick={() => setForm({ ...form, vatRate: r.value })}
+                      className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                        form.vatRate === r.value
+                          ? "bg-[#1E1E2D] text-white"
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {amountNum > 0 && form.vatRate > 0 && (
+                <div className="flex gap-4 text-xs text-gray-500 pt-1 border-t border-gray-100">
+                  <span>Net: <strong className="text-gray-700">{formatCurrency(Math.round(netAmount * 100))}</strong></span>
+                  <span>KDV: <strong className="text-gray-700">{formatCurrency(Math.round(vatAmount * 100))}</strong></span>
+                  <span>Toplam: <strong className="text-gray-700">{formatCurrency(Math.round(totalAmount * 100))}</strong></span>
+                </div>
+              )}
             </div>
 
             {error && <p className="text-sm text-red-500">{error}</p>}

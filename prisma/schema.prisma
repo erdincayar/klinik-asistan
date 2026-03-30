@@ -199,9 +199,11 @@ model Expense {
   clinicId    String
   clinic      Clinic   @relation(fields: [clinicId], references: [id])
   description String
-  amount      Int // kuruş cinsinden
+  amount      Int      // kuruş cinsinden
   category    String
   type        String   @default("EXPENSE") // EXPENSE, INCOME
+  vatRate     Int      @default(20)    // KDV oranı %
+  vatIncluded Boolean  @default(true)  // Fiyata KDV dahil mi
   date        DateTime @default(now())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

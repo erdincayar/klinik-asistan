@@ -42,6 +42,8 @@ export const expenseSchema = z.object({
   amount: z.number().min(1, "Tutar girin"),
   category: z.string().min(1, "Kategori seçin"),
   date: z.string().min(1, "Tarih seçin"),
+  vatRate: z.number().int().min(0).max(100).optional(),
+  vatIncluded: z.boolean().optional(),
 });
 
 export const reminderSchema = z.object({
