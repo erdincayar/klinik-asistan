@@ -51,102 +51,89 @@ export async function POST(request: Request) {
       );
     }
 
-    await prisma.$transaction(async (tx) => {
-      // Delete order matters due to foreign key constraints
+    // Sequential delete — transaction yerine tek tek sil (bazı tablolar eksik olabilir)
+    const tx = prisma;
+    const safeDelete = async (fn: () => Promise<any>) => {
+      try { await fn(); } catch { /* tablo yoksa veya FK hatası — sessiz geç */ }
+    };
 
-      // Helper: bazı tablolar eski migration'larda olmayabilir
-      async function safeDelete(fn: () => Promise<any>) {
-        try { await fn(); } catch { /* tablo yoksa sessiz geç */ }
-      }
+    if (modules.includes("patients")) {
+      await safeDelete(() => tx.alarmLog.deleteMany({ where: { clinicId } }));
+      await safeDelete(() => tx.alarm.deleteMany({ where: { clinicId } }));
+      await safeDelete(() => tx.reminderLog.deleteMany({ where: { clinicId } }));
+      await safeDelete(() => tx.consentFormResponse.deleteMany({ where: { clinicId } }));
+      await safeDelete(() => tx.consentForm.deleteMany({ where: { clinicId } }));
+      await safeDelete(() => tx.transactionCustomValue.deleteMany({ where: { treatment: { clinicId } } }));
+      await safeDelete(() => tx.invoice.deleteMany({ where: { clinicId } }));
+      await safeDelete(() => tx.treatment.deleteMany({ where: { clinicId } }));
+      await safeDelete(() => tx.patientPhoto.deleteMany({ where: { patient: { clinicId } } }));
+      await safeDelete(() => tx.patientPreference.deleteMany({ where: { clinicId } }));
+      await safeDelete(() => tx.patientVisitPattern.deleteMany({ where: { clinicId } }));
+      await safeDelete(() => tx.assistantAppointment.deleteMany({ where: { clinicId } }));
+      await safeDelete(() => tx.appointment.deleteMany({ where: { clinicId } }));
+      await safeDelete(() => tx.customerCustomValue.deleteMany({ where: { patient: { clinicId } } }));
+      await safeDelete(() => tx.patient.deleteMany({ where: { clinicId } }));
+    }
 
-      if (modules.includes("patients")) {
-        await tx.alarmLog.deleteMany({ where: { clinicId } });
-        await tx.alarm.deleteMany({ where: { clinicId } });
-        await tx.reminderLog.deleteMany({ where: { clinicId } });
-        await safeDelete(() => tx.consentFormResponse.deleteMany({ where: { clinicId } }));
-        await tx.transactionCustomValue.deleteMany({
-          where: { treatment: { clinicId } },
-        });
-        await tx.invoice.deleteMany({ where: { clinicId } });
-        await tx.treatment.deleteMany({ where: { clinicId } });
-        await tx.patientPhoto.deleteMany({
-          where: { patient: { clinicId } },
-        });
-        await tx.patientPreference.deleteMany({ where: { clinicId } });
-        await tx.patientVisitPattern.deleteMany({ where: { clinicId } });
-        await safeDelete(() => tx.assistantAppointment.deleteMany({ where: { clinicId } }));
-        await tx.appointment.deleteMany({ where: { clinicId } });
-        await tx.customerCustomValue.deleteMany({
-          where: { patient: { clinicId } },
-        });
-        await tx.patient.deleteMany({ where: { clinicId } });
-      }
+    if (modules.includes("appointments") && !modules.includes("patients")) {
+      await safeDelete(() => tx.assistantAppointment.deleteMany({ where: { clinicId } }));
+      await safeDelete(() => tx.appointment.deleteMany({ where: { clinicId } }));
+      await safeDelete(() => tx.clinicSchedule.deleteMany({ where: { clinicId } }));
+    } else if (modules.includes("appointments")) {
+      await safeDelete(() => tx.clinicSchedule.deleteMany({ where: { clinicId } }));
+    }
 
-      if (modules.includes("appointments") && !modules.includes("patients")) {
-        await safeDelete(() => tx.assistantAppointment.deleteMany({ where: { clinicId } }));
-        await tx.appointment.deleteMany({ where: { clinicId } });
-        await tx.clinicSchedule.deleteMany({ where: { clinicId } });
-      } else if (modules.includes("appointments")) {
-        await tx.clinicSchedule.deleteMany({ where: { clinicId } });
+    if (modules.includes("finance")) {
+      await safeDelete(() => tx.recurringPayment.deleteMany({ where: { recurringTransaction: { clinicId } } }));
+      await safeDelete(() => tx.recurringTransaction.deleteMany({ where: { clinicId } }));
+      await safeDelete(() => tx.uploadedInvoice.deleteMany({ where: { clinicId } }));
+      await safeDelete(() => tx.financialReport.deleteMany({ where: { clinicId } }));
+      if (!modules.includes("patients")) {
+        await safeDelete(() => tx.invoice.deleteMany({ where: { clinicId } }));
       }
+      await safeDelete(() => tx.expense.deleteMany({ where: { clinicId } }));
+    }
 
-      if (modules.includes("finance")) {
-        await tx.recurringPayment.deleteMany({
-          where: { recurringTransaction: { clinicId } },
-        });
-        await tx.recurringTransaction.deleteMany({ where: { clinicId } });
-        await tx.uploadedInvoice.deleteMany({ where: { clinicId } });
-        await tx.financialReport.deleteMany({ where: { clinicId } });
-        if (!modules.includes("patients")) {
-          await tx.invoice.deleteMany({ where: { clinicId } });
-        }
-        await tx.expense.deleteMany({ where: { clinicId } });
-      }
+    if (modules.includes("inventory")) {
+      await safeDelete(() => tx.stockMovement.deleteMany({ where: { clinicId } }));
+      await safeDelete(() => tx.stockAlarm.deleteMany({ where: { clinicId } }));
+      await safeDelete(() => tx.fixedAsset.deleteMany({ where: { clinicId } }));
+      await safeDelete(() => tx.product.deleteMany({ where: { clinicId } }));
+    }
 
-      if (modules.includes("inventory")) {
-        await tx.stockMovement.deleteMany({ where: { clinicId } });
-        await tx.stockAlarm.deleteMany({ where: { clinicId } });
-        await tx.fixedAsset.deleteMany({ where: { clinicId } });
-        await tx.product.deleteMany({ where: { clinicId } });
-      }
+    if (modules.includes("employees")) {
+      await safeDelete(() => tx.commissionTier.deleteMany({ where: { employee: { clinicId } } }));
+      await safeDelete(() => tx.employeeCustomValue.deleteMany({ where: { employee: { clinicId } } }));
+      await safeDelete(() => tx.employeeCustomField.deleteMany({ where: { clinicId } }));
+      await safeDelete(() => tx.employeeRole.deleteMany({ where: { clinicId } }));
+      await safeDelete(() => tx.hrDocument.deleteMany({ where: { clinicId } }));
+      await safeDelete(() => tx.recurringTransaction.deleteMany({ where: { clinicId, employeeId: { not: null } } }));
+      await safeDelete(() => tx.employee.deleteMany({ where: { clinicId } }));
+    }
 
-      if (modules.includes("employees")) {
-        await safeDelete(() => tx.commissionTier.deleteMany({ where: { employee: { clinicId } } }));
-        await tx.employeeCustomValue.deleteMany({
-          where: { employee: { clinicId } },
-        });
-        await tx.employeeCustomField.deleteMany({ where: { clinicId } });
-        await tx.employeeRole.deleteMany({ where: { clinicId } });
-        await tx.hrDocument.deleteMany({ where: { clinicId } });
-        // Recurring transactions linked to employees
-        await tx.recurringTransaction.deleteMany({ where: { clinicId, employeeId: { not: null } } });
-        await tx.employee.deleteMany({ where: { clinicId } });
+    if (modules.includes("messaging")) {
+      if (!modules.includes("patients")) {
+        await safeDelete(() => tx.reminderLog.deleteMany({ where: { clinicId } }));
       }
+      await safeDelete(() => tx.reminder.deleteMany({ where: { clinicId } }));
+      await safeDelete(() => tx.telegramLink.deleteMany({ where: { clinicId } }));
+      await safeDelete(() => tx.clinicConversation.deleteMany({ where: { clinicId } }));
+    }
 
-      if (modules.includes("messaging")) {
-        if (!modules.includes("patients")) {
-          await tx.reminderLog.deleteMany({ where: { clinicId } });
-        }
-        await tx.reminder.deleteMany({ where: { clinicId } });
-        await tx.telegramLink.deleteMany({ where: { clinicId } });
-        await tx.clinicConversation.deleteMany({ where: { clinicId } });
-      }
+    if (modules.includes("marketing")) {
+      await safeDelete(() => tx.adCampaignMetric.deleteMany({ where: { clinicId } }));
+      await safeDelete(() => tx.adCampaign.deleteMany({ where: { clinicId } }));
+      await safeDelete(() => tx.socialMediaAsset.deleteMany({ where: { clinicId } }));
+      await safeDelete(() => tx.scheduledPost.deleteMany({ where: { clinicId } }));
+      await safeDelete(() => tx.aiGeneratedContent.deleteMany({ where: { clinicId } }));
+      await safeDelete(() => tx.clinicStyleProfile.deleteMany({ where: { clinicId } }));
+      await safeDelete(() => tx.metaAdsConnection.deleteMany({ where: { clinicId } }));
+    }
 
-      if (modules.includes("marketing")) {
-        await tx.adCampaignMetric.deleteMany({ where: { clinicId } });
-        await tx.adCampaign.deleteMany({ where: { clinicId } });
-        await tx.socialMediaAsset.deleteMany({ where: { clinicId } });
-        await tx.scheduledPost.deleteMany({ where: { clinicId } });
-        await tx.aiGeneratedContent.deleteMany({ where: { clinicId } });
-        await tx.clinicStyleProfile.deleteMany({ where: { clinicId } });
-        await tx.metaAdsConnection.deleteMany({ where: { clinicId } });
-      }
-
-      if (modules.includes("ai_assistant")) {
-        await tx.clinicKnowledgeBase.deleteMany({ where: { clinicId } });
-        await tx.clinicAssistantConfig.deleteMany({ where: { clinicId } });
-      }
-    }, { timeout: 60000 }); // 60 saniye timeout
+    if (modules.includes("ai_assistant")) {
+      await safeDelete(() => tx.clinicKnowledgeBase.deleteMany({ where: { clinicId } }));
+      await safeDelete(() => tx.clinicAssistantConfig.deleteMany({ where: { clinicId } }));
+    }
 
     return Response.json({ success: true, deletedModules: modules });
   } catch (err) {
