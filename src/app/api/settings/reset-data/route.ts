@@ -54,11 +54,16 @@ export async function POST(request: Request) {
     await prisma.$transaction(async (tx) => {
       // Delete order matters due to foreign key constraints
 
+      // Helper: bazı tablolar eski migration'larda olmayabilir
+      async function safeDelete(fn: () => Promise<any>) {
+        try { await fn(); } catch { /* tablo yoksa sessiz geç */ }
+      }
+
       if (modules.includes("patients")) {
         await tx.alarmLog.deleteMany({ where: { clinicId } });
         await tx.alarm.deleteMany({ where: { clinicId } });
         await tx.reminderLog.deleteMany({ where: { clinicId } });
-        await tx.consentFormResponse.deleteMany({ where: { clinicId } });
+        await safeDelete(() => tx.consentFormResponse.deleteMany({ where: { clinicId } }));
         await tx.transactionCustomValue.deleteMany({
           where: { treatment: { clinicId } },
         });
@@ -69,7 +74,7 @@ export async function POST(request: Request) {
         });
         await tx.patientPreference.deleteMany({ where: { clinicId } });
         await tx.patientVisitPattern.deleteMany({ where: { clinicId } });
-        await tx.assistantAppointment.deleteMany({ where: { clinicId } });
+        await safeDelete(() => tx.assistantAppointment.deleteMany({ where: { clinicId } }));
         await tx.appointment.deleteMany({ where: { clinicId } });
         await tx.customerCustomValue.deleteMany({
           where: { patient: { clinicId } },
@@ -78,7 +83,7 @@ export async function POST(request: Request) {
       }
 
       if (modules.includes("appointments") && !modules.includes("patients")) {
-        await tx.assistantAppointment.deleteMany({ where: { clinicId } });
+        await safeDelete(() => tx.assistantAppointment.deleteMany({ where: { clinicId } }));
         await tx.appointment.deleteMany({ where: { clinicId } });
         await tx.clinicSchedule.deleteMany({ where: { clinicId } });
       } else if (modules.includes("appointments")) {
@@ -106,9 +111,7 @@ export async function POST(request: Request) {
       }
 
       if (modules.includes("employees")) {
-        await tx.commissionTier.deleteMany({
-          where: { employee: { clinicId } },
-        });
+        await safeDelete(() => tx.commissionTier.deleteMany({ where: { employee: { clinicId } } }));
         await tx.employeeCustomValue.deleteMany({
           where: { employee: { clinicId } },
         });
