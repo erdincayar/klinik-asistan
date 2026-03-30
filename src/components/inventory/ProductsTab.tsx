@@ -782,7 +782,7 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
                   type={bulkEditField === "minProfitMargin" ? "number" : "text"}
                   value={bulkEditValue}
                   onChange={(e) => setBulkEditValue(e.target.value)}
-                  placeholder={bulkEditField === "supplier" ? "Tedarikçi adı" : bulkEditField === "minProfitMargin" ? "0-100" : "Değer"}
+                  placeholder={bulkEditField === "supplier" ? "Tedarikçi adı" : bulkEditField === "minProfitMargin" ? "Ör: 50" : "Değer"}
                   className="mt-1"
                 />
               )}
@@ -1015,7 +1015,7 @@ function NewProductDialog({
           </div>
           <div className="space-y-2">
             <Label htmlFor="minProfitMargin">Min Kâr Marjı (%)</Label>
-            <Input id="minProfitMargin" type="number" min={0} max={100} value={form.minProfitMargin} onChange={(e) => setForm({ ...form, minProfitMargin: Number(e.target.value) })} />
+            <Input id="minProfitMargin" type="number" min={0} value={form.minProfitMargin} onChange={(e) => setForm({ ...form, minProfitMargin: Number(e.target.value) })} />
           </div>
           <div className="flex items-center gap-2">
             <input type="checkbox" id="orderAlert" checked={form.orderAlert} onChange={(e) => setForm({ ...form, orderAlert: e.target.checked })} className="h-4 w-4 rounded border-gray-300" />
@@ -1207,7 +1207,7 @@ function EditProductDialog({
           </div>
           <div className="space-y-2">
             <Label htmlFor="editMinProfitMargin">Min Kâr Marjı (%)</Label>
-            <Input id="editMinProfitMargin" type="number" min={0} max={100} value={form.minProfitMargin} onChange={(e) => setForm({ ...form, minProfitMargin: Number(e.target.value) })} />
+            <Input id="editMinProfitMargin" type="number" min={0} value={form.minProfitMargin} onChange={(e) => setForm({ ...form, minProfitMargin: Number(e.target.value) })} />
           </div>
           <div className="flex items-center gap-2">
             <input type="checkbox" id="editOrderAlert" checked={form.orderAlert} onChange={(e) => setForm({ ...form, orderAlert: e.target.checked })} className="h-4 w-4 rounded border-gray-300" />

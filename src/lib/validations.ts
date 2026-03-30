@@ -121,7 +121,7 @@ export const productSchema = z.object({
   purchasePrice: z.number().int().min(0, "Fiyat negatif olamaz"),
   purchasePriceUSD: z.number().min(0, "Fiyat negatif olamaz").nullable().optional(),
   currency: z.enum(["TRY", "USD", "EUR"]).optional(),
-  minProfitMargin: z.number().int().min(0).max(100).optional(),
+  minProfitMargin: z.number().int().min(0).optional(),
   salePrice: z.number().int().min(0, "Fiyat negatif olamaz"),
   salePriceUSD: z.number().min(0, "Fiyat negatif olamaz").nullable().optional(),
   saleCurrency: z.enum(["TRY", "USD", "EUR"]).optional(),
