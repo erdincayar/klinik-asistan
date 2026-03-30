@@ -228,6 +228,8 @@ export default function FinanceOverview() {
   const [upcomingPayments, setUpcomingPayments] = useState<RecurringTransaction[]>([]);
   const [upcomingLoading, setUpcomingLoading] = useState(false);
   const [payingId, setPayingId] = useState<string | null>(null);
+  const [upcomingDays, setUpcomingDays] = useState(7);
+  const [upcomingTotal, setUpcomingTotal] = useState(0);
 
   useEffect(() => {
     async function fetchData() {
@@ -273,13 +275,15 @@ export default function FinanceOverview() {
     }
   }
 
-  async function fetchUpcomingPayments() {
+  async function fetchUpcomingPayments(days?: number) {
     setUpcomingLoading(true);
     try {
-      const res = await fetch("/api/finance/recurring/upcoming");
+      const d = days ?? upcomingDays;
+      const res = await fetch(`/api/finance/recurring/upcoming?days=${d}`);
       if (res.ok) {
         const data = await res.json();
         setUpcomingPayments(data.upcoming || []);
+        setUpcomingTotal(data.totalAmount || 0);
       }
     } catch {
       // silent fail
@@ -1007,13 +1011,42 @@ export default function FinanceOverview() {
         {/* Upcoming Payments Tab */}
         <TabsContent value="upcoming">
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-lg font-semibold">Yaklaşan Ödemeler</h2>
-              <Button variant="outline" onClick={fetchUpcomingPayments}>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Yenile
-              </Button>
+              <div className="flex items-center gap-2">
+                <select
+                  value={upcomingDays}
+                  onChange={(e) => {
+                    const d = Number(e.target.value);
+                    setUpcomingDays(d);
+                    fetchUpcomingPayments(d);
+                  }}
+                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-[#4F46E5] focus:outline-none focus:ring-1 focus:ring-[#4F46E5]"
+                >
+                  <option value={3}>3 gün</option>
+                  <option value={7}>7 gün</option>
+                  <option value={14}>14 gün</option>
+                  <option value={30}>30 gün</option>
+                </select>
+                <Button variant="outline" onClick={() => fetchUpcomingPayments()}>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Yenile
+                </Button>
+              </div>
             </div>
+
+            {!upcomingLoading && upcomingPayments.length > 0 && (
+              <Card className="border-[#4F46E5]/20 bg-[#4F46E5]/5">
+                <CardContent className="flex items-center justify-between p-4">
+                  <span className="text-sm font-medium text-gray-700">
+                    Önümüzdeki {upcomingDays} gün — Toplam Ödenecek
+                  </span>
+                  <span className="text-lg font-bold text-[#4F46E5]">
+                    {formatCurrency(upcomingTotal)}
+                  </span>
+                </CardContent>
+              </Card>
+            )}
 
             {upcomingLoading ? (
               <div className="text-gray-500">Yükleniyor...</div>
@@ -1021,7 +1054,7 @@ export default function FinanceOverview() {
               <Card>
                 <CardContent className="p-6">
                   <p className="text-sm text-gray-500">
-                    Önümüzdeki 7 gün içinde yaklaşan ödeme bulunmuyor.
+                    Önümüzdeki {upcomingDays} gün içinde yaklaşan ödeme bulunmuyor.
                   </p>
                 </CardContent>
               </Card>

@@ -281,6 +281,29 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
     }
   };
 
+  const [bulkKdvSaving, setBulkKdvSaving] = useState(false);
+
+  const handleBulkKdvUpdate = async (vatIncluded: boolean) => {
+    if (selectedIds.size === 0) return;
+    setBulkKdvSaving(true);
+    try {
+      const res = await fetch("/api/products/bulk-update", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedIds), data: { vatIncluded } }),
+      });
+      if (!res.ok) throw new Error("Toplu KDV güncelleme hatası");
+      setProducts((prev) =>
+        prev.map((p) => selectedIds.has(p.id) ? { ...p, vatIncluded } : p)
+      );
+      setSelectedIds(new Set());
+    } catch {
+      // silent
+    } finally {
+      setBulkKdvSaving(false);
+    }
+  };
+
   const handleBulkBrandAssign = async () => {
     if (!bulkBrandValue.trim() || selectedIds.size === 0) return;
     setBulkBrandSaving(true);
@@ -437,6 +460,12 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
           <span className="text-sm font-medium text-[#7A2414]">{selectedIds.size} ürün seçildi</span>
           <Button size="sm" variant="outline" onClick={() => setShowBulkBrand(true)}>
             <Tag className="mr-1 h-3.5 w-3.5" /> Marka Ata
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => handleBulkKdvUpdate(true)} disabled={bulkKdvSaving}>
+            <CheckCircle className="mr-1 h-3.5 w-3.5" /> KDV Ekle
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => handleBulkKdvUpdate(false)} disabled={bulkKdvSaving}>
+            <X className="mr-1 h-3.5 w-3.5" /> KDV Kaldır
           </Button>
           <Button size="sm" variant="outline" onClick={() => setShowBulkEdit(true)}>
             <Pencil className="mr-1 h-3.5 w-3.5" /> Toplu Düzenle

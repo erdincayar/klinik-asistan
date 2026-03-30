@@ -226,7 +226,7 @@ export default function DashboardPage() {
 
         if (upcomingRes.ok) {
           const upcomingData = await upcomingRes.json();
-          setUpcomingPayments(Array.isArray(upcomingData) ? upcomingData : []);
+          setUpcomingPayments(upcomingData.upcoming || []);
         }
 
         // TOKEN_SYSTEM_DISABLED
@@ -741,7 +741,14 @@ export default function DashboardPage() {
                 Yaklaşan Ödemeler
               </h2>
             </div>
-            <p className="mt-0.5 text-[11px] text-gray-400">Önümüzdeki 7 gün içindeki ödemeler</p>
+            <p className="mt-0.5 text-[11px] text-gray-400">
+              Önümüzdeki 7 gün
+              {upcomingPayments.length > 0 && (
+                <span className="ml-2 font-semibold text-[#4F46E5]">
+                  Toplam: {formatCurrency(upcomingPayments.reduce((s, p) => s + (p.amount || 0), 0))}
+                </span>
+              )}
+            </p>
           </div>
           <Link
             href="/finance?tab=upcoming"
