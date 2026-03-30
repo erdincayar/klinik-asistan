@@ -42,6 +42,7 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showNewProduct, setShowNewProduct] = useState(false);
+  const [showBulkAdd, setShowBulkAdd] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [showImport, setShowImport] = useState(false);
@@ -323,7 +324,13 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
                   onClick={() => { setShowNewProduct(true); setShowAddMenu(false); }}
                   className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-gray-100"
                 >
-                  <Pencil className="h-4 w-4" /> Manuel
+                  <Pencil className="h-4 w-4" /> Tekli Ekle
+                </button>
+                <button
+                  onClick={() => { setShowBulkAdd(true); setShowAddMenu(false); }}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-gray-100"
+                >
+                  <FileSpreadsheet className="h-4 w-4" /> Toplu Ekle
                 </button>
                 <button
                   onClick={() => { setShowImport(true); setShowAddMenu(false); }}
@@ -588,6 +595,7 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
 
       {/* New product modal */}
       <NewProductDialog open={showNewProduct} onOpenChange={setShowNewProduct} onSuccess={fetchProducts} />
+      <BulkAddDialog open={showBulkAdd} onOpenChange={setShowBulkAdd} onSuccess={fetchProducts} />
 
       {/* Edit product modal */}
       <EditProductDialog
@@ -902,8 +910,6 @@ function NewProductDialog({
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [addedCount, setAddedCount] = useState(0);
-  const [lastAdded, setLastAdded] = useState("");
 
   const resetForm = () => setForm({
     name: "", sku: "", brand: "", category: "DIGER", unit: "ADET",
@@ -913,13 +919,8 @@ function NewProductDialog({
     vatIncluded: true,
   });
 
-  // Ortak alanları koruyarak sadece ürün-spesifik alanları sıfırla
-  const resetForNext = () => setForm((prev) => ({
-    ...prev,
-    name: "", sku: "", purchasePrice: 0, purchasePriceUSD: "", salePrice: 0, salePriceUSD: "", currentStock: 0,
-  }));
-
-  const saveProduct = async (continueAdding: boolean) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setSaving(true);
     setError("");
     try {
@@ -939,17 +940,9 @@ function NewProductDialog({
         const data = await res.json();
         throw new Error(data.error || "Ürün oluşturulamadı");
       }
+      onOpenChange(false);
+      resetForm();
       onSuccess();
-      if (continueAdding) {
-        setAddedCount((c) => c + 1);
-        setLastAdded(form.name);
-        resetForNext();
-      } else {
-        onOpenChange(false);
-        resetForm();
-        setAddedCount(0);
-        setLastAdded("");
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Bir hata oluştu");
     } finally {
@@ -957,23 +950,13 @@ function NewProductDialog({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await saveProduct(false);
-  };
-
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) { setAddedCount(0); setLastAdded(""); resetForm(); } onOpenChange(v); }}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); onOpenChange(v); }}>
       <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Yeni Ürün {addedCount > 0 && <span className="text-xs font-normal text-green-600 ml-2">({addedCount} ürün eklendi)</span>}</DialogTitle>
+          <DialogTitle>Yeni Ürün</DialogTitle>
           <DialogDescription>Yeni bir ürün ekleyin</DialogDescription>
         </DialogHeader>
-        {lastAdded && (
-          <div className="flex items-center gap-2 rounded-lg bg-green-50 border border-green-200 px-3 py-2 text-xs text-green-700">
-            <span className="font-medium">&ldquo;{lastAdded}&rdquo;</span> kaydedildi. Sıradaki ürünü ekleyin.
-          </div>
-        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -1070,14 +1053,265 @@ function NewProductDialog({
             </div>
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}
-          <DialogFooter className="flex-col sm:flex-row gap-2">
+          <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>İptal</Button>
-            <Button type="button" variant="outline" disabled={saving || !form.name.trim()} onClick={() => saveProduct(true)}>
-              {saving ? "Kaydediliyor..." : "Kaydet ve Yeni Ekle"}
-            </Button>
             <Button type="submit" disabled={saving}>{saving ? "Kaydediliyor..." : "Kaydet"}</Button>
           </DialogFooter>
         </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Bulk Add Dialog ───
+
+interface BulkAddRow {
+  id: string;
+  name: string;
+  brand: string;
+  category: string;
+  purchasePrice: number;
+  salePrice: number;
+  vatIncluded: boolean;
+}
+
+const emptyRow = (): BulkAddRow => ({
+  id: Math.random().toString(36).slice(2),
+  name: "", brand: "", category: "DIGER",
+  purchasePrice: 0, salePrice: 0, vatIncluded: true,
+});
+
+function BulkAddDialog({
+  open, onOpenChange, onSuccess,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
+}) {
+  const [rows, setRows] = useState<BulkAddRow[]>(() => Array.from({ length: 5 }, emptyRow));
+  const [commonBrand, setCommonBrand] = useState("");
+  const [commonCategory, setCommonCategory] = useState("DIGER");
+  const [currency, setCurrency] = useState("TRY");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [result, setResult] = useState<{ ok: number; fail: number } | null>(null);
+
+  const updateRow = (id: string, field: keyof BulkAddRow, value: any) => {
+    setRows((prev) => prev.map((r) => r.id === id ? { ...r, [field]: value } : r));
+  };
+
+  const addRows = (count: number) => {
+    setRows((prev) => [...prev, ...Array.from({ length: count }, emptyRow)]);
+  };
+
+  const removeRow = (id: string) => {
+    setRows((prev) => prev.length > 1 ? prev.filter((r) => r.id !== id) : prev);
+  };
+
+  const validRows = rows.filter((r) => r.name.trim());
+
+  const handleSave = async () => {
+    if (validRows.length === 0) return;
+    setSaving(true);
+    setError("");
+    let ok = 0, fail = 0;
+    for (const row of validRows) {
+      try {
+        const res = await fetch("/api/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: row.name.trim(),
+            sku: "",
+            brand: (row.brand || commonBrand) || null,
+            category: row.category || commonCategory,
+            unit: "ADET",
+            currentStock: 0,
+            minStock: 0,
+            purchasePrice: toKurus(row.purchasePrice),
+            salePrice: toKurus(row.salePrice),
+            currency,
+            vatIncluded: row.vatIncluded,
+          }),
+        });
+        if (res.ok) ok++; else fail++;
+      } catch { fail++; }
+    }
+    setResult({ ok, fail });
+    setSaving(false);
+    if (ok > 0) onSuccess();
+  };
+
+  const handleClose = () => {
+    setRows(Array.from({ length: 5 }, emptyRow));
+    setCommonBrand("");
+    setCommonCategory("DIGER");
+    setCurrency("TRY");
+    setError("");
+    setResult(null);
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); else onOpenChange(v); }}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Toplu Ürün Ekle</DialogTitle>
+          <DialogDescription>Ürünleri alt alta girin, tek seferde kaydedin</DialogDescription>
+        </DialogHeader>
+
+        {result ? (
+          <div className="space-y-4 py-4">
+            <div className="text-center">
+              <p className="text-lg font-semibold text-gray-900">{result.ok} ürün eklendi</p>
+              {result.fail > 0 && <p className="text-sm text-red-500 mt-1">{result.fail} ürün eklenemedi</p>}
+            </div>
+            <DialogFooter>
+              <Button onClick={handleClose}>Kapat</Button>
+            </DialogFooter>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Ortak ayarlar */}
+            <div className="flex flex-wrap gap-3 rounded-lg bg-gray-50 p-3">
+              <div className="space-y-1">
+                <label className="text-[11px] font-medium text-gray-500">Ortak Marka</label>
+                <input
+                  value={commonBrand}
+                  onChange={(e) => setCommonBrand(e.target.value)}
+                  placeholder="Opsiyonel"
+                  className="block w-36 rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:border-[#6366F1] focus:outline-none"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[11px] font-medium text-gray-500">Ortak Kategori</label>
+                <select
+                  value={commonCategory}
+                  onChange={(e) => setCommonCategory(e.target.value)}
+                  className="block w-32 rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:border-[#6366F1] focus:outline-none"
+                >
+                  {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[11px] font-medium text-gray-500">Para Birimi</label>
+                <select
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value)}
+                  className="block w-28 rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:border-[#6366F1] focus:outline-none"
+                >
+                  {CURRENCIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                </select>
+              </div>
+            </div>
+
+            {/* Tablo */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left text-xs text-gray-500">
+                    <th className="pb-2 pr-2 w-8">#</th>
+                    <th className="pb-2 pr-2">Ürün Adı <span className="text-red-500">*</span></th>
+                    <th className="pb-2 pr-2 w-28">Marka</th>
+                    <th className="pb-2 pr-2 w-28">Kategori</th>
+                    <th className="pb-2 pr-2 w-24 text-right">Alış ({getCurrencySymbol(currency)})</th>
+                    <th className="pb-2 pr-2 w-24 text-right">Satış (₺)</th>
+                    <th className="pb-2 pr-2 w-12 text-center">KDV</th>
+                    <th className="pb-2 w-8"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row, i) => (
+                    <tr key={row.id} className="border-b border-gray-100">
+                      <td className="py-1.5 pr-2 text-xs text-gray-400">{i + 1}</td>
+                      <td className="py-1.5 pr-2">
+                        <input
+                          value={row.name}
+                          onChange={(e) => updateRow(row.id, "name", e.target.value)}
+                          placeholder="Ürün adı"
+                          className="w-full rounded border border-gray-200 px-2 py-1.5 text-sm focus:border-[#6366F1] focus:outline-none"
+                          autoFocus={i === 0}
+                        />
+                      </td>
+                      <td className="py-1.5 pr-2">
+                        <input
+                          value={row.brand}
+                          onChange={(e) => updateRow(row.id, "brand", e.target.value)}
+                          placeholder={commonBrand || "—"}
+                          className="w-full rounded border border-gray-200 px-2 py-1.5 text-sm focus:border-[#6366F1] focus:outline-none"
+                        />
+                      </td>
+                      <td className="py-1.5 pr-2">
+                        <select
+                          value={row.category || commonCategory}
+                          onChange={(e) => updateRow(row.id, "category", e.target.value)}
+                          className="w-full rounded border border-gray-200 px-1.5 py-1.5 text-sm focus:border-[#6366F1] focus:outline-none"
+                        >
+                          {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                        </select>
+                      </td>
+                      <td className="py-1.5 pr-2">
+                        <input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          value={row.purchasePrice || ""}
+                          onChange={(e) => updateRow(row.id, "purchasePrice", Number(e.target.value))}
+                          placeholder="0"
+                          className="w-full rounded border border-gray-200 px-2 py-1.5 text-sm text-right tabular-nums focus:border-[#6366F1] focus:outline-none"
+                        />
+                      </td>
+                      <td className="py-1.5 pr-2">
+                        <input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          value={row.salePrice || ""}
+                          onChange={(e) => updateRow(row.id, "salePrice", Number(e.target.value))}
+                          placeholder="0"
+                          className="w-full rounded border border-gray-200 px-2 py-1.5 text-sm text-right tabular-nums focus:border-[#6366F1] focus:outline-none"
+                        />
+                      </td>
+                      <td className="py-1.5 pr-2 text-center">
+                        <input
+                          type="checkbox"
+                          checked={row.vatIncluded}
+                          onChange={(e) => updateRow(row.id, "vatIncluded", e.target.checked)}
+                          className="h-3.5 w-3.5 rounded border-gray-300 text-[#6366F1] cursor-pointer"
+                        />
+                      </td>
+                      <td className="py-1.5">
+                        <button
+                          onClick={() => removeRow(row.id)}
+                          className="rounded p-1 text-gray-300 hover:text-red-500 transition-colors"
+                          title="Satırı sil"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Satır ekle */}
+            <div className="flex gap-2">
+              <button onClick={() => addRows(1)} className="text-xs text-[#6366F1] hover:text-[#4F46E5] font-medium">+ 1 satır</button>
+              <button onClick={() => addRows(5)} className="text-xs text-[#6366F1] hover:text-[#4F46E5] font-medium">+ 5 satır</button>
+              <button onClick={() => addRows(10)} className="text-xs text-[#6366F1] hover:text-[#4F46E5] font-medium">+ 10 satır</button>
+            </div>
+
+            {error && <p className="text-sm text-red-500">{error}</p>}
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={handleClose}>İptal</Button>
+              <Button onClick={handleSave} disabled={saving || validRows.length === 0}>
+                {saving ? "Kaydediliyor..." : `${validRows.length} Ürün Kaydet`}
+              </Button>
+            </DialogFooter>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
