@@ -379,7 +379,7 @@ export default function PatientsPage() {
           <select
             value={riskFilter}
             onChange={(e) => setRiskFilter(e.target.value as any)}
-            className="rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm text-gray-700 focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
+            className="rounded-xl border border-gray-200 bg-white px-4 py-3 pr-8 text-sm text-gray-700 focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
           >
             <option value="all">Tümü</option>
             <option value="active">Aktif</option>
