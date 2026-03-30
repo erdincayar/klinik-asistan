@@ -7,7 +7,7 @@ const resetSchema = z.object({
   confirmText: z.string(),
 });
 
-const CONFIRM_TEXT = "TÜM VERİLERİ SİL";
+const CONFIRM_TEXT = "SIFIRLA";
 
 export async function POST(request: Request) {
   try {
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
 
     const { modules, confirmText } = parsed.data;
 
-    if (confirmText !== CONFIRM_TEXT) {
+    if (confirmText.toUpperCase().replace("İ","I") !== CONFIRM_TEXT) {
       return Response.json({ error: "Onay metni hatalı" }, { status: 400 });
     }
 

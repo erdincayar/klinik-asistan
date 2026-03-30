@@ -1543,12 +1543,12 @@ export default function SettingsPage() {
 
             <div>
               <label className="mb-1.5 block text-xs font-medium text-gray-600">
-                Onaylamak için <span className="font-bold text-red-600">TÜM VERİLERİ SİL</span> yazın
+                Onaylamak için <span className="font-bold text-red-600">SIFIRLA</span> yazın
               </label>
               <input
                 value={resetConfirmText}
                 onChange={(e) => setResetConfirmText(e.target.value)}
-                placeholder="TÜM VERİLERİ SİL"
+                placeholder="SIFIRLA"
                 className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-400/20"
               />
             </div>
@@ -1586,7 +1586,7 @@ export default function SettingsPage() {
                     setResetLoading(false);
                   }
                 }}
-                disabled={resetConfirmText !== "TÜM VERİLERİ SİL" || resetLoading}
+                disabled={resetConfirmText.toUpperCase().replace("İ","I") !== "SIFIRLA" || resetLoading}
                 className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {resetLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
