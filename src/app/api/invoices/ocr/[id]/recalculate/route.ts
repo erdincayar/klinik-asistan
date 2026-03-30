@@ -81,12 +81,15 @@ export async function PATCH(
         profitData.matchedItems.map(async (item) => {
           const product = await prisma.product.findFirst({
             where: { id: item.productId, clinicId },
-            select: { purchasePrice: true, name: true },
+            select: { purchasePrice: true, name: true, vatIncluded: true },
           });
 
           if (!product) return item;
 
-          const costPrice = product.purchasePrice;
+          // If product's purchasePrice doesn't include KDV, add 20% for accurate cost
+          const costPrice = product.vatIncluded
+            ? product.purchasePrice
+            : Math.round(product.purchasePrice * 1.20);
           const profit = (item.salePrice - costPrice) * item.quantity;
 
           return { ...item, productName: product.name, costPrice, profit };
@@ -124,7 +127,7 @@ export async function PATCH(
 
     const products = await prisma.product.findMany({
       where: { clinicId, isActive: true },
-      select: { id: true, name: true, purchasePrice: true },
+      select: { id: true, name: true, purchasePrice: true, vatIncluded: true },
     });
 
     const matchedItems: ProfitData["matchedItems"] = [];
@@ -147,7 +150,10 @@ export async function PATCH(
       }
 
       if (bestMatch) {
-        const costPrice = bestMatch.purchasePrice;
+        // If product's purchasePrice doesn't include KDV, add 20% for accurate cost
+        const costPrice = bestMatch.vatIncluded
+          ? bestMatch.purchasePrice
+          : Math.round(bestMatch.purchasePrice * 1.20);
         matchedItems.push({
           description: item.description || "",
           productId: bestMatch.id,

@@ -27,9 +27,53 @@ export async function DELETE(
     }
 
     await prisma.$transaction(async (tx) => {
+      // If invoice was approved, reverse all side effects
+      if (invoice.approved) {
+        const reference = `invoice-${id}`;
+
+        // Find all stock movements created by this invoice
+        const stockMovements = await tx.stockMovement.findMany({
+          where: { clinicId, reference },
+        });
+
+        // Reverse product stock for each movement
+        for (const movement of stockMovements) {
+          const product = await tx.product.findFirst({
+            where: { id: movement.productId, clinicId },
+          });
+          if (!product) continue;
+
+          if (movement.type === "IN") {
+            // Was a purchase invoice — reverse stock addition
+            await tx.product.update({
+              where: { id: product.id },
+              data: {
+                currentStock: Math.max(0, (product.currentStock ?? 0) - movement.quantity),
+              },
+            });
+          } else if (movement.type === "OUT") {
+            // Was a sales invoice — reverse stock deduction
+            await tx.product.update({
+              where: { id: product.id },
+              data: {
+                currentStock: (product.currentStock ?? 0) + movement.quantity,
+              },
+            });
+          }
+        }
+
+        // Delete all stock movements for this invoice
+        await tx.stockMovement.deleteMany({
+          where: { clinicId, reference },
+        });
+      }
+
+      // Delete linked expense/income record
       if (invoice.linkedExpenseId) {
         await tx.expense.delete({ where: { id: invoice.linkedExpenseId } }).catch(() => {});
       }
+
+      // Delete the invoice itself
       await tx.uploadedInvoice.delete({ where: { id } });
     });
 

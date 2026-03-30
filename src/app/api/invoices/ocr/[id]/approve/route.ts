@@ -66,13 +66,29 @@ export async function POST(
     const invoiceType = overrideInvoiceType || invoice.invoiceType;
     const parsedAmount = invoice.amount ? Math.round(invoice.amount * 100) : 0;
 
+    // Extract KDV info from OCR data
+    const ocrData = invoice.ocrData as Record<string, any> | null;
+    const taxAmount = ocrData?.taxAmount ? Math.round(ocrData.taxAmount * 100) : 0;
+    // Determine if the total amount already includes KDV
+    const vatIncluded = taxAmount > 0;
+    // Calculate VAT rate from amounts (if taxAmount exists)
+    let vatRate = 20; // default
+    if (taxAmount > 0 && parsedAmount > taxAmount) {
+      const netAmount = parsedAmount - taxAmount;
+      vatRate = Math.round((taxAmount / netAmount) * 100);
+      // Snap to common rates
+      if (vatRate >= 8 && vatRate <= 12) vatRate = 10;
+      else if (vatRate >= 18 && vatRate <= 22) vatRate = 20;
+      else if (vatRate >= 1 && vatRate <= 2) vatRate = 1;
+    }
+
     // Auto-match products when stockMappings is empty but OCR items exist
     if (stockMappings.length === 0 && invoice.ocrData) {
       const ocrItems = (invoice.ocrData as any).items;
       if (Array.isArray(ocrItems) && ocrItems.length > 0) {
         const products = await prisma.product.findMany({
           where: { clinicId, isActive: true },
-          select: { id: true, name: true, currentStock: true, purchasePrice: true },
+          select: { id: true, name: true, currentStock: true, purchasePrice: true, vatIncluded: true },
         });
 
         for (const item of ocrItems) {
@@ -118,6 +134,8 @@ export async function POST(
               category: invoice.category || "DIGER",
               type: "EXPENSE",
               date: invoice.invoiceDate || new Date(),
+              vatRate,
+              vatIncluded,
             },
           });
 
@@ -201,6 +219,8 @@ export async function POST(
               category: invoice.category || "SATIS",
               type: "INCOME",
               date: invoice.invoiceDate || new Date(),
+              vatRate,
+              vatIncluded,
             },
           });
 
@@ -232,10 +252,14 @@ export async function POST(
           if (mapping.productId) {
             const product = await tx.product.findFirst({
               where: { id: mapping.productId, clinicId },
+              select: { id: true, name: true, purchasePrice: true, currentStock: true, vatIncluded: true },
             });
             if (!product) continue;
 
-            const costPrice = product.purchasePrice;
+            // If product's purchasePrice doesn't include KDV, add 20% for accurate cost
+            const costPrice = product.vatIncluded
+              ? product.purchasePrice
+              : Math.round(product.purchasePrice * 1.20);
             const itemProfit = (unitPriceKurus - costPrice) * mapping.quantity;
 
             matchedItems.push({

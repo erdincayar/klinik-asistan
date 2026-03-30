@@ -745,7 +745,7 @@ export default function DashboardPage() {
               Önümüzdeki 7 gün
               {upcomingPayments.length > 0 && (
                 <span className="ml-2 font-semibold text-[#4F46E5]">
-                  Toplam: {formatCurrency(upcomingPayments.reduce((s, p) => s + (p.amount || 0), 0))}
+                  Toplam: {formatCurrency(Math.round(upcomingPayments.reduce((s, p) => s + (p.amount || 0), 0) * 100))}
                 </span>
               )}
             </p>

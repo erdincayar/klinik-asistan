@@ -81,6 +81,7 @@ interface ProductOption {
   unit: string;
   currentStock: number;
   purchasePrice: number;
+  vatIncluded: boolean;
 }
 
 const statusConfig: Record<string, { label: string; color: string; icon: typeof Clock }> = {
@@ -717,7 +718,7 @@ export default function InvoiceUploadContent() {
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-400">Tutar</p>
+                      <p className="text-xs text-gray-400">Toplam Tutar</p>
                       <p className="font-medium text-gray-800">
                         {selectedInvoice.amount
                           ? formatCurrency(Math.round(selectedInvoice.amount * 100))
@@ -728,6 +729,28 @@ export default function InvoiceUploadContent() {
                       <p className="text-xs text-gray-400">Kategori</p>
                       <p className="font-medium text-gray-800">{selectedInvoice.category || "—"}</p>
                     </div>
+                    {(selectedInvoice.ocrData as any)?.taxAmount != null && (selectedInvoice.ocrData as any).taxAmount > 0 && (() => {
+                      const taxAmt = (selectedInvoice.ocrData as any).taxAmount;
+                      const totalAmt = selectedInvoice.amount || 0;
+                      const netAmt = totalAmt - taxAmt;
+                      const vatPct = netAmt > 0 ? Math.round((taxAmt / netAmt) * 100) : 0;
+                      return (
+                        <>
+                          <div>
+                            <p className="text-xs text-gray-400">Net Tutar (KDV Hariç)</p>
+                            <p className="font-medium text-gray-800">
+                              {formatCurrency(Math.round(netAmt * 100))}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-400">KDV (%{vatPct})</p>
+                            <p className="font-medium text-orange-600">
+                              {formatCurrency(Math.round(taxAmt * 100))}
+                            </p>
+                          </div>
+                        </>
+                      );
+                    })()}
                     {(selectedInvoice.ocrData as any)?.invoiceNumber && (
                       <div>
                         <p className="text-xs text-gray-400">Fatura No</p>
@@ -925,7 +948,9 @@ export default function InvoiceUploadContent() {
                       {stockMappings.map((mapping, idx) => {
                         const product = mapping.productId ? allProducts.find(p => p.id === mapping.productId) : null;
                         const salePriceKurus = Math.round(mapping.unitPrice * 100);
-                        const costPriceKurus = product?.purchasePrice || 0;
+                        // If product's purchasePrice doesn't include KDV, add 20%
+                        const rawCost = product?.purchasePrice || 0;
+                        const costPriceKurus = product && !product.vatIncluded ? Math.round(rawCost * 1.20) : rawCost;
                         const itemProfit = (salePriceKurus - costPriceKurus) * mapping.quantity;
                         return (
                           <div key={idx} className="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-xs">
@@ -961,22 +986,40 @@ export default function InvoiceUploadContent() {
                       const matched = stockMappings.filter(m => m.productId);
                       const unmatched = stockMappings.filter(m => !m.productId);
                       const totalRevenue = selectedInvoice.amount ? Math.round(selectedInvoice.amount * 100) : 0;
+                      const taxAmountTL = (selectedInvoice.ocrData as any)?.taxAmount || 0;
+                      const taxAmountKurus = Math.round(taxAmountTL * 100);
+                      const netRevenue = taxAmountKurus > 0 ? totalRevenue - taxAmountKurus : totalRevenue;
                       const totalCost = matched.reduce((sum, m) => {
                         const p = allProducts.find(pr => pr.id === m.productId);
-                        return sum + (p?.purchasePrice || 0) * m.quantity;
+                        if (!p) return sum;
+                        // If product's purchasePrice doesn't include KDV, add 20%
+                        const cost = p.vatIncluded ? p.purchasePrice : Math.round(p.purchasePrice * 1.20);
+                        return sum + cost * m.quantity;
                       }, 0);
-                      const estimatedProfit = totalRevenue - totalCost;
+                      const estimatedProfit = netRevenue - totalCost;
                       return (
                         <div className="mt-3 border-t border-green-100 pt-3 space-y-1">
                           <div className="flex justify-between text-xs">
-                            <span className="text-gray-500">Toplam Gelir</span>
+                            <span className="text-gray-500">Toplam Gelir (KDV Dahil)</span>
                             <span className="font-semibold text-gray-700">{formatCurrency(totalRevenue)}</span>
                           </div>
+                          {taxAmountKurus > 0 && (
+                            <>
+                              <div className="flex justify-between text-xs">
+                                <span className="text-gray-500">KDV Tutarı</span>
+                                <span className="font-semibold text-orange-600">-{formatCurrency(taxAmountKurus)}</span>
+                              </div>
+                              <div className="flex justify-between text-xs">
+                                <span className="text-gray-500">Net Gelir (KDV Hariç)</span>
+                                <span className="font-semibold text-gray-700">{formatCurrency(netRevenue)}</span>
+                              </div>
+                            </>
+                          )}
                           <div className="flex justify-between text-xs">
                             <span className="text-gray-500">Toplam Maliyet</span>
                             <span className="font-semibold text-gray-700">{formatCurrency(totalCost)}</span>
                           </div>
-                          <div className="flex justify-between text-xs">
+                          <div className="flex justify-between text-xs border-t border-green-100 pt-1">
                             <span className="text-gray-500">Tahmini Brüt Kar</span>
                             <span className={`font-bold ${estimatedProfit >= 0 ? "text-green-600" : "text-red-600"}`}>
                               {formatCurrency(estimatedProfit)}
@@ -1025,13 +1068,35 @@ export default function InvoiceUploadContent() {
                     {(() => {
                       const matched = stockMappings.filter(m => m.productId);
                       const unmatched = stockMappings.filter(m => !m.productId);
-                      return (matched.length > 0 || unmatched.length > 0) ? (
-                        <div className="mt-3 border-t border-[#E0E7FF] pt-3 text-xs text-gray-500">
-                          {matched.length > 0 && <span>{matched.length} ürün güncellenecek</span>}
-                          {matched.length > 0 && unmatched.length > 0 && <span> · </span>}
-                          {unmatched.length > 0 && <span>{unmatched.length} yeni ürün oluşturulacak</span>}
+                      const taxAmountTL = (selectedInvoice.ocrData as any)?.taxAmount || 0;
+                      const taxAmountKurus = Math.round(taxAmountTL * 100);
+                      const totalAmountKurus = selectedInvoice.amount ? Math.round(selectedInvoice.amount * 100) : 0;
+                      const netAmountKurus = taxAmountKurus > 0 ? totalAmountKurus - taxAmountKurus : totalAmountKurus;
+                      return (
+                        <div className="mt-3 border-t border-[#E0E7FF] pt-3 space-y-1">
+                          {taxAmountKurus > 0 && (
+                            <div className="space-y-1 mb-2 pb-2 border-b border-[#E0E7FF]">
+                              <div className="flex justify-between text-xs">
+                                <span className="text-gray-500">Net Tutar (KDV Hariç)</span>
+                                <span className="font-semibold text-gray-700">{formatCurrency(netAmountKurus)}</span>
+                              </div>
+                              <div className="flex justify-between text-xs">
+                                <span className="text-gray-500">KDV Tutarı</span>
+                                <span className="font-semibold text-orange-600">{formatCurrency(taxAmountKurus)}</span>
+                              </div>
+                              <div className="flex justify-between text-xs">
+                                <span className="text-gray-500">Toplam (KDV Dahil)</span>
+                                <span className="font-semibold text-gray-700">{formatCurrency(totalAmountKurus)}</span>
+                              </div>
+                            </div>
+                          )}
+                          <div className="text-xs text-gray-500">
+                            {matched.length > 0 && <span>{matched.length} ürün güncellenecek</span>}
+                            {matched.length > 0 && unmatched.length > 0 && <span> · </span>}
+                            {unmatched.length > 0 && <span>{unmatched.length} yeni ürün oluşturulacak</span>}
+                          </div>
                         </div>
-                      ) : null;
+                      );
                     })()}
                   </div>
                 )}

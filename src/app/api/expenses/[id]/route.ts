@@ -98,7 +98,62 @@ export async function DELETE(
       return Response.json({ error: "Gider bulunamadı" }, { status: 404 });
     }
 
-    await prisma.expense.delete({ where: { id: params.id } });
+    await prisma.$transaction(async (tx) => {
+      // If this expense is linked to an uploaded invoice, clean up invoice side effects
+      const linkedInvoice = await tx.uploadedInvoice.findFirst({
+        where: { linkedExpenseId: params.id, clinicId },
+      });
+
+      if (linkedInvoice && linkedInvoice.approved) {
+        const reference = `invoice-${linkedInvoice.id}`;
+
+        // Reverse stock movements
+        const stockMovements = await tx.stockMovement.findMany({
+          where: { clinicId, reference },
+        });
+
+        for (const movement of stockMovements) {
+          const product = await tx.product.findFirst({
+            where: { id: movement.productId, clinicId },
+          });
+          if (!product) continue;
+
+          if (movement.type === "IN") {
+            await tx.product.update({
+              where: { id: product.id },
+              data: {
+                currentStock: Math.max(0, (product.currentStock ?? 0) - movement.quantity),
+              },
+            });
+          } else if (movement.type === "OUT") {
+            await tx.product.update({
+              where: { id: product.id },
+              data: {
+                currentStock: (product.currentStock ?? 0) + movement.quantity,
+              },
+            });
+          }
+        }
+
+        // Delete stock movements
+        await tx.stockMovement.deleteMany({
+          where: { clinicId, reference },
+        });
+
+        // Reset invoice approval state
+        await tx.uploadedInvoice.update({
+          where: { id: linkedInvoice.id },
+          data: {
+            approved: false,
+            linkedExpenseId: null,
+            profitData: undefined,
+          },
+        });
+      }
+
+      // Delete the expense
+      await tx.expense.delete({ where: { id: params.id } });
+    });
 
     return Response.json({ success: true });
   } catch {

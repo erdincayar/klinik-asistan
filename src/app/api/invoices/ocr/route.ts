@@ -11,11 +11,15 @@ const OCR_PROMPT = `Bu bir faturadır. Lütfen şu bilgileri JSON formatında ç
 {
   "vendor": "Satıcı/firma adı",
   "invoiceDate": "YYYY-MM-DD formatında fatura tarihi",
-  "amount": toplam tutar (sayı, TL cinsinden, virgüllü ise noktaya çevir),
-  "taxAmount": KDV tutarı (sayı),
+  "amount": toplam tutar (KDV dahil genel toplam, sayı, TL cinsinden, virgüllü ise noktaya çevir),
+  "taxAmount": KDV tutarı (sayı, faturada KDV satırı varsa onu yaz, yoksa 0),
   "category": "MALZEME|KIRA|FATURA|MAAS|DIGER" (en uygun kategori),
-  "items": [{"description": "kalem açıklaması", "quantity": adet, "unitPrice": birim fiyat, "total": toplam}]
+  "items": [{"description": "kalem açıklaması", "quantity": adet, "unitPrice": birim fiyat (KDV HARİÇ net birim fiyat), "total": toplam (KDV hariç net toplam)}]
 }
+ÖNEMLİ:
+- "amount" her zaman KDV DAHİL genel toplam olmalı.
+- "taxAmount" faturadaki KDV tutarı olmalı. Eğer faturada ayrı KDV satırı yoksa 0 yaz.
+- "items" içindeki "unitPrice" ve "total" KDV HARİÇ net tutarlar olmalı.
 Sadece JSON döndür, başka açıklama yapma.`;
 
 const SUPPORTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];

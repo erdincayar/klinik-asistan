@@ -1042,7 +1042,7 @@ export default function FinanceOverview() {
                     Önümüzdeki {upcomingDays} gün — Toplam Ödenecek
                   </span>
                   <span className="text-lg font-bold text-[#4F46E5]">
-                    {formatCurrency(upcomingTotal)}
+                    {formatCurrency(Math.round(upcomingTotal * 100))}
                   </span>
                 </CardContent>
               </Card>
