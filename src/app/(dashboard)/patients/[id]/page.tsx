@@ -27,6 +27,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { useSectorConfig } from "@/lib/hooks/useSectorConfig";
 
 interface Treatment {
   id: string;
@@ -99,6 +100,7 @@ function Skeleton({ className }: { className?: string }) {
 export default function PatientDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const labels = useSectorConfig();
   const [patient, setPatient] = useState<Patient | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [photos, setPhotos] = useState<PatientPhoto[]>([]);
@@ -231,7 +233,7 @@ export default function PatientDetailPage() {
   }, [params.id, fetchPhotos, fetchCategories, fetchCrmStats]);
 
   async function handleDeletePatient() {
-    if (!confirm(`"${patient?.name}" müşterisini silmek istediğinize emin misiniz? Tüm tedavi kayıtları da silinecektir.`)) return;
+    if (!confirm(`"${patient?.name}" kaydını silmek istediğinize emin misiniz? Tüm ${labels.treatmentSingular.toLowerCase()} kayıtları da silinecektir.`)) return;
     setDeleting(true);
     try {
       const res = await fetch(`/api/patients/${params.id}`, { method: "DELETE" });
@@ -311,8 +313,8 @@ export default function PatientDetailPage() {
   };
 
   const filteredPhotos = photoFilter === "ALL" ? photos : photos.filter((p) => p.category === photoFilter);
-  const beforePhotos = photos.filter((p) => p.category === "Tedavi Öncesi" || p.category === "BEFORE");
-  const afterPhotos = photos.filter((p) => p.category === "Tedavi Sonrası" || p.category === "AFTER");
+  const beforePhotos = photos.filter((p) => p.category === "{labels.treatmentSingular} Öncesi" || p.category === "BEFORE");
+  const afterPhotos = photos.filter((p) => p.category === "{labels.treatmentSingular} Sonrası" || p.category === "AFTER");
 
   if (loading) {
     return (
@@ -692,7 +694,7 @@ export default function PatientDetailPage() {
           {compareMode && beforePhotos.length > 0 && afterPhotos.length > 0 ? (
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">Tedavi Öncesi</p>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">{labels.treatmentSingular} Öncesi</p>
                 <div className="space-y-3">
                   {beforePhotos.map((photo) => (
                     <div key={photo.id} className="overflow-hidden rounded-xl border border-gray-100">
@@ -705,7 +707,7 @@ export default function PatientDetailPage() {
                 </div>
               </div>
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">Tedavi Sonrası</p>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">{labels.treatmentSingular} Sonrası</p>
                 <div className="space-y-3">
                   {afterPhotos.map((photo) => (
                     <div key={photo.id} className="overflow-hidden rounded-xl border border-gray-100">
@@ -869,12 +871,12 @@ export default function PatientDetailPage() {
         className="overflow-hidden rounded-xl border border-gray-100 bg-white"
       >
         <div className="border-b border-gray-100 px-6 py-4">
-          <h2 className="text-sm font-semibold text-gray-900">Tedavi Geçmişi</h2>
+          <h2 className="text-sm font-semibold text-gray-900">{labels.treatmentPlural} Geçmişi</h2>
         </div>
 
         {patient.treatments.length === 0 ? (
           <div className="flex min-h-[120px] items-center justify-center p-6">
-            <p className="text-sm text-gray-500">Henüz tedavi kaydı yok</p>
+            <p className="text-sm text-gray-500">Henüz {labels.treatmentSingular.toLowerCase()} kaydı yok</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-50">
