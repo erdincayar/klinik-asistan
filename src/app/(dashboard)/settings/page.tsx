@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
+import { SECTOR_LIST, getSectorConfig } from "@/lib/sector-config";
 import {
   Settings as SettingsIcon,
   Trash2,
@@ -44,6 +45,8 @@ interface ClinicSettings {
   phone: string;
   address: string;
   taxRate: number;
+  sector?: string;
+  sectorConfig?: Record<string, any>;
   storageLimitMB?: number;
   storageUsedMB?: number;
   storagePlan?: string;
@@ -193,6 +196,8 @@ export default function SettingsPage() {
             phone: data.phone || "",
             address: data.address || "",
             taxRate: data.taxRate ?? 20,
+            sector: data.sector || "",
+            sectorConfig: data.sectorConfig || null,
             storageLimitMB: data.storageLimitMB,
             storageUsedMB: data.storageUsedMB,
             storagePlan: data.storagePlan,
@@ -527,17 +532,95 @@ export default function SettingsPage() {
               placeholder="Adres"
             />
           </div>
-          <div className="w-32">
-            <label className="mb-1.5 block text-xs font-medium text-gray-600">KDV Oranı (%)</label>
-            <input
-              type="number"
-              min="0"
-              max="100"
-              value={settings.taxRate}
-              onChange={(e) => setSettings({ ...settings, taxRate: Number(e.target.value) })}
-              className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
-            />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="w-32">
+              <label className="mb-1.5 block text-xs font-medium text-gray-600">KDV Oranı (%)</label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={settings.taxRate}
+                onChange={(e) => setSettings({ ...settings, taxRate: Number(e.target.value) })}
+                className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-gray-600">Sektör</label>
+              <select
+                value={settings.sector || ""}
+                onChange={(e) => {
+                  const newSector = e.target.value;
+                  const base = getSectorConfig(newSector);
+                  setSettings({ ...settings, sector: newSector, sectorConfig: newSector === "DIGER" ? settings.sectorConfig : base });
+                }}
+                className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
+              >
+                <option value="">Seçiniz</option>
+                {SECTOR_LIST.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
+            </div>
           </div>
+
+          {/* Sektör Özelleştirme — DIGER veya herhangi sektörde */}
+          {settings.sector && (
+            <div className="rounded-xl border border-[#E0E7FF] bg-[#EEF2FF]/30 p-4 space-y-3">
+              <p className="text-xs font-semibold text-[#4F46E5]">Modül Etiketleri</p>
+              <p className="text-[11px] text-gray-500">Sistemde kullanılacak isimleri özelleştirin</p>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {[
+                  { key: "customerPlural", label: "Müşteriler etiketi", placeholder: "ör: Hastalar, Müşteriler, Bayiler" },
+                  { key: "appointmentPlural", label: "Randevular etiketi", placeholder: "ör: Randevular, Siparişler, Toplantılar" },
+                  { key: "treatmentPlural", label: "İşlemler etiketi", placeholder: "ör: Tedaviler, Hizmetler, Siparişler" },
+                  { key: "employeePlural", label: "Çalışanlar etiketi", placeholder: "ör: Çalışanlar, Personel, Ekip" },
+                  { key: "customerSingular", label: "Müşteri (tekil)", placeholder: "ör: Hasta, Müşteri, Bayi" },
+                  { key: "appointmentSingular", label: "Randevu (tekil)", placeholder: "ör: Randevu, Sipariş, Toplantı" },
+                ].map((field) => {
+                  const base = getSectorConfig(settings.sector);
+                  const current = (settings.sectorConfig as any)?.[field.key] || (base as any)[field.key] || "";
+                  return (
+                    <div key={field.key}>
+                      <label className="mb-1 block text-[11px] font-medium text-gray-500">{field.label}</label>
+                      <input
+                        value={current}
+                        onChange={(e) => {
+                          const newConfig = { ...(settings.sectorConfig || getSectorConfig(settings.sector)), [field.key]: e.target.value };
+                          setSettings({ ...settings, sectorConfig: newConfig });
+                        }}
+                        placeholder={field.placeholder}
+                        className="block w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex items-center gap-4 pt-1">
+                {[
+                  { key: "showTcField", label: "TC Kimlik alanı" },
+                  { key: "showBirthDate", label: "Doğum tarihi" },
+                  { key: "showCompanyFields", label: "Firma/vergi alanları" },
+                ].map((toggle) => {
+                  const base = getSectorConfig(settings.sector);
+                  const current = (settings.sectorConfig as any)?.[toggle.key] ?? (base as any)[toggle.key] ?? false;
+                  return (
+                    <label key={toggle.key} className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={current}
+                        onChange={(e) => {
+                          const newConfig = { ...(settings.sectorConfig || getSectorConfig(settings.sector)), [toggle.key]: e.target.checked };
+                          setSettings({ ...settings, sectorConfig: newConfig });
+                        }}
+                        className="h-3.5 w-3.5 rounded border-gray-300 text-[#6366F1] focus:ring-[#6366F1]"
+                      />
+                      {toggle.label}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {error && <p className="text-sm text-red-500">{error}</p>}
           {success && <p className="text-sm text-green-600">{success}</p>}

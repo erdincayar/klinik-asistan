@@ -14,7 +14,7 @@ export async function GET() {
 
     const clinic = await prisma.clinic.findUnique({
       where: { id: clinicId },
-      select: { id: true, name: true, phone: true, address: true, taxRate: true, workStartTime: true, workEndTime: true, metaConnected: true, metaAdAccountId: true, metaAppId: true, metaTokenExpiresAt: true, whatsappConnected: true, whatsappPhone: true, storageLimitMB: true, storageUsedMB: true, storagePlan: true, plan: true },
+      select: { id: true, name: true, phone: true, address: true, taxRate: true, sector: true, sectorConfig: true, workStartTime: true, workEndTime: true, metaConnected: true, metaAdAccountId: true, metaAppId: true, metaTokenExpiresAt: true, whatsappConnected: true, whatsappPhone: true, storageLimitMB: true, storageUsedMB: true, storagePlan: true, plan: true },
     });
 
     if (!clinic) {
@@ -60,8 +60,10 @@ export async function PUT(request: Request) {
         ...(taxRate !== undefined && { taxRate }),
         ...(workStartTime !== undefined && { workStartTime }),
         ...(workEndTime !== undefined && { workEndTime }),
+        ...(body.sector !== undefined && { sector: body.sector }),
+        ...(body.sectorConfig !== undefined && { sectorConfig: body.sectorConfig }),
       },
-      select: { name: true, phone: true, address: true, taxRate: true, workStartTime: true, workEndTime: true },
+      select: { name: true, phone: true, address: true, taxRate: true, sector: true, sectorConfig: true, workStartTime: true, workEndTime: true },
     });
 
     return Response.json(clinic);

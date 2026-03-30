@@ -71,6 +71,7 @@ model Clinic {
   address               String?
   taxRate               Int                    @default(20)
   sector                String?
+  sectorConfig          Json?    // Özel sektör etiketleri (SectorLabels override)
   plan                  String?                @default("PRO") // BASIC, PRO, BUSINESS
   selectedModules       String?                // JSON array string
   messagingPreference   String?                // WHATSAPP, TELEGRAM, BOTH
