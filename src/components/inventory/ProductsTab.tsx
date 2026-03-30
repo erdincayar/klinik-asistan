@@ -1110,7 +1110,11 @@ function BulkAddDialog({
   };
 
   const addRows = (count: number) => {
-    setRows((prev) => [...prev, ...Array.from({ length: count }, emptyRow)]);
+    setRows((prev) => [...prev, ...Array.from({ length: count }, () => ({
+      ...emptyRow(),
+      brand: commonBrand,
+      category: commonCategory,
+    }))]);
   };
 
   const removeRow = (id: string) => {
@@ -1187,7 +1191,11 @@ function BulkAddDialog({
                 <label className="text-[11px] font-medium text-gray-500">Ortak Marka</label>
                 <input
                   value={commonBrand}
-                  onChange={(e) => setCommonBrand(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setCommonBrand(val);
+                    setRows((prev) => prev.map((r) => r.brand === "" || r.brand === commonBrand ? { ...r, brand: val } : r));
+                  }}
                   placeholder="Opsiyonel"
                   className="block w-36 rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:border-[#6366F1] focus:outline-none"
                 />
@@ -1196,7 +1204,11 @@ function BulkAddDialog({
                 <label className="text-[11px] font-medium text-gray-500">Ortak Kategori</label>
                 <select
                   value={commonCategory}
-                  onChange={(e) => setCommonCategory(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setCommonCategory(val);
+                    setRows((prev) => prev.map((r) => ({ ...r, category: val })));
+                  }}
                   className="block w-32 rounded-md border border-gray-200 px-2.5 py-1.5 text-sm focus:border-[#6366F1] focus:outline-none"
                 >
                   {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
