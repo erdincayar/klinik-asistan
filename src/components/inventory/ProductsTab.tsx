@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import {
   Plus, Search, AlertTriangle, CheckCircle, Upload, Download,
   Loader2, FileSpreadsheet, ArrowRight, Trash2, Pencil, Tag, Camera, ChevronDown, Eye,
-  Settings, GripVertical, X,
+  Settings, GripVertical, X, ArrowUpDown, ArrowUp, ArrowDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +41,8 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
   const [brandOptions, setBrandOptions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [sortKey, setSortKey] = useState<string>("");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [showNewProduct, setShowNewProduct] = useState(false);
   const [showBulkAdd, setShowBulkAdd] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -156,6 +158,42 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
     const timer = setTimeout(fetchProducts, 300);
     return () => clearTimeout(timer);
   }, [fetchProducts]);
+
+  const toggleSort = (key: string) => {
+    if (sortKey === key) {
+      setSortDir((d) => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortDir(key === "name" || key === "brand" ? "asc" : "desc");
+    }
+  };
+
+  const sortedProducts = useMemo(() => {
+    if (!sortKey) return products;
+    return [...products].sort((a, b) => {
+      let va: any, vb: any;
+      switch (sortKey) {
+        case "name": va = a.name.toLowerCase(); vb = b.name.toLowerCase(); break;
+        case "brand": va = (a.brand || "").toLowerCase(); vb = (b.brand || "").toLowerCase(); break;
+        case "category": va = a.category; vb = b.category; break;
+        case "stock": va = a.currentStock ?? 0; vb = b.currentStock ?? 0; break;
+        case "purchasePriceTRY": va = a.purchasePrice; vb = b.purchasePrice; break;
+        case "purchasePriceFX": va = a.purchasePriceUSD ?? 0; vb = b.purchasePriceUSD ?? 0; break;
+        case "salePriceTRY": va = a.salePrice; vb = b.salePrice; break;
+        case "salePriceFX": va = a.salePriceUSD ?? 0; vb = b.salePriceUSD ?? 0; break;
+        case "profitMargin": {
+          const ma = a.purchasePrice > 0 && a.salePrice > 0 ? ((a.salePrice - a.purchasePrice) / a.purchasePrice) * 100 : -Infinity;
+          const mb = b.purchasePrice > 0 && b.salePrice > 0 ? ((b.salePrice - b.purchasePrice) / b.purchasePrice) * 100 : -Infinity;
+          va = ma; vb = mb; break;
+        }
+        case "currency": va = a.currency; vb = b.currency; break;
+        default: return 0;
+      }
+      if (va < vb) return sortDir === "asc" ? -1 : 1;
+      if (va > vb) return sortDir === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [products, sortKey, sortDir]);
 
   const handleProductClick = async (product: Product) => {
     setDetailLoading(true);
@@ -429,16 +467,29 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
                       const isRight = ["stock", "purchasePriceTRY", "purchasePriceFX", "salePriceTRY", "salePriceFX", "profitMargin"].includes(key);
                       const isCenter = key === "actions" || key === "vatIncluded";
                       const hiddenOnMobile = ["sku", "purchasePriceFX", "salePriceFX", "currency", "unit"].includes(key);
+                      const sortable = ["name", "brand", "category", "stock", "purchasePriceTRY", "purchasePriceFX", "salePriceTRY", "salePriceFX", "profitMargin", "currency"].includes(key);
+                      const isSorted = sortKey === key;
                       return (
-                        <TableHead key={key} className={`${isCenter ? "text-center" : isRight ? "text-right" : ""} ${hiddenOnMobile ? "hidden md:table-cell" : ""}`}>
-                          {label}
+                        <TableHead
+                          key={key}
+                          className={`${isCenter ? "text-center" : isRight ? "text-right" : ""} ${hiddenOnMobile ? "hidden md:table-cell" : ""} ${sortable ? "cursor-pointer select-none hover:text-gray-900" : ""}`}
+                          onClick={sortable ? () => toggleSort(key) : undefined}
+                        >
+                          <span className={`inline-flex items-center gap-1 ${isRight ? "justify-end" : ""}`}>
+                            {label}
+                            {sortable && (
+                              isSorted
+                                ? sortDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+                                : <ArrowUpDown className="h-3 w-3 opacity-30" />
+                            )}
+                          </span>
                         </TableHead>
                       );
                     })}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {products.map((product) => {
+                  {sortedProducts.map((product) => {
                     const margin = calcProfitMargin(product.purchasePrice, product.salePrice);
                     const marginLow = margin !== null && margin < product.minProfitMargin;
                     return (
