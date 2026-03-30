@@ -947,8 +947,10 @@ export default function InvoiceUploadContent() {
                     <div className="space-y-2">
                       {stockMappings.map((mapping, idx) => {
                         const product = mapping.productId ? allProducts.find(p => p.id === mapping.productId) : null;
-                        const salePriceKurus = Math.round(mapping.unitPrice * 100);
-                        // If product's purchasePrice doesn't include KDV, add 20%
+                        // unitPrice from OCR = KDV hariç, KDV ekle
+                        const unitPriceNetKurus = Math.round(mapping.unitPrice * 100);
+                        const salePriceKurus = Math.round(unitPriceNetKurus * 1.20);
+                        // Maliyet KDV dahil olarak karşılaştır
                         const rawCost = product?.purchasePrice || 0;
                         const costPriceKurus = product && !product.vatIncluded ? Math.round(rawCost * 1.20) : rawCost;
                         const itemProfit = (salePriceKurus - costPriceKurus) * mapping.quantity;

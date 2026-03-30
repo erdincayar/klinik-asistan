@@ -247,7 +247,10 @@ export async function POST(
         }> = [];
 
         for (const mapping of stockMappings) {
-          const unitPriceKurus = Math.round(mapping.unitPrice * 100);
+          // unitPrice from OCR = KDV hariç net fiyat
+          const unitPriceNetKurus = Math.round(mapping.unitPrice * 100);
+          // Satış fiyatı = KDV dahil (net fiyat + %vatRate)
+          const salePriceKurus = Math.round(unitPriceNetKurus * (1 + vatRate / 100));
 
           if (mapping.productId) {
             const product = await tx.product.findFirst({
@@ -256,18 +259,18 @@ export async function POST(
             });
             if (!product) continue;
 
-            // If product's purchasePrice doesn't include KDV, add 20% for accurate cost
+            // Maliyet her zaman KDV dahil olarak karşılaştırılmalı
             const costPrice = product.vatIncluded
               ? product.purchasePrice
-              : Math.round(product.purchasePrice * 1.20);
-            const itemProfit = (unitPriceKurus - costPrice) * mapping.quantity;
+              : Math.round(product.purchasePrice * (1 + vatRate / 100));
+            const itemProfit = (salePriceKurus - costPrice) * mapping.quantity;
 
             matchedItems.push({
               description: mapping.description,
               productId: product.id,
               productName: product.name,
               quantity: mapping.quantity,
-              salePrice: unitPriceKurus,
+              salePrice: salePriceKurus,
               costPrice,
               profit: itemProfit,
             });
@@ -279,8 +282,8 @@ export async function POST(
                 productId: mapping.productId,
                 type: "OUT",
                 quantity: mapping.quantity,
-                unitPrice: unitPriceKurus,
-                totalPrice: unitPriceKurus * mapping.quantity,
+                unitPrice: salePriceKurus,
+                totalPrice: salePriceKurus * mapping.quantity,
                 description: `Satış Faturası: ${invoice.vendor || invoice.fileName} - ${mapping.description}`,
                 reference: `invoice-${id}`,
                 date: invoice.invoiceDate || new Date(),
@@ -296,7 +299,7 @@ export async function POST(
             unmatchedItems.push({
               description: mapping.description,
               quantity: mapping.quantity,
-              salePrice: unitPriceKurus,
+              salePrice: salePriceKurus,
             });
           }
         }
@@ -304,11 +307,13 @@ export async function POST(
         const totalRevenue = parsedAmount;
         const totalCost = matchedItems.reduce((sum, item) => sum + item.costPrice * item.quantity, 0);
         const grossProfit = totalRevenue - totalCost;
+        const totalVatCollected = taxAmount; // Hesaplanan KDV (satıştan)
 
         const profitData = {
           totalRevenue,
           totalCost,
           grossProfit,
+          vatCollected: totalVatCollected,
           matchedItems,
           unmatchedItems,
         };

@@ -184,6 +184,16 @@ export default function FinanceOverview() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // KDV Ledger state
+  const [vatLedger, setVatLedger] = useState<{
+    vatCollected: number;
+    vatPaid: number;
+    netVat: number;
+    vatCollectedItems: Array<{ description: string; amount: number; vatAmount: number; vatRate: number; date: string }>;
+    vatPaidItems: Array<{ description: string; amount: number; vatAmount: number; vatRate: number; date: string }>;
+  } | null>(null);
+  const [vatExpanded, setVatExpanded] = useState<"collected" | "paid" | null>(null);
+
   // Recurring transactions state
   const [activeTab, setActiveTab] = useState("overview");
   const [recurringTransactions, setRecurringTransactions] = useState<RecurringTransaction[]>([]);
@@ -236,9 +246,10 @@ export default function FinanceOverview() {
       setLoading(true);
       setError("");
       try {
-        const [isRes, msRes] = await Promise.all([
+        const [isRes, msRes, vatRes] = await Promise.all([
           fetch(`/api/finance?type=income-statement&month=${month}&year=${year}`),
           fetch(`/api/finance?type=monthly-summary&year=${year}`),
+          fetch(`/api/finance?type=vat-ledger&month=${month}&year=${year}`),
         ]);
         if (!isRes.ok) throw new Error("Finans verisi alınamadı");
         const isData = await isRes.json();
@@ -250,6 +261,10 @@ export default function FinanceOverview() {
         if (msRes.ok) {
           const msData = await msRes.json();
           setMonthlySummary(msData.months || []);
+        }
+
+        if (vatRes.ok) {
+          setVatLedger(await vatRes.json());
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Bir hata oluştu");
@@ -629,6 +644,99 @@ export default function FinanceOverview() {
                 );
               })}
             </div>
+
+            {/* KDV Ledger */}
+            {vatLedger && (vatLedger.vatCollected > 0 || vatLedger.vatPaid > 0) && (
+              <motion.div
+                variants={fadeUp}
+                initial="hidden"
+                animate="visible"
+                custom={2}
+                className="rounded-xl border border-gray-100 bg-white p-5"
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50">
+                    <FileText className="h-5 w-5 text-orange-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900">KDV Özeti</h3>
+                    <p className="text-xs text-gray-400">{MONTHS_FULL[month - 1]} {year}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  {/* Hesaplanan KDV */}
+                  <button
+                    onClick={() => setVatExpanded(vatExpanded === "collected" ? null : "collected")}
+                    className="rounded-xl bg-green-50 p-4 text-left transition-colors hover:bg-green-100"
+                  >
+                    <p className="text-[11px] font-medium text-gray-500">Hesaplanan KDV</p>
+                    <p className="text-xs text-gray-400 mb-1">Satışlardan tahsil edilen</p>
+                    <p className="text-lg font-bold text-green-700">{formatCurrency(vatLedger.vatCollected)}</p>
+                  </button>
+
+                  {/* İndirilecek KDV */}
+                  <button
+                    onClick={() => setVatExpanded(vatExpanded === "paid" ? null : "paid")}
+                    className="rounded-xl bg-red-50 p-4 text-left transition-colors hover:bg-red-100"
+                  >
+                    <p className="text-[11px] font-medium text-gray-500">İndirilecek KDV</p>
+                    <p className="text-xs text-gray-400 mb-1">Alışlardan ödenen</p>
+                    <p className="text-lg font-bold text-red-600">{formatCurrency(vatLedger.vatPaid)}</p>
+                  </button>
+
+                  {/* Ödenecek KDV */}
+                  <div className={cn(
+                    "rounded-xl p-4",
+                    vatLedger.netVat >= 0 ? "bg-orange-50" : "bg-blue-50"
+                  )}>
+                    <p className="text-[11px] font-medium text-gray-500">
+                      {vatLedger.netVat >= 0 ? "Ödenecek KDV" : "Devreden KDV"}
+                    </p>
+                    <p className="text-xs text-gray-400 mb-1">
+                      {vatLedger.netVat >= 0 ? "Devlete ödenecek" : "Sonraki aya devir"}
+                    </p>
+                    <p className={cn(
+                      "text-lg font-bold",
+                      vatLedger.netVat >= 0 ? "text-orange-700" : "text-blue-700"
+                    )}>
+                      {formatCurrency(Math.abs(vatLedger.netVat))}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Expanded Detail */}
+                {vatExpanded === "collected" && vatLedger.vatCollectedItems.length > 0 && (
+                  <div className="mt-4 rounded-xl border border-green-100 bg-green-50/30 p-4">
+                    <p className="text-xs font-semibold text-gray-500 mb-2">Hesaplanan KDV Detayı</p>
+                    <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                      {vatLedger.vatCollectedItems.map((item, i) => (
+                        <div key={i} className="flex items-center justify-between text-xs">
+                          <span className="text-gray-600 truncate flex-1 mr-2">{item.description}</span>
+                          <span className="text-gray-400 mr-3">%{item.vatRate}</span>
+                          <span className="font-semibold text-green-700 shrink-0">{formatCurrency(item.vatAmount)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {vatExpanded === "paid" && vatLedger.vatPaidItems.length > 0 && (
+                  <div className="mt-4 rounded-xl border border-red-100 bg-red-50/30 p-4">
+                    <p className="text-xs font-semibold text-gray-500 mb-2">İndirilecek KDV Detayı</p>
+                    <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                      {vatLedger.vatPaidItems.map((item, i) => (
+                        <div key={i} className="flex items-center justify-between text-xs">
+                          <span className="text-gray-600 truncate flex-1 mr-2">{item.description}</span>
+                          <span className="text-gray-400 mr-3">%{item.vatRate}</span>
+                          <span className="font-semibold text-red-600 shrink-0">{formatCurrency(item.vatAmount)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            )}
 
             {/* Invoice Profit Summary */}
             {invoiceProfitSummary && invoiceProfitSummary.invoices.length > 0 && (

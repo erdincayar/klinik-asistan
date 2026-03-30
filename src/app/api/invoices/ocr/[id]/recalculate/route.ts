@@ -86,10 +86,11 @@ export async function PATCH(
 
           if (!product) return item;
 
-          // If product's purchasePrice doesn't include KDV, add 20% for accurate cost
+          // Maliyet her zaman KDV dahil olarak karşılaştırılmalı
           const costPrice = product.vatIncluded
             ? product.purchasePrice
             : Math.round(product.purchasePrice * 1.20);
+          // salePrice zaten KDV dahil olarak kaydedildi
           const profit = (item.salePrice - costPrice) * item.quantity;
 
           return { ...item, productName: product.name, costPrice, profit };
@@ -133,9 +134,18 @@ export async function PATCH(
     const matchedItems: ProfitData["matchedItems"] = [];
     const unmatchedItems: ProfitData["unmatchedItems"] = [];
 
+    // Get clinic tax rate
+    const clinic = await prisma.clinic.findUnique({
+      where: { id: clinicId },
+      select: { taxRate: true },
+    });
+    const vatRate = clinic?.taxRate ?? 20;
+
     for (const item of ocrItems) {
       const desc = (item.description || "").toLowerCase().trim();
-      const unitPriceKurus = Math.round((item.unitPrice || 0) * 100);
+      // unitPrice from OCR = KDV hariç net fiyat, KDV ekle
+      const unitPriceNetKurus = Math.round((item.unitPrice || 0) * 100);
+      const salePriceKurus = Math.round(unitPriceNetKurus * (1 + vatRate / 100));
       const quantity = item.quantity || 1;
 
       let bestMatch: typeof products[number] | null = null;
@@ -150,24 +160,24 @@ export async function PATCH(
       }
 
       if (bestMatch) {
-        // If product's purchasePrice doesn't include KDV, add 20% for accurate cost
+        // Maliyet her zaman KDV dahil olarak karşılaştırılmalı
         const costPrice = bestMatch.vatIncluded
           ? bestMatch.purchasePrice
-          : Math.round(bestMatch.purchasePrice * 1.20);
+          : Math.round(bestMatch.purchasePrice * (1 + vatRate / 100));
         matchedItems.push({
           description: item.description || "",
           productId: bestMatch.id,
           productName: bestMatch.name,
           quantity,
-          salePrice: unitPriceKurus,
+          salePrice: salePriceKurus,
           costPrice,
-          profit: (unitPriceKurus - costPrice) * quantity,
+          profit: (salePriceKurus - costPrice) * quantity,
         });
       } else {
         unmatchedItems.push({
           description: item.description || "",
           quantity,
-          salePrice: unitPriceKurus,
+          salePrice: salePriceKurus,
         });
       }
     }

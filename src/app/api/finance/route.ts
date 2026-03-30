@@ -158,6 +158,89 @@ export async function GET(request: Request) {
       return Response.json({ totalWithVat, vatAmount, totalWithoutVat, taxRate });
     }
 
+    if (type === "vat-ledger") {
+      const startDate = new Date(Date.UTC(year, month - 1, 1));
+      const endDate = new Date(Date.UTC(year, month, 1));
+
+      // Gelen KDV: Satışlardan tahsil edilen KDV (gelir faturaları + tedaviler)
+      const [incomeRecords, treatments, expenseRecords] = await Promise.all([
+        prisma.expense.findMany({
+          where: { clinicId, type: "INCOME", date: { gte: startDate, lt: endDate } },
+          select: { id: true, description: true, amount: true, vatRate: true, vatIncluded: true, date: true },
+        }),
+        prisma.treatment.findMany({
+          where: { clinicId, date: { gte: startDate, lt: endDate } },
+          select: { id: true, category: true, amount: true, date: true, patient: { select: { name: true } } },
+        }),
+        prisma.expense.findMany({
+          where: { clinicId, type: "EXPENSE", date: { gte: startDate, lt: endDate } },
+          select: { id: true, description: true, amount: true, vatRate: true, vatIncluded: true, date: true },
+        }),
+      ]);
+
+      // Hesaplanan KDV (satışlardan)
+      let vatCollected = 0;
+      const vatCollectedItems: Array<{ description: string; amount: number; vatAmount: number; vatRate: number; date: Date }> = [];
+
+      for (const inc of incomeRecords) {
+        const rate = inc.vatRate ?? taxRate;
+        const vatAmt = inc.vatIncluded
+          ? Math.round(inc.amount * rate / (100 + rate))
+          : Math.round(inc.amount * rate / 100);
+        vatCollected += vatAmt;
+        vatCollectedItems.push({
+          description: inc.description,
+          amount: inc.amount,
+          vatAmount: vatAmt,
+          vatRate: rate,
+          date: inc.date,
+        });
+      }
+
+      // Tedavilerden KDV
+      for (const t of treatments) {
+        const vatAmt = Math.round(t.amount * taxRate / (100 + taxRate));
+        vatCollected += vatAmt;
+        vatCollectedItems.push({
+          description: `Tedavi - ${t.patient.name} (${t.category})`,
+          amount: t.amount,
+          vatAmount: vatAmt,
+          vatRate: taxRate,
+          date: t.date,
+        });
+      }
+
+      // İndirilecek KDV (alışlardan / giderlerden)
+      let vatPaid = 0;
+      const vatPaidItems: Array<{ description: string; amount: number; vatAmount: number; vatRate: number; date: Date }> = [];
+
+      for (const exp of expenseRecords) {
+        const rate = exp.vatRate ?? taxRate;
+        const vatAmt = exp.vatIncluded
+          ? Math.round(exp.amount * rate / (100 + rate))
+          : Math.round(exp.amount * rate / 100);
+        vatPaid += vatAmt;
+        vatPaidItems.push({
+          description: exp.description,
+          amount: exp.amount,
+          vatAmount: vatAmt,
+          vatRate: rate,
+          date: exp.date,
+        });
+      }
+
+      const netVat = vatCollected - vatPaid;
+
+      return Response.json({
+        vatCollected,
+        vatPaid,
+        netVat,
+        vatCollectedItems,
+        vatPaidItems,
+        taxRate,
+      });
+    }
+
     if (type === "monthly-summary") {
       const monthNames = [
         "Oca", "Şub", "Mar", "Nis", "May", "Haz",
