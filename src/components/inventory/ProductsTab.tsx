@@ -400,16 +400,16 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
           ) : products.length === 0 ? (
             <p className="p-6 text-gray-500">Ürün bulunamadı</p>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto -mx-2 sm:mx-0">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-10">
+                    <TableHead className="w-8">
                       <input
                         type="checkbox"
                         checked={products.length > 0 && selectedIds.size === products.length}
                         onChange={toggleSelectAll}
-                        className="h-4 w-4 rounded border-gray-300"
+                        className="h-3.5 w-3.5 rounded border-gray-300"
                       />
                     </TableHead>
                     {orderedColumns.map((key) => {
@@ -418,8 +418,9 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
                       const label = def?.label || custom?.name || key;
                       const isRight = ["stock", "purchasePriceTRY", "purchasePriceFX", "salePriceTRY", "salePriceFX", "profitMargin"].includes(key);
                       const isCenter = key === "actions";
+                      const hiddenOnMobile = ["sku", "purchasePriceFX", "salePriceFX", "currency", "unit"].includes(key);
                       return (
-                        <TableHead key={key} className={isCenter ? "text-center" : isRight ? "text-right" : ""}>
+                        <TableHead key={key} className={`${isCenter ? "text-center" : isRight ? "text-right" : ""} ${hiddenOnMobile ? "hidden md:table-cell" : ""}`}>
                           {label}
                         </TableHead>
                       );
@@ -436,73 +437,73 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
                         className="cursor-pointer hover:bg-muted/50"
                         onClick={() => handleProductClick(product)}
                       >
-                        <TableCell onClick={(e) => e.stopPropagation()}>
+                        <TableCell className="w-8" onClick={(e) => e.stopPropagation()}>
                           <input
                             type="checkbox"
                             checked={selectedIds.has(product.id)}
                             onChange={(e) => toggleSelect(product.id, e)}
-                            className="h-4 w-4 rounded border-gray-300"
+                            className="h-3.5 w-3.5 rounded border-gray-300"
                           />
                         </TableCell>
                         {orderedColumns.map((key) => {
                           // Default columns
                           if (key === "brand") return (
-                            <TableCell key={key} className="text-muted-foreground" onClick={(e) => e.stopPropagation()}>
+                            <TableCell key={key} className="text-muted-foreground max-w-[100px] truncate" onClick={(e) => e.stopPropagation()}>
                               {product.brand ? product.brand : (
-                                <button onClick={() => { setBrandEditTarget(product); setBrandEditValue(""); }} className="text-xs text-[#6366F1] hover:text-[#4F46E5] hover:underline">+ Marka Ekle</button>
+                                <button onClick={() => { setBrandEditTarget(product); setBrandEditValue(""); }} className="text-[11px] text-[#6366F1] hover:text-[#4F46E5] hover:underline">+ Marka</button>
                               )}
                             </TableCell>
                           );
-                          if (key === "name") return <TableCell key={key} className="font-medium">{product.name}</TableCell>;
-                          if (key === "sku") return <TableCell key={key} className="text-muted-foreground text-xs">{product.sku}</TableCell>;
+                          if (key === "name") return <TableCell key={key} className="font-medium max-w-[180px] truncate">{product.name}</TableCell>;
+                          if (key === "sku") return <TableCell key={key} className="text-muted-foreground text-[11px] hidden md:table-cell">{product.sku}</TableCell>;
                           if (key === "category") return (
                             <TableCell key={key}>
-                              <Badge className={CATEGORY_BADGE_COLORS[product.category] || "bg-gray-100 text-gray-800"}>{getCategoryLabel(product.category)}</Badge>
+                              <Badge className={`text-[10px] px-1.5 py-0.5 ${CATEGORY_BADGE_COLORS[product.category] || "bg-gray-100 text-gray-800"}`}>{getCategoryLabel(product.category)}</Badge>
                             </TableCell>
                           );
-                          if (key === "unit") return <TableCell key={key}>{getUnitLabel(product.unit)}</TableCell>;
+                          if (key === "unit") return <TableCell key={key} className="hidden md:table-cell">{getUnitLabel(product.unit)}</TableCell>;
                           if (key === "stock") return (
-                            <TableCell key={key} className="text-right">
+                            <TableCell key={key} className="text-right tabular-nums">
                               {product.currentStock === null || product.currentStock === undefined
                                 ? <span className="text-gray-400">-</span>
                                 : product.currentStock === 0
                                   ? <span className="text-gray-400">0</span>
-                                  : <>{product.currentStock} {getUnitLabel(product.unit)}</>}
+                                  : <>{product.currentStock}</>}
                             </TableCell>
                           );
-                          if (key === "purchasePriceTRY") return <TableCell key={key} className="text-right">{formatCurrency(product.purchasePrice)}</TableCell>;
+                          if (key === "purchasePriceTRY") return <TableCell key={key} className="text-right tabular-nums">{formatCurrency(product.purchasePrice)}</TableCell>;
                           if (key === "purchasePriceFX") return (
-                            <TableCell key={key} className="text-right">
+                            <TableCell key={key} className="text-right hidden md:table-cell">
                               {product.currency !== "TRY" && product.purchasePriceUSD ? (
-                                <span className="text-muted-foreground text-xs">{getCurrencySymbol(product.currency)}{product.purchasePriceUSD.toFixed(2)}</span>
+                                <span className="text-muted-foreground">{getCurrencySymbol(product.currency)}{product.purchasePriceUSD.toFixed(2)}</span>
                               ) : <span className="text-gray-300">&mdash;</span>}
                             </TableCell>
                           );
-                          if (key === "salePriceTRY") return <TableCell key={key} className="text-right">{formatCurrency(product.salePrice)}</TableCell>;
+                          if (key === "salePriceTRY") return <TableCell key={key} className="text-right tabular-nums">{formatCurrency(product.salePrice)}</TableCell>;
                           if (key === "salePriceFX") return (
-                            <TableCell key={key} className="text-right">
+                            <TableCell key={key} className="text-right hidden md:table-cell">
                               {product.saleCurrency !== "TRY" && product.salePriceUSD ? (
-                                <span className="text-muted-foreground text-xs">{getCurrencySymbol(product.saleCurrency)}{product.salePriceUSD.toFixed(2)}</span>
+                                <span className="text-muted-foreground">{getCurrencySymbol(product.saleCurrency)}{product.salePriceUSD.toFixed(2)}</span>
                               ) : <span className="text-gray-300">&mdash;</span>}
                             </TableCell>
                           );
                           if (key === "profitMargin") return (
                             <TableCell key={key} className="text-right">
                               {margin !== null ? (
-                                <span className="flex items-center justify-end gap-1">
-                                  {marginLow && <span title={`Kâr marjı %${product.minProfitMargin} altında`}><AlertTriangle className="h-3.5 w-3.5 text-yellow-500" /></span>}
+                                <span className="flex items-center justify-end gap-0.5">
+                                  {marginLow && <span title={`Kâr marjı %${product.minProfitMargin} altında`}><AlertTriangle className="h-3 w-3 text-yellow-500" /></span>}
                                   <span className={margin >= 0 ? (marginLow ? "text-yellow-600 font-medium" : "text-green-600 font-medium") : "text-red-600 font-medium"}>%{margin}</span>
                                 </span>
                               ) : <span className="text-gray-300">&mdash;</span>}
                             </TableCell>
                           );
-                          if (key === "currency") return <TableCell key={key}>{product.currency}</TableCell>;
+                          if (key === "currency") return <TableCell key={key} className="hidden md:table-cell">{product.currency}</TableCell>;
                           if (key === "actions") return (
                             <TableCell key={key} className="text-center" onClick={(e) => e.stopPropagation()}>
-                              <div className="flex items-center justify-center gap-1">
-                                <button onClick={() => handleProductClick(product)} className="inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors" title="Detay"><Eye className="h-4 w-4" /></button>
-                                <button onClick={() => setEditProduct(product)} className="inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-[#6366F1] hover:bg-[#EEF2FF] transition-colors" title="Düzenle"><Pencil className="h-4 w-4" /></button>
-                                <button onClick={() => setDeleteTarget(product)} className="inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors" title="Sil"><Trash2 className="h-4 w-4" /></button>
+                              <div className="flex items-center justify-center gap-0">
+                                <button onClick={() => handleProductClick(product)} className="inline-flex items-center justify-center rounded p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors" title="Detay"><Eye className="h-3.5 w-3.5" /></button>
+                                <button onClick={() => setEditProduct(product)} className="inline-flex items-center justify-center rounded p-1 text-gray-400 hover:text-[#6366F1] hover:bg-[#EEF2FF] transition-colors" title="Düzenle"><Pencil className="h-3.5 w-3.5" /></button>
+                                <button onClick={() => setDeleteTarget(product)} className="inline-flex items-center justify-center rounded p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors" title="Sil"><Trash2 className="h-3.5 w-3.5" /></button>
                               </div>
                             </TableCell>
                           );
