@@ -97,7 +97,19 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
         const res = await fetch("/api/inventory/column-config");
         if (res.ok) {
           const data = await res.json();
-          if (data.columns) setColumnConfig(data.columns);
+          if (data.columns) {
+            const saved = data.columns as ColumnConfig;
+            // Merge: yeni default sütunları ekle (eski config'de olmayan)
+            const defaultKeys = DEFAULT_COLUMNS.map((c) => c.key);
+            const missingKeys = defaultKeys.filter((k) => !saved.order.includes(k));
+            if (missingKeys.length > 0) {
+              // actions'dan önce ekle
+              const actionsIdx = saved.order.indexOf("actions");
+              const insertIdx = actionsIdx >= 0 ? actionsIdx : saved.order.length;
+              saved.order.splice(insertIdx, 0, ...missingKeys);
+            }
+            setColumnConfig(saved);
+          }
         }
       } catch {
         // use default config
@@ -1702,6 +1714,7 @@ function ImportDialog({
   const [uploading, setUploading] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importBrand, setImportBrand] = useState("");
+  const [importVatIncluded, setImportVatIncluded] = useState(true);
   const [showErrorDetails, setShowErrorDetails] = useState(false);
   const [customMappings, setCustomMappings] = useState<{ name: string; column: string }[]>([]);
   const [newCustomName, setNewCustomName] = useState("");
@@ -1709,7 +1722,7 @@ function ImportDialog({
   function reset() {
     setStep("upload"); setPreview(null); setMapping({}); setResult(null); setError("");
     setUploading(false); setImportFile(null); setSelectedCurrency("TRY"); setExchangeRate(null);
-    setImportBrand(""); setShowErrorDetails(false); setCustomMappings([]); setNewCustomName("");
+    setImportBrand(""); setImportVatIncluded(true); setShowErrorDetails(false); setCustomMappings([]); setNewCustomName("");
   }
 
   function handleClose(isOpen: boolean) {
@@ -1799,6 +1812,7 @@ function ImportDialog({
       }
       formData.append("mapping", JSON.stringify(finalMapping));
       formData.append("currency", selectedCurrency);
+      formData.append("vatIncluded", String(importVatIncluded));
       if (importBrand.trim()) formData.append("brand", importBrand.trim());
       const res = await fetch("/api/products/import", { method: "POST", body: formData });
       const data = await res.json();
@@ -1944,6 +1958,19 @@ function ImportDialog({
                 placeholder="Ör: Bioderma"
                 className="max-w-[300px]"
               />
+            </div>
+
+            {/* KDV */}
+            <div className="rounded-lg border border-gray-200 p-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={importVatIncluded}
+                  onChange={(e) => setImportVatIncluded(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-[#6366F1]"
+                />
+                <span className="text-xs font-semibold">Fiyatlara KDV dahil</span>
+              </label>
             </div>
 
             {/* Currency selection */}

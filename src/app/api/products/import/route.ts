@@ -59,6 +59,8 @@ export async function POST(req: NextRequest) {
     const mappingStr = formData.get("mapping") as string | null;
     const bodyCurrency = formData.get("currency") as string | null;
     const importBrand = formData.get("brand") as string | null;
+    const vatIncludedStr = formData.get("vatIncluded") as string | null;
+    const vatIncluded = vatIncludedStr !== "false";
 
     if (!file) {
       return NextResponse.json({ error: "Dosya gerekli" }, { status: 400 });
@@ -163,7 +165,7 @@ export async function POST(req: NextRequest) {
         }
         const hasCustomFields = Object.keys(customFields).length > 0;
 
-        const productData = {
+        const productData: Record<string, any> = {
           ...(brand !== null && { brand }),
           category,
           unit,
@@ -172,6 +174,7 @@ export async function POST(req: NextRequest) {
           purchasePrice: purchasePriceKurus,
           purchasePriceUSD: originalForeignPrice,
           salePrice: Math.round(salePriceTL * 100),
+          vatIncluded,
           ...(hasCustomFields && { customFields }),
         };
 
