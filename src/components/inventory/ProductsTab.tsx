@@ -143,6 +143,8 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
       const data: Product[] = await res.json();
       const brands = Array.from(new Set(data.map((p) => p.brand).filter(Boolean) as string[])).sort();
       setBrandOptions(brands);
+      // Seçili marka artık yoksa filtreyi sıfırla
+      setBrandFilter((prev) => prev && !brands.includes(prev) ? "" : prev);
     } catch { /* ignore */ }
   }, []);
 
