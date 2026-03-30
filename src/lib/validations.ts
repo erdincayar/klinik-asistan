@@ -111,7 +111,7 @@ export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 
 export const productSchema = z.object({
   name: z.string().min(2, "Ürün adı en az 2 karakter olmalı"),
-  sku: z.string().min(1, "SKU kodu gerekli"),
+  sku: z.string().optional().default(""),
   brand: z.string().nullable().optional(),
   category: z.enum(["KOZMETIK", "MEDIKAL", "SARF_MALZEME", "DIGER"]),
   unit: z.string().default("ADET"),

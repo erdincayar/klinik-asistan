@@ -79,6 +79,15 @@ export async function POST(request: Request) {
       );
     }
 
+    // Auto-generate SKU if empty
+    if (!parsed.data.sku) {
+      const prefix = parsed.data.name
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, "")
+        .slice(0, 5) || "PRD";
+      parsed.data.sku = `${prefix}-${Date.now().toString(36).slice(-4).toUpperCase()}${Math.floor(Math.random() * 10)}`;
+    }
+
     // Check SKU uniqueness within clinic
     const existingSku = await prisma.product.findFirst({
       where: { sku: parsed.data.sku, clinicId },

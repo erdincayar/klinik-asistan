@@ -935,12 +935,12 @@ function NewProductDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Ürün Adı</Label>
+              <Label htmlFor="name">Ürün Adı <span className="text-red-500">*</span></Label>
               <Input id="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="sku">SKU Kodu</Label>
-              <Input id="sku" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} required />
+              <Input id="sku" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} placeholder="Boş bırakılırsa otomatik oluşturulur" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -949,7 +949,7 @@ function NewProductDialog({
               <Input id="brand" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} placeholder="Opsiyonel" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="category">Kategori</Label>
+              <Label htmlFor="category">Kategori <span className="text-red-500">*</span></Label>
               <select id="category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
                 {CATEGORIES.map((c) => (<option key={c.value} value={c.value}>{c.label}</option>))}
@@ -984,11 +984,11 @@ function NewProductDialog({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="purchasePrice">Alış Fiyatı ({getCurrencySymbol(form.currency)})</Label>
+              <Label htmlFor="purchasePrice">Alış Fiyatı ({getCurrencySymbol(form.currency)}) <span className="text-red-500">*</span></Label>
               <Input id="purchasePrice" type="number" min={0} step="0.01" value={form.purchasePrice} onChange={(e) => setForm({ ...form, purchasePrice: Number(e.target.value) })} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="salePrice">Satış Fiyatı (₺)</Label>
+              <Label htmlFor="salePrice">Satış Fiyatı (₺) <span className="text-red-500">*</span></Label>
               <Input id="salePrice" type="number" min={0} step="0.01" value={form.salePrice} onChange={(e) => setForm({ ...form, salePrice: Number(e.target.value) })} />
             </div>
           </div>
@@ -1127,12 +1127,12 @@ function EditProductDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="editName">Ürün Adı</Label>
+              <Label htmlFor="editName">Ürün Adı <span className="text-red-500">*</span></Label>
               <Input id="editName" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="editSku">SKU Kodu</Label>
-              <Input id="editSku" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} required />
+              <Input id="editSku" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -1141,7 +1141,7 @@ function EditProductDialog({
               <Input id="editBrand" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} placeholder="Opsiyonel" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="editCategory">Kategori</Label>
+              <Label htmlFor="editCategory">Kategori <span className="text-red-500">*</span></Label>
               <select id="editCategory" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
                 {CATEGORIES.map((c) => (<option key={c.value} value={c.value}>{c.label}</option>))}
@@ -1176,11 +1176,11 @@ function EditProductDialog({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="editPurchasePrice">Alış Fiyatı ({getCurrencySymbol(form.currency)})</Label>
+              <Label htmlFor="editPurchasePrice">Alış Fiyatı ({getCurrencySymbol(form.currency)}) <span className="text-red-500">*</span></Label>
               <Input id="editPurchasePrice" type="number" min={0} step="0.01" value={form.purchasePrice} onChange={(e) => setForm({ ...form, purchasePrice: Number(e.target.value) })} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="editSalePrice">Satış Fiyatı (₺)</Label>
+              <Label htmlFor="editSalePrice">Satış Fiyatı (₺) <span className="text-red-500">*</span></Label>
               <Input id="editSalePrice" type="number" min={0} step="0.01" value={form.salePrice} onChange={(e) => setForm({ ...form, salePrice: Number(e.target.value) })} />
             </div>
           </div>
