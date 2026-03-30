@@ -1157,25 +1157,6 @@ export default function AppointmentsPage() {
         )}
       </motion.div>
 
-      {/* Empty state (only for daily with no appointments) */}
-      {viewMode === "daily" && !loading && appointments.length === 0 && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-white py-16"
-        >
-          <Calendar className="mb-3 h-10 w-10 text-gray-300" />
-          <p className="text-sm font-medium text-gray-500">Bu tarihte randevu bulunmuyor</p>
-          <button
-            onClick={openCreateDialog}
-            className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#6366F1] hover:text-[#4F46E5]"
-          >
-            Randevu oluştur
-            <Plus className="h-3 w-3" />
-          </button>
-        </motion.div>
-      )}
-
       {/* Create Appointment Dialog */}
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
         <DialogContent className="rounded-xl sm:max-w-md">
