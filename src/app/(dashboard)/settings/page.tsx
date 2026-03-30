@@ -111,11 +111,13 @@ export default function SettingsPage() {
     phone: settings.phone,
     address: settings.address,
     taxRate: settings.taxRate,
+    sectorConfig: settings.sectorConfig,
   }) !== JSON.stringify({
     name: savedSettings.name,
     phone: savedSettings.phone,
     address: savedSettings.address,
     taxRate: savedSettings.taxRate,
+    sectorConfig: savedSettings.sectorConfig,
   });
 
   // New reminder form
