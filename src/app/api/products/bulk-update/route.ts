@@ -21,7 +21,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     // Only allow safe fields to be bulk-updated
-    const allowedFields = ["brand", "category", "unit", "orderAlert", "minProfitMargin"];
+    const allowedFields = ["brand", "category", "unit", "orderAlert", "minProfitMargin", "supplier", "currency", "leadTimeDays", "autoReorder"];
     const updateData: Record<string, any> = {};
     for (const key of allowedFields) {
       if (key in data) {

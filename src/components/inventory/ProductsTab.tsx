@@ -56,6 +56,11 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
   const [showBulkBrand, setShowBulkBrand] = useState(false);
   const [bulkBrandValue, setBulkBrandValue] = useState("");
   const [bulkBrandSaving, setBulkBrandSaving] = useState(false);
+  // Toplu düzenleme
+  const [showBulkEdit, setShowBulkEdit] = useState(false);
+  const [bulkEditField, setBulkEditField] = useState("category");
+  const [bulkEditValue, setBulkEditValue] = useState("");
+  const [bulkEditSaving, setBulkEditSaving] = useState(false);
   const [brandEditTarget, setBrandEditTarget] = useState<Product | null>(null);
   const [brandEditValue, setBrandEditValue] = useState("");
   const [brandEditSaving, setBrandEditSaving] = useState(false);
@@ -372,6 +377,9 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
           <span className="text-sm font-medium text-[#7A2414]">{selectedIds.size} ürün seçildi</span>
           <Button size="sm" variant="outline" onClick={() => setShowBulkBrand(true)}>
             <Tag className="mr-1 h-3.5 w-3.5" /> Marka Ata
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setShowBulkEdit(true)}>
+            <Pencil className="mr-1 h-3.5 w-3.5" /> Toplu Düzenle
           </Button>
           <Button size="sm" variant="destructive" onClick={() => setShowBulkDeleteConfirm(true)}>
             <Trash2 className="mr-1 h-3.5 w-3.5" /> Sil
@@ -693,6 +701,120 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
             <Button variant="outline" onClick={() => { setShowBulkBrand(false); setBulkBrandValue(""); }}>İptal</Button>
             <Button onClick={handleBulkBrandAssign} disabled={bulkBrandSaving || !bulkBrandValue.trim()}>
               {bulkBrandSaving ? "Kaydediliyor..." : "Kaydet"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Toplu Düzenleme Dialog */}
+      <Dialog open={showBulkEdit} onOpenChange={(open) => { if (!open) { setShowBulkEdit(false); setBulkEditValue(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Toplu Düzenle</DialogTitle>
+            <DialogDescription><strong>{selectedIds.size}</strong> ürünü toplu güncelle</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-xs">Güncellenecek Alan</Label>
+              <select
+                value={bulkEditField}
+                onChange={(e) => { setBulkEditField(e.target.value); setBulkEditValue(""); }}
+                className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-[#6366F1] outline-none"
+              >
+                <option value="category">Kategori</option>
+                <option value="unit">Birim</option>
+                <option value="currency">Para Birimi</option>
+                <option value="supplier">Tedarikçi</option>
+                <option value="minProfitMargin">Min. Kâr Oranı (%)</option>
+                <option value="orderAlert">Stok Uyarısı</option>
+                <option value="autoReorder">Otomatik Tedarik</option>
+              </select>
+            </div>
+            <div>
+              <Label className="text-xs">Yeni Değer</Label>
+              {bulkEditField === "category" ? (
+                <select
+                  value={bulkEditValue}
+                  onChange={(e) => setBulkEditValue(e.target.value)}
+                  className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-[#6366F1] outline-none"
+                >
+                  <option value="">Seçiniz</option>
+                  <option value="KOZMETIK">Kozmetik</option>
+                  <option value="MEDIKAL">Medikal</option>
+                  <option value="SARF_MALZEME">Sarf Malzeme</option>
+                  <option value="DIGER">Diğer</option>
+                </select>
+              ) : bulkEditField === "unit" ? (
+                <select
+                  value={bulkEditValue}
+                  onChange={(e) => setBulkEditValue(e.target.value)}
+                  className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-[#6366F1] outline-none"
+                >
+                  <option value="">Seçiniz</option>
+                  {["ADET","KUTU","PAKET","ML","GR","KG","LT","SISE","TUP","DIGER"].map((u) => (
+                    <option key={u} value={u}>{u}</option>
+                  ))}
+                </select>
+              ) : bulkEditField === "currency" ? (
+                <select
+                  value={bulkEditValue}
+                  onChange={(e) => setBulkEditValue(e.target.value)}
+                  className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-[#6366F1] outline-none"
+                >
+                  <option value="">Seçiniz</option>
+                  <option value="TRY">TRY</option>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                </select>
+              ) : bulkEditField === "orderAlert" || bulkEditField === "autoReorder" ? (
+                <select
+                  value={bulkEditValue}
+                  onChange={(e) => setBulkEditValue(e.target.value)}
+                  className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-[#6366F1] outline-none"
+                >
+                  <option value="">Seçiniz</option>
+                  <option value="true">Evet</option>
+                  <option value="false">Hayır</option>
+                </select>
+              ) : (
+                <Input
+                  type={bulkEditField === "minProfitMargin" ? "number" : "text"}
+                  value={bulkEditValue}
+                  onChange={(e) => setBulkEditValue(e.target.value)}
+                  placeholder={bulkEditField === "supplier" ? "Tedarikçi adı" : bulkEditField === "minProfitMargin" ? "0-100" : "Değer"}
+                  className="mt-1"
+                />
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setShowBulkEdit(false); setBulkEditValue(""); }}>İptal</Button>
+            <Button
+              disabled={bulkEditSaving || !bulkEditValue}
+              onClick={async () => {
+                setBulkEditSaving(true);
+                try {
+                  let val: any = bulkEditValue;
+                  if (bulkEditField === "minProfitMargin") val = parseInt(bulkEditValue);
+                  if (bulkEditField === "orderAlert" || bulkEditField === "autoReorder") val = bulkEditValue === "true";
+
+                  const res = await fetch("/api/products/bulk-update", {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ ids: Array.from(selectedIds), data: { [bulkEditField]: val } }),
+                  });
+                  if (res.ok) {
+                    setProducts((prev) =>
+                      prev.map((p) => selectedIds.has(p.id) ? { ...p, [bulkEditField]: val } : p)
+                    );
+                    setShowBulkEdit(false);
+                    setBulkEditValue("");
+                    setSelectedIds(new Set());
+                  }
+                } catch { /* silent */ } finally { setBulkEditSaving(false); }
+              }}
+            >
+              {bulkEditSaving ? "Kaydediliyor..." : `${selectedIds.size} Ürünü Güncelle`}
             </Button>
           </DialogFooter>
         </DialogContent>
