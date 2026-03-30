@@ -902,6 +902,8 @@ function NewProductDialog({
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [addedCount, setAddedCount] = useState(0);
+  const [lastAdded, setLastAdded] = useState("");
 
   const resetForm = () => setForm({
     name: "", sku: "", brand: "", category: "DIGER", unit: "ADET",
@@ -911,8 +913,13 @@ function NewProductDialog({
     vatIncluded: true,
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Ortak alanları koruyarak sadece ürün-spesifik alanları sıfırla
+  const resetForNext = () => setForm((prev) => ({
+    ...prev,
+    name: "", sku: "", purchasePrice: 0, purchasePriceUSD: "", salePrice: 0, salePriceUSD: "", currentStock: 0,
+  }));
+
+  const saveProduct = async (continueAdding: boolean) => {
     setSaving(true);
     setError("");
     try {
@@ -932,9 +939,17 @@ function NewProductDialog({
         const data = await res.json();
         throw new Error(data.error || "Ürün oluşturulamadı");
       }
-      onOpenChange(false);
-      resetForm();
       onSuccess();
+      if (continueAdding) {
+        setAddedCount((c) => c + 1);
+        setLastAdded(form.name);
+        resetForNext();
+      } else {
+        onOpenChange(false);
+        resetForm();
+        setAddedCount(0);
+        setLastAdded("");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Bir hata oluştu");
     } finally {
@@ -942,13 +957,23 @@ function NewProductDialog({
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await saveProduct(false);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) { setAddedCount(0); setLastAdded(""); resetForm(); } onOpenChange(v); }}>
       <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Yeni Ürün</DialogTitle>
+          <DialogTitle>Yeni Ürün {addedCount > 0 && <span className="text-xs font-normal text-green-600 ml-2">({addedCount} ürün eklendi)</span>}</DialogTitle>
           <DialogDescription>Yeni bir ürün ekleyin</DialogDescription>
         </DialogHeader>
+        {lastAdded && (
+          <div className="flex items-center gap-2 rounded-lg bg-green-50 border border-green-200 px-3 py-2 text-xs text-green-700">
+            <span className="font-medium">&ldquo;{lastAdded}&rdquo;</span> kaydedildi. Sıradaki ürünü ekleyin.
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -1045,8 +1070,11 @@ function NewProductDialog({
             </div>
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>İptal</Button>
+            <Button type="button" variant="outline" disabled={saving || !form.name.trim()} onClick={() => saveProduct(true)}>
+              {saving ? "Kaydediliyor..." : "Kaydet ve Yeni Ekle"}
+            </Button>
             <Button type="submit" disabled={saving}>{saving ? "Kaydediliyor..." : "Kaydet"}</Button>
           </DialogFooter>
         </form>
