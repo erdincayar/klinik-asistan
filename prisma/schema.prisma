@@ -476,6 +476,7 @@ model Product {
   reorderPoint     Int?            // Yeniden sipariş noktası (adet)
   reorderQty       Int?            // Sipariş miktarı (adet)
   autoReorder      Boolean         @default(false) // Otomatik tedarik listesine ekle
+  vatIncluded      Boolean         @default(true)  // Fiyatlara KDV dahil mi
   clinicId         String
   clinic           Clinic          @relation(fields: [clinicId], references: [id])
   isActive         Boolean         @default(true)

@@ -134,19 +134,11 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
     }
   }, [search, categoryFilter, brandFilter]);
 
-  // Fetch unique brands for filter
+  // Derive brand options from products
   useEffect(() => {
-    async function fetchBrands() {
-      try {
-        const res = await fetch("/api/products?active=all");
-        if (!res.ok) return;
-        const data: Product[] = await res.json();
-        const brands = Array.from(new Set(data.map((p) => p.brand).filter(Boolean) as string[])).sort();
-        setBrandOptions(brands);
-      } catch { /* ignore */ }
-    }
-    fetchBrands();
-  }, []);
+    const brands = Array.from(new Set(products.map((p) => p.brand).filter(Boolean) as string[])).sort();
+    setBrandOptions(brands);
+  }, [products]);
 
   useEffect(() => {
     const timer = setTimeout(fetchProducts, 300);
@@ -417,7 +409,7 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
                       const custom = columnConfig.customColumns.find((c) => c.id === key);
                       const label = def?.label || custom?.name || key;
                       const isRight = ["stock", "purchasePriceTRY", "purchasePriceFX", "salePriceTRY", "salePriceFX", "profitMargin"].includes(key);
-                      const isCenter = key === "actions";
+                      const isCenter = key === "actions" || key === "vatIncluded";
                       const hiddenOnMobile = ["sku", "purchasePriceFX", "salePriceFX", "currency", "unit"].includes(key);
                       return (
                         <TableHead key={key} className={`${isCenter ? "text-center" : isRight ? "text-right" : ""} ${hiddenOnMobile ? "hidden md:table-cell" : ""}`}>
@@ -498,6 +490,29 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
                             </TableCell>
                           );
                           if (key === "currency") return <TableCell key={key} className="hidden md:table-cell">{product.currency}</TableCell>;
+                          if (key === "vatIncluded") return (
+                            <TableCell key={key} className="text-center" onClick={(e) => e.stopPropagation()}>
+                              <input
+                                type="checkbox"
+                                checked={product.vatIncluded}
+                                onChange={async (e) => {
+                                  const val = e.target.checked;
+                                  setProducts((prev) => prev.map((p) => p.id === product.id ? { ...p, vatIncluded: val } : p));
+                                  try {
+                                    await fetch(`/api/products/${product.id}`, {
+                                      method: "PUT",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({ vatIncluded: val }),
+                                    });
+                                  } catch { /* revert on error */
+                                    setProducts((prev) => prev.map((p) => p.id === product.id ? { ...p, vatIncluded: !val } : p));
+                                  }
+                                }}
+                                className="h-3.5 w-3.5 rounded border-gray-300 text-[#6366F1] cursor-pointer"
+                                title={product.vatIncluded ? "KDV Dahil" : "KDV Hariç"}
+                              />
+                            </TableCell>
+                          );
                           if (key === "actions") return (
                             <TableCell key={key} className="text-center" onClick={(e) => e.stopPropagation()}>
                               <div className="flex items-center justify-center gap-0">
@@ -883,6 +898,7 @@ function NewProductDialog({
     currentStock: 0, minStock: 0, orderAlert: false,
     purchasePrice: 0, purchasePriceUSD: "", currency: "TRY",
     minProfitMargin: 20, salePrice: 0, salePriceUSD: "", saleCurrency: "TRY",
+    vatIncluded: true,
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -892,6 +908,7 @@ function NewProductDialog({
     currentStock: 0, minStock: 0, orderAlert: false,
     purchasePrice: 0, purchasePriceUSD: "", currency: "TRY",
     minProfitMargin: 20, salePrice: 0, salePriceUSD: "", saleCurrency: "TRY",
+    vatIncluded: true,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1017,9 +1034,15 @@ function NewProductDialog({
             <Label htmlFor="minProfitMargin">Min Kâr Marjı (%)</Label>
             <Input id="minProfitMargin" type="number" min={0} value={form.minProfitMargin} onChange={(e) => setForm({ ...form, minProfitMargin: Number(e.target.value) })} />
           </div>
-          <div className="flex items-center gap-2">
-            <input type="checkbox" id="orderAlert" checked={form.orderAlert} onChange={(e) => setForm({ ...form, orderAlert: e.target.checked })} className="h-4 w-4 rounded border-gray-300" />
-            <Label htmlFor="orderAlert" className="text-sm font-normal cursor-pointer">Sipariş hatırlatması aktif</Label>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <input type="checkbox" id="vatIncluded" checked={form.vatIncluded} onChange={(e) => setForm({ ...form, vatIncluded: e.target.checked })} className="h-4 w-4 rounded border-gray-300 text-[#6366F1]" />
+              <Label htmlFor="vatIncluded" className="text-sm font-normal cursor-pointer">Fiyatlara KDV dahil</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <input type="checkbox" id="orderAlert" checked={form.orderAlert} onChange={(e) => setForm({ ...form, orderAlert: e.target.checked })} className="h-4 w-4 rounded border-gray-300" />
+              <Label htmlFor="orderAlert" className="text-sm font-normal cursor-pointer">Sipariş hatırlatması</Label>
+            </div>
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}
           <DialogFooter>
@@ -1047,6 +1070,7 @@ function EditProductDialog({
     currentStock: 0, minStock: 0, orderAlert: false,
     purchasePrice: 0, purchasePriceUSD: "", currency: "TRY",
     minProfitMargin: 20, salePrice: 0, salePriceUSD: "", saleCurrency: "TRY",
+    vatIncluded: true,
   });
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
@@ -1070,6 +1094,7 @@ function EditProductDialog({
         salePrice: fromKurus(product.salePrice),
         salePriceUSD: product.salePriceUSD != null ? String(product.salePriceUSD) : "",
         saleCurrency: product.saleCurrency || "TRY",
+        vatIncluded: product.vatIncluded,
       });
       setCustomFieldValues(product.customFields || {});
       setError("");
@@ -1209,9 +1234,15 @@ function EditProductDialog({
             <Label htmlFor="editMinProfitMargin">Min Kâr Marjı (%)</Label>
             <Input id="editMinProfitMargin" type="number" min={0} value={form.minProfitMargin} onChange={(e) => setForm({ ...form, minProfitMargin: Number(e.target.value) })} />
           </div>
-          <div className="flex items-center gap-2">
-            <input type="checkbox" id="editOrderAlert" checked={form.orderAlert} onChange={(e) => setForm({ ...form, orderAlert: e.target.checked })} className="h-4 w-4 rounded border-gray-300" />
-            <Label htmlFor="editOrderAlert" className="text-sm font-normal cursor-pointer">Sipariş hatırlatması aktif</Label>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <input type="checkbox" id="editVatIncluded" checked={form.vatIncluded} onChange={(e) => setForm({ ...form, vatIncluded: e.target.checked })} className="h-4 w-4 rounded border-gray-300 text-[#6366F1]" />
+              <Label htmlFor="editVatIncluded" className="text-sm font-normal cursor-pointer">Fiyatlara KDV dahil</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <input type="checkbox" id="editOrderAlert" checked={form.orderAlert} onChange={(e) => setForm({ ...form, orderAlert: e.target.checked })} className="h-4 w-4 rounded border-gray-300" />
+              <Label htmlFor="editOrderAlert" className="text-sm font-normal cursor-pointer">Sipariş hatırlatması</Label>
+            </div>
           </div>
           {customColumns.length > 0 && (
             <div className="space-y-3 border-t pt-4">

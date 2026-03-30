@@ -17,6 +17,7 @@ export interface Product {
   salePrice: number;
   salePriceUSD: number | null;
   saleCurrency: string;
+  vatIncluded: boolean;
   isActive: boolean;
   createdAt: string;
   movements?: StockMovement[];
@@ -178,6 +179,7 @@ export const DEFAULT_COLUMNS = [
   { key: "salePriceFX", label: "Satış Döviz" },
   { key: "profitMargin", label: "Kâr %" },
   { key: "currency", label: "Para Birimi" },
+  { key: "vatIncluded", label: "KDV" },
   { key: "actions", label: "İşlemler", locked: true },
 ] as const;
 

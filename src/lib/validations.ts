@@ -131,6 +131,7 @@ export const productSchema = z.object({
   reorderPoint: z.number().int().min(0).nullable().optional(),
   reorderQty: z.number().int().min(0).nullable().optional(),
   autoReorder: z.boolean().optional(),
+  vatIncluded: z.boolean().optional(),
 });
 
 export const stockAlarmSchema = z.object({
