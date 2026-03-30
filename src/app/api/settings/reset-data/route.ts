@@ -58,6 +58,7 @@ export async function POST(request: Request) {
     };
 
     if (modules.includes("patients")) {
+      await safeDelete(() => tx.clinicServiceName.deleteMany({ where: { clinicId } }));
       await safeDelete(() => tx.alarmLog.deleteMany({ where: { clinicId } }));
       await safeDelete(() => tx.alarm.deleteMany({ where: { clinicId } }));
       await safeDelete(() => tx.reminderLog.deleteMany({ where: { clinicId } }));

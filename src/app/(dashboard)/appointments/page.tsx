@@ -15,6 +15,7 @@ import {
   Loader2,
   Receipt,
   Trash2,
+  X,
 } from "lucide-react";
 import {
   Dialog,
@@ -818,18 +819,36 @@ export default function AppointmentsPage() {
             Tümü
           </button>
           {(showAllServices ? serviceNames : serviceNames.slice(0, 5)).map((name) => (
-            <button
-              key={name}
-              onClick={() => setSelectedService(name)}
-              className={cn(
-                "inline-flex items-center rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm font-medium transition-colors",
-                selectedService === name
-                  ? "bg-gray-900 text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              )}
-            >
-              {name}
-            </button>
+            <div key={name} className="relative group inline-flex">
+              <button
+                onClick={() => setSelectedService(name)}
+                className={cn(
+                  "inline-flex items-center rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm font-medium transition-colors",
+                  selectedService === name
+                    ? "bg-gray-900 text-white"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                )}
+              >
+                {name}
+              </button>
+              <button
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  if (!confirm(`"${name}" işlem türünü silmek istediğinize emin misiniz?`)) return;
+                  await fetch("/api/clinic/service-names", {
+                    method: "DELETE",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name }),
+                  });
+                  if (selectedService === name) setSelectedService("all");
+                  refetchServiceNames();
+                }}
+                className="absolute -top-1 -right-1 hidden group-hover:flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white transition-all hover:bg-red-600"
+                title="İşlem türünü sil"
+              >
+                <X className="h-2.5 w-2.5" />
+              </button>
+            </div>
           ))}
           {showInlineService ? (
             <div className="inline-flex items-center gap-1.5">
