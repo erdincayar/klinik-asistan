@@ -98,6 +98,7 @@ model Clinic {
   whatsappConnected     Boolean                @default(false)
   clinicModules         ClinicModule[]
   consentForms          ConsentForm[]
+  debts                 Debt[]
   onboardingChats       OnboardingChat[]
   onboardingProfiles    OnboardingProfile[]
   uploadedInvoices      UploadedInvoice[]
@@ -161,6 +162,7 @@ model Patient {
   customValues CustomerCustomValue[]
   alarms                Alarm[]
   consentFormResponses  ConsentFormResponse[]
+  debts                 Debt[]
   createdAt             DateTime             @default(now())
   updatedAt             DateTime             @updatedAt
 }
@@ -202,6 +204,47 @@ model Expense {
   date        DateTime @default(now())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// Cari Hesap — Borç/Alacak takibi
+// direction: RECEIVABLE (bize borçlu) | PAYABLE (biz borçluyuz)
+// status: OPEN (açık) | PARTIAL (kısmi ödendi) | PAID (tamamen ödendi)
+model Debt {
+  id            String        @id @default(cuid())
+  clinicId      String
+  clinic        Clinic        @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  direction     String        // RECEIVABLE | PAYABLE
+  contactName   String        // Kişi/firma adı
+  description   String?       // Açıklama
+  totalAmount   Int           // Toplam tutar (kuruş)
+  paidAmount    Int           @default(0) // Ödenen tutar (kuruş)
+  status        String        @default("OPEN") // OPEN | PARTIAL | PAID
+  dueDate       DateTime?     // Vade tarihi
+  patientId     String?       // Müşteri bağlantısı (alacak ise)
+  patient       Patient?      @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  treatmentId   String?       // İşlem bağlantısı
+  appointmentId String?       // Randevu bağlantısı
+  payments      DebtPayment[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([clinicId, direction])
+  @@index([clinicId, status])
+  @@index([patientId])
+}
+
+// Borç/Alacak ödeme kaydı
+model DebtPayment {
+  id            String   @id @default(cuid())
+  debtId        String
+  debt          Debt     @relation(fields: [debtId], references: [id], onDelete: Cascade)
+  amount        Int      // Ödeme tutarı (kuruş)
+  paymentMethod String   // CASH | CARD | TRANSFER | OTHER
+  notes         String?
+  paidAt        DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  @@index([debtId])
 }
 
 model Reminder {
