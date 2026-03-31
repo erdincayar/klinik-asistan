@@ -115,7 +115,7 @@ export default function InvoiceUploadContent() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [approveError, setApproveError] = useState("");
   const [approveSuccess, setApproveSuccess] = useState("");
-  const [openDropdown, setOpenDropdown] = useState<number | null>(null);
+  const [openDropdown, setOpenDropdown] = useState<number | string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<UploadedInvoice | null>(null);
   const [confirmReject, setConfirmReject] = useState(false);
   const [inlineApproving, setInlineApproving] = useState<string | null>(null);
@@ -954,32 +954,87 @@ export default function InvoiceUploadContent() {
                         const rawCost = product?.purchasePrice || 0;
                         const costPriceKurus = product && !product.vatIncluded ? Math.round(rawCost * 1.20) : rawCost;
                         const itemProfit = (salePriceKurus - costPriceKurus) * mapping.quantity;
+                        const dropdownKey = `profit-${idx}`;
                         return (
-                          <div key={idx} className="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-xs">
-                            <div className="flex-1 min-w-0">
-                              <span className="text-gray-700 truncate block">{mapping.description}</span>
-                              {mapping.productId && product ? (
-                                <div className="flex items-center gap-2 mt-0.5 text-[11px] text-gray-400">
-                                  <span>Alış: {formatCurrency(costPriceKurus)}</span>
-                                  <span>Satış: {formatCurrency(salePriceKurus)}</span>
-                                  <span>x{mapping.quantity}</span>
-                                </div>
-                              ) : (
-                                <div className="flex items-center gap-1 mt-0.5">
-                                  <AlertTriangle className="h-3 w-3 text-yellow-500" />
-                                  <span className="text-[11px] text-yellow-600">Eşleştirilmedi</span>
-                                </div>
-                              )}
+                          <div key={idx} className="rounded-lg bg-white px-3 py-2 text-xs">
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1 min-w-0">
+                                <span className="text-gray-700 truncate block">{mapping.description}</span>
+                                {mapping.productId && product ? (
+                                  <div className="flex items-center gap-2 mt-0.5 text-[11px] text-gray-400">
+                                    <span>Alış: {formatCurrency(costPriceKurus)}</span>
+                                    <span>Satış: {formatCurrency(salePriceKurus)}</span>
+                                    <span>x{mapping.quantity}</span>
+                                  </div>
+                                ) : null}
+                              </div>
+                              <div className="ml-2 shrink-0">
+                                {mapping.productId && product ? (
+                                  <span className={`font-semibold ${itemProfit >= 0 ? "text-green-600" : "text-red-600"}`}>
+                                    {formatCurrency(itemProfit)}
+                                  </span>
+                                ) : (
+                                  <span className="text-gray-400">—</span>
+                                )}
+                              </div>
                             </div>
-                            <div className="ml-2 shrink-0">
-                              {mapping.productId && product ? (
-                                <span className={`font-semibold ${itemProfit >= 0 ? "text-green-600" : "text-red-600"}`}>
-                                  {formatCurrency(itemProfit)}
-                                </span>
-                              ) : (
-                                <span className="text-gray-400">—</span>
-                              )}
-                            </div>
+                            {/* Product match dropdown for unmatched or re-matching */}
+                            {!selectedInvoice.approved && (
+                              <div className="relative mt-1.5">
+                                <button
+                                  onClick={() => setOpenDropdown(openDropdown === dropdownKey ? null : dropdownKey)}
+                                  className={`flex w-full items-center justify-between rounded-lg border px-2.5 py-1.5 text-[11px] transition-colors ${
+                                    mapping.productId
+                                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                      : "border-yellow-200 bg-yellow-50 text-yellow-700 hover:border-yellow-300"
+                                  }`}
+                                >
+                                  <span className="flex items-center gap-1.5 truncate">
+                                    {mapping.productId ? (
+                                      <>
+                                        <Link2 className="h-3 w-3 shrink-0" />
+                                        {mapping.productName}
+                                      </>
+                                    ) : (
+                                      <>
+                                        <AlertTriangle className="h-3 w-3 shrink-0" />
+                                        Ürün eşleştir...
+                                      </>
+                                    )}
+                                  </span>
+                                  <ChevronDown className="h-3 w-3 shrink-0" />
+                                </button>
+
+                                {openDropdown === dropdownKey && (
+                                  <div className="absolute left-0 right-0 top-full z-10 mt-1 max-h-48 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
+                                    <button
+                                      onClick={() => updateMapping(idx, null, null)}
+                                      className="flex w-full items-center gap-2 px-3 py-2 text-xs text-gray-500 hover:bg-gray-50"
+                                    >
+                                      <XCircle className="h-3 w-3" />
+                                      Eşleştirme kaldır
+                                    </button>
+                                    {allProducts.map((p) => (
+                                      <button
+                                        key={p.id}
+                                        onClick={() => updateMapping(idx, p.id, p.name)}
+                                        className={`flex w-full items-center justify-between px-3 py-2 text-xs hover:bg-[#EEF2FF] ${
+                                          mapping.productId === p.id ? "bg-[#EEF2FF] text-[#4F46E5]" : "text-gray-700"
+                                        }`}
+                                      >
+                                        <span className="truncate">{p.name}</span>
+                                        <span className="shrink-0 ml-2 text-gray-400">
+                                          Stok: {p.currentStock} {p.unit}
+                                        </span>
+                                      </button>
+                                    ))}
+                                    {allProducts.length === 0 && (
+                                      <p className="px-3 py-2 text-xs text-gray-400">Envanterde ürün bulunamadı</p>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         );
                       })}
