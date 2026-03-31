@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Plus, Trash2, Package } from "lucide-react";
@@ -70,6 +70,20 @@ export default function NewExpensePage() {
   const [showNewPatient, setShowNewPatient] = useState(false);
   const [newPatientName, setNewPatientName] = useState("");
   const [newPatientSaving, setNewPatientSaving] = useState(false);
+
+  // Close all dropdowns on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      const target = e.target as HTMLElement;
+      if (!target.closest("[data-dropdown]")) {
+        setPatientDropdownOpen(false);
+        setShowNewPatient(false);
+        setLineItems(prev => prev.map(l => ({ ...l, showDropdown: false })));
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     Promise.all([
@@ -213,7 +227,7 @@ export default function NewExpensePage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Header */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <div className="space-y-2 relative">
+              <div className="space-y-2 relative" data-dropdown>
                 <Label>Tedarikçi / Firma</Label>
                 <div className="relative">
                   <input
@@ -312,7 +326,7 @@ export default function NewExpensePage() {
                   return (
                     <div key={idx} className="border-t border-gray-100 px-3 py-3 sm:grid sm:grid-cols-[1fr_70px_100px_80px_60px_40px] sm:items-center gap-2">
                       {/* Product / Description */}
-                      <div className="relative">
+                      <div className="relative" data-dropdown>
                         <div className="flex items-center gap-1.5">
                           {line.productId && (
                             <Package className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
@@ -333,7 +347,7 @@ export default function NewExpensePage() {
                           />
                         </div>
                         {line.showDropdown && (
-                          <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-48 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
+                          <div className="absolute left-0 right-0 bottom-full z-20 mb-1 max-h-52 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
                             {line.productId && (
                               <button
                                 type="button"
@@ -363,13 +377,6 @@ export default function NewExpensePage() {
                                 {products.length === 0 ? "Stokta ürün yok" : "Sonuç bulunamadı"}
                               </p>
                             )}
-                            <button
-                              type="button"
-                              onClick={() => updateLine(idx, { showDropdown: false })}
-                              className="flex w-full items-center gap-2 border-t border-gray-100 px-3 py-2 text-xs text-gray-500 hover:bg-gray-50"
-                            >
-                              Kapat
-                            </button>
                           </div>
                         )}
                       </div>

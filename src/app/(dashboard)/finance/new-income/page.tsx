@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Plus, Trash2, Package, Search } from "lucide-react";
@@ -83,6 +83,21 @@ function NewIncomeForm() {
   const [newPatientSaving, setNewPatientSaving] = useState(false);
   const [patientSearch, setPatientSearch] = useState("");
   const [patientDropdownOpen, setPatientDropdownOpen] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  // Close all dropdowns on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      const target = e.target as HTMLElement;
+      if (!target.closest("[data-dropdown]")) {
+        setPatientDropdownOpen(false);
+        setShowNewPatient(false);
+        setLineItems(prev => prev.map(l => ({ ...l, showDropdown: false })));
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     Promise.all([
@@ -274,8 +289,8 @@ function NewIncomeForm() {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Header */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="space-y-2 relative">
-                <Label>Müşteri *</Label>
+              <div className="space-y-2 relative" data-dropdown>
+                <Label>Müşteri</Label>
                 <div className="relative">
                   <input
                     type="text"
@@ -293,7 +308,7 @@ function NewIncomeForm() {
                           <button
                             type="button"
                             key={p.id}
-                            onClick={() => { setForm({ ...form, patientId: p.id }); setPatientDropdownOpen(false); }}
+                            onClick={() => { setForm({ ...form, patientId: p.id, contactName: p.name }); setPatientDropdownOpen(false); }}
                             className={`flex w-full px-3 py-2 text-xs hover:bg-[#EEF2FF] ${form.patientId === p.id ? "bg-[#EEF2FF] text-[#4F46E5]" : "text-gray-700"}`}
                           >
                             {p.name}
@@ -329,25 +344,23 @@ function NewIncomeForm() {
                     </div>
                   )}
                 </div>
-                <input type="hidden" value={form.patientId} required />
+                <input type="hidden" value={form.patientId} />
               </div>
               <div className="space-y-2">
-                <Label>İşlem Adı *</Label>
+                <Label>İşlem Adı</Label>
                 <AutocompleteInput
                   value={form.name}
                   onChange={(val) => setForm({ ...form, name: val })}
                   fetchUrl="/api/clinic/service-names"
-                  required
                   placeholder="Ürün satışı"
                 />
               </div>
               <div className="space-y-2">
-                <Label>Kategori *</Label>
+                <Label>Kategori</Label>
                 <AutocompleteInput
                   value={form.category}
                   onChange={(val) => setForm({ ...form, category: val })}
                   fetchUrl="/api/clinic/categories"
-                  required
                   placeholder="Kategori"
                 />
               </div>
@@ -391,7 +404,7 @@ function NewIncomeForm() {
                   return (
                     <div key={idx} className="border-t border-gray-100 px-3 py-3 sm:grid sm:grid-cols-[1fr_70px_100px_80px_60px_40px] sm:items-center gap-2">
                       {/* Product / Description */}
-                      <div className="relative">
+                      <div className="relative" data-dropdown>
                         <div className="flex items-center gap-1.5">
                           {line.productId && (
                             <Package className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
@@ -412,7 +425,7 @@ function NewIncomeForm() {
                           />
                         </div>
                         {line.showDropdown && (
-                          <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-48 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
+                          <div className="absolute left-0 right-0 bottom-full z-20 mb-1 max-h-52 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
                             {line.productId && (
                               <button
                                 type="button"
@@ -442,13 +455,6 @@ function NewIncomeForm() {
                                 {products.length === 0 ? "Stokta ürün yok" : "Sonuç bulunamadı"}
                               </p>
                             )}
-                            <button
-                              type="button"
-                              onClick={() => updateLine(idx, { showDropdown: false })}
-                              className="flex w-full items-center gap-2 border-t border-gray-100 px-3 py-2 text-xs text-gray-500 hover:bg-gray-50"
-                            >
-                              Kapat
-                            </button>
                           </div>
                         )}
                         {line.productId && line.costPrice > 0 && (

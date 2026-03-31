@@ -29,12 +29,12 @@ export const patientSchema = z.object({
 });
 
 export const treatmentSchema = z.object({
-  patientId: z.string().min(1, "Müşteri seçin"),
-  name: z.string().min(2, "İşlem adı girin"),
+  patientId: z.string().optional().default(""),
+  name: z.string().optional().default("Gelir"),
   description: z.string().optional(),
   amount: z.number().min(1, "Tutar girin"),
   date: z.string().min(1, "Tarih seçin"),
-  category: z.string().min(1, "Kategori seçin"),
+  category: z.string().optional().default("SATIS"),
 });
 
 export const expenseSchema = z.object({
