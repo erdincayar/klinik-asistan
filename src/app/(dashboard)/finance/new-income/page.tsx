@@ -387,8 +387,9 @@ function NewIncomeForm() {
               <div className="space-y-3">
                 {lineItems.map((line, idx) => {
                   const total = lineTotal(line);
+                  const normalize = (s: string) => s.toLowerCase().replace(/İ/g, "i").replace(/I/g, "ı").replace(/Ğ/g, "ğ").replace(/Ü/g, "ü").replace(/Ş/g, "ş").replace(/Ö/g, "ö").replace(/Ç/g, "ç");
                   const filtered = line.productSearch
-                    ? products.filter((p) => p.name.toLowerCase().includes(line.productSearch.toLowerCase()))
+                    ? products.filter((p) => normalize(p.name).includes(normalize(line.productSearch)) || (p.sku && normalize(p.sku).includes(normalize(line.productSearch))))
                     : products;
 
                   return (
