@@ -46,6 +46,9 @@ function NewIncomeForm() {
     description: "",
     amount: "",
     date: new Date().toISOString().split("T")[0],
+    addToDebt: false,
+    contactName: "",
+    dueDate: "",
   });
 
   // Custom fields
@@ -79,14 +82,15 @@ function NewIncomeForm() {
       const res = await fetch(`/api/treatments/${editId}`);
       if (res.ok) {
         const t = await res.json();
-        setForm({
+        setForm((prev) => ({
+          ...prev,
           patientId: t.patientId || "",
           name: t.name || "",
           category: t.category || "",
           description: t.description || "",
           amount: String(t.amount / 100),
           date: t.date ? new Date(t.date).toISOString().split("T")[0] : "",
-        });
+        }));
         // Load custom values
         if (t.customValues) {
           const cvMap: Record<string, string> = {};
@@ -151,6 +155,9 @@ function NewIncomeForm() {
         description: form.description,
         amount: toKurus(amountTL),
         date: form.date,
+        addToDebt: form.addToDebt,
+        contactName: form.contactName || undefined,
+        dueDate: form.dueDate || undefined,
       };
 
       // Include custom values if any
@@ -196,7 +203,7 @@ function NewIncomeForm() {
       <Card>
         <CardHeader>
           <CardTitle>
-            {editId ? "Gelir Kaydını Düzenle" : "Yeni Gelir / Tedavi Kaydı"}
+            {editId ? "Gelir Kaydını Düzenle" : "Yeni Gelir Kaydı"}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -229,7 +236,7 @@ function NewIncomeForm() {
                 onChange={(val) => setForm({ ...form, name: val })}
                 fetchUrl="/api/clinic/service-names"
                 required
-                placeholder="Örnek: Botox uygulama"
+                placeholder="Örnek: Ürün satışı"
               />
             </div>
 
@@ -281,6 +288,42 @@ function NewIncomeForm() {
                 onChange={(e) => setForm({ ...form, date: e.target.value })}
                 required
               />
+            </div>
+
+            {/* Cari Hesap */}
+            <div className="rounded-lg border border-gray-200 p-4 space-y-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.addToDebt}
+                  onChange={(e) => setForm({ ...form, addToDebt: e.target.checked })}
+                  className="h-4 w-4 rounded border-gray-300 text-[#6366F1]"
+                />
+                <span className="text-sm font-semibold text-gray-700">Cari Hesaba Ekle</span>
+              </label>
+              {form.addToDebt && (
+                <div className="space-y-3 pt-1">
+                  <div className="space-y-2">
+                    <Label htmlFor="contactName">Firma / Kişi Adı <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="contactName"
+                      value={form.contactName}
+                      onChange={(e) => setForm({ ...form, contactName: e.target.value })}
+                      placeholder="Müşteri veya firma adı"
+                      required={form.addToDebt}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="dueDate">Vade Tarihi</Label>
+                    <Input
+                      id="dueDate"
+                      type="date"
+                      value={form.dueDate}
+                      onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Custom fields */}

@@ -1,20 +1,34 @@
 export const TREATMENT_CATEGORIES = [
-  { value: "BOTOX", label: "Botox" },
-  { value: "DOLGU", label: "Dolgu" },
-  { value: "DIS_TEDAVI", label: "Diş Tedavisi" },
-  { value: "GENEL", label: "Genel" },
+  { value: "SATIS", label: "Satış" },
+  { value: "HIZMET", label: "Hizmet" },
+  { value: "KOMISYON", label: "Komisyon" },
+  { value: "DIGER", label: "Diğer" },
 ] as const;
 
 export const EXPENSE_CATEGORIES = [
   { value: "KIRA", label: "Kira" },
   { value: "MAAS", label: "Maaş" },
-  { value: "MALZEME", label: "Malzeme" },
-  { value: "FATURA", label: "Fatura" },
+  { value: "MALZEME", label: "Malzeme / Tedarik" },
+  { value: "NAKLIYE", label: "Nakliye / Kargo" },
+  { value: "FATURA", label: "Fatura (Elektrik, Su, vb.)" },
+  { value: "REKLAM", label: "Reklam / Pazarlama" },
+  { value: "VERGI", label: "Vergi / Harç" },
+  { value: "BAKIM", label: "Bakım / Onarım" },
+  { value: "SIGORTA", label: "Sigorta" },
   { value: "DIGER", label: "Diğer" },
 ] as const;
 
-export type TreatmentCategory = "BOTOX" | "DOLGU" | "DIS_TEDAVI" | "GENEL";
-export type ExpenseCategory = "KIRA" | "MAAS" | "MALZEME" | "FATURA" | "DIGER";
+export const INCOME_CATEGORIES = [
+  { value: "SATIS", label: "Satış" },
+  { value: "HIZMET", label: "Hizmet" },
+  { value: "KOMISYON", label: "Komisyon" },
+  { value: "IADE", label: "İade" },
+  { value: "DIGER", label: "Diğer" },
+] as const;
+
+export type TreatmentCategory = (typeof TREATMENT_CATEGORIES)[number]["value"];
+export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number]["value"];
+export type IncomeCategory = (typeof INCOME_CATEGORIES)[number]["value"];
 
 export const APPOINTMENT_STATUSES = [
   { value: "SCHEDULED", label: "Planlandı", color: "bg-[#EEF2FF] text-[#4F46E5]" },

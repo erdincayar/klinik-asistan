@@ -326,6 +326,20 @@ export async function POST(
         });
       }
 
+      // Create cari hesap entry for the invoice
+      if (parsedAmount > 0 && invoice.vendor) {
+        await tx.debt.create({
+          data: {
+            clinicId,
+            direction: invoiceType === "INCOME" ? "RECEIVABLE" : "PAYABLE",
+            contactName: invoice.vendor,
+            description: `Fatura - ${invoice.fileName}`,
+            totalAmount: parsedAmount,
+            dueDate: invoice.invoiceDate || null,
+          },
+        });
+      }
+
       // Mark as approved
       await tx.uploadedInvoice.update({
         where: { id },

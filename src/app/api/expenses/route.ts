@@ -58,7 +58,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { date, ...rest } = parsed.data;
+    const { date, addToDebt, contactName, dueDate, ...rest } = parsed.data;
 
     const expense = await prisma.expense.create({
       data: {
@@ -67,6 +67,20 @@ export async function POST(request: Request) {
         clinicId,
       },
     });
+
+    // Optionally create a cari hesap (debt) record
+    if (addToDebt && contactName) {
+      await prisma.debt.create({
+        data: {
+          clinicId,
+          direction: "PAYABLE",
+          contactName,
+          description: rest.description,
+          totalAmount: rest.amount,
+          dueDate: dueDate ? new Date(dueDate) : null,
+        },
+      });
+    }
 
     return Response.json(expense, { status: 201 });
   } catch {

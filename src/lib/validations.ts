@@ -44,6 +44,9 @@ export const expenseSchema = z.object({
   date: z.string().min(1, "Tarih seçin"),
   vatRate: z.number().int().min(0).max(100).optional(),
   vatIncluded: z.boolean().optional(),
+  addToDebt: z.boolean().optional(),
+  contactName: z.string().optional(),
+  dueDate: z.string().optional(),
 });
 
 export const reminderSchema = z.object({

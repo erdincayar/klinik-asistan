@@ -49,10 +49,19 @@ function Skeleton({ className }: { className?: string }) {
 }
 
 const categoryLabels: Record<string, string> = {
-  MALZEME: "Malzeme",
+  MALZEME: "Malzeme / Tedarik",
   KIRA: "Kira",
   FATURA: "Fatura",
   MAAS: "Maaş",
+  NAKLIYE: "Nakliye / Kargo",
+  REKLAM: "Reklam / Pazarlama",
+  VERGI: "Vergi / Harç",
+  BAKIM: "Bakım / Onarım",
+  SIGORTA: "Sigorta",
+  SATIS: "Satış",
+  HIZMET: "Hizmet",
+  KOMISYON: "Komisyon",
+  IADE: "İade",
   DIGER: "Diğer",
 };
 

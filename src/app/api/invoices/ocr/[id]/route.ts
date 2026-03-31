@@ -73,6 +73,17 @@ export async function DELETE(
         await tx.expense.delete({ where: { id: invoice.linkedExpenseId } }).catch(() => {});
       }
 
+      // Delete linked cari hesap entry
+      if (invoice.vendor) {
+        await tx.debt.deleteMany({
+          where: {
+            clinicId,
+            description: `Fatura - ${invoice.fileName}`,
+            contactName: invoice.vendor,
+          },
+        });
+      }
+
       // Delete the invoice itself
       await tx.uploadedInvoice.delete({ where: { id } });
     });

@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { customValues, ...treatmentBody } = body;
+    const { customValues, addToDebt, contactName, dueDate, ...treatmentBody } = body;
     const parsed = treatmentSchema.safeParse(treatmentBody);
 
     if (!parsed.success) {
@@ -86,6 +86,26 @@ export async function POST(request: Request) {
           }),
         ),
       ).catch(() => {});
+    }
+
+    // Create cari hesap entry if requested
+    if (addToDebt && contactName) {
+      const patient = await prisma.patient.findFirst({
+        where: { id: rest.patientId, clinicId },
+        select: { name: true },
+      });
+      await prisma.debt.create({
+        data: {
+          clinicId,
+          direction: "RECEIVABLE",
+          contactName: contactName || patient?.name || "Bilinmeyen",
+          description: `${rest.name || "Gelir"} - ${rest.category || ""}`,
+          totalAmount: rest.amount,
+          patientId: rest.patientId || null,
+          treatmentId: treatment.id,
+          dueDate: dueDate ? new Date(dueDate) : null,
+        },
+      });
     }
 
     // Fire-and-forget: upsert service name and category for autocomplete

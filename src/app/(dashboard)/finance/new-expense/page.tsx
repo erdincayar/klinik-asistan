@@ -33,6 +33,9 @@ export default function NewExpensePage() {
     date: new Date().toISOString().split("T")[0],
     vatRate: 20,
     vatIncluded: true,
+    addToDebt: false,
+    contactName: "",
+    dueDate: "",
   });
 
   const amountNum = parseFloat(form.amount) || 0;
@@ -66,6 +69,9 @@ export default function NewExpensePage() {
           date: form.date,
           vatRate: form.vatRate,
           vatIncluded: form.vatIncluded,
+          addToDebt: form.addToDebt,
+          contactName: form.contactName || undefined,
+          dueDate: form.dueDate || undefined,
         }),
       });
 
@@ -99,7 +105,7 @@ export default function NewExpensePage() {
                   setForm({ ...form, description: e.target.value })
                 }
                 required
-                placeholder="Örnek: Kira ödemesi"
+                placeholder="Örnek: Tedarikçi ödemesi"
               />
             </div>
 
@@ -187,6 +193,42 @@ export default function NewExpensePage() {
                   <span>Net: <strong className="text-gray-700">{formatCurrency(Math.round(netAmount * 100))}</strong></span>
                   <span>KDV: <strong className="text-gray-700">{formatCurrency(Math.round(vatAmount * 100))}</strong></span>
                   <span>Toplam: <strong className="text-gray-700">{formatCurrency(Math.round(totalAmount * 100))}</strong></span>
+                </div>
+              )}
+            </div>
+
+            {/* Cari Hesap */}
+            <div className="rounded-lg border border-gray-200 p-4 space-y-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.addToDebt}
+                  onChange={(e) => setForm({ ...form, addToDebt: e.target.checked })}
+                  className="h-4 w-4 rounded border-gray-300 text-[#6366F1]"
+                />
+                <span className="text-sm font-semibold text-gray-700">Cari Hesaba Ekle</span>
+              </label>
+              {form.addToDebt && (
+                <div className="space-y-3 pt-1">
+                  <div className="space-y-2">
+                    <Label htmlFor="contactName">Firma / Kişi Adı <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="contactName"
+                      value={form.contactName}
+                      onChange={(e) => setForm({ ...form, contactName: e.target.value })}
+                      placeholder="Tedarikçi veya firma adı"
+                      required={form.addToDebt}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="dueDate">Vade Tarihi</Label>
+                    <Input
+                      id="dueDate"
+                      type="date"
+                      value={form.dueDate}
+                      onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
+                    />
+                  </div>
                 </div>
               )}
             </div>

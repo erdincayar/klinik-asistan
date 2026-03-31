@@ -90,6 +90,7 @@ interface IncomeStatement {
 interface MonthlySummary {
   month: number;
   monthName: string;
+  ciro: number;
   income: number;
   expense: number;
 }
@@ -133,7 +134,16 @@ const EXPENSE_BADGE: Record<string, string> = {
   KIRA: "bg-purple-50 text-purple-700",
   MAAS: "bg-[#EEF2FF] text-[#4F46E5]",
   MALZEME: "bg-orange-50 text-orange-700",
-  FATURA: "bg-orange-50 text-orange-700",
+  NAKLIYE: "bg-cyan-50 text-cyan-700",
+  FATURA: "bg-amber-50 text-amber-700",
+  REKLAM: "bg-pink-50 text-pink-700",
+  VERGI: "bg-red-50 text-red-700",
+  BAKIM: "bg-teal-50 text-teal-700",
+  SIGORTA: "bg-blue-50 text-blue-700",
+  SATIS: "bg-green-50 text-green-700",
+  HIZMET: "bg-emerald-50 text-emerald-700",
+  KOMISYON: "bg-yellow-50 text-yellow-700",
+  IADE: "bg-rose-50 text-rose-700",
   DIGER: "bg-gray-100 text-gray-700",
 };
 
@@ -161,8 +171,8 @@ function ChartTooltip({ active, payload, label }: any) {
     <div className="rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-lg">
       <p className="mb-1 text-xs font-medium text-gray-500">{label}</p>
       {payload.map((entry: any) => (
-        <p key={entry.dataKey} className={cn("text-sm font-semibold", entry.dataKey === "income" ? "text-emerald-600" : "text-red-500")}>
-          {entry.dataKey === "income" ? "Gelir" : "Gider"}: {formatCurrency(entry.value)}
+        <p key={entry.dataKey} className={cn("text-sm font-semibold", entry.dataKey === "ciro" ? "text-emerald-600" : "text-red-500")}>
+          {entry.dataKey === "ciro" ? "Ciro" : "Gider"}: {formatCurrency(entry.value)}
         </p>
       ))}
     </div>
@@ -812,8 +822,8 @@ export default function FinanceOverview() {
                     <XAxis dataKey="monthName" fontSize={12} tickLine={false} axisLine={false} dy={8} tick={{ fill: "#9ca3af" }} />
                     <YAxis fontSize={12} tickLine={false} axisLine={false} dx={-4} tick={{ fill: "#9ca3af" }} tickFormatter={(v) => `${(v / 100).toLocaleString("tr-TR")}₺`} />
                     <Tooltip content={<ChartTooltip />} />
-                    <Legend formatter={(value) => (value === "income" ? "Gelir" : "Gider")} wrapperStyle={{ fontSize: "12px" }} />
-                    <Bar dataKey="income" name="income" fill="#10b981" radius={[6, 6, 0, 0]} />
+                    <Legend formatter={(value) => (value === "ciro" ? "Ciro" : "Gider")} wrapperStyle={{ fontSize: "12px" }} />
+                    <Bar dataKey="ciro" name="ciro" fill="#10b981" radius={[6, 6, 0, 0]} />
                     <Bar dataKey="expense" name="expense" fill="#ef4444" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
