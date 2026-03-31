@@ -307,16 +307,7 @@ export default function NewExpensePage() {
                 </Button>
               </div>
 
-              <div className="rounded-xl border border-gray-200 overflow-hidden">
-                <div className="hidden sm:grid sm:grid-cols-[1fr_70px_100px_80px_60px_40px] gap-2 bg-gray-50 px-3 py-2 text-[11px] font-semibold text-gray-500 uppercase">
-                  <span>Ürün / Açıklama</span>
-                  <span className="text-center">Adet</span>
-                  <span className="text-right">Birim Fiyat</span>
-                  <span className="text-center">KDV</span>
-                  <span className="text-right">Toplam</span>
-                  <span></span>
-                </div>
-
+              <div className="space-y-3">
                 {lineItems.map((line, idx) => {
                   const total = lineTotal(line);
                   const filtered = line.productSearch
@@ -324,12 +315,12 @@ export default function NewExpensePage() {
                     : products;
 
                   return (
-                    <div key={idx} className="border-t border-gray-100 px-3 py-3 sm:grid sm:grid-cols-[1fr_70px_100px_80px_60px_40px] sm:items-center gap-2">
-                      {/* Product / Description */}
+                    <div key={idx} className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
+                      {/* Row 1: Product search — full width */}
                       <div className="relative" data-dropdown>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-2">
                           {line.productId && (
-                            <Package className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                            <Package className="h-4 w-4 text-emerald-500 shrink-0" />
                           )}
                           <input
                             type="text"
@@ -343,37 +334,46 @@ export default function NewExpensePage() {
                             }}
                             onFocus={() => updateLine(idx, { showDropdown: true, productSearch: "" })}
                             placeholder="Ürün ara veya açıklama yaz..."
-                            className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm focus:border-[#4F46E5] focus:outline-none focus:ring-1 focus:ring-[#4F46E5]"
+                            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-[#4F46E5] focus:outline-none focus:ring-1 focus:ring-[#4F46E5]"
                           />
+                          <button
+                            type="button"
+                            onClick={() => removeLine(idx)}
+                            className="text-gray-300 hover:text-red-500 transition-colors p-1 shrink-0"
+                            title="Satırı sil"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
                         </div>
+
                         {line.showDropdown && (
-                          <div className="absolute left-0 right-0 bottom-full z-20 mb-1 max-h-52 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
+                          <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-64 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-xl">
                             {line.productId && (
                               <button
                                 type="button"
                                 onClick={() => updateLine(idx, { productId: null, showDropdown: false })}
-                                className="flex w-full items-center gap-2 px-3 py-2 text-xs text-gray-500 hover:bg-gray-50"
+                                className="flex w-full items-center gap-2 px-4 py-2.5 text-xs text-gray-500 hover:bg-gray-50 border-b border-gray-100"
                               >
                                 Manuel giriş (stok bağlantısı kaldır)
                               </button>
                             )}
-                            {filtered.slice(0, 20).map((p) => (
+                            {filtered.slice(0, 30).map((p) => (
                               <button
                                 type="button"
                                 key={p.id}
                                 onClick={() => selectProduct(idx, p)}
-                                className={`flex w-full items-center justify-between px-3 py-2 text-xs hover:bg-[#EEF2FF] ${
+                                className={`flex w-full items-center justify-between px-4 py-2.5 text-sm hover:bg-[#EEF2FF] ${
                                   line.productId === p.id ? "bg-[#EEF2FF] text-[#4F46E5]" : "text-gray-700"
                                 }`}
                               >
-                                <span className="truncate">{p.name}</span>
-                                <span className="shrink-0 ml-2 text-gray-400">
-                                  {p.purchasePrice > 0 ? `${(p.purchasePrice / 100).toFixed(2)}₺` : ""} · Stok: {p.currentStock}
+                                <span className="truncate font-medium">{p.name}</span>
+                                <span className="shrink-0 ml-3 text-xs text-gray-400">
+                                  {p.purchasePrice > 0 ? `${(p.purchasePrice / 100).toLocaleString("tr-TR")}₺` : ""} · Stok: {p.currentStock}
                                 </span>
                               </button>
                             ))}
                             {filtered.length === 0 && (
-                              <p className="px-3 py-2 text-xs text-gray-400">
+                              <p className="px-4 py-3 text-sm text-gray-400">
                                 {products.length === 0 ? "Stokta ürün yok" : "Sonuç bulunamadı"}
                               </p>
                             )}
@@ -381,79 +381,75 @@ export default function NewExpensePage() {
                         )}
                       </div>
 
-                      <input
-                        type="number"
-                        min={1}
-                        value={line.quantity}
-                        onChange={(e) => updateLine(idx, { quantity: Math.max(1, parseInt(e.target.value) || 1) })}
-                        className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-sm text-center"
-                      />
-
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={line.unitPrice}
-                        onChange={(e) => updateLine(idx, { unitPrice: e.target.value })}
-                        placeholder="0.00"
-                        className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-sm text-right"
-                      />
-
-                      <div className="flex items-center justify-center gap-1">
-                        <select
-                          value={line.vatRate}
-                          onChange={(e) => updateLine(idx, { vatRate: Number(e.target.value) })}
-                          className="rounded border border-gray-200 px-1 py-1 text-xs"
-                        >
-                          <option value={0}>%0</option>
-                          <option value={1}>%1</option>
-                          <option value={10}>%10</option>
-                          <option value={20}>%20</option>
-                        </select>
-                        <label className="flex items-center gap-0.5 text-[10px] text-gray-400 cursor-pointer" title={line.vatIncluded ? "KDV Dahil" : "KDV Hariç"}>
+                      {/* Row 2: Adet, Fiyat, KDV, Toplam */}
+                      <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[11px] text-gray-400 w-8">Adet</span>
                           <input
-                            type="checkbox"
-                            checked={line.vatIncluded}
-                            onChange={(e) => updateLine(idx, { vatIncluded: e.target.checked })}
-                            className="h-3 w-3"
+                            type="number"
+                            min={1}
+                            value={line.quantity}
+                            onChange={(e) => updateLine(idx, { quantity: Math.max(1, parseInt(e.target.value) || 1) })}
+                            className="w-16 rounded-lg border border-gray-200 px-2 py-1.5 text-sm text-center"
                           />
-                          D
-                        </label>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[11px] text-gray-400 w-8">Fiyat</span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={line.unitPrice}
+                            onChange={(e) => updateLine(idx, { unitPrice: e.target.value })}
+                            placeholder="0.00"
+                            className="w-28 rounded-lg border border-gray-200 px-2 py-1.5 text-sm text-right"
+                          />
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[11px] text-gray-400">KDV</span>
+                          <select
+                            value={line.vatRate}
+                            onChange={(e) => updateLine(idx, { vatRate: Number(e.target.value) })}
+                            className="rounded-lg border border-gray-200 px-2 py-1.5 text-xs"
+                          >
+                            <option value={0}>%0</option>
+                            <option value={1}>%1</option>
+                            <option value={10}>%10</option>
+                            <option value={20}>%20</option>
+                          </select>
+                          <label className="flex items-center gap-1 text-[11px] text-gray-400 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={line.vatIncluded}
+                              onChange={(e) => updateLine(idx, { vatIncluded: e.target.checked })}
+                              className="h-3.5 w-3.5 rounded border-gray-300"
+                            />
+                            Dahil
+                          </label>
+                        </div>
+                        <span className="ml-auto text-sm font-bold text-gray-800">
+                          {total > 0 ? `${total.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}₺` : "—"}
+                        </span>
                       </div>
-
-                      <span className="text-sm font-semibold text-right text-gray-700 whitespace-nowrap">
-                        {total > 0 ? `${total.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}₺` : "—"}
-                      </span>
-
-                      <button
-                        type="button"
-                        onClick={() => removeLine(idx)}
-                        className="text-gray-400 hover:text-red-500 transition-colors p-1"
-                        title="Satırı sil"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
                     </div>
                   );
                 })}
               </div>
+            </div>
 
-              {/* Totals */}
-              <div className="flex justify-end">
-                <div className="w-full max-w-xs space-y-1.5 rounded-xl border border-gray-200 bg-gray-50 p-4">
-                  <div className="flex justify-between text-xs text-gray-500">
-                    <span>Net Tutar</span>
-                    <span className="font-medium text-gray-700">{formatCurrency(toKurus(totalNet))}</span>
-                  </div>
-                  <div className="flex justify-between text-xs text-gray-500">
-                    <span>KDV Toplamı</span>
-                    <span className="font-medium text-orange-600">{formatCurrency(toKurus(totalVat))}</span>
-                  </div>
-                  <div className="flex justify-between text-sm font-bold border-t border-gray-200 pt-1.5">
-                    <span>Genel Toplam</span>
-                    <span className="text-red-600">{formatCurrency(toKurus(grandTotal))}</span>
-                  </div>
-                </div>
+            {/* Totals — separate section */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="rounded-xl bg-gray-50 border border-gray-200 p-3 text-center">
+                <p className="text-[11px] text-gray-400">Net Tutar</p>
+                <p className="mt-1 text-sm font-bold text-gray-700">{formatCurrency(toKurus(totalNet))}</p>
+              </div>
+              <div className="rounded-xl bg-orange-50 border border-orange-100 p-3 text-center">
+                <p className="text-[11px] text-gray-400">KDV Toplamı</p>
+                <p className="mt-1 text-sm font-bold text-orange-600">{formatCurrency(toKurus(totalVat))}</p>
+              </div>
+              <div className="rounded-xl bg-red-50 border border-red-100 p-3 text-center">
+                <p className="text-[11px] text-gray-400">Genel Toplam</p>
+                <p className="mt-1 text-sm font-bold text-red-600">{formatCurrency(toKurus(grandTotal))}</p>
               </div>
             </div>
 
