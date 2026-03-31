@@ -46,6 +46,9 @@ export async function POST(
     const stockMappings: StockMapping[] = body.stockMappings || [];
     // Allow overriding invoiceType from frontend
     const overrideInvoiceType: string | undefined = body.invoiceType;
+    // Expense invoice options
+    const recordAsExpense: boolean = body.recordAsExpense !== false; // default true
+    const recordVatDeduction: boolean = body.recordVatDeduction !== false; // default true
 
     const invoice = await prisma.uploadedInvoice.findFirst({
       where: { id, clinicId },
@@ -125,7 +128,7 @@ export async function POST(
 
       if (invoiceType === "EXPENSE") {
         // ─── EXPENSE INVOICE ───
-        if (parsedAmount > 0) {
+        if (parsedAmount > 0 && recordAsExpense) {
           const expense = await tx.expense.create({
             data: {
               clinicId,
@@ -135,7 +138,26 @@ export async function POST(
               type: "EXPENSE",
               date: invoice.invoiceDate || new Date(),
               vatRate,
-              vatIncluded,
+              vatIncluded: recordVatDeduction ? vatIncluded : false,
+            },
+          });
+
+          await tx.uploadedInvoice.update({
+            where: { id },
+            data: { linkedExpenseId: expense.id },
+          });
+        } else if (parsedAmount > 0 && !recordAsExpense && recordVatDeduction && taxAmount > 0) {
+          // Only record KDV deduction — create expense with tax amount only
+          const expense = await tx.expense.create({
+            data: {
+              clinicId,
+              description: `KDV İndirimi - ${invoice.vendor || invoice.fileName}`,
+              amount: taxAmount,
+              category: "VERGI",
+              type: "EXPENSE",
+              date: invoice.invoiceDate || new Date(),
+              vatRate,
+              vatIncluded: true, // taxAmount itself is the VAT
             },
           });
 

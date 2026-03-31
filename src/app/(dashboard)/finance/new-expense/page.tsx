@@ -57,19 +57,51 @@ export default function NewExpensePage() {
   const [form, setForm] = useState({
     category: "",
     date: new Date().toISOString().split("T")[0],
-    addToDebt: false,
+    addToDebt: true,
     contactName: "",
     dueDate: "",
+    patientId: "",
   });
 
   const [lineItems, setLineItems] = useState<LineItem[]>([emptyLine()]);
+  const [patients, setPatients] = useState<{ id: string; name: string }[]>([]);
+  const [patientSearch, setPatientSearch] = useState("");
+  const [patientDropdownOpen, setPatientDropdownOpen] = useState(false);
+  const [showNewPatient, setShowNewPatient] = useState(false);
+  const [newPatientName, setNewPatientName] = useState("");
+  const [newPatientSaving, setNewPatientSaving] = useState(false);
 
   useEffect(() => {
-    fetch("/api/products?active=true")
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data) => { if (Array.isArray(data)) setProducts(data); })
-      .catch(() => {});
+    Promise.all([
+      fetch("/api/products?active=true").then((r) => (r.ok ? r.json() : [])),
+      fetch("/api/patients").then((r) => (r.ok ? r.json() : [])),
+    ]).then(([pr, pa]) => {
+      if (Array.isArray(pr)) setProducts(pr);
+      if (Array.isArray(pa)) setPatients(pa);
+    }).catch(() => {});
   }, []);
+
+  async function handleAddPatient() {
+    if (!newPatientName.trim()) return;
+    setNewPatientSaving(true);
+    try {
+      const res = await fetch("/api/patients", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newPatientName.trim() }),
+      });
+      if (res.ok) {
+        const patient = await res.json();
+        setPatients((prev) => [...prev, patient]);
+        setForm((prev) => ({ ...prev, patientId: patient.id, contactName: patient.name }));
+        setNewPatientName("");
+        setShowNewPatient(false);
+        setPatientDropdownOpen(false);
+      }
+    } catch { /* silent */ } finally {
+      setNewPatientSaving(false);
+    }
+  }
 
   function updateLine(idx: number, updates: Partial<LineItem>) {
     setLineItems((prev) => prev.map((l, i) => (i === idx ? { ...l, ...updates } : l)));
@@ -180,7 +212,53 @@ export default function NewExpensePage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Header */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="space-y-2 relative">
+                <Label>Tedarikçi / Firma</Label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={patientDropdownOpen ? patientSearch : (patients.find(p => p.id === form.patientId)?.name || "")}
+                    onChange={(e) => { setPatientSearch(e.target.value); setPatientDropdownOpen(true); }}
+                    onFocus={() => { setPatientDropdownOpen(true); setPatientSearch(""); }}
+                    placeholder="Tedarikçi ara veya yeni ekle..."
+                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
+                  />
+                  {patientDropdownOpen && (
+                    <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-48 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
+                      {patients
+                        .filter(p => !patientSearch || p.name.toLowerCase().includes(patientSearch.toLowerCase()))
+                        .map((p) => (
+                          <button
+                            type="button"
+                            key={p.id}
+                            onClick={() => { setForm({ ...form, patientId: p.id, contactName: p.name }); setPatientDropdownOpen(false); }}
+                            className={`flex w-full px-3 py-2 text-xs hover:bg-[#EEF2FF] ${form.patientId === p.id ? "bg-[#EEF2FF] text-[#4F46E5]" : "text-gray-700"}`}
+                          >
+                            {p.name}
+                          </button>
+                        ))}
+                      {!showNewPatient ? (
+                        <button
+                          type="button"
+                          onClick={() => { setShowNewPatient(true); setNewPatientName(patientSearch); }}
+                          className="flex w-full items-center gap-1.5 border-t border-gray-100 px-3 py-2 text-xs text-[#4F46E5] hover:bg-[#EEF2FF] font-medium"
+                        >
+                          <Plus className="h-3 w-3" /> Yeni Ekle {patientSearch && `"${patientSearch}"`}
+                        </button>
+                      ) : (
+                        <div className="border-t border-gray-100 p-2 space-y-2">
+                          <input autoFocus type="text" value={newPatientName} onChange={(e) => setNewPatientName(e.target.value)} placeholder="Firma adı" className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs" onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddPatient())} />
+                          <div className="flex gap-1.5">
+                            <button type="button" onClick={handleAddPatient} disabled={newPatientSaving} className="rounded-lg bg-[#4F46E5] px-3 py-1 text-xs text-white">{newPatientSaving ? "..." : "Ekle"}</button>
+                            <button type="button" onClick={() => setShowNewPatient(false)} className="rounded-lg bg-gray-100 px-3 py-1 text-xs text-gray-600">İptal</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
               <div className="space-y-2">
                 <Label>Kategori *</Label>
                 <select

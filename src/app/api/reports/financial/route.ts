@@ -21,39 +21,33 @@ export async function GET(req: NextRequest) {
       lt: new Date(`${year + 1}-01-01`),
     };
 
-    // Get treatments (income source 1)
-    const treatments = await prisma.treatment.findMany({
-      where: { clinicId, date: dateFilter },
-      select: { amount: true, date: true },
-    });
+    const [treatments, incomeRecords, expenses, outMovements, approvedIncomeInvoices] = await Promise.all([
+      prisma.treatment.findMany({
+        where: { clinicId, date: dateFilter },
+        select: { amount: true, date: true, patient: { select: { name: true } }, category: true },
+      }),
+      prisma.expense.findMany({
+        where: { clinicId, type: "INCOME", date: dateFilter },
+        select: { amount: true, date: true, description: true },
+      }),
+      prisma.expense.findMany({
+        where: { clinicId, type: "EXPENSE", date: dateFilter },
+        select: { amount: true, date: true, category: true },
+      }),
+      prisma.stockMovement.findMany({
+        where: { clinicId, type: "OUT", date: dateFilter },
+        include: { product: { select: { name: true, brand: true, purchasePrice: true } } },
+      }),
+      prisma.uploadedInvoice.findMany({
+        where: { clinicId, approved: true, invoiceType: "INCOME", invoiceDate: dateFilter },
+        select: { id: true, profitData: true },
+      }),
+    ]);
 
-    // Get income records from expense table (type: INCOME)
-    const incomeRecords = await prisma.expense.findMany({
-      where: { clinicId, type: "INCOME", date: dateFilter },
-      select: { amount: true, date: true },
-    });
+    // Monthly aggregation with COGS
+    const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
 
-    // Get actual expenses (type: EXPENSE)
-    const expenses = await prisma.expense.findMany({
-      where: { clinicId, type: "EXPENSE", date: dateFilter },
-      select: { amount: true, date: true, category: true },
-    });
-
-    // Get stock OUT movements for COGS calculation
-    const outMovements = await prisma.stockMovement.findMany({
-      where: { clinicId, type: "OUT", date: dateFilter },
-      include: { product: { select: { purchasePrice: true } } },
-    });
-
-    // Get approved income invoices for profit + unmatched item warnings
-    const approvedIncomeInvoices = await prisma.uploadedInvoice.findMany({
-      where: { clinicId, approved: true, invoiceType: "INCOME", invoiceDate: dateFilter },
-      select: { id: true, profitData: true },
-    });
-
-    // Aggregate by month
     const monthlyData = Array.from({ length: 12 }, (_, i) => {
-      const month = i + 1;
       const treatmentIncome = treatments
         .filter((t) => new Date(t.date).getMonth() === i)
         .reduce((sum, t) => sum + t.amount, 0);
@@ -64,19 +58,23 @@ export async function GET(req: NextRequest) {
       const monthExpense = expenses
         .filter((e) => new Date(e.date).getMonth() === i)
         .reduce((sum, e) => sum + e.amount, 0);
+
+      // Monthly COGS
+      const monthCogs = outMovements
+        .filter(m => new Date(m.date).getMonth() === i)
+        .reduce((sum, m) => sum + (m.quantity * (m.product.purchasePrice ?? 0)), 0);
+
       return {
-        month,
-        monthName: [
-          "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
-          "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
-        ][i],
+        month: i + 1,
+        monthName: monthNames[i],
         income: monthIncome,
         expense: monthExpense,
+        cogs: monthCogs,
         profit: monthIncome - monthExpense,
       };
     });
 
-    // Expense categories (only actual expenses)
+    // Expense categories
     const categoryMap: Record<string, number> = {};
     expenses.forEach((e) => {
       categoryMap[e.category] = (categoryMap[e.category] || 0) + e.amount;
@@ -86,7 +84,7 @@ export async function GET(req: NextRequest) {
       + incomeRecords.reduce((sum, r) => sum + r.amount, 0);
     const totalExpense = expenses.reduce((sum, e) => sum + e.amount, 0);
 
-    // COGS: non-invoice stock movements + invoice profitData costs
+    // Total COGS
     const nonInvoiceCogs = outMovements
       .filter(m => !m.reference?.startsWith("invoice-"))
       .reduce((sum, m) => sum + (m.quantity * (m.product.purchasePrice ?? 0)), 0);
@@ -97,7 +95,6 @@ export async function GET(req: NextRequest) {
       if (pd?.totalCost) {
         invoiceCogs += pd.totalCost;
       } else {
-        // Fallback: use invoice-related stock movements
         const movementCogs = outMovements
           .filter(m => m.reference === `invoice-${inv.id}`)
           .reduce((sum, m) => sum + (m.quantity * (m.product.purchasePrice ?? 0)), 0);
@@ -109,14 +106,40 @@ export async function GET(req: NextRequest) {
     const grossProfit = totalIncome - totalCogs;
     const netProfit = grossProfit - totalExpense;
 
-    // Count unmatched items across all approved income invoices
     let unmatchedItemCount = 0;
     for (const inv of approvedIncomeInvoices) {
       const pd = inv.profitData as any;
-      if (pd?.unmatchedItems?.length) {
-        unmatchedItemCount += pd.unmatchedItems.length;
-      }
+      if (pd?.unmatchedItems?.length) unmatchedItemCount += pd.unmatchedItems.length;
     }
+
+    // Top customers by revenue
+    const customerMap: Record<string, { amount: number; count: number }> = {};
+    treatments.forEach((t) => {
+      const name = t.patient?.name || "Bilinmeyen";
+      if (!customerMap[name]) customerMap[name] = { amount: 0, count: 0 };
+      customerMap[name].amount += t.amount;
+      customerMap[name].count += 1;
+    });
+    const topCustomers = Object.entries(customerMap)
+      .map(([name, data]) => ({ name, amount: data.amount, count: data.count }))
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 10);
+
+    // Top products by sales volume
+    const productMap: Record<string, { name: string; revenue: number; quantity: number; brand: string | null }> = {};
+    outMovements
+      .filter(m => m.type === "OUT")
+      .forEach((m) => {
+        const key = m.productId;
+        if (!productMap[key]) {
+          productMap[key] = { name: m.product.name, revenue: 0, quantity: 0, brand: m.product.brand ?? null };
+        }
+        productMap[key].revenue += m.totalPrice;
+        productMap[key].quantity += m.quantity;
+      });
+    const topProducts = Object.values(productMap)
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 15);
 
     return NextResponse.json({
       year,
@@ -128,6 +151,8 @@ export async function GET(req: NextRequest) {
       grossProfit,
       unmatchedItemCount,
       expenseCategories: categoryMap,
+      topCustomers,
+      topProducts,
     });
   } catch (error) {
     console.error("Financial report error:", error);

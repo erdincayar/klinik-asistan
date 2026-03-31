@@ -124,6 +124,9 @@ export default function InvoiceUploadContent() {
   const [deleteError, setDeleteError] = useState("");
   const [invoiceTypeOverride, setInvoiceTypeOverride] = useState<string | null>(null);
   const [recalculating, setRecalculating] = useState<string | null>(null);
+  // Expense invoice approval options
+  const [recordAsExpense, setRecordAsExpense] = useState(true);
+  const [recordVatDeduction, setRecordVatDeduction] = useState(true);
 
   useEffect(() => {
     fetchInvoices();
@@ -280,6 +283,8 @@ export default function InvoiceUploadContent() {
         body: JSON.stringify({
           stockMappings,
           invoiceType: invoiceTypeOverride || selectedInvoice.invoiceType,
+          recordAsExpense,
+          recordVatDeduction,
         }),
       });
       const data = await res.json();
@@ -1207,11 +1212,39 @@ export default function InvoiceUploadContent() {
                         Onay
                       </p>
                     </div>
-                    <p className="text-xs text-gray-500 mb-3">
-                      {(invoiceTypeOverride || selectedInvoice.invoiceType) === "EXPENSE"
-                        ? "Onaylandığında gider kaydı oluşturulacak ve eşleştirilen ürünlerin stoku artırılacaktır."
-                        : "Onaylandığında gelir kaydı oluşturulacak, eşleştirilen ürünlerin stoku düşürülecek ve kar hesaplanacaktır."}
-                    </p>
+                    {(invoiceTypeOverride || selectedInvoice.invoiceType) === "EXPENSE" ? (
+                      <div className="space-y-2.5 mb-3">
+                        <p className="text-xs text-gray-500">Onaylandığında eşleştirilen ürünlerin stoku artırılacaktır.</p>
+                        <label className="flex items-center gap-2 cursor-pointer rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
+                          <input
+                            type="checkbox"
+                            checked={recordAsExpense}
+                            onChange={(e) => setRecordAsExpense(e.target.checked)}
+                            className="h-4 w-4 rounded border-gray-300 text-[#6366F1]"
+                          />
+                          <div>
+                            <span className="text-xs font-medium text-gray-700">Gider olarak işle</span>
+                            <p className="text-[10px] text-gray-400">Genel gider tablosuna ekler. Ürün maliyetlerini zaten satış karından düşüyorsanız kapatabilirsiniz.</p>
+                          </div>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
+                          <input
+                            type="checkbox"
+                            checked={recordVatDeduction}
+                            onChange={(e) => setRecordVatDeduction(e.target.checked)}
+                            className="h-4 w-4 rounded border-gray-300 text-[#6366F1]"
+                          />
+                          <div>
+                            <span className="text-xs font-medium text-gray-700">KDV indirimine işle</span>
+                            <p className="text-[10px] text-gray-400">İndirilecek KDV hesabına ekler.</p>
+                          </div>
+                        </label>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-gray-500 mb-3">
+                        Onaylandığında gelir kaydı oluşturulacak, eşleştirilen ürünlerin stoku düşürülecek ve kar hesaplanacaktır.
+                      </p>
+                    )}
 
                     {approveError && (
                       <div className="mb-3 flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">
