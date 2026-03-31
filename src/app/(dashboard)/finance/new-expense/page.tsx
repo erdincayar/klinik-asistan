@@ -20,6 +20,7 @@ interface Product {
   id: string;
   name: string;
   sku: string;
+  brand: string | null;
   purchasePrice: number;
   salePrice: number;
   currentStock: number;
@@ -87,7 +88,7 @@ export default function NewExpensePage() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/products?active=true").then((r) => (r.ok ? r.json() : [])),
+      fetch("/api/products?active=all").then((r) => (r.ok ? r.json() : [])),
       fetch("/api/patients").then((r) => (r.ok ? r.json() : [])),
     ]).then(([pr, pa]) => {
       if (Array.isArray(pr)) setProducts(pr);
@@ -310,9 +311,15 @@ export default function NewExpensePage() {
               <div className="space-y-3">
                 {lineItems.map((line, idx) => {
                   const total = lineTotal(line);
-                  const normalize = (s: string) => s.toLowerCase().replace(/İ/g, "i").replace(/I/g, "ı").replace(/Ğ/g, "ğ").replace(/Ü/g, "ü").replace(/Ş/g, "ş").replace(/Ö/g, "ö").replace(/Ç/g, "ç");
-                  const filtered = line.productSearch
-                    ? products.filter((p) => normalize(p.name).includes(normalize(line.productSearch)) || (p.sku && normalize(p.sku).includes(normalize(line.productSearch))))
+                  const trLower = (s: string) => s.toLocaleLowerCase("tr-TR");
+                  const searchWords = trLower(line.productSearch).split(/\s+/).filter(Boolean);
+                  const filtered = searchWords.length > 0
+                    ? products.filter((p) => {
+                        const name = trLower(p.name);
+                        const sku = trLower(p.sku || "");
+                        const brand = trLower(p.brand || "");
+                        return searchWords.every(w => name.includes(w) || sku.includes(w) || brand.includes(w));
+                      })
                     : products;
 
                   return (
