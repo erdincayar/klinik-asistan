@@ -40,43 +40,61 @@ export async function GET(req: NextRequest) {
 }
 
 async function getIncomeReport(clinicId: string, year: number) {
-  // Monthly income data (last 12 months from given year)
+  // Monthly income data — treatments + income records from Expense table
   const monthlyData = [];
   for (let m = 0; m < 12; m++) {
     const start = new Date(year, m, 1);
     const end = new Date(year, m + 1, 1);
-    const result = await prisma.treatment.aggregate({
-      where: { clinicId, date: { gte: start, lt: end } },
-      _sum: { amount: true },
-      _count: { id: true },
-    });
+    const [treatmentResult, incomeResult] = await Promise.all([
+      prisma.treatment.aggregate({
+        where: { clinicId, date: { gte: start, lt: end } },
+        _sum: { amount: true },
+        _count: { id: true },
+      }),
+      prisma.expense.aggregate({
+        where: { clinicId, type: "INCOME", date: { gte: start, lt: end } },
+        _sum: { amount: true },
+        _count: { id: true },
+      }),
+    ]);
     monthlyData.push({
       month: m + 1,
       monthName: TURKISH_MONTHS[m],
-      income: (result._sum.amount || 0) / 100,
-      count: result._count.id || 0,
+      income: ((treatmentResult._sum.amount || 0) + (incomeResult._sum.amount || 0)) / 100,
+      count: (treatmentResult._count.id || 0) + (incomeResult._count.id || 0),
     });
   }
 
-  // Category breakdown for current year
-  const treatments = await prisma.treatment.findMany({
-    where: {
-      clinicId,
-      date: { gte: new Date(year, 0, 1), lt: new Date(year + 1, 0, 1) },
-    },
-    select: { category: true, amount: true },
-  });
+  // Category breakdown for current year — treatments + income records
+  const dateRange = { gte: new Date(year, 0, 1), lt: new Date(year + 1, 0, 1) };
+  const [treatments, incomeRecords] = await Promise.all([
+    prisma.treatment.findMany({
+      where: { clinicId, date: dateRange },
+      select: { category: true, amount: true },
+    }),
+    prisma.expense.findMany({
+      where: { clinicId, type: "INCOME", date: dateRange },
+      select: { category: true, amount: true },
+    }),
+  ]);
 
   const categoryMap: Record<string, number> = {};
   for (const t of treatments) {
     categoryMap[t.category] = (categoryMap[t.category] || 0) + t.amount;
   }
+  for (const r of incomeRecords) {
+    categoryMap[r.category] = (categoryMap[r.category] || 0) + r.amount;
+  }
 
   const categoryLabels: Record<string, string> = {
     BOTOX: "Botoks",
     DOLGU: "Dolgu",
-    DIS_TEDAVI: "Dis Tedavi",
+    DIS_TEDAVI: "Diş Tedavi",
     GENEL: "Genel",
+    SATIS: "Satış",
+    HIZMET: "Hizmet",
+    KOMISYON: "Komisyon",
+    DIGER: "Diğer",
   };
 
   const totalIncome = Object.values(categoryMap).reduce((s, v) => s + v, 0);
@@ -134,13 +152,13 @@ async function getIncomeReport(clinicId: string, year: number) {
 }
 
 async function getExpenseReport(clinicId: string, year: number) {
-  // Monthly expense data
+  // Monthly expense data — only type: EXPENSE
   const monthlyData = [];
   for (let m = 0; m < 12; m++) {
     const start = new Date(year, m, 1);
     const end = new Date(year, m + 1, 1);
     const result = await prisma.expense.aggregate({
-      where: { clinicId, date: { gte: start, lt: end } },
+      where: { clinicId, type: "EXPENSE", date: { gte: start, lt: end } },
       _sum: { amount: true },
       _count: { id: true },
     });
@@ -152,10 +170,11 @@ async function getExpenseReport(clinicId: string, year: number) {
     });
   }
 
-  // Category breakdown
+  // Category breakdown — only expenses
   const expenses = await prisma.expense.findMany({
     where: {
       clinicId,
+      type: "EXPENSE",
       date: { gte: new Date(year, 0, 1), lt: new Date(year + 1, 0, 1) },
     },
     select: { category: true, amount: true },
@@ -197,17 +216,21 @@ async function getProfitLossReport(clinicId: string, year: number) {
   for (let m = 0; m < 12; m++) {
     const start = new Date(year, m, 1);
     const end = new Date(year, m + 1, 1);
-    const [incomeResult, expenseResult] = await Promise.all([
+    const [treatmentResult, incomeRecordResult, expenseResult] = await Promise.all([
       prisma.treatment.aggregate({
         where: { clinicId, date: { gte: start, lt: end } },
         _sum: { amount: true },
       }),
       prisma.expense.aggregate({
-        where: { clinicId, date: { gte: start, lt: end } },
+        where: { clinicId, type: "INCOME", date: { gte: start, lt: end } },
+        _sum: { amount: true },
+      }),
+      prisma.expense.aggregate({
+        where: { clinicId, type: "EXPENSE", date: { gte: start, lt: end } },
         _sum: { amount: true },
       }),
     ]);
-    const income = (incomeResult._sum.amount || 0) / 100;
+    const income = ((treatmentResult._sum.amount || 0) + (incomeRecordResult._sum.amount || 0)) / 100;
     const expense = (expenseResult._sum.amount || 0) / 100;
     const profit = income - expense;
     const kdv = Math.round(income * taxRate / (100 + taxRate) * 100) / 100;
@@ -291,9 +314,20 @@ async function getCustomerAnalytics(clinicId: string, year: number) {
       visitCount: data.count,
     }));
 
+  // Include income records in revenue
+  const incomeRecordsForCustomers = await prisma.expense.findMany({
+    where: {
+      clinicId,
+      type: "INCOME",
+      date: { gte: new Date(year, 0, 1), lt: new Date(year + 1, 0, 1) },
+    },
+    select: { amount: true, description: true },
+  });
+  const incomeRecordTotal = incomeRecordsForCustomers.reduce((s, r) => s + r.amount, 0);
+
   // Average revenue per patient
   const totalPatients = await prisma.patient.count({ where: { clinicId } });
-  const totalRevenue = treatments.reduce((s, t) => s + t.amount, 0) / 100;
+  const totalRevenue = (treatments.reduce((s, t) => s + t.amount, 0) + incomeRecordTotal) / 100;
   const avgRevenuePerPatient = totalPatients > 0 ? Math.round(totalRevenue / totalPatients) : 0;
 
   // Loyalty rate (patients with 2+ visits / total patients)
