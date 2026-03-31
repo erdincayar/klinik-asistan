@@ -116,6 +116,7 @@ export default function InvoiceUploadContent() {
   const [approveError, setApproveError] = useState("");
   const [approveSuccess, setApproveSuccess] = useState("");
   const [openDropdown, setOpenDropdown] = useState<number | string | null>(null);
+  const [dropdownSearch, setDropdownSearch] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<UploadedInvoice | null>(null);
   const [confirmReject, setConfirmReject] = useState(false);
   const [inlineApproving, setInlineApproving] = useState<string | null>(null);
@@ -380,6 +381,7 @@ export default function InvoiceUploadContent() {
       prev.map((m, i) => (i === index ? { ...m, productId, productName } : m))
     );
     setOpenDropdown(null);
+    setDropdownSearch("");
   }
 
   function updateMappingQuantity(index: number, quantity: number) {
@@ -896,34 +898,53 @@ export default function InvoiceUploadContent() {
                                     <ChevronDown className="h-3 w-3 shrink-0" />
                                   </button>
 
-                                  {openDropdown === idx && (
-                                    <div className="absolute left-0 right-0 top-full z-10 mt-1 max-h-48 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
-                                      <button
-                                        onClick={() => updateMapping(idx, null, null)}
-                                        className="flex w-full items-center gap-2 px-3 py-2 text-xs text-gray-500 hover:bg-gray-50"
-                                      >
-                                        <XCircle className="h-3 w-3" />
-                                        Eşleştirme kaldır
-                                      </button>
-                                      {allProducts.map((product) => (
+                                  {openDropdown === idx && (() => {
+                                    const filtered = dropdownSearch
+                                      ? allProducts.filter(p => p.name.toLowerCase().includes(dropdownSearch.toLowerCase()))
+                                      : allProducts;
+                                    return (
+                                    <div className="absolute left-0 right-0 top-full z-10 mt-1 rounded-xl border border-gray-200 bg-white shadow-lg">
+                                      <div className="sticky top-0 border-b border-gray-100 p-2">
+                                        <input
+                                          autoFocus
+                                          type="text"
+                                          value={dropdownSearch}
+                                          onChange={(e) => setDropdownSearch(e.target.value)}
+                                          placeholder="Ürün ara..."
+                                          className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs focus:border-[#4F46E5] focus:outline-none focus:ring-1 focus:ring-[#4F46E5]"
+                                        />
+                                      </div>
+                                      <div className="max-h-48 overflow-y-auto">
                                         <button
-                                          key={product.id}
-                                          onClick={() => updateMapping(idx, product.id, product.name)}
-                                          className={`flex w-full items-center justify-between px-3 py-2 text-xs hover:bg-[#EEF2FF] ${
-                                            mapping.productId === product.id ? "bg-[#EEF2FF] text-[#4F46E5]" : "text-gray-700"
-                                          }`}
+                                          onClick={() => updateMapping(idx, null, null)}
+                                          className="flex w-full items-center gap-2 px-3 py-2 text-xs text-gray-500 hover:bg-gray-50"
                                         >
-                                          <span className="truncate">{product.name}</span>
-                                          <span className="shrink-0 ml-2 text-gray-400">
-                                            Stok: {product.currentStock} {product.unit}
-                                          </span>
+                                          <XCircle className="h-3 w-3" />
+                                          Eşleştirme kaldır
                                         </button>
-                                      ))}
-                                      {allProducts.length === 0 && (
-                                        <p className="px-3 py-2 text-xs text-gray-400">Envanterde ürün bulunamadı</p>
-                                      )}
+                                        {filtered.map((product) => (
+                                          <button
+                                            key={product.id}
+                                            onClick={() => updateMapping(idx, product.id, product.name)}
+                                            className={`flex w-full items-center justify-between px-3 py-2 text-xs hover:bg-[#EEF2FF] ${
+                                              mapping.productId === product.id ? "bg-[#EEF2FF] text-[#4F46E5]" : "text-gray-700"
+                                            }`}
+                                          >
+                                            <span className="truncate">{product.name}</span>
+                                            <span className="shrink-0 ml-2 text-gray-400">
+                                              Stok: {product.currentStock} {product.unit}
+                                            </span>
+                                          </button>
+                                        ))}
+                                        {filtered.length === 0 && (
+                                          <p className="px-3 py-2 text-xs text-gray-400">
+                                            {allProducts.length === 0 ? "Envanterde ürün bulunamadı" : "Sonuç bulunamadı"}
+                                          </p>
+                                        )}
+                                      </div>
                                     </div>
-                                  )}
+                                    );
+                                  })()}
                                 </div>
                               )}
                             </div>
@@ -1005,8 +1026,23 @@ export default function InvoiceUploadContent() {
                                   <ChevronDown className="h-3 w-3 shrink-0" />
                                 </button>
 
-                                {openDropdown === dropdownKey && (
-                                  <div className="absolute left-0 right-0 top-full z-10 mt-1 max-h-48 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
+                                {openDropdown === dropdownKey && (() => {
+                                  const filtered = dropdownSearch
+                                    ? allProducts.filter(p => p.name.toLowerCase().includes(dropdownSearch.toLowerCase()))
+                                    : allProducts;
+                                  return (
+                                  <div className="absolute left-0 right-0 top-full z-10 mt-1 rounded-xl border border-gray-200 bg-white shadow-lg">
+                                    <div className="sticky top-0 border-b border-gray-100 p-2">
+                                      <input
+                                        autoFocus
+                                        type="text"
+                                        value={dropdownSearch}
+                                        onChange={(e) => setDropdownSearch(e.target.value)}
+                                        placeholder="Ürün ara..."
+                                        className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs focus:border-[#4F46E5] focus:outline-none focus:ring-1 focus:ring-[#4F46E5]"
+                                      />
+                                    </div>
+                                    <div className="max-h-48 overflow-y-auto">
                                     <button
                                       onClick={() => updateMapping(idx, null, null)}
                                       className="flex w-full items-center gap-2 px-3 py-2 text-xs text-gray-500 hover:bg-gray-50"
@@ -1014,7 +1050,7 @@ export default function InvoiceUploadContent() {
                                       <XCircle className="h-3 w-3" />
                                       Eşleştirme kaldır
                                     </button>
-                                    {allProducts.map((p) => (
+                                    {filtered.map((p) => (
                                       <button
                                         key={p.id}
                                         onClick={() => updateMapping(idx, p.id, p.name)}
@@ -1028,11 +1064,15 @@ export default function InvoiceUploadContent() {
                                         </span>
                                       </button>
                                     ))}
-                                    {allProducts.length === 0 && (
-                                      <p className="px-3 py-2 text-xs text-gray-400">Envanterde ürün bulunamadı</p>
+                                    {filtered.length === 0 && (
+                                      <p className="px-3 py-2 text-xs text-gray-400">
+                                        {allProducts.length === 0 ? "Envanterde ürün bulunamadı" : "Sonuç bulunamadı"}
+                                      </p>
                                     )}
+                                    </div>
                                   </div>
-                                )}
+                                  );
+                                })()}
                               </div>
                             )}
                           </div>
