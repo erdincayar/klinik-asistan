@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Plus, Trash2, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,39 +16,105 @@ import {
 import { EXPENSE_CATEGORIES } from "@/lib/types";
 import { toKurus, formatCurrency } from "@/lib/utils";
 
-const VAT_RATES = [
-  { value: 0, label: "%0" },
-  { value: 1, label: "%1" },
-  { value: 10, label: "%10" },
-  { value: 20, label: "%20" },
-];
+interface Product {
+  id: string;
+  name: string;
+  sku: string;
+  purchasePrice: number;
+  salePrice: number;
+  currentStock: number;
+  unit: string;
+  vatIncluded: boolean;
+}
+
+interface LineItem {
+  productId: string | null;
+  description: string;
+  quantity: number;
+  unitPrice: string;
+  vatIncluded: boolean;
+  vatRate: number;
+  productSearch: string;
+  showDropdown: boolean;
+}
+
+const emptyLine = (): LineItem => ({
+  productId: null,
+  description: "",
+  quantity: 1,
+  unitPrice: "",
+  vatIncluded: true,
+  vatRate: 20,
+  productSearch: "",
+  showDropdown: false,
+});
 
 export default function NewExpensePage() {
   const router = useRouter();
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState({
-    description: "",
     category: "",
-    amount: "",
     date: new Date().toISOString().split("T")[0],
-    vatRate: 20,
-    vatIncluded: true,
     addToDebt: false,
     contactName: "",
     dueDate: "",
   });
 
-  const amountNum = parseFloat(form.amount) || 0;
-  const vatAmount = form.vatIncluded
-    ? amountNum - amountNum / (1 + form.vatRate / 100)
-    : amountNum * (form.vatRate / 100);
-  const netAmount = form.vatIncluded
-    ? amountNum - vatAmount
-    : amountNum;
-  const totalAmount = form.vatIncluded
-    ? amountNum
-    : amountNum + vatAmount;
+  const [lineItems, setLineItems] = useState<LineItem[]>([emptyLine()]);
+
+  useEffect(() => {
+    fetch("/api/products?active=true")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => { if (Array.isArray(data)) setProducts(data); })
+      .catch(() => {});
+  }, []);
+
+  function updateLine(idx: number, updates: Partial<LineItem>) {
+    setLineItems((prev) => prev.map((l, i) => (i === idx ? { ...l, ...updates } : l)));
+  }
+
+  function addLine() {
+    setLineItems((prev) => [...prev, emptyLine()]);
+  }
+
+  function removeLine(idx: number) {
+    setLineItems((prev) => prev.length > 1 ? prev.filter((_, i) => i !== idx) : prev);
+  }
+
+  function selectProduct(idx: number, product: Product) {
+    updateLine(idx, {
+      productId: product.id,
+      description: product.name,
+      unitPrice: product.purchasePrice > 0 ? String(product.purchasePrice / 100) : "",
+      vatIncluded: product.vatIncluded,
+      productSearch: "",
+      showDropdown: false,
+    });
+  }
+
+  function lineTotal(line: LineItem): number {
+    const price = parseFloat(line.unitPrice) || 0;
+    return price * line.quantity;
+  }
+
+  function lineVat(line: LineItem): number {
+    const total = lineTotal(line);
+    if (line.vatRate === 0) return 0;
+    return line.vatIncluded
+      ? total - total / (1 + line.vatRate / 100)
+      : total * (line.vatRate / 100);
+  }
+
+  const grandTotal = lineItems.reduce((sum, l) => {
+    const price = parseFloat(l.unitPrice) || 0;
+    const total = price * l.quantity;
+    return sum + (l.vatIncluded ? total : total + total * (l.vatRate / 100));
+  }, 0);
+
+  const totalVat = lineItems.reduce((sum, l) => sum + lineVat(l), 0);
+  const totalNet = grandTotal - totalVat;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -55,23 +122,39 @@ export default function NewExpensePage() {
     setError("");
 
     try {
-      if (isNaN(amountNum) || amountNum <= 0) {
-        throw new Error("Geçerli bir tutar girin");
-      }
+      const validLines = lineItems.filter((l) => l.description && (parseFloat(l.unitPrice) || 0) > 0);
+      if (validLines.length === 0) throw new Error("En az bir kalem girin");
+      if (grandTotal <= 0) throw new Error("Geçerli bir tutar girin");
+
+      // Use first line's VAT info for the main record, or most common
+      const mainVatRate = validLines[0]?.vatRate ?? 20;
+      const mainVatIncluded = validLines[0]?.vatIncluded ?? true;
+
+      const description = validLines.map((l) =>
+        `${l.description} x${l.quantity} = ${lineTotal(l).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL`
+      ).join("\n");
 
       const res = await fetch("/api/expenses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          description: form.description,
+          description,
           category: form.category,
-          amount: toKurus(totalAmount),
+          amount: toKurus(grandTotal),
           date: form.date,
-          vatRate: form.vatRate,
-          vatIncluded: form.vatIncluded,
+          vatRate: mainVatRate,
+          vatIncluded: mainVatIncluded,
           addToDebt: form.addToDebt,
           contactName: form.contactName || undefined,
           dueDate: form.dueDate || undefined,
+          lineItems: validLines.map((l) => ({
+            productId: l.productId,
+            description: l.description,
+            quantity: l.quantity,
+            unitPrice: toKurus(parseFloat(l.unitPrice) || 0),
+            vatIncluded: l.vatIncluded,
+            vatRate: l.vatRate,
+          })),
         }),
       });
 
@@ -89,64 +172,32 @@ export default function NewExpensePage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-4xl">
       <Card>
         <CardHeader>
           <CardTitle>Yeni Gider Kaydı</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="description">Açıklama <span className="text-red-500">*</span></Label>
-              <Input
-                id="description"
-                value={form.description}
-                onChange={(e) =>
-                  setForm({ ...form, description: e.target.value })
-                }
-                required
-                placeholder="Örnek: Tedarikçi ödemesi"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="category">Kategori <span className="text-red-500">*</span></Label>
-              <select
-                id="category"
-                value={form.category}
-                onChange={(e) =>
-                  setForm({ ...form, category: e.target.value })
-                }
-                required
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
-              >
-                <option value="">Kategori seçin...</option>
-                {EXPENSE_CATEGORIES.map((cat) => (
-                  <option key={cat.value} value={cat.value}>
-                    {cat.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Header */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="amount">Tutar (TL) <span className="text-red-500">*</span></Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={form.amount}
-                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                <Label>Kategori *</Label>
+                <select
+                  value={form.category}
+                  onChange={(e) => setForm({ ...form, category: e.target.value })}
                   required
-                  placeholder="0.00"
-                />
+                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
+                >
+                  <option value="">Kategori seçin...</option>
+                  {EXPENSE_CATEGORIES.map((cat) => (
+                    <option key={cat.value} value={cat.value}>{cat.label}</option>
+                  ))}
+                </select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="date">Tarih <span className="text-red-500">*</span></Label>
+                <Label>Tarih *</Label>
                 <Input
-                  id="date"
                   type="date"
                   value={form.date}
                   onChange={(e) => setForm({ ...form, date: e.target.value })}
@@ -155,46 +206,170 @@ export default function NewExpensePage() {
               </div>
             </div>
 
-            {/* KDV */}
-            <div className="rounded-lg border border-gray-200 p-4 space-y-3">
+            {/* Line Items */}
+            <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label className="text-sm font-semibold">KDV Ayarları</Label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={form.vatIncluded}
-                    onChange={(e) => setForm({ ...form, vatIncluded: e.target.checked })}
-                    className="h-4 w-4 rounded border-gray-300 text-[#6366F1]"
-                  />
-                  <span className="text-sm text-gray-600">KDV Dahil</span>
-                </label>
+                <Label className="text-sm font-semibold">Kalemler</Label>
+                <Button type="button" size="sm" variant="outline" onClick={addLine}>
+                  <Plus className="mr-1 h-3.5 w-3.5" /> Satır Ekle
+                </Button>
               </div>
-              <div className="flex items-center gap-3">
-                <Label className="text-xs text-gray-500 shrink-0">KDV Oranı</Label>
-                <div className="flex gap-1.5">
-                  {VAT_RATES.map((r) => (
-                    <button
-                      key={r.value}
-                      type="button"
-                      onClick={() => setForm({ ...form, vatRate: r.value })}
-                      className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                        form.vatRate === r.value
-                          ? "bg-[#1E1E2D] text-white"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      }`}
-                    >
-                      {r.label}
-                    </button>
-                  ))}
+
+              <div className="rounded-xl border border-gray-200 overflow-hidden">
+                <div className="hidden sm:grid sm:grid-cols-[1fr_70px_100px_80px_60px_40px] gap-2 bg-gray-50 px-3 py-2 text-[11px] font-semibold text-gray-500 uppercase">
+                  <span>Ürün / Açıklama</span>
+                  <span className="text-center">Adet</span>
+                  <span className="text-right">Birim Fiyat</span>
+                  <span className="text-center">KDV</span>
+                  <span className="text-right">Toplam</span>
+                  <span></span>
+                </div>
+
+                {lineItems.map((line, idx) => {
+                  const total = lineTotal(line);
+                  const filtered = line.productSearch
+                    ? products.filter((p) => p.name.toLowerCase().includes(line.productSearch.toLowerCase()))
+                    : products;
+
+                  return (
+                    <div key={idx} className="border-t border-gray-100 px-3 py-3 sm:grid sm:grid-cols-[1fr_70px_100px_80px_60px_40px] sm:items-center gap-2">
+                      {/* Product / Description */}
+                      <div className="relative">
+                        <div className="flex items-center gap-1.5">
+                          {line.productId && (
+                            <Package className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                          )}
+                          <input
+                            type="text"
+                            value={line.showDropdown ? line.productSearch : line.description}
+                            onChange={(e) => {
+                              updateLine(idx, {
+                                productSearch: e.target.value,
+                                description: line.productId ? line.description : e.target.value,
+                                showDropdown: true,
+                              });
+                            }}
+                            onFocus={() => updateLine(idx, { showDropdown: true, productSearch: "" })}
+                            placeholder="Ürün ara veya açıklama yaz..."
+                            className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm focus:border-[#4F46E5] focus:outline-none focus:ring-1 focus:ring-[#4F46E5]"
+                          />
+                        </div>
+                        {line.showDropdown && (
+                          <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-48 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
+                            {line.productId && (
+                              <button
+                                type="button"
+                                onClick={() => updateLine(idx, { productId: null, showDropdown: false })}
+                                className="flex w-full items-center gap-2 px-3 py-2 text-xs text-gray-500 hover:bg-gray-50"
+                              >
+                                Manuel giriş (stok bağlantısı kaldır)
+                              </button>
+                            )}
+                            {filtered.slice(0, 20).map((p) => (
+                              <button
+                                type="button"
+                                key={p.id}
+                                onClick={() => selectProduct(idx, p)}
+                                className={`flex w-full items-center justify-between px-3 py-2 text-xs hover:bg-[#EEF2FF] ${
+                                  line.productId === p.id ? "bg-[#EEF2FF] text-[#4F46E5]" : "text-gray-700"
+                                }`}
+                              >
+                                <span className="truncate">{p.name}</span>
+                                <span className="shrink-0 ml-2 text-gray-400">
+                                  {p.purchasePrice > 0 ? `${(p.purchasePrice / 100).toFixed(2)}₺` : ""} · Stok: {p.currentStock}
+                                </span>
+                              </button>
+                            ))}
+                            {filtered.length === 0 && (
+                              <p className="px-3 py-2 text-xs text-gray-400">
+                                {products.length === 0 ? "Stokta ürün yok" : "Sonuç bulunamadı"}
+                              </p>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => updateLine(idx, { showDropdown: false })}
+                              className="flex w-full items-center gap-2 border-t border-gray-100 px-3 py-2 text-xs text-gray-500 hover:bg-gray-50"
+                            >
+                              Kapat
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      <input
+                        type="number"
+                        min={1}
+                        value={line.quantity}
+                        onChange={(e) => updateLine(idx, { quantity: Math.max(1, parseInt(e.target.value) || 1) })}
+                        className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-sm text-center"
+                      />
+
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={line.unitPrice}
+                        onChange={(e) => updateLine(idx, { unitPrice: e.target.value })}
+                        placeholder="0.00"
+                        className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-sm text-right"
+                      />
+
+                      <div className="flex items-center justify-center gap-1">
+                        <select
+                          value={line.vatRate}
+                          onChange={(e) => updateLine(idx, { vatRate: Number(e.target.value) })}
+                          className="rounded border border-gray-200 px-1 py-1 text-xs"
+                        >
+                          <option value={0}>%0</option>
+                          <option value={1}>%1</option>
+                          <option value={10}>%10</option>
+                          <option value={20}>%20</option>
+                        </select>
+                        <label className="flex items-center gap-0.5 text-[10px] text-gray-400 cursor-pointer" title={line.vatIncluded ? "KDV Dahil" : "KDV Hariç"}>
+                          <input
+                            type="checkbox"
+                            checked={line.vatIncluded}
+                            onChange={(e) => updateLine(idx, { vatIncluded: e.target.checked })}
+                            className="h-3 w-3"
+                          />
+                          D
+                        </label>
+                      </div>
+
+                      <span className="text-sm font-semibold text-right text-gray-700 whitespace-nowrap">
+                        {total > 0 ? `${total.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}₺` : "—"}
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() => removeLine(idx)}
+                        className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                        title="Satırı sil"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Totals */}
+              <div className="flex justify-end">
+                <div className="w-full max-w-xs space-y-1.5 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>Net Tutar</span>
+                    <span className="font-medium text-gray-700">{formatCurrency(toKurus(totalNet))}</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>KDV Toplamı</span>
+                    <span className="font-medium text-orange-600">{formatCurrency(toKurus(totalVat))}</span>
+                  </div>
+                  <div className="flex justify-between text-sm font-bold border-t border-gray-200 pt-1.5">
+                    <span>Genel Toplam</span>
+                    <span className="text-red-600">{formatCurrency(toKurus(grandTotal))}</span>
+                  </div>
                 </div>
               </div>
-              {amountNum > 0 && form.vatRate > 0 && (
-                <div className="flex gap-4 text-xs text-gray-500 pt-1 border-t border-gray-100">
-                  <span>Net: <strong className="text-gray-700">{formatCurrency(Math.round(netAmount * 100))}</strong></span>
-                  <span>KDV: <strong className="text-gray-700">{formatCurrency(Math.round(vatAmount * 100))}</strong></span>
-                  <span>Toplam: <strong className="text-gray-700">{formatCurrency(Math.round(totalAmount * 100))}</strong></span>
-                </div>
-              )}
             </div>
 
             {/* Cari Hesap */}
@@ -209,11 +384,10 @@ export default function NewExpensePage() {
                 <span className="text-sm font-semibold text-gray-700">Cari Hesaba Ekle</span>
               </label>
               {form.addToDebt && (
-                <div className="space-y-3 pt-1">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 pt-1">
                   <div className="space-y-2">
-                    <Label htmlFor="contactName">Firma / Kişi Adı <span className="text-red-500">*</span></Label>
+                    <Label>Firma / Kişi Adı *</Label>
                     <Input
-                      id="contactName"
                       value={form.contactName}
                       onChange={(e) => setForm({ ...form, contactName: e.target.value })}
                       placeholder="Tedarikçi veya firma adı"
@@ -221,9 +395,8 @@ export default function NewExpensePage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="dueDate">Vade Tarihi</Label>
+                    <Label>Vade Tarihi</Label>
                     <Input
-                      id="dueDate"
                       type="date"
                       value={form.dueDate}
                       onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
@@ -240,9 +413,7 @@ export default function NewExpensePage() {
                 {loading ? "Kaydediliyor..." : "Kaydet"}
               </Button>
               <Link href="/finance">
-                <Button type="button" variant="outline">
-                  İptal
-                </Button>
+                <Button type="button" variant="outline">İptal</Button>
               </Link>
             </div>
           </form>

@@ -59,6 +59,7 @@ export async function POST(request: Request) {
     }
 
     const { date, addToDebt, contactName, dueDate, ...rest } = parsed.data;
+    const lineItems = body.lineItems;
 
     const expense = await prisma.expense.create({
       data: {
@@ -67,6 +68,40 @@ export async function POST(request: Request) {
         clinicId,
       },
     });
+
+    // Process line items: create stock IN movements for product-based items (purchase)
+    if (Array.isArray(lineItems)) {
+      for (const item of lineItems) {
+        if (item.productId && item.quantity > 0) {
+          const product = await prisma.product.findFirst({
+            where: { id: item.productId, clinicId },
+          });
+          if (!product) continue;
+
+          await prisma.stockMovement.create({
+            data: {
+              productId: item.productId,
+              type: "IN",
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              totalPrice: item.unitPrice * item.quantity,
+              description: `Alış: ${item.description}`,
+              reference: `expense-${expense.id}`,
+              date: new Date(date),
+              clinicId,
+            },
+          });
+
+          await prisma.product.update({
+            where: { id: item.productId },
+            data: {
+              currentStock: (product.currentStock ?? 0) + item.quantity,
+              purchasePrice: item.unitPrice,
+            },
+          });
+        }
+      }
+    }
 
     // Optionally create a cari hesap (debt) record
     if (addToDebt && contactName) {

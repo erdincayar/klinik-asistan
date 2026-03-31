@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { customValues, addToDebt, contactName, dueDate, ...treatmentBody } = body;
+    const { customValues, addToDebt, contactName, dueDate, lineItems, ...treatmentBody } = body;
     const parsed = treatmentSchema.safeParse(treatmentBody);
 
     if (!parsed.success) {
@@ -86,6 +86,39 @@ export async function POST(request: Request) {
           }),
         ),
       ).catch(() => {});
+    }
+
+    // Process line items: create stock OUT movements for product-based items
+    if (Array.isArray(lineItems)) {
+      for (const item of lineItems) {
+        if (item.productId && item.quantity > 0) {
+          const product = await prisma.product.findFirst({
+            where: { id: item.productId, clinicId },
+          });
+          if (!product) continue;
+
+          await prisma.stockMovement.create({
+            data: {
+              productId: item.productId,
+              type: "OUT",
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              totalPrice: item.unitPrice * item.quantity,
+              description: `Satış: ${rest.name || item.description}`,
+              reference: `treatment-${treatment.id}`,
+              date: new Date(date),
+              clinicId,
+            },
+          });
+
+          await prisma.product.update({
+            where: { id: item.productId },
+            data: {
+              currentStock: Math.max(0, (product.currentStock ?? 0) - item.quantity),
+            },
+          });
+        }
+      }
     }
 
     // Create cari hesap entry if requested
