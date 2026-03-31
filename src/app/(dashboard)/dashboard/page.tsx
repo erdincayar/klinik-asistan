@@ -63,6 +63,7 @@ interface DashboardData {
 interface MonthlySummary {
   month: number;
   monthName: string;
+  ciro: number;
   income: number;
   expense: number;
 }
@@ -141,7 +142,7 @@ function ChartTooltip({ active, payload, label }: any) {
       <p className="mb-1 text-xs font-medium text-gray-500">{label}</p>
       {payload.map((entry: any) => (
         <p key={entry.dataKey} className="text-sm font-semibold text-gray-900">
-          {entry.dataKey === "income" ? "Gelir" : "Gider"}:{" "}
+          {entry.dataKey === "ciro" ? "Ciro" : "Gider"}:{" "}
           {formatCurrency(entry.value)}
         </p>
       ))}
@@ -646,7 +647,7 @@ export default function DashboardPage() {
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h2 className="text-base font-semibold text-gray-900">
-              Gelir / Gider Grafiği
+              Ciro / Gider Grafiği
             </h2>
             <p className="mt-0.5 text-[13px] text-gray-500">
               {new Date().getFullYear()} yılı aylık özet
@@ -704,7 +705,7 @@ export default function DashboardPage() {
               <Tooltip content={<ChartTooltip />} />
               <Area
                 type="monotone"
-                dataKey="income"
+                dataKey="ciro"
                 stroke="#6366F1"
                 strokeWidth={2.5}
                 fill="url(#incomeGrad)"
