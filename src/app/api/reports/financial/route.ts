@@ -44,6 +44,25 @@ export async function GET(req: NextRequest) {
       }),
     ]);
 
+    // Pre-compute orphan reference sets for COGS filtering
+    const treatmentRefs = outMovements
+      .filter(m => m.reference?.startsWith("treatment-"))
+      .map(m => m.reference!.replace("treatment-", ""));
+    const expenseIncomeRefs = outMovements
+      .filter(m => m.reference?.startsWith("expense-income-"))
+      .map(m => m.reference!.replace("expense-income-", ""));
+
+    const [existingTreatmentIds, existingExpenseIds] = await Promise.all([
+      treatmentRefs.length > 0
+        ? prisma.treatment.findMany({ where: { id: { in: treatmentRefs }, clinicId }, select: { id: true } })
+        : Promise.resolve([]),
+      expenseIncomeRefs.length > 0
+        ? prisma.expense.findMany({ where: { id: { in: expenseIncomeRefs }, clinicId }, select: { id: true } })
+        : Promise.resolve([]),
+    ]);
+    const validTreatmentSet = new Set(existingTreatmentIds.map(t => t.id));
+    const validExpenseSet = new Set(existingExpenseIds.map(e => e.id));
+
     // Monthly aggregation with COGS
     const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
 
@@ -59,17 +78,32 @@ export async function GET(req: NextRequest) {
         .filter((e) => new Date(e.date).getMonth() === i)
         .reduce((sum, e) => sum + e.amount, 0);
 
-      // Monthly COGS
+      // Monthly COGS — same orphan filtering applied in yearly totals
       const monthCogs = outMovements
         .filter(m => new Date(m.date).getMonth() === i)
+        .filter(m => {
+          if (!m.reference) return true;
+          if (m.reference.startsWith("invoice-")) return true; // invoices handled separately in yearly
+          if (m.reference.startsWith("treatment-")) return validTreatmentSet.has(m.reference.replace("treatment-", ""));
+          if (m.reference.startsWith("expense-income-")) return validExpenseSet.has(m.reference.replace("expense-income-", ""));
+          return true;
+        })
         .reduce((sum, m) => sum + (m.quantity * (m.product.purchasePrice ?? 0)), 0);
+
+      // Monthly embedded cost from income records
+      const monthEmbeddedCost = incomeRecords
+        .filter(r => new Date(r.date).getMonth() === i)
+        .reduce((sum, r) => {
+          const match = r.description?.match(/\[Maliyet: (\d+)\]/);
+          return sum + (match ? parseInt(match[1], 10) : 0);
+        }, 0);
 
       return {
         month: i + 1,
         monthName: monthNames[i],
         income: monthIncome,
         expense: monthExpense,
-        cogs: monthCogs,
+        cogs: monthCogs + monthEmbeddedCost,
         profit: monthIncome - monthExpense,
       };
     });
@@ -84,9 +118,22 @@ export async function GET(req: NextRequest) {
       + incomeRecords.reduce((sum, r) => sum + r.amount, 0);
     const totalExpense = expenses.reduce((sum, e) => sum + e.amount, 0);
 
-    // Total COGS
+    // Extract embedded cost from income record descriptions
+    let embeddedCost = 0;
+    for (const r of incomeRecords) {
+      const costMatch = (r as any).description?.match(/\[Maliyet: (\d+)\]/);
+      if (costMatch) embeddedCost += parseInt(costMatch[1], 10);
+    }
+
+    // Total COGS — uses pre-computed validTreatmentSet/validExpenseSet from above
     const nonInvoiceCogs = outMovements
-      .filter(m => !m.reference?.startsWith("invoice-"))
+      .filter(m => {
+        if (!m.reference) return true;
+        if (m.reference.startsWith("invoice-")) return false;
+        if (m.reference.startsWith("treatment-")) return validTreatmentSet.has(m.reference.replace("treatment-", ""));
+        if (m.reference.startsWith("expense-income-")) return validExpenseSet.has(m.reference.replace("expense-income-", ""));
+        return true;
+      })
       .reduce((sum, m) => sum + (m.quantity * (m.product.purchasePrice ?? 0)), 0);
 
     let invoiceCogs = 0;
@@ -102,7 +149,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const totalCogs = nonInvoiceCogs + invoiceCogs;
+    const totalCogs = nonInvoiceCogs + invoiceCogs + embeddedCost;
     const grossProfit = totalIncome - totalCogs;
     const netProfit = grossProfit - totalExpense;
 
