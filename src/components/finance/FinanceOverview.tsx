@@ -919,14 +919,20 @@ export default function FinanceOverview() {
                       date: t.date,
                       patientId: t.patientId,
                     })),
-                    ...incomeRecords.map((r) => ({
-                      id: r.id,
-                      type: "income" as const,
-                      label: r.description.split("\n")[0] || "Gelir",
-                      sublabel: (EXPENSE_CATEGORIES.find((c) => c.value === r.category)?.label || r.category) + " · " + formatTurkishDate(r.date),
-                      amount: r.amount,
-                      date: r.date,
-                    })),
+                    ...incomeRecords.map((r) => {
+                      const costMatch = r.description?.match(/\[Maliyet: (\d+)\]/);
+                      const cost = costMatch ? parseInt(costMatch[1], 10) : 0;
+                      const profit = cost > 0 ? r.amount - cost : undefined;
+                      return {
+                        id: r.id,
+                        type: "income" as const,
+                        label: r.description.split("\n")[0].replace(/\[Maliyet:.*?\]/, "").trim() || "Gelir",
+                        sublabel: (EXPENSE_CATEGORIES.find((c) => c.value === r.category)?.label || r.category) + " · " + formatTurkishDate(r.date),
+                        amount: r.amount,
+                        date: r.date,
+                        grossProfit: profit,
+                      };
+                    }),
                     ...(invoiceProfitSummary?.invoices || []).map((inv) => ({
                       id: inv.id,
                       type: "invoice" as const,
@@ -974,18 +980,16 @@ export default function FinanceOverview() {
                           <div className="flex items-center gap-2">
                             <div className="text-right">
                               <span className="text-sm font-semibold text-emerald-700">{formatCurrency(row.amount)}</span>
-                              {row.type === "invoice" ? (
+                              {row.grossProfit !== undefined ? (
                                 <div className="flex items-center justify-end gap-1 mt-0.5">
-                                  <span className={cn("text-[11px] font-medium", (row.grossProfit ?? 0) >= 0 ? "text-emerald-600" : "text-red-600")}>
-                                    Kâr: {formatCurrency(row.grossProfit ?? 0)}
+                                  <span className={cn("text-[11px] font-medium", row.grossProfit >= 0 ? "text-emerald-600" : "text-red-600")}>
+                                    Kâr: {formatCurrency(row.grossProfit)}
                                   </span>
                                   {(row.unmatchedCount ?? 0) > 0 && (
                                     <AlertTriangle className="h-3 w-3 text-yellow-500" />
                                   )}
                                 </div>
-                              ) : (
-                                <p className="text-[11px] text-gray-400 mt-0.5">—</p>
-                              )}
+                              ) : null}
                             </div>
                             <button
                               onClick={() => {
