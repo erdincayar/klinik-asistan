@@ -631,7 +631,9 @@ export default function InvoiceUploadContent() {
                       <p className="text-sm font-medium text-gray-900">{inv.fileName}</p>
                       <div className="flex items-center gap-3 mt-0.5">
                         {inv.vendor && (
-                          <span className="text-xs text-gray-500">{inv.vendor}</span>
+                          <span className="text-xs text-gray-500">
+                            {inv.invoiceType === "INCOME" ? "Müşteri: " : ""}{inv.vendor}
+                          </span>
                         )}
                         {inv.amount != null && inv.amount > 0 && (
                           <span className="text-xs font-semibold text-gray-700">
@@ -778,7 +780,9 @@ export default function InvoiceUploadContent() {
                 <div className="rounded-xl bg-gray-50 p-4">
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <p className="text-xs text-gray-400">Tedarikçi / Satıcı</p>
+                      <p className="text-xs text-gray-400">
+                        {(invoiceTypeOverride || selectedInvoice.invoiceType) === "INCOME" ? "Müşteri" : "Tedarikçi / Satıcı"}
+                      </p>
                       <p className="font-medium text-gray-800">{selectedInvoice.vendor || "—"}</p>
                     </div>
                     <div>

@@ -9,7 +9,7 @@ import path from "path";
 
 const OCR_PROMPT = `Bu bir faturadır. Lütfen şu bilgileri JSON formatında çıkar:
 {
-  "vendor": "Satıcı/firma adı",
+  "vendor": "Faturadaki karşı taraf firma/kişi adı (alış faturasında satıcı, satış faturasında müşteri)",
   "invoiceDate": "YYYY-MM-DD formatında fatura tarihi",
   "amount": toplam tutar (KDV dahil genel toplam, sayı, TL cinsinden, virgüllü ise noktaya çevir),
   "taxAmount": KDV tutarı (sayı, faturada KDV satırı varsa onu yaz, yoksa 0),

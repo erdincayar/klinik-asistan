@@ -236,7 +236,7 @@ export async function POST(
           const incomeRecord = await tx.expense.create({
             data: {
               clinicId,
-              description: `Fatura - ${invoice.vendor || invoice.fileName}`,
+              description: `${invoice.vendor || "Müşteri"} - ${invoice.fileName}`,
               amount: parsedAmount,
               category: invoice.category || "SATIS",
               type: "INCOME",
