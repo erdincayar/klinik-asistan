@@ -140,7 +140,7 @@ export async function GET(req: NextRequest) {
     let invoiceCogs = 0;
     for (const inv of approvedIncomeInvoices) {
       const pd = inv.profitData as any;
-      if (pd?.totalCost) {
+      if (pd && typeof pd.totalCost === "number") {
         invoiceCogs += pd.totalCost;
       } else {
         const movementCogs = outMovements

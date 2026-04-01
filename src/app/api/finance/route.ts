@@ -104,7 +104,7 @@ export async function GET(request: Request) {
       let invoiceCogs = 0;
       for (const inv of approvedIncomeInvoices) {
         const pd = inv.profitData as any;
-        if (pd?.totalCost) {
+        if (pd && typeof pd.totalCost === "number") {
           invoiceCogs += pd.totalCost;
         } else {
           // Fallback: use invoice-related stock movements for this invoice

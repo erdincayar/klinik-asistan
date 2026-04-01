@@ -304,6 +304,14 @@ export default function FinanceOverview() {
     } catch { /* silent */ }
   }
 
+  async function handleDeleteInvoice(id: string) {
+    if (!confirm("Bu faturayı silmek istediğinize emin misiniz? Bağlı gelir/gider kayıtları ve stok hareketleri de silinecektir.")) return;
+    try {
+      const res = await fetch(`/api/invoices/ocr/${id}`, { method: "DELETE" });
+      if (res.ok) fetchFinanceData();
+    } catch { /* silent */ }
+  }
+
   async function fetchRecurringTransactions() {
     setRecurringLoading(true);
     try {
@@ -979,15 +987,17 @@ export default function FinanceOverview() {
                                 <p className="text-[11px] text-gray-400 mt-0.5">—</p>
                               )}
                             </div>
-                            {(row.type === "treatment" || row.type === "income") && (
-                              <button
-                                onClick={() => row.type === "treatment" ? handleDeleteTreatment(row.id) : handleDeleteExpense(row.id)}
-                                className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
-                                title="Sil"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </button>
-                            )}
+                            <button
+                              onClick={() => {
+                                if (row.type === "treatment") handleDeleteTreatment(row.id);
+                                else if (row.type === "invoice") handleDeleteInvoice(row.id);
+                                else handleDeleteExpense(row.id);
+                              }}
+                              className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
+                              title="Sil"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
                           </div>
                         </div>
                       ))}
