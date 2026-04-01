@@ -63,6 +63,13 @@ export async function GET(req: NextRequest) {
     const validTreatmentSet = new Set(existingTreatmentIds.map(t => t.id));
     const validExpenseSet = new Set(existingExpenseIds.map(e => e.id));
 
+    // Pre-compute income records that have stock movements (to avoid double-counting)
+    const incomeIdsWithStockMovements = new Set(
+      outMovements
+        .filter(m => m.reference?.startsWith("expense-income-"))
+        .map(m => m.reference!.replace("expense-income-", ""))
+    );
+
     // Monthly aggregation with COGS
     const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
 
@@ -140,11 +147,6 @@ export async function GET(req: NextRequest) {
     const totalExpense = expenses.reduce((sum, e) => sum + e.amount, 0);
 
     // Extract embedded cost ONLY from income records without stock movements (avoid double-counting)
-    const incomeIdsWithStockMovements = new Set(
-      outMovements
-        .filter(m => m.reference?.startsWith("expense-income-"))
-        .map(m => m.reference!.replace("expense-income-", ""))
-    );
     let embeddedCost = 0;
     for (const r of incomeRecords) {
       if (incomeIdsWithStockMovements.has(r.id)) continue;
