@@ -4,12 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
 const patchSchema = z.object({
-  patientId: z.string().min(1).optional(),
-  name: z.string().min(2).optional(),
+  patientId: z.string().optional(),
+  name: z.string().optional(),
   description: z.string().optional(),
   amount: z.number().min(1).optional(),
-  date: z.string().min(1).optional(),
-  category: z.string().min(1).optional(),
+  date: z.string().optional(),
+  category: z.string().optional(),
   customValues: z.array(z.object({
     fieldKey: z.string(),
     value: z.string(),

@@ -786,7 +786,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-semibold text-gray-900">
-                      {payment.amount ? formatCurrency(payment.amount) : "Değişken"}
+                      {payment.amount ? formatCurrency(Math.round(payment.amount * 100)) : "Değişken"}
                     </p>
                     <p className="text-[11px] text-gray-400">Her ayın {payment.dayOfMonth}. günü</p>
                   </div>

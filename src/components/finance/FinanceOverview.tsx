@@ -251,39 +251,56 @@ export default function FinanceOverview() {
   const [upcomingDays, setUpcomingDays] = useState(7);
   const [upcomingTotal, setUpcomingTotal] = useState(0);
 
-  useEffect(() => {
-    async function fetchData() {
-      setLoading(true);
-      setError("");
-      try {
-        const [isRes, msRes, vatRes] = await Promise.all([
-          fetch(`/api/finance?type=income-statement&month=${month}&year=${year}`),
-          fetch(`/api/finance?type=monthly-summary&year=${year}`),
-          fetch(`/api/finance?type=vat-ledger&month=${month}&year=${year}`),
-        ]);
-        if (!isRes.ok) throw new Error("Finans verisi alınamadı");
-        const isData = await isRes.json();
-        setIncomeStatement(isData);
-        setTreatments(isData.treatments || []);
-        setExpenses(isData.expenses || []);
-        setInvoiceProfitSummary(isData.invoiceProfitSummary || null);
+  async function fetchFinanceData() {
+    setLoading(true);
+    setError("");
+    try {
+      const [isRes, msRes, vatRes] = await Promise.all([
+        fetch(`/api/finance?type=income-statement&month=${month}&year=${year}`),
+        fetch(`/api/finance?type=monthly-summary&year=${year}`),
+        fetch(`/api/finance?type=vat-ledger&month=${month}&year=${year}`),
+      ]);
+      if (!isRes.ok) throw new Error("Finans verisi alınamadı");
+      const isData = await isRes.json();
+      setIncomeStatement(isData);
+      setTreatments(isData.treatments || []);
+      setExpenses(isData.expenses || []);
+      setInvoiceProfitSummary(isData.invoiceProfitSummary || null);
 
-        if (msRes.ok) {
-          const msData = await msRes.json();
-          setMonthlySummary(msData.months || []);
-        }
-
-        if (vatRes.ok) {
-          setVatLedger(await vatRes.json());
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Bir hata oluştu");
-      } finally {
-        setLoading(false);
+      if (msRes.ok) {
+        const msData = await msRes.json();
+        setMonthlySummary(msData.months || []);
       }
+
+      if (vatRes.ok) {
+        setVatLedger(await vatRes.json());
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
+    } finally {
+      setLoading(false);
     }
-    fetchData();
+  }
+
+  useEffect(() => {
+    fetchFinanceData();
   }, [month, year]);
+
+  async function handleDeleteTreatment(id: string) {
+    if (!confirm("Bu gelir kaydını silmek istediğinize emin misiniz?")) return;
+    try {
+      const res = await fetch(`/api/treatments/${id}`, { method: "DELETE" });
+      if (res.ok) fetchFinanceData();
+    } catch { /* silent */ }
+  }
+
+  async function handleDeleteExpense(id: string) {
+    if (!confirm("Bu gider kaydını silmek istediğinize emin misiniz?")) return;
+    try {
+      const res = await fetch(`/api/expenses/${id}`, { method: "DELETE" });
+      if (res.ok) fetchFinanceData();
+    } catch { /* silent */ }
+  }
 
   async function fetchRecurringTransactions() {
     setRecurringLoading(true);
@@ -932,13 +949,22 @@ export default function FinanceOverview() {
                               )}
                             </div>
                             {row.type === "treatment" && (
-                              <Link
-                                href={`/finance/new-income?edit=${row.id}`}
-                                className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-[#EEF2FF] hover:text-[#6366F1]"
-                                title="Düzenle"
-                              >
-                                <Pencil className="h-3.5 w-3.5" />
-                              </Link>
+                              <>
+                                <Link
+                                  href={`/finance/new-income?edit=${row.id}`}
+                                  className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-[#EEF2FF] hover:text-[#6366F1]"
+                                  title="Düzenle"
+                                >
+                                  <Pencil className="h-3.5 w-3.5" />
+                                </Link>
+                                <button
+                                  onClick={() => handleDeleteTreatment(row.id)}
+                                  className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
+                                  title="Sil"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              </>
                             )}
                           </div>
                         </div>
@@ -997,7 +1023,16 @@ export default function FinanceOverview() {
                               </div>
                             </div>
                           </div>
-                          <span className="text-sm font-semibold text-red-600">{formatCurrency(e.amount)}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold text-red-600">{formatCurrency(e.amount)}</span>
+                            <button
+                              onClick={() => handleDeleteExpense(e.id)}
+                              className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
+                              title="Sil"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
                         </div>
                       );
                     })}

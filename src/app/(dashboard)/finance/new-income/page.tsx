@@ -118,12 +118,14 @@ function NewIncomeForm() {
       const res = await fetch(`/api/treatments/${editId}`);
       if (res.ok) {
         const t = await res.json();
+        const patientName = t.patient?.name || "";
         setForm((prev) => ({
           ...prev,
           patientId: t.patientId || "",
           name: t.name || "",
           category: t.category || "",
           date: t.date ? new Date(t.date).toISOString().split("T")[0] : "",
+          contactName: patientName,
         }));
         // Put the existing amount as a single line item
         setLineItems([{
@@ -216,8 +218,7 @@ function NewIncomeForm() {
   const totalNet = grandTotal - totalVat;
   const totalCost = lineItems.reduce((sum, l) => {
     if (!l.productId || l.costPrice === 0) return sum;
-    const cost = l.vatIncluded ? l.costPrice : Math.round(l.costPrice * (1 + l.vatRate / 100));
-    return sum + (cost / 100) * l.quantity;
+    return sum + (l.costPrice / 100) * l.quantity;
   }, 0);
   const estimatedProfit = grandTotal - totalCost;
 
@@ -516,7 +517,7 @@ function NewIncomeForm() {
                         <div className="ml-auto flex items-center gap-3">
                           {line.productId && line.costPrice > 0 && (
                             <span className="text-[11px] text-gray-400">
-                              Maliyet: {formatCurrency(line.vatIncluded ? line.costPrice : Math.round(line.costPrice * 1.20))}
+                              Maliyet: {formatCurrency(line.costPrice)}
                             </span>
                           )}
                           <span className="text-sm font-bold text-gray-800">
