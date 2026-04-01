@@ -14,7 +14,6 @@ export async function POST() {
       return NextResponse.json({ error: "Klinik bulunamadı" }, { status: 400 });
     }
 
-    // Find all stock movements with references
     const allMovements = await prisma.stockMovement.findMany({
       where: { clinicId },
       select: { id: true, reference: true, productId: true, quantity: true, type: true },
@@ -22,35 +21,55 @@ export async function POST() {
 
     const orphanIds: string[] = [];
 
+    // Batch-collect all referenced IDs for efficient lookup
+    const treatmentIds = new Set<string>();
+    const expenseIds = new Set<string>();
+    const invoiceIds = new Set<string>();
+
     for (const m of allMovements) {
       if (!m.reference) continue;
+      if (m.reference.startsWith("treatment-")) treatmentIds.add(m.reference.replace("treatment-", ""));
+      else if (m.reference.startsWith("expense-income-")) expenseIds.add(m.reference.replace("expense-income-", ""));
+      else if (m.reference.startsWith("expense-")) expenseIds.add(m.reference.replace("expense-", ""));
+      else if (m.reference.startsWith("invoice-")) invoiceIds.add(m.reference.replace("invoice-", ""));
+    }
 
-      let parentExists = false;
+    // Batch lookup existing parents
+    const [existingTreatments, existingExpenses, existingInvoices] = await Promise.all([
+      treatmentIds.size > 0
+        ? prisma.treatment.findMany({ where: { id: { in: Array.from(treatmentIds) }, clinicId }, select: { id: true } })
+        : Promise.resolve([]),
+      expenseIds.size > 0
+        ? prisma.expense.findMany({ where: { id: { in: Array.from(expenseIds) }, clinicId }, select: { id: true } })
+        : Promise.resolve([]),
+      invoiceIds.size > 0
+        ? prisma.uploadedInvoice.findMany({ where: { id: { in: Array.from(invoiceIds) }, clinicId }, select: { id: true } })
+        : Promise.resolve([]),
+    ]);
+
+    const validTreatments = new Set(existingTreatments.map(t => t.id));
+    const validExpenses = new Set(existingExpenses.map(e => e.id));
+    const validInvoices = new Set(existingInvoices.map(i => i.id));
+
+    for (const m of allMovements) {
+      if (!m.reference) continue; // Keep manual movements
+
+      let parentExists = true;
 
       if (m.reference.startsWith("treatment-")) {
-        const treatmentId = m.reference.replace("treatment-", "");
-        const t = await prisma.treatment.findFirst({ where: { id: treatmentId, clinicId }, select: { id: true } });
-        parentExists = !!t;
+        parentExists = validTreatments.has(m.reference.replace("treatment-", ""));
       } else if (m.reference.startsWith("expense-income-")) {
-        const expenseId = m.reference.replace("expense-income-", "");
-        const e = await prisma.expense.findFirst({ where: { id: expenseId, clinicId }, select: { id: true } });
-        parentExists = !!e;
+        parentExists = validExpenses.has(m.reference.replace("expense-income-", ""));
       } else if (m.reference.startsWith("expense-")) {
-        const expenseId = m.reference.replace("expense-", "");
-        const e = await prisma.expense.findFirst({ where: { id: expenseId, clinicId }, select: { id: true } });
-        parentExists = !!e;
+        parentExists = validExpenses.has(m.reference.replace("expense-", ""));
       } else if (m.reference.startsWith("invoice-")) {
-        const invoiceId = m.reference.replace("invoice-", "");
-        const inv = await prisma.uploadedInvoice.findFirst({ where: { id: invoiceId, clinicId }, select: { id: true } });
-        parentExists = !!inv;
-      } else {
-        parentExists = true; // Unknown reference format, keep it
+        parentExists = validInvoices.has(m.reference.replace("invoice-", ""));
       }
 
       if (!parentExists) {
         orphanIds.push(m.id);
 
-        // Reverse stock for orphaned movement
+        // Reverse stock
         const product = await prisma.product.findFirst({
           where: { id: m.productId, clinicId },
         });
@@ -70,7 +89,6 @@ export async function POST() {
       }
     }
 
-    // Delete orphaned movements
     if (orphanIds.length > 0) {
       await prisma.stockMovement.deleteMany({
         where: { id: { in: orphanIds } },

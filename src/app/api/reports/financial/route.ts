@@ -78,14 +78,15 @@ export async function GET(req: NextRequest) {
         .filter((e) => new Date(e.date).getMonth() === i)
         .reduce((sum, e) => sum + e.amount, 0);
 
-      // Monthly COGS — same orphan filtering applied in yearly totals
+      // Monthly COGS — exclude orphaned references
       const monthCogs = outMovements
         .filter(m => new Date(m.date).getMonth() === i)
         .filter(m => {
           if (!m.reference) return true;
-          if (m.reference.startsWith("invoice-")) return true; // invoices handled separately in yearly
           if (m.reference.startsWith("treatment-")) return validTreatmentSet.has(m.reference.replace("treatment-", ""));
           if (m.reference.startsWith("expense-income-")) return validExpenseSet.has(m.reference.replace("expense-income-", ""));
+          if (m.reference.startsWith("expense-")) return validExpenseSet.has(m.reference.replace("expense-", ""));
+          if (m.reference.startsWith("invoice-")) return approvedIncomeInvoices.some(inv => inv.id === m.reference!.replace("invoice-", ""));
           return true;
         })
         .reduce((sum, m) => sum + (m.quantity * (m.product.purchasePrice ?? 0)), 0);
@@ -180,6 +181,14 @@ export async function GET(req: NextRequest) {
         if (!m.reference) return true;
         if (m.reference.startsWith("treatment-")) return validTreatmentSet.has(m.reference.replace("treatment-", ""));
         if (m.reference.startsWith("expense-income-")) return validExpenseSet.has(m.reference.replace("expense-income-", ""));
+        if (m.reference.startsWith("expense-")) {
+          const eid = m.reference.replace("expense-", "");
+          return validExpenseSet.has(eid);
+        }
+        if (m.reference.startsWith("invoice-")) {
+          // Check if invoice still exists
+          return approvedIncomeInvoices.some(inv => inv.id === m.reference!.replace("invoice-", ""));
+        }
         return true;
       })
       .forEach((m) => {
