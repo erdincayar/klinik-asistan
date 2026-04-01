@@ -189,6 +189,7 @@ export default function FinanceOverview() {
   const [monthlySummary, setMonthlySummary] = useState<MonthlySummary[]>([]);
   const [treatments, setTreatments] = useState<TreatmentDetail[]>([]);
   const [expenses, setExpenses] = useState<ExpenseDetail[]>([]);
+  const [incomeRecords, setIncomeRecords] = useState<ExpenseDetail[]>([]);
   const [invoiceProfitSummary, setInvoiceProfitSummary] = useState<InvoiceProfitSummary | null>(null);
   const [showProfitBreakdown, setShowProfitBreakdown] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -265,6 +266,7 @@ export default function FinanceOverview() {
       setIncomeStatement(isData);
       setTreatments(isData.treatments || []);
       setExpenses(isData.expenses || []);
+        setIncomeRecords(isData.incomeRecords || []);
       setInvoiceProfitSummary(isData.invoiceProfitSummary || null);
 
       if (msRes.ok) {
@@ -870,7 +872,7 @@ export default function FinanceOverview() {
                 {(() => {
                   const incomeRows: Array<{
                     id: string;
-                    type: "treatment" | "invoice";
+                    type: "treatment" | "invoice" | "income";
                     label: string;
                     sublabel: string;
                     amount: number;
@@ -887,6 +889,14 @@ export default function FinanceOverview() {
                       amount: t.amount,
                       date: t.date,
                       patientId: t.patientId,
+                    })),
+                    ...incomeRecords.map((r) => ({
+                      id: r.id,
+                      type: "income" as const,
+                      label: r.description.split("\n")[0] || "Gelir",
+                      sublabel: (EXPENSE_CATEGORIES.find((c) => c.value === r.category)?.label || r.category) + " · " + formatTurkishDate(r.date),
+                      amount: r.amount,
+                      date: r.date,
                     })),
                     ...(invoiceProfitSummary?.invoices || []).map((inv) => ({
                       id: inv.id,
@@ -948,23 +958,14 @@ export default function FinanceOverview() {
                                 <p className="text-[11px] text-gray-400 mt-0.5">—</p>
                               )}
                             </div>
-                            {row.type === "treatment" && (
-                              <>
-                                <Link
-                                  href={`/finance/new-income?edit=${row.id}`}
-                                  className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-[#EEF2FF] hover:text-[#6366F1]"
-                                  title="Düzenle"
-                                >
-                                  <Pencil className="h-3.5 w-3.5" />
-                                </Link>
-                                <button
-                                  onClick={() => handleDeleteTreatment(row.id)}
-                                  className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
-                                  title="Sil"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </button>
-                              </>
+                            {(row.type === "treatment" || row.type === "income") && (
+                              <button
+                                onClick={() => row.type === "treatment" ? handleDeleteTreatment(row.id) : handleDeleteExpense(row.id)}
+                                className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
+                                title="Sil"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
                             )}
                           </div>
                         </div>

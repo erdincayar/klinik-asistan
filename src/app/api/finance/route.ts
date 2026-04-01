@@ -172,7 +172,15 @@ export async function GET(request: Request) {
         }
       }
 
-      return Response.json({ ciro, cogs, gelir, totalExpense, totalProfit, vatAmount, taxRate, treatments, expenses, invoiceProfitSummary });
+      const incomeRecords = rawIncomeRecords.map((r) => ({
+        id: r.id,
+        date: r.date,
+        description: r.description,
+        category: r.category,
+        amount: r.amount,
+      }));
+
+      return Response.json({ ciro, cogs, gelir, totalExpense, totalProfit, vatAmount, taxRate, treatments, expenses, incomeRecords, invoiceProfitSummary });
     }
 
     if (type === "vat-summary") {
