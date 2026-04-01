@@ -52,9 +52,16 @@ export async function GET(request: Request) {
       const incomeTotal = rawIncomeRecords.reduce((sum, i) => sum + (i.amount ?? 0), 0);
       const ciro = treatmentTotal + incomeTotal;
 
-      // Extract embedded cost data from income records' descriptions
+      // Extract embedded cost ONLY from income records that have NO stock movements
+      // (to avoid double-counting: embedded cost + stock movement cost)
+      const incomeIdsWithStockMovements = new Set(
+        rawOutMovements
+          .filter(m => m.reference?.startsWith("expense-income-"))
+          .map(m => m.reference!.replace("expense-income-", ""))
+      );
       let embeddedCost = 0;
       for (const inc of rawIncomeRecords) {
+        if (incomeIdsWithStockMovements.has(inc.id)) continue; // skip — stock movements handle the cost
         const costMatch = inc.description?.match(/\[Maliyet: (\d+)\]/);
         if (costMatch) embeddedCost += parseInt(costMatch[1], 10);
       }

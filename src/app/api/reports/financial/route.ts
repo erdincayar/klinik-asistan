@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
       }),
       prisma.expense.findMany({
         where: { clinicId, type: "INCOME", date: dateFilter },
-        select: { amount: true, date: true, description: true },
+        select: { id: true, amount: true, date: true, description: true },
       }),
       prisma.expense.findMany({
         where: { clinicId, type: "EXPENSE", date: dateFilter },
@@ -119,9 +119,15 @@ export async function GET(req: NextRequest) {
       + incomeRecords.reduce((sum, r) => sum + r.amount, 0);
     const totalExpense = expenses.reduce((sum, e) => sum + e.amount, 0);
 
-    // Extract embedded cost from income record descriptions
+    // Extract embedded cost ONLY from income records without stock movements (avoid double-counting)
+    const incomeIdsWithStockMovements = new Set(
+      outMovements
+        .filter(m => m.reference?.startsWith("expense-income-"))
+        .map(m => m.reference!.replace("expense-income-", ""))
+    );
     let embeddedCost = 0;
     for (const r of incomeRecords) {
+      if (incomeIdsWithStockMovements.has(r.id)) continue;
       const costMatch = (r as any).description?.match(/\[Maliyet: (\d+)\]/);
       if (costMatch) embeddedCost += parseInt(costMatch[1], 10);
     }

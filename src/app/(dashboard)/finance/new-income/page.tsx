@@ -64,6 +64,7 @@ function NewIncomeForm() {
   const searchParams = useSearchParams();
   const preselectedPatientId = searchParams.get("patientId") || "";
   const editId = searchParams.get("edit") || "";
+  const editExpenseId = searchParams.get("editExpense") || "";
 
   const [patients, setPatients] = useState<Patient[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -142,6 +143,32 @@ function NewIncomeForm() {
   }, [editId]);
 
   useEffect(() => { fetchTreatment(); }, [fetchTreatment]);
+
+  // Edit expense (income) record
+  useEffect(() => {
+    if (!editExpenseId) return;
+    setFetchingEdit(true);
+    fetch(`/api/expenses/${editExpenseId}`)
+      .then((res) => res.ok ? res.json() : null)
+      .then((e) => {
+        if (!e) return;
+        const descLines = (e.description || "").split("\n");
+        const mainDesc = descLines[0]?.replace(/\[Maliyet:.*?\]/, "").trim() || "Gelir";
+        setForm((prev) => ({
+          ...prev,
+          name: mainDesc,
+          category: e.category || "",
+          date: e.date ? new Date(e.date).toISOString().split("T")[0] : "",
+        }));
+        setLineItems([{
+          ...emptyLine(),
+          description: mainDesc,
+          unitPrice: String(e.amount / 100),
+        }]);
+      })
+      .catch(() => {})
+      .finally(() => setFetchingEdit(false));
+  }, [editExpenseId]);
 
   async function handleAddPatient() {
     if (!newPatientName.trim()) return;
@@ -265,8 +292,23 @@ function NewIncomeForm() {
         })),
       };
 
-      const url = editId ? `/api/treatments/${editId}` : "/api/treatments";
-      const method = editId ? "PATCH" : "POST";
+      let url: string;
+      let method: string;
+      if (editExpenseId) {
+        url = `/api/expenses/${editExpenseId}`;
+        method = "PUT";
+        // For expense update, restructure payload
+        payload.description = validLines.map((l: any) =>
+          `${l.description} x${l.quantity} = ${(l.unitPrice / 100 * l.quantity).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL`
+        ).join("\n");
+        payload.amount = toKurus(grandTotal);
+      } else if (editId) {
+        url = `/api/treatments/${editId}`;
+        method = "PATCH";
+      } else {
+        url = "/api/treatments";
+        method = "POST";
+      }
 
       const res = await fetch(url, {
         method,
@@ -295,7 +337,7 @@ function NewIncomeForm() {
     <div className="mx-auto max-w-4xl">
       <Card>
         <CardHeader>
-          <CardTitle>{editId ? "Gelir Kaydını Düzenle" : "Yeni Gelir Kaydı"}</CardTitle>
+          <CardTitle>{editId || editExpenseId ? "Gelir Kaydını Düzenle" : "Yeni Gelir Kaydı"}</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">

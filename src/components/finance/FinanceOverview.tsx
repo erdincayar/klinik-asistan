@@ -991,6 +991,15 @@ export default function FinanceOverview() {
                                 </div>
                               ) : null}
                             </div>
+                            {(row.type === "treatment" || row.type === "income") && (
+                              <Link
+                                href={row.type === "treatment" ? `/finance/new-income?edit=${row.id}` : `/finance/new-income?editExpense=${row.id}`}
+                                className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-[#EEF2FF] hover:text-[#6366F1]"
+                                title="Düzenle"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Link>
+                            )}
                             <button
                               onClick={() => {
                                 if (row.type === "treatment") handleDeleteTreatment(row.id);
