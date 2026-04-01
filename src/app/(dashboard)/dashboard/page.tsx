@@ -195,6 +195,10 @@ export default function DashboardPage() {
   const [showModuleSetup, setShowModuleSetup] = useState(false);
   const [selectedModules, setSelectedModules] = useState<Set<string>>(new Set(["base", "messaging"]));
   const [savingModules, setSavingModules] = useState(false);
+  const [showChecklist, setShowChecklist] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("poby-checklist-dismissed") !== "true";
+  });
 
   // Check modules first — independent of dashboard data
   useEffect(() => {
@@ -749,6 +753,59 @@ export default function DashboardPage() {
             <ArrowRight className="ml-auto h-4 w-4 text-orange-500" />
           </motion.div>
         </Link>
+      )}
+
+      {/* ── ONBOARDING CHECKLIST ── */}
+      {showChecklist && data && (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-xl border border-[#E0E7FF] bg-gradient-to-br from-[#EEF2FF] to-white p-5"
+        >
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#4F46E5] text-white">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-gray-900">Poby&apos;ye Hoş Geldiniz!</h2>
+                <p className="text-xs text-gray-500">Başlamak için bu adımları tamamlayın</p>
+              </div>
+            </div>
+            <button
+              onClick={() => { setShowChecklist(false); localStorage.setItem("poby-checklist-dismissed", "true"); }}
+              className="text-xs text-gray-400 hover:text-gray-600"
+            >
+              Kapat
+            </button>
+          </div>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {[
+              { done: data.totalPatients > 0, label: "İlk müşterinizi ekleyin", href: "/patients/new" },
+              { done: (data.todayAppointments?.length || 0) > 0, label: "İlk randevuyu oluşturun", href: "/appointments" },
+              { done: data.monthlyIncome > 0 || data.monthlyExpense > 0, label: "Gelir veya gider kaydedin", href: "/finance" },
+              { done: !!clinicName, label: "İşletme adınızı belirleyin", href: "/settings" },
+            ].map((step, i) => (
+              <Link
+                key={i}
+                href={step.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
+                  step.done ? "bg-emerald-50 text-emerald-700" : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-100"
+                )}
+              >
+                <div className={cn(
+                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                  step.done ? "bg-emerald-500 text-white" : "bg-gray-200 text-gray-500"
+                )}>
+                  {step.done ? "✓" : i + 1}
+                </div>
+                <span className={step.done ? "line-through" : ""}>{step.label}</span>
+                {!step.done && <ArrowRight className="ml-auto h-3.5 w-3.5 text-gray-400" />}
+              </Link>
+            ))}
+          </div>
+        </motion.div>
       )}
 
       {/* ── STAT CARDS ── */}
