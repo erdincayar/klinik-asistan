@@ -1051,9 +1051,19 @@ export default function AppointmentsPage() {
                             );
                           })
                         ) : (
-                          <div className="flex w-full items-center justify-center rounded-lg border border-dashed border-gray-200 py-2 text-sm text-gray-400">
-                            Boş
-                          </div>
+                          <button
+                            onClick={() => {
+                              setNewAppt((prev) => ({
+                                ...prev,
+                                date: formatDateISO(selectedDate),
+                                startTime: time,
+                              }));
+                              setCreateDialogOpen(true);
+                            }}
+                            className="flex w-full items-center justify-center rounded-lg border border-dashed border-gray-200 py-2 text-sm text-gray-400 hover:border-[#6366F1] hover:text-[#6366F1] hover:bg-[#EEF2FF]/30 transition-colors cursor-pointer"
+                          >
+                            + Randevu Ekle
+                          </button>
                         )}
                       </div>
                     </div>
@@ -1114,7 +1124,16 @@ export default function AppointmentsPage() {
                           const isTodayCol = dateStr === formatDateISO(new Date());
 
                           return (
-                            <td key={i} className={cn("align-top", compactMode ? "px-0.5 py-0.5" : "px-1 py-1", isTodayCol && "bg-[#EEF2FF]/30")}>
+                            <td
+                              key={i}
+                              className={cn("align-top cursor-pointer", compactMode ? "px-0.5 py-0.5" : "px-1 py-1", isTodayCol && "bg-[#EEF2FF]/30", slotAppts.length === 0 && "hover:bg-[#EEF2FF]/20")}
+                              onClick={() => {
+                                if (slotAppts.length === 0) {
+                                  setNewAppt((prev) => ({ ...prev, date: dateStr, startTime: time }));
+                                  setCreateDialogOpen(true);
+                                }
+                              }}
+                            >
                               <div className="flex flex-col gap-0.5">
                                 {slotAppts.map((appt) => {
                                   const statusInfo = getStatusInfo(appt.status);
