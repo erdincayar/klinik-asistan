@@ -236,6 +236,10 @@ function NewIncomeForm() {
       if (validLines.length === 0) throw new Error("En az bir kalem girin");
       if (grandTotal <= 0) throw new Error("Geçerli bir tutar girin");
 
+      // Determine main VAT rate from line items (use first line or most common)
+      const mainVatRate = validLines[0]?.vatRate ?? 20;
+      const mainVatIncluded = validLines[0]?.vatIncluded ?? true;
+
       const payload: any = {
         patientId: form.patientId,
         name: form.name || validLines.map((l) => l.description).join(", "),
@@ -245,6 +249,8 @@ function NewIncomeForm() {
         ).join("\n"),
         amount: toKurus(grandTotal),
         date: form.date,
+        vatRate: mainVatRate,
+        vatIncluded: mainVatIncluded,
         addToDebt: form.addToDebt,
         contactName: form.contactName || patients.find(p => p.id === form.patientId)?.name || undefined,
         dueDate: form.dueDate || undefined,
@@ -253,7 +259,7 @@ function NewIncomeForm() {
           description: l.description,
           quantity: l.quantity,
           unitPrice: toKurus(parseFloat(l.unitPrice) || 0),
-          costPrice: l.costPrice,
+          costPrice: toKurus(parseFloat(l.costPriceInput) || 0),
           vatIncluded: l.vatIncluded,
           vatRate: l.vatRate,
         })),

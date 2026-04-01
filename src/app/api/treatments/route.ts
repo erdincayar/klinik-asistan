@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { customValues, addToDebt, contactName, dueDate, lineItems, ...treatmentBody } = body;
+    const { customValues, addToDebt, contactName, dueDate, lineItems, vatRate: bodyVatRate, vatIncluded: bodyVatIncluded, ...treatmentBody } = body;
     const parsed = treatmentSchema.safeParse(treatmentBody);
 
     if (!parsed.success) {
@@ -66,8 +66,10 @@ export async function POST(request: Request) {
 
     const { date, ...rest } = parsed.data;
 
-    // If no patientId, save as income record in Expense table instead
-    if (!rest.patientId) {
+    // If lineItems present or no patientId, save as Expense(INCOME) instead of Treatment
+    // This prevents income entries from appearing in "işlemler" (treatment) list
+    const isIncomeRecord = Array.isArray(lineItems) || !rest.patientId;
+    if (isIncomeRecord) {
       const incomeRecord = await prisma.expense.create({
         data: {
           clinicId,
@@ -76,13 +78,16 @@ export async function POST(request: Request) {
           category: rest.category || "SATIS",
           type: "INCOME",
           date: new Date(date),
+          vatRate: typeof bodyVatRate === "number" ? bodyVatRate : 20,
+          vatIncluded: typeof bodyVatIncluded === "boolean" ? bodyVatIncluded : true,
         },
       });
 
-      // Process line items for stock OUT
+      // Process line items for stock OUT + cost tracking
       if (Array.isArray(lineItems)) {
         for (const item of lineItems) {
-          if (item.productId && item.quantity > 0) {
+          if (item.quantity > 0 && item.productId) {
+            // Stoktan ürün — stok düş + maliyet kaydet
             const product = await prisma.product.findFirst({
               where: { id: item.productId, clinicId },
             });
@@ -105,6 +110,16 @@ export async function POST(request: Request) {
               data: { currentStock: Math.max(0, (product.currentStock ?? 0) - item.quantity) },
             });
           }
+        }
+        // Toplam maliyeti description'a ekle (raporlar için)
+        const totalCost = lineItems.reduce((s: number, item: any) => s + ((item.costPrice || 0) * (item.quantity || 1)), 0);
+        if (totalCost > 0) {
+          await prisma.expense.update({
+            where: { id: incomeRecord.id },
+            data: {
+              description: `${rest.name || "Gelir"}\n[Maliyet: ${totalCost}]`,
+            },
+          });
         }
       }
 

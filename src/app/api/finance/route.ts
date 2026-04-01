@@ -52,9 +52,42 @@ export async function GET(request: Request) {
       const incomeTotal = rawIncomeRecords.reduce((sum, i) => sum + (i.amount ?? 0), 0);
       const ciro = treatmentTotal + incomeTotal;
 
-      // COGS: non-invoice stock movements + invoice profitData costs (avoid double-counting)
+      // Extract embedded cost data from income records' descriptions
+      let embeddedCost = 0;
+      for (const inc of rawIncomeRecords) {
+        const costMatch = inc.description?.match(/\[Maliyet: (\d+)\]/);
+        if (costMatch) embeddedCost += parseInt(costMatch[1], 10);
+      }
+
+      // COGS: non-invoice stock movements, excluding orphaned references
+      // First, collect treatment and expense-income references to validate
+      const treatmentRefs = rawOutMovements
+        .filter(m => m.reference?.startsWith("treatment-"))
+        .map(m => m.reference!.replace("treatment-", ""));
+      const expenseIncomeRefs = rawOutMovements
+        .filter(m => m.reference?.startsWith("expense-income-"))
+        .map(m => m.reference!.replace("expense-income-", ""));
+
+      // Check which parent records still exist
+      const [existingTreatments, existingExpenseIncomes] = await Promise.all([
+        treatmentRefs.length > 0
+          ? prisma.treatment.findMany({ where: { id: { in: treatmentRefs }, clinicId }, select: { id: true } })
+          : Promise.resolve([]),
+        expenseIncomeRefs.length > 0
+          ? prisma.expense.findMany({ where: { id: { in: expenseIncomeRefs }, clinicId }, select: { id: true } })
+          : Promise.resolve([]),
+      ]);
+      const validTreatmentIds = new Set(existingTreatments.map(t => t.id));
+      const validExpenseIncomeIds = new Set(existingExpenseIncomes.map(e => e.id));
+
       const nonInvoiceCogs = rawOutMovements
-        .filter(m => !m.reference?.startsWith("invoice-"))
+        .filter(m => {
+          if (!m.reference) return true;
+          if (m.reference.startsWith("invoice-")) return false; // handled separately
+          if (m.reference.startsWith("treatment-")) return validTreatmentIds.has(m.reference.replace("treatment-", ""));
+          if (m.reference.startsWith("expense-income-")) return validExpenseIncomeIds.has(m.reference.replace("expense-income-", ""));
+          return true;
+        })
         .reduce((sum, m) => sum + (m.quantity * (m.product.purchasePrice ?? 0)), 0);
 
       // Fetch approved income invoices for profitData-based costs
@@ -82,7 +115,7 @@ export async function GET(request: Request) {
         }
       }
 
-      const cogs = nonInvoiceCogs + invoiceCogs;
+      const cogs = nonInvoiceCogs + invoiceCogs + embeddedCost;
       const gelir = ciro - cogs;
       const totalExpense = rawExpenses.reduce((sum, e) => sum + (e.amount ?? 0), 0);
       const totalProfit = gelir - totalExpense;
@@ -184,6 +217,7 @@ export async function GET(request: Request) {
 
       for (const inc of incomeRecords) {
         const rate = inc.vatRate ?? taxRate;
+        if (rate === 0) continue; // KDV %0 = faturasız satış, KDV hesaplanmaz
         const vatAmt = inc.vatIncluded
           ? Math.round(inc.amount * rate / (100 + rate))
           : Math.round(inc.amount * rate / 100);
@@ -216,6 +250,7 @@ export async function GET(request: Request) {
 
       for (const exp of expenseRecords) {
         const rate = exp.vatRate ?? taxRate;
+        if (rate === 0) continue; // KDV %0, KDV hesaplanmaz
         const vatAmt = exp.vatIncluded
           ? Math.round(exp.amount * rate / (100 + rate))
           : Math.round(exp.amount * rate / 100);
