@@ -625,6 +625,25 @@ export default function FinanceOverview() {
                   <Download className="h-4 w-4" />
                   Dışa Aktar
                 </a>
+                <button
+                  onClick={async () => {
+                    const res = await fetch("/api/finance/cleanup", { method: "POST" });
+                    if (res.ok) {
+                      const data = await res.json();
+                      if (data.cleaned > 0) {
+                        alert(`${data.cleaned} yetim stok hareketi temizlendi. Sayfa yenilenecek.`);
+                        window.location.reload();
+                      } else {
+                        alert("Temizlenecek veri bulunamadı.");
+                      }
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-500 transition-all hover:bg-gray-50"
+                  title="Silinmiş kayıtların yetim stok hareketlerini temizle"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Temizle
+                </button>
                 <Link
                   href="/finance/new-income"
                   className="inline-flex items-center gap-2 rounded-xl bg-[#1E1E2D] px-4 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-[#2A2A3C] hover:shadow-lg hover:shadow-[#1E1E2D]/20"

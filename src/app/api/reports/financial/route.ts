@@ -172,10 +172,16 @@ export async function GET(req: NextRequest) {
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 10);
 
-    // Top products by sales volume
+    // Top products by sales volume — exclude orphaned movements
     const productMap: Record<string, { name: string; revenue: number; quantity: number; brand: string | null }> = {};
     outMovements
       .filter(m => m.type === "OUT")
+      .filter(m => {
+        if (!m.reference) return true;
+        if (m.reference.startsWith("treatment-")) return validTreatmentSet.has(m.reference.replace("treatment-", ""));
+        if (m.reference.startsWith("expense-income-")) return validExpenseSet.has(m.reference.replace("expense-income-", ""));
+        return true;
+      })
       .forEach((m) => {
         const key = m.productId;
         if (!productMap[key]) {
