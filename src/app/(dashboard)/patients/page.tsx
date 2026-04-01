@@ -555,7 +555,7 @@ export default function PatientsPage() {
       >
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-[#6366F1]" />
                 <CardTitle>Müşteri Listesi</CardTitle>
@@ -565,17 +565,19 @@ export default function PatientsPage() {
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Link href="/patients/settings">
                   <Button size="sm" variant="outline" className="gap-1.5">
                     <Settings2 className="h-3.5 w-3.5" />
-                    Alanları Düzenle
+                    <span className="hidden sm:inline">Alanları Düzenle</span>
+                    <span className="sm:hidden">Düzenle</span>
                   </Button>
                 </Link>
                 <Link href="/patients/new">
                   <Button size="sm" className="gap-1.5">
                     <Plus className="h-3.5 w-3.5" />
-                    Yeni Müşteri
+                    <span className="hidden sm:inline">Yeni Müşteri</span>
+                    <span className="sm:hidden">Ekle</span>
                   </Button>
                 </Link>
                 {customColumns.length > 0 && (

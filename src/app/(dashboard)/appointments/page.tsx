@@ -145,7 +145,6 @@ export default function AppointmentsPage() {
   const [weekAppointments, setWeekAppointments] = useState<Record<string, Appointment[]>>({});
   const [loading, setLoading] = useState(true);
   const [viewModeRaw, setViewModeRaw] = useState(() => loadPrefs().viewMode || "daily");
-  // Mobilde haftalık görünüm yerine otomatik günlük'e düş
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640);
@@ -153,7 +152,8 @@ export default function AppointmentsPage() {
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
-  const viewMode = isMobile ? "daily" : viewModeRaw;
+  // Mobilde de haftalık görünüme geçilebilir
+  const viewMode = viewModeRaw;
   const setViewMode = (v: string) => { setViewModeRaw(v); savePrefs({ viewMode: v }); };
   const compactMode = true;
   const [hideEmpty, setHideEmpty] = useState(() => loadPrefs().hideEmpty ?? false);
@@ -648,8 +648,8 @@ export default function AppointmentsPage() {
           <h2 className="text-base font-semibold text-gray-900">{formatDateTR(selectedDate)}</h2>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {/* Work hours (hidden on mobile) */}
-          <div className="hidden items-center gap-1 rounded-xl border border-gray-200 bg-white px-2.5 py-1.5 sm:flex">
+          {/* Work hours */}
+          <div className="flex items-center gap-1 rounded-xl border border-gray-200 bg-white px-2 py-1 sm:px-2.5 sm:py-1.5">
             <span className="text-xs font-medium text-gray-500">Mesai:</span>
             <select
               value={workStartTime}
