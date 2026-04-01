@@ -1158,6 +1158,9 @@ model CustomerCustomColumn {
   clinicId   String
   columnName String
   columnKey  String
+  fieldType  String   @default("text") // text, number, date, select, phone, email
+  options    String?  // JSON array for select type options
+  isRequired Boolean  @default(false)
   sortOrder  Int      @default(0)
   createdAt  DateTime @default(now())
   clinic     Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)

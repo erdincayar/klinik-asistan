@@ -566,6 +566,12 @@ export default function PatientsPage() {
                 )}
               </div>
               <div className="flex items-center gap-2">
+                <Link href="/patients/settings">
+                  <Button size="sm" variant="outline" className="gap-1.5">
+                    <Settings2 className="h-3.5 w-3.5" />
+                    Alanları Düzenle
+                  </Button>
+                </Link>
                 <Link href="/patients/new">
                   <Button size="sm" className="gap-1.5">
                     <Plus className="h-3.5 w-3.5" />

@@ -48,7 +48,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Klinik bulunamadı" }, { status: 400 });
     }
 
-    const { columnName } = await req.json();
+    const body = await req.json();
+    const { columnName, fieldType, options, isRequired } = body;
     if (!columnName || typeof columnName !== "string" || columnName.trim().length < 1) {
       return NextResponse.json({ error: "Sütun adı gerekli" }, { status: 400 });
     }
@@ -57,6 +58,9 @@ export async function POST(req: NextRequest) {
     if (!columnKey) {
       return NextResponse.json({ error: "Geçersiz sütun adı" }, { status: 400 });
     }
+
+    const validTypes = ["text", "number", "date", "select", "phone", "email", "textarea"];
+    const type = validTypes.includes(fieldType) ? fieldType : "text";
 
     // Get current max sortOrder
     const maxSort = await prisma.customerCustomColumn.findFirst({
@@ -70,6 +74,9 @@ export async function POST(req: NextRequest) {
         clinicId,
         columnName: columnName.trim(),
         columnKey,
+        fieldType: type,
+        options: type === "select" && options ? JSON.stringify(options) : null,
+        isRequired: isRequired === true,
         sortOrder: (maxSort?.sortOrder ?? -1) + 1,
       },
     });

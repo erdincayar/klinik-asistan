@@ -37,8 +37,9 @@ interface LineItem {
   productId: string | null;
   description: string;
   quantity: number;
-  unitPrice: string; // TL string for input
-  costPrice: number; // kuruş, from product
+  unitPrice: string; // TL string for input (satış fiyatı)
+  costPriceInput: string; // TL string for input (maliyet)
+  costPrice: number; // kuruş, from product (auto-fill)
   vatIncluded: boolean;
   vatRate: number;
   productSearch: string;
@@ -50,6 +51,7 @@ const emptyLine = (): LineItem => ({
   description: "",
   quantity: 1,
   unitPrice: "",
+  costPriceInput: "",
   costPrice: 0,
   vatIncluded: true,
   vatRate: 20,
@@ -187,6 +189,7 @@ function NewIncomeForm() {
       productId: product.id,
       description: product.name,
       costPrice: product.purchasePrice,
+      costPriceInput: product.purchasePrice > 0 ? String(product.purchasePrice / 100) : "",
       unitPrice: product.salePrice > 0 ? String(product.salePrice / 100) : "",
       vatIncluded: product.vatIncluded,
       productSearch: "",
@@ -217,8 +220,9 @@ function NewIncomeForm() {
   const totalVat = lineItems.reduce((sum, l) => sum + lineVat(l), 0);
   const totalNet = grandTotal - totalVat;
   const totalCost = lineItems.reduce((sum, l) => {
-    if (!l.productId || l.costPrice === 0) return sum;
-    return sum + (l.costPrice / 100) * l.quantity;
+    const cost = parseFloat(l.costPriceInput) || 0;
+    if (cost === 0) return sum;
+    return sum + cost * l.quantity;
   }, 0);
   const estimatedProfit = grandTotal - totalCost;
 
@@ -481,7 +485,19 @@ function NewIncomeForm() {
                           />
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[11px] text-gray-400 w-8">Fiyat</span>
+                          <span className="text-[11px] text-gray-400">Maliyet</span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={line.costPriceInput}
+                            onChange={(e) => updateLine(idx, { costPriceInput: e.target.value })}
+                            placeholder="0.00"
+                            className="w-24 rounded-lg border border-gray-200 px-2 py-1.5 text-sm text-right bg-orange-50/50"
+                          />
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[11px] text-gray-400">Satış</span>
                           <input
                             type="number"
                             step="0.01"
@@ -489,7 +505,7 @@ function NewIncomeForm() {
                             value={line.unitPrice}
                             onChange={(e) => updateLine(idx, { unitPrice: e.target.value })}
                             placeholder="0.00"
-                            className="w-28 rounded-lg border border-gray-200 px-2 py-1.5 text-sm text-right"
+                            className="w-24 rounded-lg border border-gray-200 px-2 py-1.5 text-sm text-right"
                           />
                         </div>
                         <div className="flex items-center gap-1.5">
@@ -515,9 +531,9 @@ function NewIncomeForm() {
                           </label>
                         </div>
                         <div className="ml-auto flex items-center gap-3">
-                          {line.productId && line.costPrice > 0 && (
-                            <span className="text-[11px] text-gray-400">
-                              Maliyet: {formatCurrency(line.costPrice)}
+                          {(parseFloat(line.costPriceInput) || 0) > 0 && total > 0 && (
+                            <span className={`text-[11px] font-medium ${total - (parseFloat(line.costPriceInput) || 0) * line.quantity >= 0 ? "text-green-600" : "text-red-600"}`}>
+                              Kar: {(total - (parseFloat(line.costPriceInput) || 0) * line.quantity).toLocaleString("tr-TR", { minimumFractionDigits: 2 })}₺
                             </span>
                           )}
                           <span className="text-sm font-bold text-gray-800">

@@ -151,6 +151,31 @@ export async function DELETE(
         });
       }
 
+      // Reverse stock movements created by manual income/expense forms
+      for (const ref of [`expense-${params.id}`, `expense-income-${params.id}`]) {
+        const manualMovements = await tx.stockMovement.findMany({
+          where: { clinicId, reference: ref },
+        });
+        for (const movement of manualMovements) {
+          const product = await tx.product.findFirst({
+            where: { id: movement.productId, clinicId },
+          });
+          if (!product) continue;
+          if (movement.type === "IN") {
+            await tx.product.update({
+              where: { id: product.id },
+              data: { currentStock: Math.max(0, (product.currentStock ?? 0) - movement.quantity) },
+            });
+          } else if (movement.type === "OUT") {
+            await tx.product.update({
+              where: { id: product.id },
+              data: { currentStock: (product.currentStock ?? 0) + movement.quantity },
+            });
+          }
+        }
+        await tx.stockMovement.deleteMany({ where: { clinicId, reference: ref } });
+      }
+
       // Delete the expense
       await tx.expense.delete({ where: { id: params.id } });
     });

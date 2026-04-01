@@ -147,7 +147,45 @@ export async function DELETE(
       return NextResponse.json({ error: "İşlem bulunamadı" }, { status: 404 });
     }
 
-    await prisma.treatment.delete({ where: { id } });
+    await prisma.$transaction(async (tx) => {
+      // Reverse stock movements created by this treatment
+      const reference = `treatment-${id}`;
+      const stockMovements = await tx.stockMovement.findMany({
+        where: { clinicId, reference },
+      });
+
+      for (const movement of stockMovements) {
+        const product = await tx.product.findFirst({
+          where: { id: movement.productId, clinicId },
+        });
+        if (!product) continue;
+
+        if (movement.type === "OUT") {
+          // Was a sale — reverse stock deduction
+          await tx.product.update({
+            where: { id: product.id },
+            data: { currentStock: (product.currentStock ?? 0) + movement.quantity },
+          });
+        } else if (movement.type === "IN") {
+          await tx.product.update({
+            where: { id: product.id },
+            data: { currentStock: Math.max(0, (product.currentStock ?? 0) - movement.quantity) },
+          });
+        }
+      }
+
+      // Delete stock movements
+      await tx.stockMovement.deleteMany({ where: { clinicId, reference } });
+
+      // Delete linked debt records
+      await tx.debt.deleteMany({ where: { clinicId, treatmentId: id } });
+
+      // Delete custom values
+      await tx.transactionCustomValue.deleteMany({ where: { treatmentId: id } });
+
+      // Delete the treatment
+      await tx.treatment.delete({ where: { id } });
+    });
 
     return NextResponse.json({ success: true });
   } catch {
