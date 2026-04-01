@@ -7,9 +7,43 @@ export async function GET() {
     if (!session?.user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const clinicId = (session.user as any).clinicId;
+    let clinicId = (session.user as any).clinicId;
+
+    // Auto-create clinic for users without one (e.g. Google sign-up)
     if (!clinicId) {
-      return Response.json({ error: "No clinic" }, { status: 400 });
+      const userId = (session.user as any).id || session.user.email;
+      const dbUser = await prisma.user.findFirst({
+        where: { email: session.user.email! },
+        select: { id: true, clinicId: true, name: true },
+      });
+
+      if (dbUser?.clinicId) {
+        clinicId = dbUser.clinicId;
+      } else if (dbUser) {
+        const clinic = await prisma.clinic.create({
+          data: {
+            name: dbUser.name ? `${dbUser.name} İşletmesi` : "İşletmem",
+            plan: "PRO",
+          },
+        });
+        await prisma.user.update({
+          where: { id: dbUser.id },
+          data: { clinicId: clinic.id, role: "ADMIN" },
+        });
+        // Create default subscription plan
+        await prisma.subscriptionPlan.create({
+          data: {
+            clinicId: clinic.id,
+            status: "trial",
+            activeModules: ["base", "messaging"],
+            monthlyTotal: 0,
+            trialEnd: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days
+          },
+        }).catch(() => {});
+        clinicId = clinic.id;
+      } else {
+        return Response.json({ error: "Kullanıcı bulunamadı" }, { status: 400 });
+      }
     }
 
     const now = new Date();
@@ -61,7 +95,7 @@ export async function GET() {
         invoiceDate: { gte: startOfMonth, lt: startOfNextMonth },
       },
       select: { profitData: true },
-    });
+    }).catch(() => []);
 
     let estimatedProfit = 0;
     let unmatchedItemCount = 0;
