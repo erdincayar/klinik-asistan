@@ -574,17 +574,19 @@ export default function FinanceOverview() {
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="overview">Genel Bakış</TabsTrigger>
-          <TabsTrigger value="recurring">
-            <RefreshCw className="mr-1 h-4 w-4" />
-            Sabit Ödemeler
-          </TabsTrigger>
-          <TabsTrigger value="upcoming">
-            <CalendarDays className="mr-1 h-4 w-4" />
-            Yaklaşan Ödemeler
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-1 px-1">
+          <TabsList className="w-max sm:w-auto">
+            <TabsTrigger value="overview">Genel Bakış</TabsTrigger>
+            <TabsTrigger value="recurring">
+              <RefreshCw className="mr-1 h-4 w-4 hidden sm:block" />
+              Sabit Ödemeler
+            </TabsTrigger>
+            <TabsTrigger value="upcoming">
+              <CalendarDays className="mr-1 h-4 w-4 hidden sm:block" />
+              Yaklaşan Ödemeler
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Overview Tab */}
         <TabsContent value="overview">
@@ -646,16 +648,16 @@ export default function FinanceOverview() {
                 </button>
                 <Link
                   href="/finance/new-income"
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#1E1E2D] px-4 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-[#2A2A3C] hover:shadow-lg hover:shadow-[#1E1E2D]/20"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#1E1E2D] px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-semibold text-white transition-all hover:bg-[#2A2A3C]"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   Gelir Ekle
                 </Link>
                 <Link
                   href="/finance/new-expense"
-                  className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-all hover:bg-gray-50"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-semibold text-gray-700 transition-all hover:bg-gray-50"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   Gider Ekle
                 </Link>
               </div>

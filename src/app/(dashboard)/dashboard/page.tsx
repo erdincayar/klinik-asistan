@@ -121,7 +121,7 @@ function StatCardSkeleton() {
 function DashboardSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
         {[...Array(4)].map((_, i) => (
           <StatCardSkeleton key={i} />
         ))}
@@ -809,7 +809,7 @@ export default function DashboardPage() {
       )}
 
       {/* ── STAT CARDS ── */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
         {statCards.map((stat, i) => {
           const Icon = stat.icon;
           return (

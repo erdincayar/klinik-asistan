@@ -1073,28 +1073,30 @@ export default function ReportsPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="income" className="gap-1.5 text-xs sm:text-sm">
-            <DollarSign className="hidden h-4 w-4 sm:inline" />
-            Gelir Analizi
-          </TabsTrigger>
-          <TabsTrigger value="expense" className="gap-1.5 text-xs sm:text-sm">
-            <TrendingDown className="hidden h-4 w-4 sm:inline" />
-            Gider Analizi
-          </TabsTrigger>
-          <TabsTrigger value="profit-loss" className="gap-1.5 text-xs sm:text-sm">
-            <BarChart3 className="hidden h-4 w-4 sm:inline" />
-            Kâr-Zarar
-          </TabsTrigger>
-          <TabsTrigger value="customer" className="gap-1.5 text-xs sm:text-sm">
-            <Users className="hidden h-4 w-4 sm:inline" />
-            Müşteri Analizi
-          </TabsTrigger>
-          <TabsTrigger value="employee" className="gap-1.5 text-xs sm:text-sm">
-            <Briefcase className="hidden h-4 w-4 sm:inline" />
-            Çalışan & Prim
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-1 px-1">
+          <TabsList className="w-max sm:w-full sm:grid sm:grid-cols-5">
+            <TabsTrigger value="income" className="gap-1.5 text-xs sm:text-sm">
+              <DollarSign className="hidden h-4 w-4 sm:inline" />
+              Gelir
+            </TabsTrigger>
+            <TabsTrigger value="expense" className="gap-1.5 text-xs sm:text-sm">
+              <TrendingDown className="hidden h-4 w-4 sm:inline" />
+              Gider
+            </TabsTrigger>
+            <TabsTrigger value="profit-loss" className="gap-1.5 text-xs sm:text-sm">
+              <BarChart3 className="hidden h-4 w-4 sm:inline" />
+              Kâr-Zarar
+            </TabsTrigger>
+            <TabsTrigger value="customer" className="gap-1.5 text-xs sm:text-sm">
+              <Users className="hidden h-4 w-4 sm:inline" />
+              Müşteri
+            </TabsTrigger>
+            <TabsTrigger value="employee" className="gap-1.5 text-xs sm:text-sm">
+              <Briefcase className="hidden h-4 w-4 sm:inline" />
+              Çalışan
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="income">
           <IncomeTab year={selectedYear} active={activeTab === "income"} />

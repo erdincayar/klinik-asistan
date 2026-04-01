@@ -481,7 +481,7 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
 
       {/* Products table */}
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           {loading ? (
             <p className="p-6 text-gray-500">Yükleniyor...</p>
           ) : error ? (

@@ -27,14 +27,16 @@ export default function InventoryPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="products">Ürünler</TabsTrigger>
-          <TabsTrigger value="alarms">Alarmlar</TabsTrigger>
-          <TabsTrigger value="assets">Demirbaş</TabsTrigger>
-          <TabsTrigger value="movements">Stok Hareketleri</TabsTrigger>
-          <TabsTrigger value="report">Stok Raporu</TabsTrigger>
-          <TabsTrigger value="supply-chain">Tedarik Zinciri</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-1 px-1">
+          <TabsList className="w-max sm:w-auto">
+            <TabsTrigger value="products">Ürünler</TabsTrigger>
+            <TabsTrigger value="alarms">Alarmlar</TabsTrigger>
+            <TabsTrigger value="assets">Demirbaş</TabsTrigger>
+            <TabsTrigger value="movements">Hareketler</TabsTrigger>
+            <TabsTrigger value="report">Rapor</TabsTrigger>
+            <TabsTrigger value="supply-chain">Tedarik</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="products">
           <ProductsTab onDataChange={triggerRefresh} />
