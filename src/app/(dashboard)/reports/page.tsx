@@ -1045,7 +1045,7 @@ export default function ReportsPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Raporlar</h1>
-            <p className="text-sm text-gray-500">Klinik performans analizi ve finansal raporlar</p>
+            <p className="text-sm text-gray-500">İşletme performans analizi ve finansal raporlar</p>
           </div>
         </div>
 
