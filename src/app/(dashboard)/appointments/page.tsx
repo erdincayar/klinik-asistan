@@ -683,8 +683,7 @@ export default function AppointmentsPage() {
             className="inline-flex items-center gap-1.5 sm:gap-2 rounded-xl bg-[#1E1E2D] px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-[#2A2A3C] hover:shadow-lg hover:shadow-[#1E1E2D]/20"
           >
             <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">Yeni Randevu</span>
-            <span className="sm:hidden">Ekle</span>
+            Randevu Ekle
           </button>
         </div>
       </motion.div>
@@ -945,6 +944,14 @@ export default function AppointmentsPage() {
               {tab.label}
             </button>
           ))}
+          <button
+            onClick={openCreateDialog}
+            className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-[#4F46E5] hover:bg-white hover:shadow-sm transition-all"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">Randevu Ekle</span>
+            <span className="sm:hidden">Ekle</span>
+          </button>
         </div>
         {viewMode === "daily" ? (
           /* ── Daily view ── */

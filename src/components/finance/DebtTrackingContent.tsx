@@ -169,42 +169,70 @@ export default function DebtTrackingContent() {
   return (
     <div className="space-y-6 mt-4">
       {/* Summary Cards */}
-      {summary && (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <div className="rounded-xl border border-gray-100 bg-white p-4">
-            <div className="flex items-center gap-2 mb-2">
+      {summary && (() => {
+        const receivablePaid = summary.receivableTotal - summary.receivableRemaining;
+        const payablePaid = summary.payableTotal - summary.payableRemaining;
+        return (
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+          {/* Alacak Bölümü */}
+          <div className="rounded-xl border border-green-100 bg-green-50/30 p-4">
+            <div className="flex items-center gap-2 mb-3">
               <ArrowDownRight className="h-4 w-4 text-green-600" />
-              <span className="text-xs text-gray-500">Toplam Alacak</span>
+              <span className="text-xs font-semibold text-gray-600">Alacaklar</span>
             </div>
-            <p className="text-lg font-bold text-green-700">{fmtTL(summary.receivableRemaining)}</p>
-            <p className="text-[11px] text-gray-400">Toplam: {fmtTL(summary.receivableTotal)}</p>
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-xs">
+                <span className="text-gray-500">Toplam</span>
+                <span className="font-semibold text-gray-700">{fmtTL(summary.receivableTotal)}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-gray-500">Tahsil Edilen</span>
+                <span className="font-semibold text-emerald-600">{fmtTL(receivablePaid)}</span>
+              </div>
+              <div className="flex justify-between text-xs border-t border-green-200 pt-1.5">
+                <span className="text-gray-500">Kalan</span>
+                <span className="font-bold text-green-700">{fmtTL(summary.receivableRemaining)}</span>
+              </div>
+            </div>
           </div>
-          <div className="rounded-xl border border-gray-100 bg-white p-4">
-            <div className="flex items-center gap-2 mb-2">
+          {/* Borç Bölümü */}
+          <div className="rounded-xl border border-red-100 bg-red-50/30 p-4">
+            <div className="flex items-center gap-2 mb-3">
               <ArrowUpRight className="h-4 w-4 text-red-500" />
-              <span className="text-xs text-gray-500">Toplam Borç</span>
+              <span className="text-xs font-semibold text-gray-600">Borçlar</span>
             </div>
-            <p className="text-lg font-bold text-red-600">{fmtTL(summary.payableRemaining)}</p>
-            <p className="text-[11px] text-gray-400">Toplam: {fmtTL(summary.payableTotal)}</p>
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-xs">
+                <span className="text-gray-500">Toplam</span>
+                <span className="font-semibold text-gray-700">{fmtTL(summary.payableTotal)}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-gray-500">Ödenen</span>
+                <span className="font-semibold text-emerald-600">{fmtTL(payablePaid)}</span>
+              </div>
+              <div className="flex justify-between text-xs border-t border-red-200 pt-1.5">
+                <span className="text-gray-500">Kalan</span>
+                <span className="font-bold text-red-600">{fmtTL(summary.payableRemaining)}</span>
+              </div>
+            </div>
           </div>
-          <div className="rounded-xl border border-gray-100 bg-white p-4">
-            <div className="flex items-center gap-2 mb-2">
+          {/* Net Bakiye + Açık Kayıt */}
+          <div className="col-span-2 lg:col-span-1 rounded-xl border border-[#E0E7FF] bg-[#EEF2FF]/30 p-4">
+            <div className="flex items-center gap-2 mb-3">
               <Wallet className="h-4 w-4 text-[#6366F1]" />
-              <span className="text-xs text-gray-500">Net Bakiye</span>
+              <span className="text-xs font-semibold text-gray-600">Net Bakiye</span>
             </div>
-            <p className={cn("text-lg font-bold", summary.receivableRemaining - summary.payableRemaining >= 0 ? "text-green-700" : "text-red-600")}>
+            <p className={cn("text-2xl font-bold", summary.receivableRemaining - summary.payableRemaining >= 0 ? "text-green-700" : "text-red-600")}>
               {fmtTL(summary.receivableRemaining - summary.payableRemaining)}
             </p>
-          </div>
-          <div className="rounded-xl border border-gray-100 bg-white p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Calendar className="h-4 w-4 text-orange-500" />
-              <span className="text-xs text-gray-500">Açık Kayıt</span>
+            <div className="flex items-center gap-2 mt-2 text-xs text-gray-400">
+              <Calendar className="h-3.5 w-3.5 text-orange-500" />
+              <span>{summary.openCount} açık kayıt</span>
             </div>
-            <p className="text-lg font-bold text-gray-900">{summary.openCount}</p>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* Filters + Actions */}
       <div className="flex flex-wrap items-center gap-2">

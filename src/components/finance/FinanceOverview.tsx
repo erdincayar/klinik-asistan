@@ -1052,13 +1052,42 @@ export default function FinanceOverview() {
         {/* Recurring Transactions Tab */}
         <TabsContent value="recurring">
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-lg font-semibold">Sabit Ödemeler</h2>
               <Button onClick={() => setShowAddRecurring(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 Yeni Sabit İşlem Ekle
               </Button>
             </div>
+
+            {!recurringLoading && recurringTransactions.length > 0 && (() => {
+              const totalExpense = recurringTransactions
+                .filter(t => t.isActive && t.type === "EXPENSE")
+                .reduce((s, t) => s + (t.amount || 0), 0);
+              const totalIncome = recurringTransactions
+                .filter(t => t.isActive && t.type === "INCOME")
+                .reduce((s, t) => s + (t.amount || 0), 0);
+              return (
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                  <div className="rounded-xl bg-red-50 border border-red-100 p-4 text-center">
+                    <p className="text-[11px] text-gray-500">Aylık Sabit Gider</p>
+                    <p className="mt-1 text-lg font-bold text-red-600">{formatCurrency(Math.round(totalExpense * 100))}</p>
+                  </div>
+                  {totalIncome > 0 && (
+                    <div className="rounded-xl bg-green-50 border border-green-100 p-4 text-center">
+                      <p className="text-[11px] text-gray-500">Aylık Sabit Gelir</p>
+                      <p className="mt-1 text-lg font-bold text-green-600">{formatCurrency(Math.round(totalIncome * 100))}</p>
+                    </div>
+                  )}
+                  <div className="rounded-xl bg-[#EEF2FF] border border-[#E0E7FF] p-4 text-center">
+                    <p className="text-[11px] text-gray-500">Net Aylık Sabit</p>
+                    <p className={`mt-1 text-lg font-bold ${totalIncome - totalExpense >= 0 ? "text-[#4F46E5]" : "text-red-600"}`}>
+                      {formatCurrency(Math.round((totalIncome - totalExpense) * 100))}
+                    </p>
+                  </div>
+                </div>
+              );
+            })()}
 
             {recurringLoading ? (
               <div className="text-gray-500">Yükleniyor...</div>
