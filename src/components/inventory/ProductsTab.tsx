@@ -609,12 +609,13 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
                                   const val = e.target.checked;
                                   setProducts((prev) => prev.map((p) => p.id === product.id ? { ...p, vatIncluded: val } : p));
                                   try {
-                                    await fetch(`/api/products/${product.id}`, {
-                                      method: "PUT",
+                                    const res = await fetch("/api/products/bulk-update", {
+                                      method: "PATCH",
                                       headers: { "Content-Type": "application/json" },
-                                      body: JSON.stringify({ vatIncluded: val }),
+                                      body: JSON.stringify({ ids: [product.id], data: { vatIncluded: val } }),
                                     });
-                                  } catch { /* revert on error */
+                                    if (!res.ok) throw new Error("Update failed");
+                                  } catch {
                                     setProducts((prev) => prev.map((p) => p.id === product.id ? { ...p, vatIncluded: !val } : p));
                                   }
                                 }}

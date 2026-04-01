@@ -119,6 +119,18 @@ export async function PATCH(
       return NextResponse.json({ error: "Fatura bulunamadı" }, { status: 404 });
     }
 
+    const body = await req.json();
+
+    // If fileName update requested
+    if (body.fileName) {
+      await prisma.uploadedInvoice.update({
+        where: { id },
+        data: { fileName: body.fileName },
+      });
+      return NextResponse.json({ success: true, message: "Fatura ismi güncellendi" });
+    }
+
+    // Otherwise reject
     if (invoice.approved) {
       return NextResponse.json(
         { error: "Onaylanmış fatura reddedilemez" },

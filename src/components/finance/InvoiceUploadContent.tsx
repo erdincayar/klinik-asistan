@@ -19,6 +19,8 @@ import {
   Trash2,
   AlertTriangle,
   RefreshCw,
+  Pencil,
+  CalendarDays,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
@@ -500,7 +502,20 @@ export default function InvoiceUploadContent() {
         )}
       </motion.div>
 
-      {/* Invoice List */}
+      {/* Invoice List — grouped by month */}
+      {(() => {
+        // Group invoices by month
+        const monthGroups: Record<string, typeof filteredInvoices> = {};
+        filteredInvoices.forEach((inv) => {
+          const d = inv.invoiceDate ? new Date(inv.invoiceDate) : new Date(inv.createdAt);
+          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+          if (!monthGroups[key]) monthGroups[key] = [];
+          monthGroups[key].push(inv);
+        });
+        const sortedMonths = Object.keys(monthGroups).sort((a, b) => b.localeCompare(a));
+        const MONTH_NAMES = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+
+        return (
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -521,6 +536,32 @@ export default function InvoiceUploadContent() {
               </span>
             )}
           </div>
+          {!loading && filteredInvoices.length > 0 && (
+            <button
+              type="button"
+              onClick={async () => {
+                // Auto-rename invoices: vendor + date + amount
+                for (const inv of filteredInvoices) {
+                  if (!inv.vendor || inv.approved) continue;
+                  const d = inv.invoiceDate ? new Date(inv.invoiceDate).toLocaleDateString("tr-TR") : "";
+                  const amt = inv.amount ? `${inv.amount.toLocaleString("tr-TR")}TL` : "";
+                  const newName = [inv.vendor, d, amt].filter(Boolean).join(" - ");
+                  if (newName && newName !== inv.fileName) {
+                    await fetch(`/api/invoices/ocr/${inv.id}`, {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ fileName: newName }),
+                    }).catch(() => {});
+                  }
+                }
+                fetchInvoices();
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#EEF2FF] px-3 py-1.5 text-[11px] font-medium text-[#6366F1] transition-colors hover:bg-[#E0E7FF]"
+            >
+              <Pencil className="h-3 w-3" />
+              İsimleri Düzenle
+            </button>
+          )}
         </div>
 
         {loading ? (
@@ -546,8 +587,26 @@ export default function InvoiceUploadContent() {
             </div>
           </div>
         ) : (
-          <div className="divide-y divide-gray-50">
-            {filteredInvoices.map((inv, i) => {
+          <div>
+            {sortedMonths.map((monthKey) => {
+              const [y, m] = monthKey.split("-");
+              const monthName = `${MONTH_NAMES[parseInt(m) - 1]} ${y}`;
+              const monthInvoices = monthGroups[monthKey];
+              const monthTotal = monthInvoices.reduce((s, inv) => s + (inv.amount || 0), 0);
+              return (
+                <div key={monthKey}>
+                  <div className="flex items-center justify-between bg-gray-50 px-6 py-2.5 border-b border-gray-100">
+                    <div className="flex items-center gap-2">
+                      <CalendarDays className="h-3.5 w-3.5 text-gray-400" />
+                      <span className="text-xs font-semibold text-gray-600">{monthName}</span>
+                      <span className="text-[10px] text-gray-400">{monthInvoices.length} fatura</span>
+                    </div>
+                    <span className="text-xs font-semibold text-gray-600">
+                      {formatCurrency(Math.round(monthTotal * 100))}
+                    </span>
+                  </div>
+                  <div className="divide-y divide-gray-50">
+            {monthInvoices.map((inv, i) => {
               const status = statusConfig[inv.status] || statusConfig.PENDING;
               const StatusIcon = status.icon;
               return (
@@ -675,9 +734,15 @@ export default function InvoiceUploadContent() {
                 </motion.div>
               );
             })}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </motion.div>
+        );
+      })()}
 
       {/* Detail + Stock Matching Modal */}
       <AnimatePresence>
