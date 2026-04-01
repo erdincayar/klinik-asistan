@@ -20,10 +20,6 @@ import {
   HardDrive,
   CheckCircle,
   BarChart3,
-  MessageCircle,
-  ShoppingCart,
-  FileText,
-  Megaphone,
 } from "lucide-react";
 import type { ModuleRecommendation } from "@/lib/onboarding/onboarding-agent";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
@@ -200,7 +196,26 @@ export default function DashboardPage() {
   const [selectedModules, setSelectedModules] = useState<Set<string>>(new Set(["base", "messaging"]));
   const [savingModules, setSavingModules] = useState(false);
 
+  // Check modules first — independent of dashboard data
   useEffect(() => {
+    async function checkModules() {
+      try {
+        const res = await fetch("/api/billing/modules");
+        if (res.ok) {
+          const data = await res.json();
+          const active = data.activeModules || [];
+          if (active.length <= 2 && active.every((m: string) => ["base", "messaging"].includes(m))) {
+            setShowModuleSetup(true);
+            setLoading(false);
+          }
+        }
+      } catch {}
+    }
+    checkModules();
+  }, []);
+
+  useEffect(() => {
+    if (showModuleSetup) return; // Don't fetch dashboard data if showing module setup
     async function fetchData() {
       try {
         const today = new Date();
@@ -244,19 +259,6 @@ export default function DashboardPage() {
         //   const tokenData = await tokenRes.json();
         //   setTokenBalance(tokenData.balance?.balance ?? null);
         // }
-
-        // Check if modules have been set up (first login detection)
-        try {
-          const modulesRes = await fetch("/api/billing/modules");
-          if (modulesRes.ok) {
-            const modulesData = await modulesRes.json();
-            const active = modulesData.activeModules || [];
-            // If only default modules, show setup screen
-            if (active.length <= 2 && active.every((m: string) => ["base", "messaging"].includes(m))) {
-              setShowModuleSetup(true);
-            }
-          }
-        } catch {}
 
         // Storage usage
         try {
@@ -318,6 +320,98 @@ export default function DashboardPage() {
             className="mt-3 text-sm font-medium text-[#4F46E5] hover:underline"
           >
             Tekrar dene
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Module setup screen for first-time users
+  if (showModuleSetup) {
+    const modules = [
+      { slug: "customers", name: "Müşteri Yönetimi", desc: "Müşteri kartları, iletişim bilgileri, geçmiş", icon: Users, color: "bg-blue-500" },
+      { slug: "appointments", name: "Randevu Yönetimi", desc: "Online randevu, takvim, hatırlatmalar", icon: Calendar, color: "bg-cyan-500" },
+      { slug: "finance", name: "Finans Takibi", desc: "Gelir/gider, fatura, KDV, cari hesap", icon: DollarSign, color: "bg-emerald-500" },
+      { slug: "inventory", name: "Stok / Envanter", desc: "Ürün takibi, stok hareketleri, maliyet", icon: Package, color: "bg-orange-500" },
+      { slug: "employees", name: "Çalışan Yönetimi", desc: "Personel, izin, prim hesaplama", icon: Users, color: "bg-purple-500" },
+      { slug: "reports", name: "Raporlar & Analiz", desc: "Mali tablo, müşteri analizi, kar-zarar", icon: BarChart3, color: "bg-indigo-500" },
+      { slug: "alarms", name: "Hatırlatıcılar", desc: "Alarm, bildirim, otomatik hatırlatma", icon: Bell, color: "bg-yellow-500" },
+    ];
+
+    const handleSaveModules = async () => {
+      setSavingModules(true);
+      try {
+        const modulesToSave = ["base", "messaging", ...Array.from(selectedModules)];
+        await fetch("/api/billing/modules", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ activeModules: modulesToSave }),
+        });
+        setShowModuleSetup(false);
+        window.location.reload();
+      } catch {} finally {
+        setSavingModules(false);
+      }
+    }
+
+    return (
+      <div className="mx-auto max-w-3xl py-8 px-4">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
+          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-[#EEF2FF] mb-4">
+            <Sparkles className="h-8 w-8 text-[#6366F1]" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900">Hoş Geldiniz!</h1>
+          <p className="mt-2 text-gray-500">Kullanmak istediğiniz modülleri seçin. Deneme süresinde tüm modüller ücretsizdir.</p>
+        </motion.div>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {modules.map((mod, i) => {
+            const isSelected = selectedModules.has(mod.slug);
+            const Icon = mod.icon;
+            return (
+              <motion.button
+                key={mod.slug}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                onClick={() => {
+                  const next = new Set(selectedModules);
+                  if (isSelected) next.delete(mod.slug); else next.add(mod.slug);
+                  setSelectedModules(next);
+                }}
+                className={cn(
+                  "flex items-start gap-4 rounded-xl border-2 p-4 text-left transition-all",
+                  isSelected ? "border-[#4F46E5] bg-[#EEF2FF]" : "border-gray-200 bg-white hover:border-gray-300"
+                )}
+              >
+                <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white", mod.color)}>
+                  <Icon className="h-5 w-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-gray-900">{mod.name}</span>
+                    {isSelected && <CheckCircle className="h-4 w-4 text-[#4F46E5]" />}
+                  </div>
+                  <p className="mt-0.5 text-xs text-gray-500">{mod.desc}</p>
+                </div>
+              </motion.button>
+            );
+          })}
+        </div>
+
+        <div className="mt-8 flex flex-col items-center gap-3">
+          <button
+            onClick={handleSaveModules}
+            disabled={savingModules || selectedModules.size === 0}
+            className="w-full max-w-sm rounded-xl bg-[#4F46E5] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#4338CA] disabled:opacity-50"
+          >
+            {savingModules ? "Kaydediliyor..." : `${selectedModules.size} Modül ile Başla`}
+          </button>
+          <button
+            onClick={() => { setShowModuleSetup(false); window.location.reload(); }}
+            className="text-sm text-gray-400 hover:text-gray-600"
+          >
+            Şimdilik geç
           </button>
         </div>
       </div>
