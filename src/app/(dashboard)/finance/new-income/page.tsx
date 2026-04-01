@@ -234,7 +234,7 @@ function NewIncomeForm() {
     try {
       const validLines = lineItems.filter((l) => l.description && (parseFloat(l.unitPrice) || 0) > 0);
       if (validLines.length === 0) throw new Error("En az bir kalem girin");
-      if (grandTotal <= 0) throw new Error("Geçerli bir tutar girin");
+      if (grandTotal < 0) throw new Error("Tutar negatif olamaz");
 
       // Determine main VAT rate from line items (use first line or most common)
       const mainVatRate = validLines[0]?.vatRate ?? 20;

@@ -16,6 +16,7 @@ import {
   Receipt,
   Trash2,
   X,
+  RefreshCw,
 } from "lucide-react";
 import {
   Dialog,
@@ -1540,33 +1541,43 @@ export default function AppointmentsPage() {
                 </TabsContent>
               </Tabs>
 
-              {selectedAppointment.status === "SCHEDULED" && (
-                <DialogFooter>
-                  <div className="flex w-full gap-2">
+              <DialogFooter>
+                <div className="flex w-full gap-2">
+                  {selectedAppointment.status === "SCHEDULED" ? (
+                    <>
+                      <button
+                        disabled={updating}
+                        onClick={() => updateAppointmentStatus(selectedAppointment.id, "COMPLETED")}
+                        className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
+                      >
+                        <CheckCircle className="h-4 w-4" /> Tamamlandı
+                      </button>
+                      <button
+                        disabled={updating}
+                        onClick={() => updateAppointmentStatus(selectedAppointment.id, "CANCELLED")}
+                        className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-red-200 px-3 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+                      >
+                        <XCircle className="h-4 w-4" /> İptal Et
+                      </button>
+                      <button
+                        disabled={updating}
+                        onClick={() => updateAppointmentStatus(selectedAppointment.id, "NO_SHOW")}
+                        className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-orange-200 px-3 py-2.5 text-sm font-semibold text-orange-600 transition-colors hover:bg-orange-50 disabled:opacity-50"
+                      >
+                        <AlertCircle className="h-4 w-4" /> Gelmedi
+                      </button>
+                    </>
+                  ) : (
                     <button
                       disabled={updating}
-                      onClick={() => updateAppointmentStatus(selectedAppointment.id, "COMPLETED")}
-                      className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
+                      onClick={() => updateAppointmentStatus(selectedAppointment.id, "SCHEDULED")}
+                      className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#4F46E5] px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#4338CA] disabled:opacity-50"
                     >
-                      <CheckCircle className="h-4 w-4" /> Tamamlandı
+                      <RefreshCw className="h-4 w-4" /> Tekrar Planla
                     </button>
-                    <button
-                      disabled={updating}
-                      onClick={() => updateAppointmentStatus(selectedAppointment.id, "CANCELLED")}
-                      className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-red-200 px-3 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
-                    >
-                      <XCircle className="h-4 w-4" /> İptal Et
-                    </button>
-                    <button
-                      disabled={updating}
-                      onClick={() => updateAppointmentStatus(selectedAppointment.id, "NO_SHOW")}
-                      className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-orange-200 px-3 py-2.5 text-sm font-semibold text-orange-600 transition-colors hover:bg-orange-50 disabled:opacity-50"
-                    >
-                      <AlertCircle className="h-4 w-4" /> Gelmedi
-                    </button>
-                  </div>
-                </DialogFooter>
-              )}
+                  )}
+                </div>
+              </DialogFooter>
             </>
           )}
         </DialogContent>

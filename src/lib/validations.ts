@@ -32,7 +32,7 @@ export const treatmentSchema = z.object({
   patientId: z.string().optional().default(""),
   name: z.string().optional().default("Gelir"),
   description: z.string().optional(),
-  amount: z.number().min(1, "Tutar girin"),
+  amount: z.number().min(0, "Tutar negatif olamaz"),
   date: z.string().min(1, "Tarih seçin"),
   category: z.string().optional().default("SATIS"),
 });
