@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
       }),
       prisma.uploadedInvoice.findMany({
         where: { clinicId, approved: true, invoiceType: "INCOME", invoiceDate: dateFilter },
-        select: { id: true, profitData: true },
+        select: { id: true, profitData: true, invoiceDate: true },
       }),
     ]);
 
@@ -78,33 +78,53 @@ export async function GET(req: NextRequest) {
         .filter((e) => new Date(e.date).getMonth() === i)
         .reduce((sum, e) => sum + e.amount, 0);
 
-      // Monthly COGS — exclude orphaned references
-      const monthCogs = outMovements
+      // Monthly COGS — same logic as yearly totals
+      // 1. Non-invoice stock movements (exclude orphans, exclude invoice-*)
+      const monthNonInvoiceCogs = outMovements
         .filter(m => new Date(m.date).getMonth() === i)
         .filter(m => {
           if (!m.reference) return true;
+          if (m.reference.startsWith("invoice-")) return false; // handled via profitData
           if (m.reference.startsWith("treatment-")) return validTreatmentSet.has(m.reference.replace("treatment-", ""));
           if (m.reference.startsWith("expense-income-")) return validExpenseSet.has(m.reference.replace("expense-income-", ""));
           if (m.reference.startsWith("expense-")) return validExpenseSet.has(m.reference.replace("expense-", ""));
-          if (m.reference.startsWith("invoice-")) return approvedIncomeInvoices.some(inv => inv.id === m.reference!.replace("invoice-", ""));
           return true;
         })
         .reduce((sum, m) => sum + (m.quantity * (m.product.purchasePrice ?? 0)), 0);
 
-      // Monthly embedded cost from income records
+      // 2. Invoice COGS from profitData (same as yearly)
+      let monthInvoiceCogs = 0;
+      for (const inv of approvedIncomeInvoices) {
+        const invDate = inv.invoiceDate ? new Date(inv.invoiceDate) : null;
+        if (!invDate || invDate.getMonth() !== i) continue;
+        const pd = inv.profitData as any;
+        if (pd && typeof pd.totalCost === "number") {
+          monthInvoiceCogs += pd.totalCost;
+        } else {
+          // Fallback
+          monthInvoiceCogs += outMovements
+            .filter(m => m.reference === `invoice-${inv.id}` && new Date(m.date).getMonth() === i)
+            .reduce((sum, m) => sum + (m.quantity * (m.product.purchasePrice ?? 0)), 0);
+        }
+      }
+
+      // 3. Embedded cost only from records WITHOUT stock movements
       const monthEmbeddedCost = incomeRecords
         .filter(r => new Date(r.date).getMonth() === i)
+        .filter(r => !incomeIdsWithStockMovements.has(r.id))
         .reduce((sum, r) => {
           const match = r.description?.match(/\[Maliyet: (\d+)\]/);
           return sum + (match ? parseInt(match[1], 10) : 0);
         }, 0);
+
+      const monthTotalCogs = monthNonInvoiceCogs + monthInvoiceCogs + monthEmbeddedCost;
 
       return {
         month: i + 1,
         monthName: monthNames[i],
         income: monthIncome,
         expense: monthExpense,
-        cogs: monthCogs + monthEmbeddedCost,
+        cogs: monthTotalCogs,
         profit: monthIncome - monthExpense,
       };
     });
