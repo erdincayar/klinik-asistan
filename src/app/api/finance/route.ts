@@ -98,7 +98,7 @@ export async function GET(request: Request) {
           invoiceType: "INCOME",
           invoiceDate: { gte: startDate, lt: endDate },
         },
-        select: { id: true, vendor: true, amount: true, profitData: true, invoiceDate: true },
+        select: { id: true, vendor: true, amount: true, profitData: true, invoiceDate: true, linkedExpenseId: true },
       });
 
       let invoiceCogs = 0;
@@ -172,13 +172,21 @@ export async function GET(request: Request) {
         }
       }
 
-      const incomeRecords = rawIncomeRecords.map((r) => ({
-        id: r.id,
-        date: r.date,
-        description: r.description,
-        category: r.category,
-        amount: r.amount,
-      }));
+      // Exclude income records that are linked to invoices (they show in invoiceProfitSummary)
+      const invoiceLinkedExpenseIds = new Set(
+        approvedIncomeInvoices
+          .filter((inv) => (inv as any).linkedExpenseId)
+          .map((inv) => (inv as any).linkedExpenseId)
+      );
+      const incomeRecords = rawIncomeRecords
+        .filter((r) => !invoiceLinkedExpenseIds.has(r.id))
+        .map((r) => ({
+          id: r.id,
+          date: r.date,
+          description: r.description,
+          category: r.category,
+          amount: r.amount,
+        }));
 
       return Response.json({ ciro, cogs, gelir, totalExpense, totalProfit, vatAmount, taxRate, treatments, expenses, incomeRecords, invoiceProfitSummary });
     }

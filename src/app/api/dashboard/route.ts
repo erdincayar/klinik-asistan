@@ -20,43 +20,33 @@ export async function GET() {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const [
-      totalPatients,
-      monthlyTreatments,
-      monthlyIncomeRecords,
-      monthlyExpenseRecords,
-      recentTreatments,
-      pendingReminders,
-      todayAppointments,
-      unreadAlarmCount,
-    ] = await Promise.all([
-      prisma.patient.count({ where: { clinicId } }),
-      prisma.treatment.findMany({
-        where: { clinicId, date: { gte: startOfMonth, lt: startOfNextMonth } },
-        select: { amount: true },
-      }),
-      prisma.expense.findMany({
-        where: { clinicId, type: "INCOME", date: { gte: startOfMonth, lt: startOfNextMonth } },
-        select: { amount: true },
-      }),
-      prisma.expense.findMany({
-        where: { clinicId, type: "EXPENSE", date: { gte: startOfMonth, lt: startOfNextMonth } },
-        select: { amount: true },
-      }),
-      prisma.treatment.findMany({
-        where: { clinicId },
-        include: { patient: { select: { name: true } } },
-        orderBy: { date: "desc" },
-        take: 5,
-      }),
-      prisma.reminder.count({ where: { clinicId, isActive: true } }),
-      prisma.appointment.findMany({
-        where: { clinicId, date: { gte: today, lt: tomorrow }, status: { not: "CANCELLED" } },
-        include: { patient: { select: { name: true } } },
-        orderBy: { startTime: "asc" },
-      }),
-      prisma.alarmLog.count({ where: { clinicId, isRead: false } }),
-    ]);
+    // Use individual try-catch for each query to be tolerant of missing tables/data
+    const totalPatients = await prisma.patient.count({ where: { clinicId } }).catch(() => 0);
+    const monthlyTreatments = await prisma.treatment.findMany({
+      where: { clinicId, date: { gte: startOfMonth, lt: startOfNextMonth } },
+      select: { amount: true },
+    }).catch(() => []);
+    const monthlyIncomeRecords = await prisma.expense.findMany({
+      where: { clinicId, type: "INCOME", date: { gte: startOfMonth, lt: startOfNextMonth } },
+      select: { amount: true },
+    }).catch(() => []);
+    const monthlyExpenseRecords = await prisma.expense.findMany({
+      where: { clinicId, type: "EXPENSE", date: { gte: startOfMonth, lt: startOfNextMonth } },
+      select: { amount: true },
+    }).catch(() => []);
+    const recentTreatments = await prisma.treatment.findMany({
+      where: { clinicId },
+      include: { patient: { select: { name: true } } },
+      orderBy: { date: "desc" },
+      take: 5,
+    }).catch(() => []);
+    const pendingReminders = await prisma.reminder.count({ where: { clinicId, isActive: true } }).catch(() => 0);
+    const todayAppointments = await prisma.appointment.findMany({
+      where: { clinicId, date: { gte: today, lt: tomorrow }, status: { not: "CANCELLED" } },
+      include: { patient: { select: { name: true } } },
+      orderBy: { startTime: "asc" },
+    }).catch(() => []);
+    const unreadAlarmCount = await prisma.alarmLog.count({ where: { clinicId, isRead: false } }).catch(() => 0);
 
     const monthlyIncome = monthlyTreatments.reduce((sum, t) => sum + (t.amount ?? 0), 0)
       + monthlyIncomeRecords.reduce((sum, r) => sum + (r.amount ?? 0), 0);
