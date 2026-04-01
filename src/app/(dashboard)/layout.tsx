@@ -66,25 +66,81 @@ interface NavItem {
 
 /* ──────────────────────── DATA ──────────────────────── */
 
-const navItems: NavItem[] = [
-  { href: "/dashboard",    label: "Genel Bakış",      icon: LayoutDashboard, moduleSlug: "base",         permKey: "dashboard" },
-  { href: "/patients",     label: "Müşteriler",       icon: Users,           moduleSlug: "customers",    permKey: "customers" },
-  { href: "/appointments", label: "Randevular",       icon: Calendar,        moduleSlug: "appointments", permKey: "appointments" },
-  { href: "/finance",      label: "Finans",           icon: DollarSign,      moduleSlug: "finance",      permKey: "finance" },
-  { href: "/inventory",    label: "Stok/Envanter",    icon: Package,         moduleSlug: "inventory",    permKey: "inventory" },
-  { href: "/employees",    label: "Çalışanlar",       icon: UserCog,         moduleSlug: "employees",    permKey: "employees" },
-  { href: "/hr",           label: "Belgeler",          icon: ClipboardList,   moduleSlug: "employees",    permKey: "hr" },
-  { href: "/marketing",    label: "Pazarlama",        icon: Megaphone,       moduleSlug: "marketing",    permKey: "marketing" },
-  { href: "/messaging",    label: "Mesajlaşma",       icon: MessageCircle,   moduleSlug: "messaging",    permKey: "messaging" },
-  { href: "/ai-assistant", label: "AI Asistan",       icon: Bot,             moduleSlug: "ai_assistant", permKey: "ai_assistant" },
-  { href: "/reports",      label: "Raporlar",         icon: BarChart3,       moduleSlug: "reports",      permKey: "reports" },
-  { href: "/alarmlar",     label: "Alarmlar",         icon: BellRing,        moduleSlug: "alarms",       permKey: "alarms" },
-  { href: "/reminders",    label: "Hatırlatmalar",    icon: Bell,            moduleSlug: "alarms",       permKey: "reminders" },
-  { href: "/billing",      label: "Abonelik",         icon: CreditCard },
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
+const navGroups: NavGroup[] = [
+  {
+    label: "Genel",
+    items: [
+      { href: "/dashboard",    label: "Genel Bakış",      icon: LayoutDashboard, moduleSlug: "base",         permKey: "dashboard" },
+    ],
+  },
+  {
+    label: "Müşteriler",
+    items: [
+      { href: "/patients",     label: "Müşteriler",       icon: Users,           moduleSlug: "customers",    permKey: "customers" },
+    ],
+  },
+  {
+    label: "İşletme",
+    items: [
+      { href: "/appointments", label: "Randevular",       icon: Calendar,        moduleSlug: "appointments", permKey: "appointments" },
+      { href: "/employees",    label: "Çalışanlar",       icon: UserCog,         moduleSlug: "employees",    permKey: "employees" },
+      { href: "/hr",           label: "Belgeler",         icon: ClipboardList,   moduleSlug: "employees",    permKey: "hr" },
+    ],
+  },
+  {
+    label: "Finans",
+    items: [
+      { href: "/finance",      label: "Finans",           icon: DollarSign,      moduleSlug: "finance",      permKey: "finance" },
+      { href: "/reports",      label: "Raporlar",         icon: BarChart3,       moduleSlug: "reports",      permKey: "reports" },
+    ],
+  },
+  {
+    label: "Stok",
+    items: [
+      { href: "/inventory",    label: "Stok/Envanter",    icon: Package,         moduleSlug: "inventory",    permKey: "inventory" },
+    ],
+  },
+  {
+    label: "Pazarlama",
+    items: [
+      { href: "/marketing",    label: "Pazarlama",        icon: Megaphone,       moduleSlug: "marketing",    permKey: "marketing" },
+    ],
+  },
+  {
+    label: "İletişim",
+    items: [
+      { href: "/messaging",    label: "Mesajlaşma",       icon: MessageCircle,   moduleSlug: "messaging",    permKey: "messaging" },
+      { href: "/ai-assistant", label: "Poby Asistan",     icon: Bot,             moduleSlug: "ai_assistant", permKey: "ai_assistant" },
+    ],
+  },
+  {
+    label: "Bildirimler",
+    items: [
+      { href: "/alarmlar",     label: "Alarmlar",         icon: BellRing,        moduleSlug: "alarms",       permKey: "alarms" },
+      { href: "/reminders",    label: "Hatırlatmalar",    icon: Bell,            moduleSlug: "alarms",       permKey: "reminders" },
+    ],
+  },
+  {
+    label: "Ayarlar",
+    items: [
+      { href: "/billing",      label: "Abonelik",         icon: CreditCard },
+    ],
+  },
 ];
 
-// Nav group boundaries for visual separation
-const NAV_GROUP_BREAKS = new Set(["/inventory", "/messaging"]);
+// Flat list for backward compatibility (DnD, order, etc.)
+const navItems: NavItem[] = navGroups.flatMap((g) => g.items);
+
+// Build group label lookup: href → group label
+const navGroupLabels = new Map<string, string>();
+navGroups.forEach((g) => {
+  if (g.items.length > 0) navGroupLabels.set(g.items[0].href, g.label);
+});
 
 const adminNavItems = [
   { href: "/admin", label: "Admin Panel", icon: Shield },
@@ -475,8 +531,15 @@ function Sidebar({
                   const isLocked = isYakinda || isNotSubscribed;
                   return (
                     <div key={item.href}>
-                      {NAV_GROUP_BREAKS.has(item.href) && (
-                        <div className="border-t border-white/[0.06] mt-3 pt-3" />
+                      {navGroupLabels.has(item.href) && (
+                        <div className="mt-4 pt-2 first:mt-0 first:pt-0">
+                          {!collapsed && (
+                            <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-wider text-[#6C7293]">
+                              {navGroupLabels.get(item.href)}
+                            </p>
+                          )}
+                          {collapsed && <div className="border-t border-white/[0.06] mx-2 mb-1" />}
+                        </div>
                       )}
                       <div className="relative">
                         <SortableNavItem
