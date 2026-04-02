@@ -1063,7 +1063,8 @@ export default function PatientDetailPage() {
                       <span>{appt.startTime} - {appt.endTime}</span>
                       {appt.employee?.name && <span>· {appt.employee.name}</span>}
                     </div>
-                    {appt.notes && <p className="text-xs text-gray-500 mt-0.5">{appt.notes}</p>}
+                    {appt.notes && <p className="text-xs text-gray-500 mt-0.5">📋 {appt.notes}</p>}
+                    {(appt as any).meetingNotes && <p className="text-xs text-gray-600 mt-0.5">💬 {(appt as any).meetingNotes}</p>}
                   </div>
                 </div>
               );

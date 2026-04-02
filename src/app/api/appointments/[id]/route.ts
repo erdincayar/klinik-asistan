@@ -55,7 +55,7 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { status, notes, startTime, endTime, date, treatmentType } = body;
+    const { status, notes, meetingNotes, startTime, endTime, date, treatmentType } = body;
 
     // Validate status if provided
     const validStatuses = ["SCHEDULED", "CONFIRMED", "COMPLETED", "CANCELLED", "NO_SHOW"];
@@ -69,6 +69,7 @@ export async function PUT(
     const updateData: any = {};
     if (status) updateData.status = status;
     if (notes !== undefined) updateData.notes = notes;
+    if (meetingNotes !== undefined) updateData.meetingNotes = meetingNotes;
     if (treatmentType) updateData.treatmentType = treatmentType;
     if (startTime) updateData.startTime = startTime;
     if (endTime) updateData.endTime = endTime;

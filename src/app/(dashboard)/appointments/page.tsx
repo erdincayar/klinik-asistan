@@ -18,6 +18,8 @@ import {
   X,
   RefreshCw,
   ShoppingCart,
+  FileText,
+  Bell,
 } from "lucide-react";
 import {
   Dialog,
@@ -1273,15 +1275,15 @@ export default function AppointmentsPage() {
                 <DialogTitle className="text-lg">Randevu Detayı</DialogTitle>
               </DialogHeader>
               <Tabs value={detailTab} onValueChange={setDetailTab}>
-                <TabsList className="w-full">
-                  <TabsTrigger value="detail" className="flex-1 text-xs sm:text-sm">Detay</TabsTrigger>
-                  <TabsTrigger value="transactions" className="flex-1 text-xs sm:text-sm gap-1">
-                    <Receipt className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> İşlem
-                  </TabsTrigger>
-                  <TabsTrigger value="next-appointment" className="flex-1 text-xs sm:text-sm gap-1">
-                    <Calendar className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Sonraki
-                  </TabsTrigger>
-                </TabsList>
+                <div className="overflow-x-auto -mx-1 px-1">
+                  <TabsList className="w-max sm:w-full">
+                    <TabsTrigger value="detail" className="text-xs sm:text-sm">Detay</TabsTrigger>
+                    <TabsTrigger value="notes" className="text-xs sm:text-sm">Notlar</TabsTrigger>
+                    <TabsTrigger value="transactions" className="text-xs sm:text-sm">İşlem</TabsTrigger>
+                    <TabsTrigger value="next-appointment" className="text-xs sm:text-sm">Sonraki</TabsTrigger>
+                    <TabsTrigger value="reminders" className="text-xs sm:text-sm">Hatırlatma</TabsTrigger>
+                  </TabsList>
+                </div>
 
                 {/* Detail Tab */}
                 <TabsContent value="detail">
@@ -1329,9 +1331,21 @@ export default function AppointmentsPage() {
                         </span>
                       </div>
                     </div>
-                    {/* Notes — always visible, inline editable */}
+                    {selectedAppointment.notes && (
+                      <div className="flex items-start gap-2 rounded-lg bg-gray-50 px-3 py-2">
+                        <FileText className="h-3.5 w-3.5 text-gray-400 mt-0.5 shrink-0" />
+                        <p className="text-xs text-gray-600">{selectedAppointment.notes}</p>
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+
+                {/* Notes Tab */}
+                <TabsContent value="notes">
+                  <div className="space-y-4 pt-2">
                     <div>
-                      <span className="text-sm text-gray-500">Görüşme Notları</span>
+                      <label className="text-sm font-medium text-gray-700">Görüşme Öncesi Not</label>
+                      <p className="text-[11px] text-gray-400 mb-1">Randevu oluşturulurken eklenen not</p>
                       <textarea
                         value={selectedAppointment.notes || ""}
                         onChange={(e) => setSelectedAppointment({ ...selectedAppointment, notes: e.target.value })}
@@ -1342,9 +1356,27 @@ export default function AppointmentsPage() {
                             body: JSON.stringify({ notes: selectedAppointment.notes || "" }),
                           }).catch(() => {});
                         }}
-                        placeholder="Görüşme ile ilgili notlarınızı yazın..."
-                        rows={3}
-                        className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-[#6366F1] focus:outline-none focus:ring-1 focus:ring-[#6366F1]/20"
+                        placeholder="Randevu öncesi notlar..."
+                        rows={2}
+                        className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-[#6366F1] focus:outline-none focus:ring-1 focus:ring-[#6366F1]/20"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Görüşme Notları</label>
+                      <p className="text-[11px] text-gray-400 mb-1">Görüşme sırasında veya sonrasında eklenen notlar</p>
+                      <textarea
+                        value={(selectedAppointment as any).meetingNotes || ""}
+                        onChange={(e) => setSelectedAppointment({ ...selectedAppointment, meetingNotes: e.target.value } as any)}
+                        onBlur={async () => {
+                          await fetch(`/api/appointments/${selectedAppointment.id}`, {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ meetingNotes: (selectedAppointment as any).meetingNotes || "" }),
+                          }).catch(() => {});
+                        }}
+                        placeholder="Görüşmede konuşulanlar, kararlar, yapılacaklar..."
+                        rows={4}
+                        className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-[#6366F1] focus:outline-none focus:ring-1 focus:ring-[#6366F1]/20"
                       />
                     </div>
                   </div>
@@ -1569,6 +1601,62 @@ export default function AppointmentsPage() {
                     >
                       <Calendar className="h-4 w-4" />
                       Randevu Oluştur
+                    </button>
+                  </div>
+                </TabsContent>
+
+                {/* Reminders Tab */}
+                <TabsContent value="reminders">
+                  <div className="space-y-4 pt-2">
+                    <p className="text-xs text-gray-500">Bu görüşmeyle ilgili yapılması gerekenleri hatırlatma olarak ekleyin.</p>
+                    <div className="space-y-3">
+                      <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-gray-700">Hatırlatma</label>
+                        <input
+                          type="text"
+                          id="reminderText"
+                          placeholder="Örn: Teklif gönder, Numune hazırla..."
+                          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-gray-700">Tarih <span className="text-gray-400 text-xs font-normal">(opsiyonel)</span></label>
+                        <input
+                          type="date"
+                          id="reminderDate"
+                          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        const text = (document.getElementById("reminderText") as HTMLInputElement)?.value;
+                        const date = (document.getElementById("reminderDate") as HTMLInputElement)?.value;
+                        if (!text?.trim()) { alert("Hatırlatma metni gerekli."); return; }
+                        try {
+                          await fetch("/api/alarms", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              type: "REMINDER",
+                              name: text.trim(),
+                              description: `Randevu: ${selectedAppointment.patientName} - ${formatDateDisplay(selectedAppointment.date)}`,
+                              patientId: selectedAppointment.patientId,
+                              conditions: {
+                                appointmentId: selectedAppointment.id,
+                                ...(date ? { dueDate: date } : {}),
+                              },
+                            }),
+                          });
+                          (document.getElementById("reminderText") as HTMLInputElement).value = "";
+                          (document.getElementById("reminderDate") as HTMLInputElement).value = "";
+                          alert("Hatırlatma eklendi!");
+                        } catch {}
+                      }}
+                      className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-orange-500 px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-600"
+                    >
+                      <Bell className="h-4 w-4" />
+                      Hatırlatma Ekle
                     </button>
                   </div>
                 </TabsContent>

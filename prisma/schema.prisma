@@ -277,6 +277,7 @@ model Appointment {
   status        String    @default("SCHEDULED") // SCHEDULED, COMPLETED, CANCELLED, NO_SHOW
   treatmentType String    @default("GENEL") // BOTOX, DOLGU, DIS_TEDAVI, GENEL
   notes         String?
+  meetingNotes  String?   // Görüşme sırası/sonrası notlar
   treatments    Treatment[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
