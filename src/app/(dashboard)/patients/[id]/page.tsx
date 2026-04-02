@@ -506,7 +506,50 @@ export default function PatientDetailPage() {
         </div>
       </motion.div>
 
-      {/* CRM Stats Panel */}
+      {/* Mini Stats — compact cards */}
+      {(crmStats || (patient.debts && patient.debts.length > 0)) && (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.03 }}
+          className="grid grid-cols-2 gap-3 sm:grid-cols-4"
+        >
+          {crmStats && crmStats.totalVisits > 0 && (
+            <Link href="/appointments" className="rounded-xl border border-gray-100 bg-white p-3 hover:bg-gray-50 transition-colors">
+              <p className="text-[10px] text-gray-400 uppercase font-semibold">Görüşme</p>
+              <p className="text-lg font-bold text-[#4F46E5]">{crmStats.totalVisits}</p>
+            </Link>
+          )}
+          {crmStats && crmStats.totalRevenue > 0 && (
+            <Link href="/finance" className="rounded-xl border border-gray-100 bg-white p-3 hover:bg-gray-50 transition-colors">
+              <p className="text-[10px] text-gray-400 uppercase font-semibold">Ciro</p>
+              <p className="text-lg font-bold text-emerald-600">{formatCurrency(crmStats.totalRevenue)}</p>
+            </Link>
+          )}
+          {(() => {
+            const totalDebt = patient.debts?.reduce((s, d) => s + d.totalAmount, 0) || 0;
+            const totalPaid = patient.debts?.reduce((s, d) => s + d.paidAmount, 0) || 0;
+            const remaining = totalDebt - totalPaid;
+            if (totalDebt === 0) return null;
+            return (
+              <Link href="/finance?tab=debts" className="rounded-xl border border-gray-100 bg-white p-3 hover:bg-gray-50 transition-colors">
+                <p className="text-[10px] text-gray-400 uppercase font-semibold">Cari Bakiye</p>
+                <p className={`text-lg font-bold ${remaining > 0 ? "text-orange-600" : "text-emerald-600"}`}>
+                  {formatCurrency(remaining)}
+                </p>
+              </Link>
+            );
+          })()}
+          {crmStats && crmStats.lastVisit && (
+            <div className="rounded-xl border border-gray-100 bg-white p-3">
+              <p className="text-[10px] text-gray-400 uppercase font-semibold">Son Ziyaret</p>
+              <p className="text-sm font-bold text-gray-700">{formatDate(crmStats.lastVisit)}</p>
+            </div>
+          )}
+        </motion.div>
+      )}
+
+      {/* CRM Stats Panel — detailed (only if exists, collapsible) */}
       {crmStats && crmStats.totalVisits > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 16 }}
