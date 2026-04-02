@@ -58,6 +58,9 @@ export async function GET() {
     const analyses: ProductAnalysis[] = [];
 
     for (const product of products) {
+      // Stok takibi kapalı ürünleri atla
+      if (!product.trackStock) continue;
+
       const stock = product.currentStock ?? 0;
 
       // Son 6 aylık OUT hareketlerinden tüketim analizi
@@ -106,10 +109,18 @@ export async function GET() {
 
       // Aciliyet
       let urgency: ProductAnalysis["urgency"] = "safe";
-      if (stock === 0) urgency = "critical";
-      else if (daysOfSupply <= leadDays) urgency = "critical";
-      else if (daysOfSupply <= leadDays * 2) urgency = "warning";
-      else if (avgDailyConsumption > 0 && daysOfSupply > 180) urgency = "overstocked";
+      if (avgDailyConsumption === 0 && stock === 0) {
+        // Henüz hiç stok hareketi yok — yeni ürün, kritik değil
+        urgency = "safe";
+      } else if (stock === 0 && avgDailyConsumption > 0) {
+        urgency = "critical";
+      } else if (daysOfSupply <= leadDays) {
+        urgency = "critical";
+      } else if (daysOfSupply <= leadDays * 2) {
+        urgency = "warning";
+      } else if (avgDailyConsumption > 0 && daysOfSupply > 180) {
+        urgency = "overstocked";
+      }
 
       analyses.push({
         id: product.id,
