@@ -853,7 +853,7 @@ export default function PatientsPage() {
                             ) : (
                               <span
                                 className="cursor-pointer rounded px-1 py-0.5 text-sm text-gray-600 hover:bg-[#EEF2FF]"
-                                onClick={() => startEdit(patient.id, "phone", patient.phone)}
+                                onClick={(e) => { e.stopPropagation(); startEdit(patient.id, "phone", patient.phone); }}
                               >
                                 {patient.phone || <span className="text-gray-300">&mdash;</span>}
                               </span>
@@ -877,7 +877,7 @@ export default function PatientsPage() {
                             ) : (
                               <span
                                 className="cursor-pointer truncate rounded px-1 py-0.5 text-sm text-gray-600 hover:bg-[#EEF2FF]"
-                                onClick={() => startEdit(patient.id, "email", patient.email)}
+                                onClick={(e) => { e.stopPropagation(); startEdit(patient.id, "email", patient.email); }}
                               >
                                 {patient.email || <span className="text-gray-300">&mdash;</span>}
                               </span>
@@ -906,7 +906,7 @@ export default function PatientsPage() {
                                 ) : (
                                   <span
                                     className="cursor-pointer rounded px-1 py-0.5 text-sm text-gray-600 hover:bg-[#EEF2FF]"
-                                    onClick={() => startEdit(patient.id, cellKey, cv?.value || "")}
+                                    onClick={(e) => { e.stopPropagation(); startEdit(patient.id, cellKey, cv?.value || ""); }}
                                   >
                                     {cv?.value || <span className="text-gray-300">&mdash;</span>}
                                   </span>
@@ -920,12 +920,12 @@ export default function PatientsPage() {
                                 variant="outline"
                                 size="sm"
                                 className="h-8 w-8 p-0"
-                                onClick={() => openEditModal(patient)}
+                                onClick={(e) => { e.stopPropagation(); openEditModal(patient); }}
                                 title="Düzenle"
                               >
                                 <Pencil className="h-3.5 w-3.5" />
                               </Button>
-                              <Link href={`/patients/${patient.id}`}>
+                              <Link href={`/patients/${patient.id}`} onClick={(e) => e.stopPropagation()}>
                                 <Button variant="outline" size="sm">
                                   Detay
                                 </Button>
