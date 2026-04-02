@@ -121,6 +121,9 @@ export default function PatientsPage() {
   }, []);
   const isFieldVisible = (key: string) => fieldVisibility[key]?.list !== false;
 
+  // Custom field filtering
+  const [customFilter, setCustomFilter] = useState<{ columnKey: string; value: string }>({ columnKey: "", value: "" });
+
   // Edit modal
   const [editPatient, setEditPatient] = useState<Patient | null>(null);
   const [editForm, setEditForm] = useState({ name: "", phone: "", email: "" });
@@ -365,9 +368,14 @@ export default function PatientsPage() {
     }
   }
 
-  const filteredPatients = riskFilter === "all"
-    ? patients
-    : patients.filter((p) => p.riskStatus === riskFilter);
+  const filteredPatients = patients.filter((p) => {
+    if (riskFilter !== "all" && p.riskStatus !== riskFilter) return false;
+    if (customFilter.columnKey && customFilter.value) {
+      const cv = p.customValues?.find((v: any) => v.columnKey === customFilter.columnKey);
+      if (!cv?.value || !cv.value.toLocaleLowerCase("tr-TR").includes(customFilter.value.toLocaleLowerCase("tr-TR"))) return false;
+    }
+    return true;
+  });
 
   return (
     <div className="space-y-6">
@@ -398,6 +406,28 @@ export default function PatientsPage() {
             <option value="warning">Dikkat</option>
             <option value="risk">Kayıp Riski</option>
           </select>
+          {customColumns.length > 0 && (
+            <>
+              <select
+                value={customFilter.columnKey}
+                onChange={(e) => setCustomFilter({ columnKey: e.target.value, value: "" })}
+                className="rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm text-gray-700 focus:border-[#6366F1] focus:outline-none"
+              >
+                <option value="">Alan Filtrele</option>
+                {customColumns.map((col) => (
+                  <option key={col.columnKey} value={col.columnKey}>{col.columnName}</option>
+                ))}
+              </select>
+              {customFilter.columnKey && (
+                <Input
+                  placeholder="Filtre değeri..."
+                  value={customFilter.value}
+                  onChange={(e) => setCustomFilter({ ...customFilter, value: e.target.value })}
+                  className="w-36 rounded-xl border-gray-200 py-3 text-sm"
+                />
+              )}
+            </>
+          )}
         </div>
         <div className="flex gap-2">
           <Link href="/customers/import">

@@ -77,6 +77,8 @@ export default function PatientSettingsPage() {
   const [newFieldName, setNewFieldName] = useState("");
   const [newFieldType, setNewFieldType] = useState("text");
   const [newFieldOptions, setNewFieldOptions] = useState("");
+  const [editingFieldKey, setEditingFieldKey] = useState<string | null>(null);
+  const [editingFieldName, setEditingFieldName] = useState("");
 
   useEffect(() => { fetchColumns(); }, []);
 
@@ -145,6 +147,19 @@ export default function PatientSettingsPage() {
     } catch {} finally { setSaving(false); }
   }
 
+  async function renameColumn(columnKey: string, newName: string) {
+    if (!newName.trim()) return;
+    try {
+      await fetch("/api/clinic/custom-columns", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ columnKey, columnName: newName.trim() }),
+      });
+      await fetchColumns();
+    } catch {}
+    setEditingFieldKey(null);
+  }
+
   async function deleteColumn(columnKey: string) {
     if (!confirm("Bu alanı silmek istediğinize emin misiniz? Tüm müşteri verileri de silinecektir.")) return;
     try {
@@ -187,7 +202,32 @@ export default function PatientSettingsPage() {
               <div className="flex items-center gap-3 min-w-0">
                 <div className={`h-2 w-2 rounded-full shrink-0 ${field.isDefault ? "bg-[#6366F1]" : "bg-emerald-500"}`} />
                 <div className="min-w-0">
-                  <span className="text-sm font-medium text-gray-700">{field.name}</span>
+                  {!field.isDefault && editingFieldKey === field.key ? (
+                    <input
+                      autoFocus
+                      value={editingFieldName}
+                      onChange={(e) => setEditingFieldName(e.target.value)}
+                      onBlur={() => renameColumn(field.key, editingFieldName)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") renameColumn(field.key, editingFieldName);
+                        if (e.key === "Escape") setEditingFieldKey(null);
+                      }}
+                      className="rounded-lg border border-[#4F46E5] px-2 py-1 text-sm font-medium text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#4F46E5]"
+                    />
+                  ) : (
+                    <span
+                      className={`text-sm font-medium text-gray-700 ${!field.isDefault ? "cursor-pointer hover:text-[#4F46E5]" : ""}`}
+                      onClick={() => {
+                        if (!field.isDefault) {
+                          setEditingFieldKey(field.key);
+                          setEditingFieldName(field.name);
+                        }
+                      }}
+                      title={!field.isDefault ? "Tıklayarak adını değiştirin" : undefined}
+                    >
+                      {field.name}
+                    </span>
+                  )}
                   <span className="ml-2 text-[10px] text-gray-400">
                     {FIELD_TYPES.find(t => t.value === field.type)?.label || field.type}
                     {field.isRequired && " · Zorunlu"}

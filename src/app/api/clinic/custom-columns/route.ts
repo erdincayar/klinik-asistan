@@ -121,3 +121,26 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Bir hata oluştu" }, { status: 500 });
   }
 }
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const session = await auth();
+    if (!session?.user) return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
+    const clinicId = (session.user as any).clinicId;
+    if (!clinicId) return NextResponse.json({ error: "Klinik bulunamadı" }, { status: 400 });
+
+    const { columnKey, columnName } = await req.json();
+    if (!columnKey || !columnName?.trim()) {
+      return NextResponse.json({ error: "Alan adı gerekli" }, { status: 400 });
+    }
+
+    await prisma.customerCustomColumn.update({
+      where: { clinicId_columnKey: { clinicId, columnKey } },
+      data: { columnName: columnName.trim() },
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch {
+    return NextResponse.json({ error: "Bir hata oluştu" }, { status: 500 });
+  }
+}

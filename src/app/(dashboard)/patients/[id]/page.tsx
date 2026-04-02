@@ -25,6 +25,7 @@ import {
   BellRing,
   Lock,
   ArrowRight,
+  ArrowLeft,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useSectorConfig } from "@/lib/hooks/useSectorConfig";
@@ -356,6 +357,12 @@ export default function PatientDetailPage() {
 
   return (
     <div className="space-y-6">
+      {/* Back button */}
+      <Link href="/patients" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#4F46E5] transition-colors">
+        <ArrowLeft className="h-4 w-4" />
+        Müşteri Listesine Dön
+      </Link>
+
       {/* Patient Info */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -416,32 +423,38 @@ export default function PatientDetailPage() {
                     className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
                   />
                 </div>
+                {fieldVisibility.phone?.detail !== false && (
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-gray-600">Telefon</label>
+                    <input
+                      value={editForm.phone}
+                      onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
+                    />
+                  </div>
+                )}
+                {fieldVisibility.email?.detail !== false && (
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-gray-600">Email</label>
+                    <input
+                      value={editForm.email}
+                      onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
+                    />
+                  </div>
+                )}
+              </div>
+              {fieldVisibility.notes?.detail !== false && (
                 <div>
-                  <label className="mb-1.5 block text-xs font-medium text-gray-600">Telefon</label>
-                  <input
-                    value={editForm.phone}
-                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                  <label className="mb-1.5 block text-xs font-medium text-gray-600">Notlar</label>
+                  <textarea
+                    value={editForm.notes}
+                    onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                    rows={2}
                     className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
                   />
                 </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium text-gray-600">Email</label>
-                  <input
-                    value={editForm.email}
-                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                    className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-600">Notlar</label>
-                <textarea
-                  value={editForm.notes}
-                  onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
-                  rows={2}
-                  className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
-                />
-              </div>
+              )}
               <button
                 onClick={handleSave}
                 disabled={saving}
@@ -453,19 +466,25 @@ export default function PatientDetailPage() {
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Phone className="h-4 w-4 text-gray-400" />
-                {patient.phone || "Telefon girilmemiş"}
-              </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Mail className="h-4 w-4 text-gray-400" />
-                {patient.email || "Email girilmemiş"}
-              </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Calendar className="h-4 w-4 text-gray-400" />
-                Kayıt: {formatDate(patient.createdAt)}
-              </div>
-              {patient.notes && (
+              {fieldVisibility.phone?.detail !== false && (
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Phone className="h-4 w-4 text-gray-400" />
+                  {patient.phone || "Telefon girilmemiş"}
+                </div>
+              )}
+              {fieldVisibility.email?.detail !== false && (
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Mail className="h-4 w-4 text-gray-400" />
+                  {patient.email || "Email girilmemiş"}
+                </div>
+              )}
+              {fieldVisibility.createdAt?.detail !== false && (
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Calendar className="h-4 w-4 text-gray-400" />
+                  Kayıt: {formatDate(patient.createdAt)}
+                </div>
+              )}
+              {fieldVisibility.notes?.detail !== false && patient.notes && (
                 <div className="flex items-start gap-2 text-sm text-gray-600 sm:col-span-2">
                   <FileText className="mt-0.5 h-4 w-4 text-gray-400" />
                   {patient.notes}

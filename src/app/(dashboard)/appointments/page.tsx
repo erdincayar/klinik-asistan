@@ -17,6 +17,7 @@ import {
   Trash2,
   X,
   RefreshCw,
+  ShoppingCart,
 } from "lucide-react";
 import {
   Dialog,
@@ -1569,6 +1570,14 @@ export default function AppointmentsPage() {
                     >
                       {savingTransactions ? <><Loader2 className="h-4 w-4 animate-spin" /> Kaydediliyor...</> : "Kaydet"}
                     </button>
+
+                    <Link
+                      href={`/finance/new-income?patientId=${selectedAppointment.patientId}`}
+                      className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-[#E0E7FF] bg-[#EEF2FF] px-3 py-2.5 text-sm font-semibold text-[#4F46E5] transition-colors hover:bg-[#E0E7FF]"
+                    >
+                      <ShoppingCart className="h-4 w-4" />
+                      Sipariş Oluştur
+                    </Link>
                   </div>
                 </TabsContent>
               </Tabs>
