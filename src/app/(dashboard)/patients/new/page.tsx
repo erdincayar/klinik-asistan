@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { CitySelect, DistrictSelect } from "@/components/ui/city-district-select";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
@@ -135,22 +136,42 @@ export default function NewPatientPage() {
             {customColumns.length > 0 && (
               <div className="space-y-3 border-t pt-4">
                 <p className="text-sm font-medium text-gray-700">Özel Alanlar</p>
-                {customColumns.map((col) => (
-                  <div key={col.columnKey} className="space-y-2">
-                    <Label htmlFor={`custom-${col.columnKey}`}>{col.columnName}</Label>
-                    <Input
-                      id={`custom-${col.columnKey}`}
-                      value={customValues[col.columnKey] || ""}
-                      onChange={(e) =>
-                        setCustomValues((prev) => ({
-                          ...prev,
-                          [col.columnKey]: e.target.value,
-                        }))
-                      }
-                      placeholder={col.columnName}
-                    />
-                  </div>
-                ))}
+                {customColumns.map((col) => {
+                  const lower = col.columnName.toLocaleLowerCase("tr-TR");
+                  const isCity = lower === "il" || lower === "şehir";
+                  const isDistrict = lower === "ilçe" || lower === "semt";
+                  // Find the city column value for district filtering
+                  const cityCol = customColumns.find((c) => {
+                    const cl = c.columnName.toLocaleLowerCase("tr-TR");
+                    return cl === "il" || cl === "şehir";
+                  });
+                  const cityValue = cityCol ? (customValues[cityCol.columnKey] || "") : "";
+
+                  return (
+                    <div key={col.columnKey} className="space-y-2">
+                      <Label htmlFor={`custom-${col.columnKey}`}>{col.columnName}</Label>
+                      {isCity ? (
+                        <CitySelect
+                          value={customValues[col.columnKey] || ""}
+                          onChange={(v) => setCustomValues((prev) => ({ ...prev, [col.columnKey]: v }))}
+                        />
+                      ) : isDistrict ? (
+                        <DistrictSelect
+                          city={cityValue}
+                          value={customValues[col.columnKey] || ""}
+                          onChange={(v) => setCustomValues((prev) => ({ ...prev, [col.columnKey]: v }))}
+                        />
+                      ) : (
+                        <Input
+                          id={`custom-${col.columnKey}`}
+                          value={customValues[col.columnKey] || ""}
+                          onChange={(e) => setCustomValues((prev) => ({ ...prev, [col.columnKey]: e.target.value }))}
+                          placeholder={col.columnName}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
 

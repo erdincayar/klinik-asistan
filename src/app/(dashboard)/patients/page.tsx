@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { Plus, Search, Users, ArrowRight, Phone, Upload, Download, ChevronRight, X, Settings2, Pencil } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { CitySelect, DistrictSelect } from "@/components/ui/city-district-select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -418,14 +419,47 @@ export default function PatientsPage() {
                   <option key={col.columnKey} value={col.columnKey}>{col.columnName}</option>
                 ))}
               </select>
-              {customFilter.columnKey && (
-                <Input
-                  placeholder="Filtre değeri..."
-                  value={customFilter.value}
-                  onChange={(e) => setCustomFilter({ ...customFilter, value: e.target.value })}
-                  className="w-36 rounded-xl border-gray-200 py-3 text-sm"
-                />
-              )}
+              {customFilter.columnKey && (() => {
+                const col = customColumns.find((c) => c.columnKey === customFilter.columnKey);
+                const lower = col?.columnName?.toLocaleLowerCase("tr-TR") || "";
+                const isCity = lower === "il" || lower === "şehir";
+                const isDistrict = lower === "ilçe" || lower === "semt";
+                if (isCity) {
+                  return (
+                    <CitySelect
+                      value={customFilter.value}
+                      onChange={(v) => setCustomFilter({ ...customFilter, value: v })}
+                      className="rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm text-gray-700"
+                    />
+                  );
+                }
+                if (isDistrict) {
+                  // Find city filter value
+                  const cityCol = customColumns.find((c) => {
+                    const cl = c.columnName?.toLocaleLowerCase("tr-TR") || "";
+                    return cl === "il" || cl === "şehir";
+                  });
+                  const cityValue = cityCol ? (customFilter.columnKey === cityCol.columnKey ? "" :
+                    patients.find(p => p.customValues?.some((v: any) => v.columnKey === cityCol.columnKey))?.customValues?.find((v: any) => v.columnKey === cityCol.columnKey)?.value || ""
+                  ) : "";
+                  return (
+                    <DistrictSelect
+                      city={cityValue}
+                      value={customFilter.value}
+                      onChange={(v) => setCustomFilter({ ...customFilter, value: v })}
+                      className="rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm text-gray-700"
+                    />
+                  );
+                }
+                return (
+                  <Input
+                    placeholder="Filtre değeri..."
+                    value={customFilter.value}
+                    onChange={(e) => setCustomFilter({ ...customFilter, value: e.target.value })}
+                    className="w-36 rounded-xl border-gray-200 py-3 text-sm"
+                  />
+                );
+              })()}
             </>
           )}
         </div>
