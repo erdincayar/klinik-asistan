@@ -214,12 +214,21 @@ export default function PatientSettingsPage() {
                   {field.showInDetail || field.key === "name" ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
                 </button>
 
-                {/* Delete (only custom fields) */}
-                {!field.isDefault ? (
+                {/* Delete (all except name) */}
+                {field.key !== "name" ? (
                   <button
-                    onClick={() => deleteColumn(field.key)}
+                    onClick={() => {
+                      if (field.isDefault) {
+                        // Hide default field by toggling both list and detail off
+                        const next = { ...visibility, [field.key]: { list: false, detail: false } };
+                        setVisibility(next);
+                        saveVisibility(next);
+                      } else {
+                        deleteColumn(field.key);
+                      }
+                    }}
                     className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"
-                    title="Sil"
+                    title={field.isDefault ? "Gizle" : "Sil"}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
