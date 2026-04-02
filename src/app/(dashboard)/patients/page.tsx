@@ -574,27 +574,33 @@ export default function PatientsPage() {
                 onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-phone">Telefon</Label>
-              <Input
-                id="edit-phone"
-                value={editForm.phone}
-                onChange={(e) => setEditForm((f) => ({ ...f, phone: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-email">Email</Label>
-              <Input
-                id="edit-email"
-                type="email"
-                value={editForm.email}
-                onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
-              />
-            </div>
-            {customColumns.length > 0 && (
+            {(fieldVisibility as any).phone?.deleted !== true && isFieldVisible("phone") && (
+              <div className="space-y-2">
+                <Label htmlFor="edit-phone">Telefon</Label>
+                <Input
+                  id="edit-phone"
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm((f) => ({ ...f, phone: e.target.value }))}
+                />
+              </div>
+            )}
+            {(fieldVisibility as any).email?.deleted !== true && isFieldVisible("email") && (
+              <div className="space-y-2">
+                <Label htmlFor="edit-email">Email</Label>
+                <Input
+                  id="edit-email"
+                  type="email"
+                  value={editForm.email}
+                  onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
+                />
+              </div>
+            )}
+            {customColumns.filter(col => (fieldVisibility as any)[col.columnKey]?.deleted !== true).length > 0 && (
               <div className="space-y-3 border-t pt-3">
                 <p className="text-sm font-medium text-gray-700">Özel Alanlar</p>
-                {customColumns.map((col) => (
+                {customColumns
+                  .filter(col => (fieldVisibility as any)[col.columnKey]?.deleted !== true)
+                  .map((col) => (
                   <div key={col.columnKey} className="space-y-2">
                     <Label htmlFor={`edit-custom-${col.columnKey}`}>{col.columnName}</Label>
                     <Input
