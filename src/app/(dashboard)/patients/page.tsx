@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Plus, Search, Users, ArrowRight, Phone, Upload, Download, ChevronRight, X, Settings2, Pencil } from "lucide-react";
@@ -97,6 +98,7 @@ function TableSkeleton() {
 }
 
 export default function PatientsPage() {
+  const router = useRouter();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -691,8 +693,8 @@ export default function PatientsPage() {
                         <TableHead>Müşteri</TableHead>
                         {isFieldVisible("phone") && <TableHead>Telefon</TableHead>}
                         {isFieldVisible("email") && <TableHead>Email</TableHead>}
-                        <TableHead>İşlem Sayısı</TableHead>
-                        <TableHead>Kayıt Tarihi</TableHead>
+                        {isFieldVisible("treatmentCount") && <TableHead>İşlem Sayısı</TableHead>}
+                        {isFieldVisible("createdAt") && <TableHead>Kayıt Tarihi</TableHead>}
                         {customColumns.filter(col => isFieldVisible(col.columnKey)).map((col) => (
                           <TableHead key={col.columnKey}>
                             {col.columnName}
@@ -737,7 +739,15 @@ export default function PatientsPage() {
                     </TableHeader>
                     <TableBody>
                       {filteredPatients.map((patient, i) => (
-                        <motion.tr key={patient.id} variants={fadeUp} initial="hidden" animate="visible" custom={i}>
+                        <motion.tr
+                          key={patient.id}
+                          variants={fadeUp}
+                          initial="hidden"
+                          animate="visible"
+                          custom={i}
+                          onClick={() => router.push(`/patients/${patient.id}`)}
+                          className="cursor-pointer hover:bg-[#EEF2FF]/30 transition-colors"
+                        >
                           <TableCell className="text-center text-xs font-medium text-gray-400">{filteredPatients.length - i}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-3">
@@ -810,8 +820,8 @@ export default function PatientsPage() {
                             )}
                           </TableCell>
                           )}
-                          <TableCell>{patient._count?.treatments ?? 0}</TableCell>
-                          <TableCell>{formatDate(patient.createdAt)}</TableCell>
+                          {isFieldVisible("treatmentCount") && <TableCell>{patient._count?.treatments ?? 0}</TableCell>}
+                          {isFieldVisible("createdAt") && <TableCell>{formatDate(patient.createdAt)}</TableCell>}
                           {customColumns.filter(col => isFieldVisible(col.columnKey)).map((col) => {
                             const cv = patient.customValues?.find((v) => v.columnKey === col.columnKey);
                             const cellKey = `custom_${col.columnKey}`;

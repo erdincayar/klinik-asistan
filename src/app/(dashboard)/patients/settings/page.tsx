@@ -94,6 +94,8 @@ export default function PatientSettingsPage() {
     { key: "email", name: "E-posta", type: "email", isDefault: true, isRequired: false, showInList: visibility.email?.list !== false, showInDetail: visibility.email?.detail !== false },
     { key: "notes", name: "Notlar", type: "textarea", isDefault: true, isRequired: false, showInList: false, showInDetail: visibility.notes?.detail !== false },
     { key: "dateOfBirth", name: "Doğum Tarihi", type: "date", isDefault: true, isRequired: false, showInList: false, showInDetail: visibility.dateOfBirth?.detail !== false },
+    { key: "treatmentCount", name: "İşlem Sayısı", type: "number", isDefault: true, isRequired: false, showInList: visibility.treatmentCount?.list !== false, showInDetail: false },
+    { key: "createdAt", name: "Kayıt Tarihi", type: "date", isDefault: true, isRequired: false, showInList: visibility.createdAt?.list !== false, showInDetail: visibility.createdAt?.detail !== false },
   ];
 
   const customFields: FieldConfig[] = columns.map((col) => ({
