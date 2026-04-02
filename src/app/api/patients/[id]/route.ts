@@ -100,8 +100,24 @@ export async function DELETE(
       return Response.json({ error: "Müşteri bulunamadı" }, { status: 404 });
     }
 
-    await prisma.treatment.deleteMany({ where: { patientId: params.id } });
-    await prisma.patient.delete({ where: { id: params.id } });
+    const pid = params.id;
+    const safeDelete = async (fn: () => Promise<any>) => { try { await fn(); } catch {} };
+
+    // Delete all related records before deleting patient
+    await safeDelete(() => prisma.transactionCustomValue.deleteMany({ where: { treatment: { patientId: pid } } }));
+    await safeDelete(() => prisma.treatment.deleteMany({ where: { patientId: pid } }));
+    await safeDelete(() => prisma.debtPayment.deleteMany({ where: { debt: { patientId: pid } } }));
+    await safeDelete(() => prisma.debt.deleteMany({ where: { patientId: pid } }));
+    await safeDelete(() => prisma.appointment.deleteMany({ where: { patientId: pid } }));
+    await safeDelete(() => prisma.invoice.deleteMany({ where: { patientId: pid } }));
+    await safeDelete(() => prisma.patientPhoto.deleteMany({ where: { patientId: pid } }));
+    await safeDelete(() => prisma.patientPreference.deleteMany({ where: { patientId: pid } }));
+    await safeDelete(() => prisma.patientVisitPattern.deleteMany({ where: { patientId: pid } }));
+    await safeDelete(() => prisma.reminderLog.deleteMany({ where: { patientId: pid } }));
+    await safeDelete(() => prisma.customerCustomValue.deleteMany({ where: { customerId: pid } }));
+    await safeDelete(() => prisma.consentFormResponse.deleteMany({ where: { patientId: pid } }));
+
+    await prisma.patient.delete({ where: { id: pid } });
 
     return Response.json({ success: true });
   } catch {
