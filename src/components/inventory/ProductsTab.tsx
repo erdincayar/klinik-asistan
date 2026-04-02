@@ -1183,12 +1183,13 @@ interface BulkAddRow {
   purchasePrice: number;
   salePrice: number;
   vatIncluded: boolean;
+  trackStock: boolean;
 }
 
 const emptyRow = (): BulkAddRow => ({
   id: Math.random().toString(36).slice(2),
   name: "", brand: "", category: "DIGER",
-  purchasePrice: 0, salePrice: 0, vatIncluded: true,
+  purchasePrice: 0, salePrice: 0, vatIncluded: true, trackStock: true,
 });
 
 function BulkAddDialog({
@@ -1242,6 +1243,7 @@ function BulkAddDialog({
             salePrice: toKurus(row.salePrice),
             currency,
             vatIncluded: row.vatIncluded,
+            trackStock: row.trackStock,
           })),
         }),
       });
@@ -1751,6 +1753,7 @@ function ImportDialog({
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importBrand, setImportBrand] = useState("");
   const [importVatIncluded, setImportVatIncluded] = useState(true);
+  const [importTrackStock, setImportTrackStock] = useState(true);
   const [showErrorDetails, setShowErrorDetails] = useState(false);
   const [customMappings, setCustomMappings] = useState<{ name: string; column: string }[]>([]);
   const [newCustomName, setNewCustomName] = useState("");
@@ -1849,6 +1852,7 @@ function ImportDialog({
       formData.append("mapping", JSON.stringify(finalMapping));
       formData.append("currency", selectedCurrency);
       formData.append("vatIncluded", String(importVatIncluded));
+      formData.append("trackStock", String(importTrackStock));
       if (importBrand.trim()) formData.append("brand", importBrand.trim());
       const res = await fetch("/api/products/import", { method: "POST", body: formData });
       const data = await res.json();
@@ -1997,7 +2001,7 @@ function ImportDialog({
             </div>
 
             {/* KDV */}
-            <div className="rounded-lg border border-gray-200 p-4">
+            <div className="rounded-lg border border-gray-200 p-4 space-y-2">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -2006,6 +2010,15 @@ function ImportDialog({
                   className="h-4 w-4 rounded border-gray-300 text-[#6366F1]"
                 />
                 <span className="text-xs font-semibold">Fiyatlara KDV dahil</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={importTrackStock}
+                  onChange={(e) => setImportTrackStock(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-[#6366F1]"
+                />
+                <span className="text-xs font-semibold">Stok takibi yap</span>
               </label>
             </div>
 

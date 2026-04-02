@@ -14,6 +14,7 @@ interface BulkProduct {
   salePrice: number; // kuruş
   currency: string;
   vatIncluded?: boolean;
+  trackStock?: boolean;
 }
 
 function generateSku(name: string): string {
@@ -93,6 +94,7 @@ export async function POST(request: Request) {
             currency,
             salePrice: item.salePrice || 0,
             vatIncluded: item.vatIncluded ?? true,
+            trackStock: item.trackStock ?? true,
             clinicId,
           } as any,
         });

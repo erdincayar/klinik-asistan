@@ -61,6 +61,8 @@ export async function POST(req: NextRequest) {
     const importBrand = formData.get("brand") as string | null;
     const vatIncludedStr = formData.get("vatIncluded") as string | null;
     const vatIncluded = vatIncludedStr !== "false";
+    const trackStockStr = formData.get("trackStock") as string | null;
+    const trackStock = trackStockStr !== "false";
 
     if (!file) {
       return NextResponse.json({ error: "Dosya gerekli" }, { status: 400 });
@@ -175,6 +177,7 @@ export async function POST(req: NextRequest) {
           purchasePriceUSD: originalForeignPrice,
           salePrice: Math.round(salePriceTL * 100),
           vatIncluded,
+          trackStock,
           ...(hasCustomFields && { customFields }),
         };
 
