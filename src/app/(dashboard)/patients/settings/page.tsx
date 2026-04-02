@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Trash2, GripVertical, ArrowLeft, Settings } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, Eye, EyeOff, List, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,17 @@ interface CustomColumn {
   options: string | null;
   isRequired: boolean;
   sortOrder: number;
+}
+
+interface FieldConfig {
+  key: string;
+  name: string;
+  type: string;
+  isDefault: boolean;
+  isRequired: boolean;
+  showInList: boolean;
+  showInDetail: boolean;
+  customColumnId?: string;
 }
 
 const FIELD_TYPES = [
@@ -43,29 +54,68 @@ const PRESET_FIELDS = [
   { name: "İndirim Oranı (%)", type: "number" },
 ];
 
+const STORAGE_KEY = "poby-field-visibility";
+
+function loadVisibility(): Record<string, { list: boolean; detail: boolean }> {
+  if (typeof window === "undefined") return {};
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+  } catch { return {}; }
+}
+
+function saveVisibility(data: Record<string, { list: boolean; detail: boolean }>) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
 export default function PatientSettingsPage() {
   const [columns, setColumns] = useState<CustomColumn[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [visibility, setVisibility] = useState<Record<string, { list: boolean; detail: boolean }>>(loadVisibility);
 
   // New field form
   const [newFieldName, setNewFieldName] = useState("");
   const [newFieldType, setNewFieldType] = useState("text");
-  const [newFieldRequired, setNewFieldRequired] = useState(false);
   const [newFieldOptions, setNewFieldOptions] = useState("");
-  const [showNewField, setShowNewField] = useState(false);
 
-  useEffect(() => {
-    fetchColumns();
-  }, []);
+  useEffect(() => { fetchColumns(); }, []);
 
   async function fetchColumns() {
     try {
       const res = await fetch("/api/clinic/custom-columns");
       if (res.ok) setColumns(await res.json());
-    } catch {} finally {
-      setLoading(false);
-    }
+    } catch {} finally { setLoading(false); }
+  }
+
+  // Build combined field list
+  const defaultFields: FieldConfig[] = [
+    { key: "name", name: "İsim", type: "text", isDefault: true, isRequired: true, showInList: true, showInDetail: true },
+    { key: "phone", name: "Telefon", type: "phone", isDefault: true, isRequired: false, showInList: visibility.phone?.list !== false, showInDetail: visibility.phone?.detail !== false },
+    { key: "email", name: "E-posta", type: "email", isDefault: true, isRequired: false, showInList: visibility.email?.list !== false, showInDetail: visibility.email?.detail !== false },
+    { key: "notes", name: "Notlar", type: "textarea", isDefault: true, isRequired: false, showInList: false, showInDetail: visibility.notes?.detail !== false },
+    { key: "dateOfBirth", name: "Doğum Tarihi", type: "date", isDefault: true, isRequired: false, showInList: false, showInDetail: visibility.dateOfBirth?.detail !== false },
+  ];
+
+  const customFields: FieldConfig[] = columns.map((col) => ({
+    key: col.columnKey,
+    name: col.columnName,
+    type: col.fieldType,
+    isDefault: false,
+    isRequired: col.isRequired,
+    showInList: visibility[col.columnKey]?.list !== false,
+    showInDetail: visibility[col.columnKey]?.detail !== false,
+    customColumnId: col.id,
+  }));
+
+  const allFields = [...defaultFields, ...customFields];
+
+  function toggleVisibility(key: string, target: "list" | "detail") {
+    setVisibility((prev) => {
+      const current = prev[key] || { list: true, detail: true };
+      const next = { ...prev, [key]: { ...current, [target]: !current[target] } };
+      saveVisibility(next);
+      return next;
+    });
   }
 
   async function addColumn(name?: string, type?: string) {
@@ -75,9 +125,8 @@ export default function PatientSettingsPage() {
     setSaving(true);
     try {
       const body: any = { columnName: fieldName, fieldType };
-      if (newFieldRequired) body.isRequired = true;
       if (fieldType === "select" && newFieldOptions) {
-        body.options = newFieldOptions.split(",").map(o => o.trim()).filter(Boolean);
+        body.options = newFieldOptions.split(",").map((o: string) => o.trim()).filter(Boolean);
       }
       const res = await fetch("/api/clinic/custom-columns", {
         method: "POST",
@@ -88,13 +137,9 @@ export default function PatientSettingsPage() {
         await fetchColumns();
         setNewFieldName("");
         setNewFieldType("text");
-        setNewFieldRequired(false);
         setNewFieldOptions("");
-        setShowNewField(false);
       }
-    } catch {} finally {
-      setSaving(false);
-    }
+    } catch {} finally { setSaving(false); }
   }
 
   async function deleteColumn(columnKey: string) {
@@ -116,62 +161,72 @@ export default function PatientSettingsPage() {
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Müşteri Alanlarını Düzenle</h1>
-          <p className="text-sm text-gray-500">Müşteri kartlarında görünecek alanları belirleyin</p>
+          <h1 className="text-xl font-bold text-gray-900">Müşteri Alanları</h1>
+          <p className="text-sm text-gray-500">Alanları yönetin, nerede görüneceğini belirleyin</p>
         </div>
       </div>
 
-      {/* Current fields */}
+      {/* All Fields — unified panel */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Mevcut Alanlar</CardTitle>
-            <span className="text-xs text-gray-400">{columns.length} alan</span>
+            <CardTitle className="text-base">Alanlar</CardTitle>
+            <div className="flex items-center gap-4 text-[10px] font-semibold uppercase text-gray-400">
+              <span className="flex items-center gap-1"><List className="h-3 w-3" /> Liste</span>
+              <span className="flex items-center gap-1"><FileText className="h-3 w-3" /> Detay</span>
+              <span className="w-7"></span>
+            </div>
           </div>
         </CardHeader>
-        <CardContent>
-          {/* Default fields - always present */}
-          <div className="mb-4 space-y-2">
-            <p className="text-[11px] font-semibold uppercase text-gray-400">Varsayılan Alanlar</p>
-            {["İsim", "Telefon", "E-posta", "Notlar", "Doğum Tarihi"].map((f) => (
-              <div key={f} className="flex items-center justify-between rounded-lg bg-gray-50 px-4 py-2.5">
-                <div className="flex items-center gap-3">
-                  <div className="h-2 w-2 rounded-full bg-[#6366F1]" />
-                  <span className="text-sm font-medium text-gray-700">{f}</span>
+        <CardContent className="space-y-1.5">
+          {allFields.map((field) => (
+            <div key={field.key} className="flex items-center justify-between rounded-lg border border-gray-100 px-4 py-2.5 hover:bg-gray-50/50">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className={`h-2 w-2 rounded-full shrink-0 ${field.isDefault ? "bg-[#6366F1]" : "bg-emerald-500"}`} />
+                <div className="min-w-0">
+                  <span className="text-sm font-medium text-gray-700">{field.name}</span>
+                  <span className="ml-2 text-[10px] text-gray-400">
+                    {FIELD_TYPES.find(t => t.value === field.type)?.label || field.type}
+                    {field.isRequired && " · Zorunlu"}
+                  </span>
                 </div>
-                <span className="text-[11px] text-gray-400">Sabit alan</span>
               </div>
-            ))}
-          </div>
-
-          {/* Custom fields */}
-          {columns.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-[11px] font-semibold uppercase text-gray-400">Özel Alanlar</p>
-              {columns.map((col) => (
-                <div key={col.id} className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-2.5 hover:bg-gray-50">
-                  <div className="flex items-center gap-3">
-                    <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                    <div>
-                      <span className="text-sm font-medium text-gray-700">{col.columnName}</span>
-                      <span className="ml-2 text-[10px] text-gray-400">
-                        {FIELD_TYPES.find(t => t.value === col.fieldType)?.label || col.fieldType}
-                        {col.isRequired && " · Zorunlu"}
-                      </span>
-                    </div>
-                  </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {/* List visibility toggle */}
+                {field.key !== "name" && (
                   <button
-                    onClick={() => deleteColumn(col.columnKey)}
+                    onClick={() => toggleVisibility(field.key, "list")}
+                    className={`rounded-lg p-1.5 transition-colors ${field.showInList ? "text-[#4F46E5] bg-[#EEF2FF]" : "text-gray-300 hover:text-gray-400"}`}
+                    title={field.showInList ? "Listede görünür" : "Listede gizli"}
+                  >
+                    {field.showInList ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                  </button>
+                )}
+                {field.key === "name" && <div className="w-8" />}
+
+                {/* Detail visibility toggle */}
+                <button
+                  onClick={() => field.key !== "name" ? toggleVisibility(field.key, "detail") : null}
+                  className={`rounded-lg p-1.5 transition-colors ${field.key === "name" ? "text-[#4F46E5] bg-[#EEF2FF] cursor-default" : field.showInDetail ? "text-emerald-600 bg-emerald-50" : "text-gray-300 hover:text-gray-400"}`}
+                  title={field.showInDetail ? "Detayda görünür" : "Detayda gizli"}
+                  disabled={field.key === "name"}
+                >
+                  {field.showInDetail || field.key === "name" ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                </button>
+
+                {/* Delete (only custom fields) */}
+                {!field.isDefault ? (
+                  <button
+                    onClick={() => deleteColumn(field.key)}
                     className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"
                     title="Sil"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
-                </div>
-              ))}
+                ) : <div className="w-8" />}
+              </div>
             </div>
-          )}
-
+          ))}
           {loading && <p className="text-sm text-gray-400 py-4 text-center">Yükleniyor...</p>}
         </CardContent>
       </Card>
@@ -240,16 +295,7 @@ export default function PatientSettingsPage() {
               </div>
             )}
 
-            <div className="mt-3 flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={newFieldRequired}
-                  onChange={(e) => setNewFieldRequired(e.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300 text-[#6366F1]"
-                />
-                <span className="text-sm text-gray-600">Zorunlu alan</span>
-              </label>
+            <div className="mt-3 flex justify-end">
               <Button onClick={() => addColumn()} disabled={saving || !newFieldName.trim()}>
                 {saving ? "Ekleniyor..." : "Alan Ekle"}
               </Button>

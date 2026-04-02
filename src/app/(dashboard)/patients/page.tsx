@@ -569,8 +569,8 @@ export default function PatientsPage() {
                 <Link href="/patients/settings">
                   <Button size="sm" variant="outline" className="gap-1.5">
                     <Settings2 className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Alanları Düzenle</span>
-                    <span className="sm:hidden">Düzenle</span>
+                    <span className="hidden sm:inline">Alanları Yönet</span>
+                    <span className="sm:hidden">Alanlar</span>
                   </Button>
                 </Link>
                 <Link href="/patients/new">
@@ -580,20 +580,6 @@ export default function PatientsPage() {
                     <span className="sm:hidden">Ekle</span>
                   </Button>
                 </Link>
-                {customColumns.length > 0 && (
-                  <button
-                    onClick={() => setColumnEditMode(!columnEditMode)}
-                    className={cn(
-                      "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
-                      columnEditMode
-                        ? "bg-[#1E1E2D] text-white"
-                        : "border border-gray-200 text-gray-600 hover:bg-gray-50",
-                    )}
-                  >
-                    <Settings2 className="h-3.5 w-3.5" />
-                    {columnEditMode ? "Tamam" : "Düzenle"}
-                  </button>
-                )}
               </div>
             </div>
           </CardHeader>
@@ -699,18 +685,7 @@ export default function PatientsPage() {
                         <TableHead>Kayıt Tarihi</TableHead>
                         {customColumns.map((col) => (
                           <TableHead key={col.columnKey}>
-                            <div className="flex items-center gap-1">
-                              {col.columnName}
-                              {columnEditMode && (
-                                <button
-                                  onClick={() => setDeleteConfirm(col.columnKey)}
-                                  className="ml-1 rounded-full p-0.5 text-red-400 transition-colors hover:bg-red-50 hover:text-red-600"
-                                  title="Sütunu sil"
-                                >
-                                  <X className="h-3.5 w-3.5" />
-                                </button>
-                              )}
-                            </div>
+                            {col.columnName}
                           </TableHead>
                         ))}
                         <TableHead>
