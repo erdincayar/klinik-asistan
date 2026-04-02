@@ -695,235 +695,66 @@ export default function AppointmentsPage() {
         </div>
       </motion.div>
 
-      {/* Filter block */}
-      <motion.div variants={fadeUp} initial="hidden" animate="visible" className="space-y-2 rounded-xl border border-gray-100 bg-white p-2 sm:p-3">
-        {/* Employee filter row */}
-        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-          <span className="text-xs sm:text-sm font-medium text-gray-500">Çalışan:</span>
-          <button
-            onClick={() => setSelectedEmployee("all")}
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm font-medium transition-colors",
-              selectedEmployee === "all"
-                ? "bg-gray-900 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            )}
-          >
-            Tümü
-          </button>
-          {employees.map((emp) => (
-            <button
-              key={emp.id}
-              onClick={() => setSelectedEmployee(emp.id)}
-              className={cn(
-                "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm font-medium transition-colors",
-                selectedEmployee === emp.id
-                  ? "bg-gray-900 text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              )}
-            >
-              <span
-                className="inline-block h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full"
-                style={{ backgroundColor: emp.color }}
-              />
-              {emp.name}
-            </button>
-          ))}
-          {showInlineEmployee ? (
-            <div className="inline-flex items-center gap-1.5">
-              <input
-                autoFocus
-                value={inlineEmployeeName}
-                onChange={(e) => setInlineEmployeeName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    if (!inlineEmployeeName.trim() || savingInlineEmployee) return;
-                    setSavingInlineEmployee(true);
-                    fetch("/api/employees", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ action: "create", name: inlineEmployeeName.trim(), role: "Çalışan" }),
-                    })
-                      .then((res) => { if (res.ok) { refetchEmployees(); setShowInlineEmployee(false); setInlineEmployeeName(""); } })
-                      .catch(() => {})
-                      .finally(() => setSavingInlineEmployee(false));
-                  }
-                  if (e.key === "Escape") { setShowInlineEmployee(false); setInlineEmployeeName(""); }
-                }}
-                placeholder="Çalışan adı..."
-                className="w-28 rounded-full border border-gray-300 px-3 py-1.5 text-sm focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
-              />
-              <button
-                disabled={savingInlineEmployee || !inlineEmployeeName.trim()}
-                onClick={async () => {
-                  if (!inlineEmployeeName.trim()) return;
-                  setSavingInlineEmployee(true);
-                  try {
-                    const res = await fetch("/api/employees", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ action: "create", name: inlineEmployeeName.trim(), role: "Çalışan" }),
-                    });
-                    if (res.ok) { await refetchEmployees(); setShowInlineEmployee(false); setInlineEmployeeName(""); }
-                  } catch { /* silently handle */ }
-                  finally { setSavingInlineEmployee(false); }
-                }}
-                className="rounded-full bg-[#1E1E2D] px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#2A2A3C] disabled:opacity-50"
-              >
-                {savingInlineEmployee ? <Loader2 className="h-3 w-3 animate-spin" /> : "Kaydet"}
-              </button>
-              <button
-                onClick={() => { setShowInlineEmployee(false); setInlineEmployeeName(""); }}
-                className="rounded-full bg-gray-100 px-2.5 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-200"
-              >
-                İptal
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => setShowInlineEmployee(true)}
-              className="inline-flex items-center gap-1 rounded-full border border-dashed border-gray-300 px-3 py-1.5 text-sm text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-colors"
-            >
-              <Plus className="h-3 w-3" /> Ekle
-            </button>
+      {/* Minimal filter bar */}
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" className="flex flex-wrap items-center gap-1.5 rounded-xl border border-gray-100 bg-white px-3 py-2">
+        {/* Employee chips */}
+        <button
+          onClick={() => setSelectedEmployee("all")}
+          className={cn(
+            "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
+            selectedEmployee === "all"
+              ? "bg-gray-900 text-white"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
           )}
-        </div>
-
-        {/* Service filter row */}
-        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-          <span className="text-xs sm:text-sm font-medium text-gray-500">İşlem:</span>
+        >
+          Tümü
+        </button>
+        {employees.map((emp) => (
           <button
-            onClick={() => setSelectedService("all")}
+            key={emp.id}
+            onClick={() => setSelectedEmployee(selectedEmployee === emp.id ? "all" : emp.id)}
             className={cn(
-              "inline-flex items-center rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm font-medium transition-colors",
-              selectedService === "all"
+              "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
+              selectedEmployee === emp.id
                 ? "bg-gray-900 text-white"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             )}
           >
-            Tümü
+            <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: emp.color }} />
+            {emp.name}
           </button>
-          {(showAllServices ? serviceNames : serviceNames.slice(0, 5)).map((name) => (
-            <div key={name} className="relative group inline-flex">
+        ))}
+        {/* Service filter — compact */}
+        {serviceNames.length > 0 && (
+          <>
+            <div className="mx-1 h-4 w-px bg-gray-200" />
+            {serviceNames.slice(0, 5).map((name) => (
               <button
-                onClick={() => setSelectedService(name)}
+                key={name}
+                onClick={() => setSelectedService(selectedService === name ? "all" : name)}
                 className={cn(
-                  "inline-flex items-center rounded-full px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm font-medium transition-colors",
+                  "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
                   selectedService === name
-                    ? "bg-gray-900 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    ? "bg-[#4F46E5] text-white"
+                    : "bg-[#EEF2FF] text-[#4F46E5] hover:bg-[#E0E7FF]"
                 )}
               >
                 {name}
               </button>
-              <button
-                onClick={async (e) => {
-                  e.stopPropagation();
-                  if (!confirm(`"${name}" işlem türünü silmek istediğinize emin misiniz?`)) return;
-                  await fetch("/api/clinic/service-names", {
-                    method: "DELETE",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ name }),
-                  });
-                  if (selectedService === name) setSelectedService("all");
-                  refetchServiceNames();
-                }}
-                className="absolute -top-1 -right-1 hidden group-hover:flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white transition-all hover:bg-red-600"
-                title="İşlem türünü sil"
-              >
-                <X className="h-2.5 w-2.5" />
-              </button>
-            </div>
-          ))}
-          {showInlineService ? (
-            <div className="inline-flex items-center gap-1.5">
-              <input
-                autoFocus
-                value={inlineServiceName}
-                onChange={(e) => setInlineServiceName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    if (!inlineServiceName.trim() || savingInlineService) return;
-                    setSavingInlineService(true);
-                    fetch("/api/clinic/service-names", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ name: inlineServiceName.trim() }),
-                    })
-                      .then((res) => { if (res.ok) { refetchServiceNames(); setShowInlineService(false); setInlineServiceName(""); } })
-                      .catch(() => {})
-                      .finally(() => setSavingInlineService(false));
-                  }
-                  if (e.key === "Escape") { setShowInlineService(false); setInlineServiceName(""); }
-                }}
-                placeholder="İşlem adı..."
-                className="w-28 rounded-full border border-gray-300 px-3 py-1.5 text-sm focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
-              />
-              <button
-                disabled={savingInlineService || !inlineServiceName.trim()}
-                onClick={async () => {
-                  if (!inlineServiceName.trim()) return;
-                  setSavingInlineService(true);
-                  try {
-                    const res = await fetch("/api/clinic/service-names", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ name: inlineServiceName.trim() }),
-                    });
-                    if (res.ok) { await refetchServiceNames(); setShowInlineService(false); setInlineServiceName(""); }
-                  } catch { /* silently handle */ }
-                  finally { setSavingInlineService(false); }
-                }}
-                className="rounded-full bg-[#1E1E2D] px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#2A2A3C] disabled:opacity-50"
-              >
-                {savingInlineService ? <Loader2 className="h-3 w-3 animate-spin" /> : "Kaydet"}
-              </button>
-              <button
-                onClick={() => { setShowInlineService(false); setInlineServiceName(""); }}
-                className="rounded-full bg-gray-100 px-2.5 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-200"
-              >
-                İptal
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => setShowInlineService(true)}
-              className="inline-flex items-center gap-1 rounded-full border border-dashed border-gray-300 px-3 py-1.5 text-sm text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-colors"
-            >
-              <Plus className="h-3 w-3" /> Ekle
-            </button>
-          )}
-          {!showAllServices && serviceNames.length > 5 && (
-            <button
-              onClick={() => setShowAllServices(true)}
-              className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200"
-            >
-              +{serviceNames.length - 5} daha
-            </button>
-          )}
-          {showAllServices && serviceNames.length > 5 && (
-            <button
-              onClick={() => setShowAllServices(false)}
-              className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200"
-            >
-              Daralt
-            </button>
-          )}
-
-          {/* Hide empty toggle */}
-          <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
-            <button
-              onClick={() => { const v = !hideEmpty; setHideEmpty(v); savePrefs({ hideEmpty: v }); }}
-              className={cn(
-                "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] sm:px-3 sm:py-1.5 sm:text-xs font-medium transition-colors",
-                hideEmpty ? "bg-[#E0E7FF] text-[#4F46E5]" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-              )}
-            >
-              Boş Gizle
-            </button>
-          </div>
+            ))}
+          </>
+        )}
+        {/* Hide empty toggle */}
+        <div className="ml-auto">
+          <button
+            onClick={() => { const v = !hideEmpty; setHideEmpty(v); savePrefs({ hideEmpty: v }); }}
+            className={cn(
+              "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-medium transition-colors",
+              hideEmpty ? "bg-[#E0E7FF] text-[#4F46E5]" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+            )}
+          >
+            Boş Gizle
+          </button>
         </div>
       </motion.div>
 
@@ -961,8 +792,8 @@ export default function AppointmentsPage() {
           </button>
         </div>
         {viewMode === "daily" ? (
-          /* ── Daily view ── */
-          <div ref={dailyScrollRef} className="max-h-[calc(100vh-280px)] overflow-y-auto rounded-xl border border-gray-100 bg-white">
+          /* ── Daily view — employee columns ── */
+          <div ref={dailyScrollRef} className="max-h-[calc(100vh-280px)] overflow-x-auto overflow-y-auto rounded-xl border border-gray-100 bg-white">
             {loading ? (
               <div className="space-y-0 divide-y divide-gray-50 p-0">
                 {[...Array(6)].map((_, i) => (
@@ -972,7 +803,63 @@ export default function AppointmentsPage() {
                   </div>
                 ))}
               </div>
+            ) : employees.length > 1 && selectedEmployee === "all" ? (
+              /* Multi-employee column view */
+              <table className="w-full border-collapse">
+                <thead className="sticky top-0 z-10 bg-white">
+                  <tr className="border-b border-gray-100">
+                    <th className="w-16 sm:w-20 px-1 py-2 text-[10px] sm:text-xs font-medium text-gray-400 text-center">Saat</th>
+                    {employees.map((emp) => (
+                      <th key={emp.id} className="px-1 py-2 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: emp.color }} />
+                          <span className="text-[10px] sm:text-xs font-medium text-gray-600 truncate">{emp.name}</span>
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleTimeSlots.map((time) => {
+                    const isCurrentSlot = isToday && time === nowTime.slice(0, 5);
+                    const isOffHours = isOutsideWorkHours(time, workStartTime, workEndTime);
+                    return (
+                      <tr key={time} data-time={time} className={cn("border-b border-gray-50", isCurrentSlot && "bg-[#EEF2FF]/50", isOffHours && !isCurrentSlot && "bg-gray-50/70")}>
+                        <td className={cn("px-1 py-1 text-center text-[10px] sm:text-xs font-medium border-r border-gray-50", isOffHours ? "text-gray-300" : "text-gray-500")}>{time}</td>
+                        {employees.map((emp) => {
+                          const empAppts = appointments.filter(a => a.startTime === time && a.employeeId === emp.id);
+                          return (
+                            <td key={emp.id} className={cn("px-0.5 py-0.5 align-top border-r border-gray-50 last:border-0", empAppts.length === 0 && "cursor-pointer hover:bg-[#EEF2FF]/20")}
+                              onClick={() => {
+                                if (empAppts.length === 0) {
+                                  setNewAppt((prev) => ({ ...prev, date: formatDateISO(selectedDate), startTime: time, employeeId: emp.id }));
+                                  setCreateDialogOpen(true);
+                                }
+                              }}
+                            >
+                              {empAppts.map((appt) => {
+                                const statusInfo = getStatusInfo(appt.status);
+                                return (
+                                  <button key={appt.id}
+                                    onClick={(e) => { e.stopPropagation(); setSelectedAppointment(appt); setTransactionItems([{ name: appt.treatmentType || "", amount: "", paymentMethod: "Nakit", notes: "" }]); setAppointmentTreatments([]); fetchAppointmentTreatments(appt.id); setDialogOpen(true); }}
+                                    className="w-full rounded-md px-1.5 py-1 text-left text-[10px] sm:text-xs transition-all hover:shadow-sm"
+                                    style={{ backgroundColor: `${emp.color}15`, borderLeft: `2px solid ${emp.color}` }}
+                                  >
+                                    <div className="font-semibold text-gray-900 truncate">{appt.patientName}</div>
+                                    {appt.treatmentType && <div className="text-gray-500 truncate">{appt.treatmentType}</div>}
+                                  </button>
+                                );
+                              })}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             ) : (
+              /* Single column view (1 employee or filtered) */
               <div className="divide-y divide-gray-50">
                 {visibleTimeSlots.map((time) => {
                   const slotAppointments = getAppointmentsForSlot(time);
