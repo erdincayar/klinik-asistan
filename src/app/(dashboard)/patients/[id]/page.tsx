@@ -26,6 +26,7 @@ import {
   Lock,
   ArrowRight,
   ArrowLeft,
+  Settings2,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useSectorConfig } from "@/lib/hooks/useSectorConfig";
@@ -48,6 +49,16 @@ interface Patient {
   createdAt: string;
   treatments: Treatment[];
   customValues?: Array<{ columnKey: string; value: string | null }>;
+  appointments?: Array<{
+    id: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+    treatmentType: string;
+    status: string;
+    notes: string | null;
+    employee?: { name: string } | null;
+  }>;
   debts?: Array<{
     id: string;
     direction: string;
@@ -118,6 +129,8 @@ export default function PatientDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const [photos, setPhotos] = useState<PatientPhoto[]>([]);
   const [fieldVisibility, setFieldVisibility] = useState<Record<string, { list: boolean; detail: boolean }>>({});
+  const [editingCell, setEditingCell] = useState<{ id: string; field: string } | null>(null);
+  const [cellEditValue, setCellEditValue] = useState("");
 
   useEffect(() => {
     try {
@@ -234,25 +247,26 @@ export default function PatientDetailPage() {
     }
   }, [params.id]);
 
-  useEffect(() => {
-    async function fetchPatient() {
-      try {
-        const res = await fetch(`/api/patients/${params.id}`);
-        if (!res.ok) throw new Error("Müşteri bulunamadı");
-        const data = await res.json();
-        setPatient(data);
-        setEditForm({
-          name: data.name,
-          phone: data.phone || "",
-          email: data.email || "",
-          notes: data.notes || "",
-        });
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Bir hata oluştu");
-      } finally {
-        setLoading(false);
-      }
+  const fetchPatient = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/patients/${params.id}`);
+      if (!res.ok) throw new Error("Müşteri bulunamadı");
+      const data = await res.json();
+      setPatient(data);
+      setEditForm({
+        name: data.name,
+        phone: data.phone || "",
+        email: data.email || "",
+        notes: data.notes || "",
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
+    } finally {
+      setLoading(false);
     }
+  }, [params.id]);
+
+  useEffect(() => {
     fetchPatient();
     fetchPhotos();
     fetchCategories();
@@ -400,6 +414,13 @@ export default function PatientDetailPage() {
               <Pencil className="h-3.5 w-3.5" />
               {editing ? "İptal" : "Düzenle"}
             </button>
+            <Link
+              href="/patients/settings"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+            >
+              <Settings2 className="h-3.5 w-3.5" />
+              Alanları Yönet
+            </Link>
             <button
               onClick={handleDeletePatient}
               disabled={deleting}
@@ -497,16 +518,39 @@ export default function PatientDetailPage() {
                   {patient.notes}
                 </div>
               )}
-              {/* Custom field values */}
+              {/* Custom field values — all visible fields shown, inline editable */}
               {customColumns
                 .filter(col => fieldVisibility[col.columnKey]?.detail !== false)
                 .map(col => {
                   const cv = patient.customValues?.find(v => v.columnKey === col.columnKey);
-                  if (!cv?.value) return null;
                   return (
-                    <div key={col.columnKey} className="flex items-center gap-2 text-sm text-gray-600">
-                      <span className="text-gray-400 text-xs font-medium">{col.columnName}:</span>
-                      {cv.value}
+                    <div key={col.columnKey} className="flex items-center gap-2 text-sm">
+                      <span className="text-gray-400 text-xs font-medium shrink-0">{col.columnName}:</span>
+                      {editingCell?.id === patient.id && editingCell?.field === `cv_${col.columnKey}` ? (
+                        <input
+                          autoFocus
+                          value={cellEditValue}
+                          onChange={(e) => setCellEditValue(e.target.value)}
+                          onBlur={async () => {
+                            await fetch(`/api/customers/${patient.id}/custom-value`, {
+                              method: "PATCH",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ columnKey: col.columnKey, value: cellEditValue }),
+                            });
+                            fetchPatient();
+                            setEditingCell(null);
+                          }}
+                          onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); if (e.key === "Escape") setEditingCell(null); }}
+                          className="rounded border border-[#4F46E5] px-2 py-0.5 text-sm focus:outline-none"
+                        />
+                      ) : (
+                        <span
+                          className="cursor-pointer text-gray-600 hover:text-[#4F46E5] rounded px-1 hover:bg-[#EEF2FF]"
+                          onClick={() => { setEditingCell({ id: patient.id, field: `cv_${col.columnKey}` }); setCellEditValue(cv?.value || ""); }}
+                        >
+                          {cv?.value || <span className="text-gray-300 italic">Ekle...</span>}
+                        </span>
+                      )}
                     </div>
                   );
                 })}
@@ -985,6 +1029,58 @@ export default function PatientDetailPage() {
           </div>
         )}
       </motion.div>
+
+      {/* Görüşme / Randevu Geçmişi */}
+      {patient.appointments && patient.appointments.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.12 }}
+          className="overflow-hidden rounded-xl border border-gray-100 bg-white"
+        >
+          <div className="border-b border-gray-100 px-6 py-4">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-[#6366F1]" />
+              <h2 className="text-sm font-semibold text-gray-900">Görüşme Geçmişi</h2>
+              <span className="rounded-full bg-[#EEF2FF] px-2 py-0.5 text-[11px] font-semibold text-[#4F46E5]">{patient.appointments.length}</span>
+            </div>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {patient.appointments.map((appt) => {
+              const statusColors: Record<string, string> = {
+                SCHEDULED: "bg-blue-50 text-blue-700",
+                COMPLETED: "bg-emerald-50 text-emerald-700",
+                CANCELLED: "bg-red-50 text-red-600",
+                NO_SHOW: "bg-orange-50 text-orange-700",
+              };
+              const statusLabels: Record<string, string> = {
+                SCHEDULED: "Planlandı",
+                COMPLETED: "Tamamlandı",
+                CANCELLED: "İptal",
+                NO_SHOW: "Gelmedi",
+              };
+              return (
+                <div key={appt.id} className="flex items-center justify-between px-6 py-3">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <span className={`rounded-md px-2 py-0.5 text-[10px] font-semibold ${statusColors[appt.status] || "bg-gray-100 text-gray-600"}`}>
+                        {statusLabels[appt.status] || appt.status}
+                      </span>
+                      <span className="text-sm font-medium text-gray-900">{appt.treatmentType || "Görüşme"}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                      <span>{formatDate(appt.date)}</span>
+                      <span>{appt.startTime} - {appt.endTime}</span>
+                      {appt.employee?.name && <span>· {appt.employee.name}</span>}
+                    </div>
+                    {appt.notes && <p className="text-xs text-gray-500 mt-0.5">{appt.notes}</p>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
 
       {/* Cari Hesap / Sipariş Geçmişi */}
       {patient.debts && patient.debts.length > 0 && (

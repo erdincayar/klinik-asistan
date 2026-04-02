@@ -204,8 +204,8 @@ export default function PatientSettingsPage() {
     const oldIndex = fieldOrder.indexOf(active.id as string);
     const newIndex = fieldOrder.indexOf(over.id as string);
     if (oldIndex < 0 || newIndex < 0) return;
-    // Don't allow moving before "name"
-    if (newIndex === 0 && fieldOrder[0] === "name") return;
+    // İsim her zaman 0. index — taşınamaz ve üzerine taşınamaz
+    if (active.id === "name" || newIndex === 0) return;
 
     const newOrder = arrayMove(fieldOrder, oldIndex, newIndex);
     setFieldOrder(newOrder);

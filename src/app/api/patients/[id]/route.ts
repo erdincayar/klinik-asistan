@@ -20,6 +20,11 @@ export async function GET(
       where: { id: params.id, clinicId },
       include: {
         treatments: { orderBy: { date: "desc" } },
+        appointments: {
+          orderBy: { date: "desc" },
+          take: 20,
+          include: { employee: { select: { name: true } } },
+        },
         debts: {
           orderBy: { createdAt: "desc" },
           include: { payments: { orderBy: { paidAt: "desc" } } },
