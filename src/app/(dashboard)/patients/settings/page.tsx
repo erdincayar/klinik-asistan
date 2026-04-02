@@ -2,11 +2,18 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Trash2, ArrowLeft, Eye, EyeOff, List, FileText, ChevronUp, ChevronDown } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, Eye, EyeOff, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy, arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface CustomColumn {
   id: string;
@@ -24,9 +31,6 @@ interface FieldConfig {
   type: string;
   isDefault: boolean;
   isRequired: boolean;
-  showInList: boolean;
-  showInDetail: boolean;
-  customColumnId?: string;
 }
 
 const FIELD_TYPES = [
@@ -56,29 +60,102 @@ const PRESET_FIELDS = [
 
 const STORAGE_KEY = "poby-field-visibility";
 
-function loadVisibility(): Record<string, { list: boolean; detail: boolean; order?: number }> {
-  if (typeof window === "undefined") return {};
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-  } catch { return {}; }
-}
+type VisItem = { list: boolean; detail: boolean; order?: number };
+type VisMap = Record<string, VisItem>;
 
-function saveVisibility(data: Record<string, { list: boolean; detail: boolean; order?: number }>) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+function loadVis(): VisMap { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); } catch { return {}; } }
+function saveVis(d: VisMap) { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); }
+
+// Sortable row
+function SortableField({
+  field, vis, onToggle, onDelete, onRename,
+}: {
+  field: FieldConfig;
+  vis: VisItem;
+  onToggle: (target: "list" | "detail") => void;
+  onDelete: () => void;
+  onRename: (name: string) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: field.key });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState(field.name);
+
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-center gap-2 rounded-lg border border-gray-100 bg-white px-3 py-2.5 hover:bg-gray-50/50">
+      {/* Drag handle */}
+      {field.key !== "name" ? (
+        <button {...attributes} {...listeners} className="cursor-grab text-gray-300 hover:text-gray-500 touch-none">
+          <GripVertical className="h-4 w-4" />
+        </button>
+      ) : <div className="w-4" />}
+
+      {/* Color dot + Name */}
+      <div className={`h-2 w-2 rounded-full shrink-0 ${field.isDefault ? "bg-[#6366F1]" : "bg-emerald-500"}`} />
+      <div className="flex-1 min-w-0">
+        {!field.isDefault && editing ? (
+          <input
+            autoFocus value={editName} onChange={(e) => setEditName(e.target.value)}
+            onBlur={() => { onRename(editName); setEditing(false); }}
+            onKeyDown={(e) => { if (e.key === "Enter") { onRename(editName); setEditing(false); } if (e.key === "Escape") setEditing(false); }}
+            className="rounded border border-[#4F46E5] px-2 py-0.5 text-sm focus:outline-none"
+          />
+        ) : (
+          <span
+            className={`text-sm font-medium text-gray-700 ${!field.isDefault ? "cursor-pointer hover:text-[#4F46E5]" : ""}`}
+            onClick={() => { if (!field.isDefault) { setEditing(true); setEditName(field.name); } }}
+          >
+            {field.name}
+          </span>
+        )}
+        <span className="ml-2 text-[10px] text-gray-400">
+          {FIELD_TYPES.find(t => t.value === field.type)?.label || field.type}
+          {field.isRequired && " · Zorunlu"}
+        </span>
+      </div>
+
+      {/* List toggle */}
+      {field.key !== "name" && (
+        <button onClick={() => onToggle("list")} className={`rounded-lg p-1.5 transition-colors ${vis.list !== false ? "text-[#4F46E5] bg-[#EEF2FF]" : "text-gray-300 hover:text-gray-400"}`} title="Listede görünsün">
+          {vis.list !== false ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+        </button>
+      )}
+      {field.key === "name" && <div className="w-8" />}
+
+      {/* Detail toggle */}
+      <button
+        onClick={() => field.key !== "name" ? onToggle("detail") : null}
+        disabled={field.key === "name"}
+        className={`rounded-lg p-1.5 transition-colors ${field.key === "name" ? "text-emerald-500 bg-emerald-50 cursor-default" : vis.detail !== false ? "text-emerald-600 bg-emerald-50" : "text-gray-300 hover:text-gray-400"}`}
+        title="Detayda görünsün"
+      >
+        {vis.detail !== false || field.key === "name" ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+      </button>
+
+      {/* Delete */}
+      {field.key !== "name" ? (
+        <button onClick={onDelete} className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors" title="Sil/Gizle">
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      ) : <div className="w-8" />}
+    </div>
+  );
 }
 
 export default function PatientSettingsPage() {
   const [columns, setColumns] = useState<CustomColumn[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [visibility, setVisibility] = useState<Record<string, { list: boolean; detail: boolean; order?: number }>>(loadVisibility);
-
-  // New field form
+  const [vis, setVis] = useState<VisMap>(loadVis);
+  const [fieldOrder, setFieldOrder] = useState<string[]>([]);
   const [newFieldName, setNewFieldName] = useState("");
   const [newFieldType, setNewFieldType] = useState("text");
   const [newFieldOptions, setNewFieldOptions] = useState("");
-  const [editingFieldKey, setEditingFieldKey] = useState<string | null>(null);
-  const [editingFieldName, setEditingFieldName] = useState("");
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   useEffect(() => { fetchColumns(); }, []);
 
@@ -89,65 +166,89 @@ export default function PatientSettingsPage() {
     } catch {} finally { setLoading(false); }
   }
 
-  // Build combined field list
+  // Build field list
   const defaultFields: FieldConfig[] = [
-    { key: "name", name: "İsim", type: "text", isDefault: true, isRequired: true, showInList: true, showInDetail: true },
-    { key: "phone", name: "Telefon", type: "phone", isDefault: true, isRequired: false, showInList: visibility.phone?.list !== false, showInDetail: visibility.phone?.detail !== false },
-    { key: "email", name: "E-posta", type: "email", isDefault: true, isRequired: false, showInList: visibility.email?.list !== false, showInDetail: visibility.email?.detail !== false },
-    { key: "notes", name: "Notlar", type: "textarea", isDefault: true, isRequired: false, showInList: false, showInDetail: visibility.notes?.detail !== false },
-    { key: "dateOfBirth", name: "Doğum Tarihi", type: "date", isDefault: true, isRequired: false, showInList: false, showInDetail: visibility.dateOfBirth?.detail !== false },
-    { key: "treatmentCount", name: "İşlem Sayısı", type: "number", isDefault: true, isRequired: false, showInList: visibility.treatmentCount?.list !== false, showInDetail: false },
-    { key: "createdAt", name: "Kayıt Tarihi", type: "date", isDefault: true, isRequired: false, showInList: visibility.createdAt?.list !== false, showInDetail: visibility.createdAt?.detail !== false },
-    { key: "photos", name: "Fotoğraflar", type: "text", isDefault: true, isRequired: false, showInList: false, showInDetail: visibility.photos?.detail !== false },
+    { key: "name", name: "İsim", type: "text", isDefault: true, isRequired: true },
+    { key: "phone", name: "Telefon", type: "phone", isDefault: true, isRequired: false },
+    { key: "email", name: "E-posta", type: "email", isDefault: true, isRequired: false },
+    { key: "notes", name: "Notlar", type: "textarea", isDefault: true, isRequired: false },
+    { key: "dateOfBirth", name: "Doğum Tarihi", type: "date", isDefault: true, isRequired: false },
+    { key: "treatmentCount", name: "İşlem Sayısı", type: "number", isDefault: true, isRequired: false },
+    { key: "createdAt", name: "Kayıt Tarihi", type: "date", isDefault: true, isRequired: false },
+    { key: "photos", name: "Fotoğraflar", type: "text", isDefault: true, isRequired: false },
   ];
 
   const customFields: FieldConfig[] = columns.map((col) => ({
-    key: col.columnKey,
-    name: col.columnName,
-    type: col.fieldType,
-    isDefault: false,
-    isRequired: col.isRequired,
-    showInList: visibility[col.columnKey]?.list !== false,
-    showInDetail: visibility[col.columnKey]?.detail !== false,
-    customColumnId: col.id,
+    key: col.columnKey, name: col.columnName, type: col.fieldType, isDefault: false, isRequired: col.isRequired,
   }));
 
-  const allFieldsUnsorted = [...defaultFields, ...customFields];
-  const allFields = allFieldsUnsorted.sort((a, b) => {
-    const aOrder = (visibility[a.key] as any)?.order ?? allFieldsUnsorted.indexOf(a);
-    const bOrder = (visibility[b.key] as any)?.order ?? allFieldsUnsorted.indexOf(b);
-    return aOrder - bOrder;
-  });
+  const allFieldKeys = [...defaultFields, ...customFields].map(f => f.key);
+  const allFieldMap = new Map([...defaultFields, ...customFields].map(f => [f.key, f]));
 
-  function toggleVisibility(key: string, target: "list" | "detail") {
-    setVisibility((prev) => {
-      const current = prev[key] || { list: true, detail: true };
-      const next = { ...prev, [key]: { ...current, [target]: !current[target] } };
-      saveVisibility(next);
-      return next;
-    });
-  }
+  // Maintain ordered list
+  useEffect(() => {
+    const savedOrder = Object.entries(vis).filter(([, v]) => v.order !== undefined).sort(([, a], [, b]) => (a.order ?? 0) - (b.order ?? 0)).map(([k]) => k);
+    if (savedOrder.length > 0) {
+      const remaining = allFieldKeys.filter(k => !savedOrder.includes(k));
+      setFieldOrder([...savedOrder.filter(k => allFieldMap.has(k)), ...remaining]);
+    } else {
+      setFieldOrder(allFieldKeys);
+    }
+  }, [columns]);
 
-  function moveField(key: string, direction: "up" | "down") {
-    const idx = allFields.findIndex(f => f.key === key);
-    if (idx <= 1 && direction === "up") return; // İsim sabit, ilk alan yukarı gidemez
-    if (idx >= allFields.length - 1 && direction === "down") return;
+  const orderedFields = fieldOrder.map(k => allFieldMap.get(k)).filter(Boolean) as FieldConfig[];
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = fieldOrder.indexOf(active.id as string);
+    const newIndex = fieldOrder.indexOf(over.id as string);
+    if (oldIndex < 0 || newIndex < 0) return;
+    // Don't allow moving before "name"
+    if (newIndex === 0 && fieldOrder[0] === "name") return;
+
+    const newOrder = arrayMove(fieldOrder, oldIndex, newIndex);
+    setFieldOrder(newOrder);
 
     // Save order to visibility
-    setVisibility((prev) => {
-      const targetIdx = direction === "up" ? idx - 1 : idx + 1;
-      const currentOrder = prev[key]?.order ?? idx;
-      const targetKey = allFields[targetIdx].key;
-      const targetOrder = prev[targetKey]?.order ?? targetIdx;
-
-      const next = {
-        ...prev,
-        [key]: { ...(prev[key] || { list: true, detail: true }), order: targetOrder },
-        [targetKey]: { ...(prev[targetKey] || { list: true, detail: true }), order: currentOrder },
-      };
-      saveVisibility(next);
-      return next;
+    const newVis = { ...vis };
+    newOrder.forEach((key, idx) => {
+      newVis[key] = { ...(newVis[key] || { list: true, detail: true }), order: idx };
     });
+    setVis(newVis);
+    saveVis(newVis);
+  }
+
+  function toggleField(key: string, target: "list" | "detail") {
+    const current = vis[key] || { list: true, detail: true };
+    const next = { ...vis, [key]: { ...current, [target]: !current[target] } };
+    setVis(next);
+    saveVis(next);
+  }
+
+  function deleteField(field: FieldConfig) {
+    if (field.isDefault) {
+      const next = { ...vis, [field.key]: { list: false, detail: false, order: vis[field.key]?.order } };
+      setVis(next);
+      saveVis(next);
+    } else {
+      if (!confirm("Bu alanı silmek istediğinize emin misiniz?")) return;
+      fetch("/api/clinic/custom-columns", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ columnKey: field.key }),
+      }).then(() => fetchColumns());
+    }
+  }
+
+  async function renameField(key: string, newName: string) {
+    if (!newName.trim()) return;
+    await fetch("/api/clinic/custom-columns", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ columnKey: key, columnName: newName.trim() }),
+    });
+    fetchColumns();
   }
 
   async function addColumn(name?: string, type?: string) {
@@ -157,239 +258,155 @@ export default function PatientSettingsPage() {
     setSaving(true);
     try {
       const body: any = { columnName: fieldName, fieldType };
-      if (fieldType === "select" && newFieldOptions) {
-        body.options = newFieldOptions.split(",").map((o: string) => o.trim()).filter(Boolean);
-      }
-      const res = await fetch("/api/clinic/custom-columns", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (res.ok) {
-        await fetchColumns();
-        setNewFieldName("");
-        setNewFieldType("text");
-        setNewFieldOptions("");
-      }
+      if (fieldType === "select" && newFieldOptions) body.options = newFieldOptions.split(",").map((o: string) => o.trim()).filter(Boolean);
+      const res = await fetch("/api/clinic/custom-columns", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      if (res.ok) { await fetchColumns(); setNewFieldName(""); setNewFieldType("text"); setNewFieldOptions(""); }
     } catch {} finally { setSaving(false); }
   }
 
-  async function renameColumn(columnKey: string, newName: string) {
-    if (!newName.trim()) return;
-    try {
-      await fetch("/api/clinic/custom-columns", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ columnKey, columnName: newName.trim() }),
-      });
-      await fetchColumns();
-    } catch {}
-    setEditingFieldKey(null);
-  }
-
-  async function deleteColumn(columnKey: string) {
-    if (!confirm("Bu alanı silmek istediğinize emin misiniz? Tüm müşteri verileri de silinecektir.")) return;
-    try {
-      await fetch("/api/clinic/custom-columns", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ columnKey }),
-      });
-      await fetchColumns();
-    } catch {}
-  }
+  // Preview: visible list columns
+  const previewListCols = orderedFields.filter(f => {
+    if (f.key === "name") return true;
+    const v = vis[f.key];
+    return v?.list !== false;
+  });
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-4xl space-y-6">
       <div className="flex items-center gap-3">
         <Link href="/patients" className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div>
           <h1 className="text-xl font-bold text-gray-900">Müşteri Alanları</h1>
-          <p className="text-sm text-gray-500">Alanları yönetin, nerede görüneceğini belirleyin</p>
+          <p className="text-sm text-gray-500">Sürükleyerek sıralayın, toggle ile gösterim ayarlayın</p>
         </div>
       </div>
 
-      {/* All Fields — unified panel */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Alanlar</CardTitle>
-            <div className="flex items-center gap-4 text-[10px] font-semibold uppercase text-gray-400">
-              <span className="flex items-center gap-1"><List className="h-3 w-3" /> Liste</span>
-              <span className="flex items-center gap-1"><FileText className="h-3 w-3" /> Detay</span>
-              <span className="w-7"></span>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-1.5">
-          {allFields.map((field) => (
-            <div key={field.key} className="flex items-center justify-between rounded-lg border border-gray-100 px-4 py-2.5 hover:bg-gray-50/50">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className={`h-2 w-2 rounded-full shrink-0 ${field.isDefault ? "bg-[#6366F1]" : "bg-emerald-500"}`} />
-                <div className="min-w-0">
-                  {!field.isDefault && editingFieldKey === field.key ? (
-                    <input
-                      autoFocus
-                      value={editingFieldName}
-                      onChange={(e) => setEditingFieldName(e.target.value)}
-                      onBlur={() => renameColumn(field.key, editingFieldName)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") renameColumn(field.key, editingFieldName);
-                        if (e.key === "Escape") setEditingFieldKey(null);
-                      }}
-                      className="rounded-lg border border-[#4F46E5] px-2 py-1 text-sm font-medium text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#4F46E5]"
-                    />
-                  ) : (
-                    <span
-                      className={`text-sm font-medium text-gray-700 ${!field.isDefault ? "cursor-pointer hover:text-[#4F46E5]" : ""}`}
-                      onClick={() => {
-                        if (!field.isDefault) {
-                          setEditingFieldKey(field.key);
-                          setEditingFieldName(field.name);
-                        }
-                      }}
-                      title={!field.isDefault ? "Tıklayarak adını değiştirin" : undefined}
-                    >
-                      {field.name}
-                    </span>
-                  )}
-                  <span className="ml-2 text-[10px] text-gray-400">
-                    {FIELD_TYPES.find(t => t.value === field.type)?.label || field.type}
-                    {field.isRequired && " · Zorunlu"}
-                  </span>
+      <div className="grid gap-6 lg:grid-cols-5">
+        {/* Fields panel — 3 cols */}
+        <div className="lg:col-span-3 space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base">Alanlar</CardTitle>
+                <div className="flex items-center gap-3 text-[10px] font-semibold uppercase text-gray-400">
+                  <span>Liste</span>
+                  <span>Detay</span>
+                  <span className="w-7"></span>
                 </div>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                {/* List visibility toggle */}
-                {field.key !== "name" && (
-                  <button
-                    onClick={() => toggleVisibility(field.key, "list")}
-                    className={`rounded-lg p-1.5 transition-colors ${field.showInList ? "text-[#4F46E5] bg-[#EEF2FF]" : "text-gray-300 hover:text-gray-400"}`}
-                    title={field.showInList ? "Listede görünür" : "Listede gizli"}
-                  >
-                    {field.showInList ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-                  </button>
-                )}
-                {field.key === "name" && <div className="w-8" />}
+            </CardHeader>
+            <CardContent>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={fieldOrder} strategy={verticalListSortingStrategy}>
+                  <div className="space-y-1.5">
+                    {orderedFields.map((field) => (
+                      <SortableField
+                        key={field.key}
+                        field={field}
+                        vis={vis[field.key] || { list: true, detail: true }}
+                        onToggle={(t) => toggleField(field.key, t)}
+                        onDelete={() => deleteField(field)}
+                        onRename={(n) => renameField(field.key, n)}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+              {loading && <p className="text-sm text-gray-400 py-4 text-center">Yükleniyor...</p>}
+            </CardContent>
+          </Card>
 
-                {/* Detail visibility toggle */}
-                <button
-                  onClick={() => field.key !== "name" ? toggleVisibility(field.key, "detail") : null}
-                  className={`rounded-lg p-1.5 transition-colors ${field.key === "name" ? "text-[#4F46E5] bg-[#EEF2FF] cursor-default" : field.showInDetail ? "text-emerald-600 bg-emerald-50" : "text-gray-300 hover:text-gray-400"}`}
-                  title={field.showInDetail ? "Detayda görünür" : "Detayda gizli"}
-                  disabled={field.key === "name"}
-                >
-                  {field.showInDetail || field.key === "name" ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-                </button>
-
-                {/* Reorder (all except name) */}
-                {field.key !== "name" && (
-                  <div className="flex flex-col">
-                    <button onClick={() => moveField(field.key, "up")} className="text-gray-300 hover:text-gray-500 p-0.5" title="Yukarı"><ChevronUp className="h-3 w-3" /></button>
-                    <button onClick={() => moveField(field.key, "down")} className="text-gray-300 hover:text-gray-500 p-0.5" title="Aşağı"><ChevronDown className="h-3 w-3" /></button>
+          {/* Add new field */}
+          <Card>
+            <CardHeader><CardTitle className="text-base">Yeni Alan Ekle</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <p className="text-[11px] font-semibold uppercase text-gray-400 mb-2">Hızlı Ekle</p>
+                <div className="flex flex-wrap gap-2">
+                  {PRESET_FIELDS.filter(p => !columns.some(c => c.columnName === p.name)).map((preset) => (
+                    <button key={preset.name} onClick={() => addColumn(preset.name, preset.type)} disabled={saving}
+                      className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-[#EEF2FF] hover:text-[#4F46E5] hover:border-[#E0E7FF] transition-colors disabled:opacity-50">
+                      <Plus className="inline h-3 w-3 mr-1" />{preset.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="border-t border-gray-100 pt-4">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Alan Adı</Label>
+                    <Input value={newFieldName} onChange={(e) => setNewFieldName(e.target.value)} placeholder="Örn: Vergi No" onKeyDown={(e) => e.key === "Enter" && addColumn()} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Alan Tipi</Label>
+                    <select value={newFieldType} onChange={(e) => setNewFieldType(e.target.value)} className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm">
+                      {FIELD_TYPES.map((t) => (<option key={t.value} value={t.value}>{t.label}</option>))}
+                    </select>
+                  </div>
+                </div>
+                {newFieldType === "select" && (
+                  <div className="mt-3 space-y-1.5">
+                    <Label className="text-xs">Seçenekler (virgülle)</Label>
+                    <Input value={newFieldOptions} onChange={(e) => setNewFieldOptions(e.target.value)} placeholder="İstanbul, Ankara, İzmir" />
                   </div>
                 )}
-
-                {/* Delete (all except name) */}
-                {field.key !== "name" ? (
-                  <button
-                    onClick={() => {
-                      if (field.isDefault) {
-                        // Hide default field by toggling both list and detail off
-                        const next = { ...visibility, [field.key]: { list: false, detail: false } };
-                        setVisibility(next);
-                        saveVisibility(next);
-                      } else {
-                        deleteColumn(field.key);
-                      }
-                    }}
-                    className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"
-                    title={field.isDefault ? "Gizle" : "Sil"}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                ) : <div className="w-8" />}
+                <div className="mt-3 flex justify-end">
+                  <Button onClick={() => addColumn()} disabled={saving || !newFieldName.trim()}>
+                    {saving ? "Ekleniyor..." : "Alan Ekle"}
+                  </Button>
+                </div>
               </div>
-            </div>
-          ))}
-          {loading && <p className="text-sm text-gray-400 py-4 text-center">Yükleniyor...</p>}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </div>
 
-      {/* Add new field */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Yeni Alan Ekle</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Preset shortcuts */}
-          <div>
-            <p className="text-[11px] font-semibold uppercase text-gray-400 mb-2">Hızlı Ekle</p>
-            <div className="flex flex-wrap gap-2">
-              {PRESET_FIELDS
-                .filter(p => !columns.some(c => c.columnName === p.name))
-                .map((preset) => (
-                  <button
-                    key={preset.name}
-                    onClick={() => addColumn(preset.name, preset.type)}
-                    disabled={saving}
-                    className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-[#EEF2FF] hover:text-[#4F46E5] hover:border-[#E0E7FF] transition-colors disabled:opacity-50"
-                  >
-                    <Plus className="inline h-3 w-3 mr-1" />
-                    {preset.name}
-                  </button>
-                ))}
-            </div>
-          </div>
-
-          {/* Custom field form */}
-          <div className="border-t border-gray-100 pt-4">
-            <p className="text-[11px] font-semibold uppercase text-gray-400 mb-3">Özel Alan</p>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label className="text-xs">Alan Adı</Label>
-                <Input
-                  value={newFieldName}
-                  onChange={(e) => setNewFieldName(e.target.value)}
-                  placeholder="Örn: Vergi No, Referans"
-                  onKeyDown={(e) => e.key === "Enter" && addColumn()}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Alan Tipi</Label>
-                <select
-                  value={newFieldType}
-                  onChange={(e) => setNewFieldType(e.target.value)}
-                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
-                >
-                  {FIELD_TYPES.map((t) => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
+        {/* Preview panel — 2 cols */}
+        <div className="lg:col-span-2">
+          <Card className="sticky top-6">
+            <CardHeader>
+              <CardTitle className="text-base">Ön İzleme</CardTitle>
+              <p className="text-xs text-gray-400">Müşteri listesinde böyle görünecek</p>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-xl border border-gray-200 overflow-hidden">
+                {/* Header */}
+                <div className="flex bg-gray-50 border-b border-gray-200">
+                  <div className="px-3 py-2 text-[10px] font-semibold uppercase text-gray-400 w-8 text-center">#</div>
+                  {previewListCols.map((f) => (
+                    <div key={f.key} className="px-3 py-2 text-[10px] font-semibold uppercase text-gray-400 flex-1 truncate">
+                      {f.name}
+                    </div>
                   ))}
-                </select>
+                </div>
+                {/* Sample rows */}
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex border-b border-gray-50 last:border-0">
+                    <div className="px-3 py-2 text-xs text-gray-400 w-8 text-center">{i}</div>
+                    {previewListCols.map((f, j) => (
+                      <div key={f.key} className="px-3 py-2 flex-1 truncate">
+                        {j === 0 ? (
+                          <div className="flex items-center gap-2">
+                            <div className="h-6 w-6 rounded-full bg-[#EEF2FF] flex items-center justify-center text-[9px] font-bold text-[#4F46E5]">
+                              {["AY", "MK", "FÖ"][i - 1]}
+                            </div>
+                            <span className="text-xs font-medium text-gray-700">{["Ahmet Yılmaz", "Mehmet Kaya", "Fatma Öz"][i - 1]}</span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-500">
+                            {f.type === "phone" ? "05XX XXX XX XX" : f.type === "email" ? "ornek@mail.com" : f.key === "treatmentCount" ? `${i * 3}` : f.key === "createdAt" ? "01.01.2026" : "—"}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ))}
               </div>
-            </div>
-
-            {newFieldType === "select" && (
-              <div className="mt-3 space-y-1.5">
-                <Label className="text-xs">Seçenekler (virgülle ayırın)</Label>
-                <Input
-                  value={newFieldOptions}
-                  onChange={(e) => setNewFieldOptions(e.target.value)}
-                  placeholder="Örn: İstanbul, Ankara, İzmir"
-                />
-              </div>
-            )}
-
-            <div className="mt-3 flex justify-end">
-              <Button onClick={() => addColumn()} disabled={saving || !newFieldName.trim()}>
-                {saving ? "Ekleniyor..." : "Alan Ekle"}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }
