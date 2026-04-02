@@ -33,6 +33,10 @@ export default function NewPatientPage() {
   });
   const [customColumns, setCustomColumns] = useState<CustomColumn[]>([]);
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
+  const [fieldVis, setFieldVis] = useState<Record<string, { list: boolean; detail: boolean }>>({});
+  useEffect(() => {
+    try { const s = localStorage.getItem("poby-field-visibility"); if (s) setFieldVis(JSON.parse(s)); } catch {}
+  }, []);
 
   useEffect(() => {
     fetch("/api/clinic/custom-columns")
@@ -101,6 +105,7 @@ export default function NewPatientPage() {
               />
             </div>
 
+            {fieldVis.phone?.detail !== false && fieldVis.phone?.list !== false && (
             <div className="space-y-2">
               <Label htmlFor="phone">Telefon</Label>
               <Input
@@ -110,7 +115,9 @@ export default function NewPatientPage() {
                 placeholder="05XX XXX XX XX"
               />
             </div>
+            )}
 
+            {fieldVis.email?.detail !== false && fieldVis.email?.list !== false && (
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -121,7 +128,9 @@ export default function NewPatientPage() {
                 placeholder="ornek@email.com"
               />
             </div>
+            )}
 
+            {fieldVis.notes?.detail !== false && (
             <div className="space-y-2">
               <Label htmlFor="notes">Notlar</Label>
               <Textarea
@@ -132,6 +141,7 @@ export default function NewPatientPage() {
                 rows={4}
               />
             </div>
+            )}
 
             {customColumns.length > 0 && (
               <div className="space-y-3 border-t pt-4">

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Trash2, ArrowLeft, Eye, EyeOff, List, FileText } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, Eye, EyeOff, List, FileText, ChevronUp, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,14 +56,14 @@ const PRESET_FIELDS = [
 
 const STORAGE_KEY = "poby-field-visibility";
 
-function loadVisibility(): Record<string, { list: boolean; detail: boolean }> {
+function loadVisibility(): Record<string, { list: boolean; detail: boolean; order?: number }> {
   if (typeof window === "undefined") return {};
   try {
     return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
   } catch { return {}; }
 }
 
-function saveVisibility(data: Record<string, { list: boolean; detail: boolean }>) {
+function saveVisibility(data: Record<string, { list: boolean; detail: boolean; order?: number }>) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
@@ -71,7 +71,7 @@ export default function PatientSettingsPage() {
   const [columns, setColumns] = useState<CustomColumn[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [visibility, setVisibility] = useState<Record<string, { list: boolean; detail: boolean }>>(loadVisibility);
+  const [visibility, setVisibility] = useState<Record<string, { list: boolean; detail: boolean; order?: number }>>(loadVisibility);
 
   // New field form
   const [newFieldName, setNewFieldName] = useState("");
@@ -112,12 +112,39 @@ export default function PatientSettingsPage() {
     customColumnId: col.id,
   }));
 
-  const allFields = [...defaultFields, ...customFields];
+  const allFieldsUnsorted = [...defaultFields, ...customFields];
+  const allFields = allFieldsUnsorted.sort((a, b) => {
+    const aOrder = (visibility[a.key] as any)?.order ?? allFieldsUnsorted.indexOf(a);
+    const bOrder = (visibility[b.key] as any)?.order ?? allFieldsUnsorted.indexOf(b);
+    return aOrder - bOrder;
+  });
 
   function toggleVisibility(key: string, target: "list" | "detail") {
     setVisibility((prev) => {
       const current = prev[key] || { list: true, detail: true };
       const next = { ...prev, [key]: { ...current, [target]: !current[target] } };
+      saveVisibility(next);
+      return next;
+    });
+  }
+
+  function moveField(key: string, direction: "up" | "down") {
+    const idx = allFields.findIndex(f => f.key === key);
+    if (idx <= 1 && direction === "up") return; // İsim sabit, ilk alan yukarı gidemez
+    if (idx >= allFields.length - 1 && direction === "down") return;
+
+    // Save order to visibility
+    setVisibility((prev) => {
+      const targetIdx = direction === "up" ? idx - 1 : idx + 1;
+      const currentOrder = prev[key]?.order ?? idx;
+      const targetKey = allFields[targetIdx].key;
+      const targetOrder = prev[targetKey]?.order ?? targetIdx;
+
+      const next = {
+        ...prev,
+        [key]: { ...(prev[key] || { list: true, detail: true }), order: targetOrder },
+        [targetKey]: { ...(prev[targetKey] || { list: true, detail: true }), order: currentOrder },
+      };
       saveVisibility(next);
       return next;
     });
@@ -256,6 +283,14 @@ export default function PatientSettingsPage() {
                 >
                   {field.showInDetail || field.key === "name" ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
                 </button>
+
+                {/* Reorder (all except name) */}
+                {field.key !== "name" && (
+                  <div className="flex flex-col">
+                    <button onClick={() => moveField(field.key, "up")} className="text-gray-300 hover:text-gray-500 p-0.5" title="Yukarı"><ChevronUp className="h-3 w-3" /></button>
+                    <button onClick={() => moveField(field.key, "down")} className="text-gray-300 hover:text-gray-500 p-0.5" title="Aşağı"><ChevronDown className="h-3 w-3" /></button>
+                  </div>
+                )}
 
                 {/* Delete (all except name) */}
                 {field.key !== "name" ? (

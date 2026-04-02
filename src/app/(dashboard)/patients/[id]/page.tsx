@@ -47,6 +47,7 @@ interface Patient {
   notes: string | null;
   createdAt: string;
   treatments: Treatment[];
+  customValues?: Array<{ columnKey: string; value: string | null }>;
   debts?: Array<{
     id: string;
     direction: string;
@@ -144,6 +145,12 @@ export default function PatientDetailPage() {
   const [dragOver, setDragOver] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<PatientPhoto | null>(null);
+
+  // Custom columns for detail display
+  const [customColumns, setCustomColumns] = useState<Array<{ columnKey: string; columnName: string; fieldType: string }>>([]);
+  useEffect(() => {
+    fetch("/api/clinic/custom-columns").then(r => r.ok ? r.json() : []).then(setCustomColumns).catch(() => {});
+  }, []);
 
   // Dynamic categories
   const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
@@ -490,6 +497,19 @@ export default function PatientDetailPage() {
                   {patient.notes}
                 </div>
               )}
+              {/* Custom field values */}
+              {customColumns
+                .filter(col => fieldVisibility[col.columnKey]?.detail !== false)
+                .map(col => {
+                  const cv = patient.customValues?.find(v => v.columnKey === col.columnKey);
+                  if (!cv?.value) return null;
+                  return (
+                    <div key={col.columnKey} className="flex items-center gap-2 text-sm text-gray-600">
+                      <span className="text-gray-400 text-xs font-medium">{col.columnName}:</span>
+                      {cv.value}
+                    </div>
+                  );
+                })}
             </div>
           )}
         </div>
