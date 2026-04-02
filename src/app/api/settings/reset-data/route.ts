@@ -58,6 +58,8 @@ export async function POST(request: Request) {
     };
 
     if (modules.includes("patients")) {
+      await safeDelete(() => tx.debtPayment.deleteMany({ where: { debt: { clinicId } } }));
+      await safeDelete(() => tx.debt.deleteMany({ where: { clinicId } }));
       await safeDelete(() => tx.clinicServiceName.deleteMany({ where: { clinicId } }));
       await safeDelete(() => tx.alarmLog.deleteMany({ where: { clinicId } }));
       await safeDelete(() => tx.alarm.deleteMany({ where: { clinicId } }));
@@ -85,6 +87,8 @@ export async function POST(request: Request) {
     }
 
     if (modules.includes("finance")) {
+      await safeDelete(() => tx.debtPayment.deleteMany({ where: { debt: { clinicId } } }));
+      await safeDelete(() => tx.debt.deleteMany({ where: { clinicId } }));
       await safeDelete(() => tx.recurringPayment.deleteMany({ where: { recurringTransaction: { clinicId } } }));
       await safeDelete(() => tx.recurringTransaction.deleteMany({ where: { clinicId } }));
       await safeDelete(() => tx.uploadedInvoice.deleteMany({ where: { clinicId } }));
