@@ -637,7 +637,7 @@ export default function PatientsPage() {
                   {filteredPatients.map((patient, i) => (
                     <motion.div key={patient.id} variants={fadeUp} initial="hidden" animate="visible" custom={i}>
                       <div className="flex items-center gap-3 rounded-xl border border-gray-100 px-4 py-3">
-                        <span className="text-xs font-medium text-gray-400 w-5 shrink-0">{i + 1}</span>
+                        <span className="text-xs font-medium text-gray-400 w-5 shrink-0">{filteredPatients.length - i}</span>
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EEF2FF] text-sm font-semibold text-[#4F46E5]">
                           {patient.name
                             .split(" ")
@@ -753,7 +753,7 @@ export default function PatientsPage() {
                     <TableBody>
                       {filteredPatients.map((patient, i) => (
                         <motion.tr key={patient.id} variants={fadeUp} initial="hidden" animate="visible" custom={i}>
-                          <TableCell className="text-center text-xs font-medium text-gray-400">{i + 1}</TableCell>
+                          <TableCell className="text-center text-xs font-medium text-gray-400">{filteredPatients.length - i}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-3">
                               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EEF2FF] text-sm font-semibold text-[#4F46E5]">
