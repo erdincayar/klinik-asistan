@@ -283,74 +283,109 @@ export default function PatientSettingsPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-5">
-        {/* Fields panel — 3 cols */}
-        <div className="lg:col-span-3 space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base">Alanlar</CardTitle>
-                <div className="flex items-center gap-3 text-[10px] font-semibold uppercase text-gray-400">
-                  <span>Liste</span>
-                  <span>Detay</span>
-                  <span className="w-7"></span>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={fieldOrder} strategy={verticalListSortingStrategy}>
-                  <div className="space-y-1.5">
-                    {orderedFields.map((field) => (
-                      <SortableField
-                        key={field.key}
-                        field={field}
-                        vis={vis[field.key] || { list: true, detail: true }}
-                        onToggle={(t) => toggleField(field.key, t)}
-                        onDelete={() => deleteField(field)}
-                        onRename={(n) => renameField(field.key, n)}
-                      />
-                    ))}
-                  </div>
-                </SortableContext>
-              </DndContext>
-              {loading && <p className="text-sm text-gray-400 py-4 text-center">Yükleniyor...</p>}
-            </CardContent>
-          </Card>
+      {/* Preview — full width, single row */}
+      <div className="rounded-xl border border-[#E0E7FF] bg-[#EEF2FF]/30 p-4">
+        <p className="text-[11px] font-semibold uppercase text-gray-400 mb-2">Ön İzleme — Liste Görünümü</p>
+        <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-100 bg-gray-50">
+                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase text-gray-400 w-8">#</th>
+                {previewListCols.map((f) => (
+                  <th key={f.key} className="px-3 py-2 text-left text-[10px] font-semibold uppercase text-gray-400 whitespace-nowrap">{f.name}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b border-gray-50">
+                <td className="px-3 py-2 text-xs text-gray-400">1</td>
+                {previewListCols.map((f, j) => (
+                  <td key={f.key} className="px-3 py-2 whitespace-nowrap">
+                    {j === 0 ? (
+                      <div className="flex items-center gap-2">
+                        <div className="h-6 w-6 rounded-full bg-[#EEF2FF] flex items-center justify-center text-[9px] font-bold text-[#4F46E5]">AY</div>
+                        <span className="text-xs font-medium text-gray-700">Ahmet Yılmaz</span>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-400">
+                        {f.type === "phone" ? "0532 XXX XX XX" : f.type === "email" ? "ahmet@mail.com" : f.key === "treatmentCount" ? "5" : f.key === "createdAt" ? "15.01.2026" : "Örnek veri"}
+                      </span>
+                    )}
+                  </td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-          {/* Add new field */}
-          <Card>
-            <CardHeader><CardTitle className="text-base">Yeni Alan Ekle</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-[11px] font-semibold uppercase text-gray-400 mb-2">Hızlı Ekle</p>
-                <div className="flex flex-wrap gap-2">
-                  {PRESET_FIELDS.filter(p => !columns.some(c => c.columnName === p.name)).map((preset) => (
-                    <button key={preset.name} onClick={() => addColumn(preset.name, preset.type)} disabled={saving}
-                      className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-[#EEF2FF] hover:text-[#4F46E5] hover:border-[#E0E7FF] transition-colors disabled:opacity-50">
-                      <Plus className="inline h-3 w-3 mr-1" />{preset.name}
-                    </button>
+      <div className="space-y-6">
+        {/* Fields panel */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">Alanlar</CardTitle>
+              <div className="flex items-center gap-3 text-[10px] font-semibold uppercase text-gray-400">
+                <span>Liste</span>
+                <span>Detay</span>
+                <span className="w-7"></span>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={fieldOrder} strategy={verticalListSortingStrategy}>
+                <div className="space-y-1.5">
+                  {orderedFields.map((field) => (
+                    <SortableField
+                      key={field.key}
+                      field={field}
+                      vis={vis[field.key] || { list: true, detail: true }}
+                      onToggle={(t) => toggleField(field.key, t)}
+                      onDelete={() => deleteField(field)}
+                      onRename={(n) => renameField(field.key, n)}
+                    />
                   ))}
                 </div>
+              </SortableContext>
+            </DndContext>
+            {loading && <p className="text-sm text-gray-400 py-4 text-center">Yükleniyor...</p>}
+          </CardContent>
+        </Card>
+
+        {/* Add new field */}
+        <Card>
+          <CardHeader><CardTitle className="text-base">Yeni Alan Ekle</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <p className="text-[11px] font-semibold uppercase text-gray-400 mb-2">Hızlı Ekle</p>
+              <div className="flex flex-wrap gap-2">
+                {PRESET_FIELDS.filter(p => !columns.some(c => c.columnName === p.name)).map((preset) => (
+                  <button key={preset.name} onClick={() => addColumn(preset.name, preset.type)} disabled={saving}
+                    className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-[#EEF2FF] hover:text-[#4F46E5] hover:border-[#E0E7FF] transition-colors disabled:opacity-50">
+                    <Plus className="inline h-3 w-3 mr-1" />{preset.name}
+                  </button>
+                ))}
               </div>
-              <div className="border-t border-gray-100 pt-4">
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Alan Adı</Label>
-                    <Input value={newFieldName} onChange={(e) => setNewFieldName(e.target.value)} placeholder="Örn: Vergi No" onKeyDown={(e) => e.key === "Enter" && addColumn()} />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Alan Tipi</Label>
-                    <select value={newFieldType} onChange={(e) => setNewFieldType(e.target.value)} className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm">
-                      {FIELD_TYPES.map((t) => (<option key={t.value} value={t.value}>{t.label}</option>))}
-                    </select>
-                  </div>
+            </div>
+            <div className="border-t border-gray-100 pt-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Alan Adı</Label>
+                  <Input value={newFieldName} onChange={(e) => setNewFieldName(e.target.value)} placeholder="Örn: Vergi No" onKeyDown={(e) => e.key === "Enter" && addColumn()} />
                 </div>
-                {newFieldType === "select" && (
-                  <div className="mt-3 space-y-1.5">
-                    <Label className="text-xs">Seçenekler (virgülle)</Label>
-                    <Input value={newFieldOptions} onChange={(e) => setNewFieldOptions(e.target.value)} placeholder="İstanbul, Ankara, İzmir" />
-                  </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Alan Tipi</Label>
+                  <select value={newFieldType} onChange={(e) => setNewFieldType(e.target.value)} className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm">
+                    {FIELD_TYPES.map((t) => (<option key={t.value} value={t.value}>{t.label}</option>))}
+                  </select>
+                </div>
+              </div>
+              {newFieldType === "select" && (
+                <div className="mt-3 space-y-1.5">
+                  <Label className="text-xs">Seçenekler (virgülle)</Label>
+                  <Input value={newFieldOptions} onChange={(e) => setNewFieldOptions(e.target.value)} placeholder="İstanbul, Ankara, İzmir" />
+                </div>
                 )}
                 <div className="mt-3 flex justify-end">
                   <Button onClick={() => addColumn()} disabled={saving || !newFieldName.trim()}>
@@ -361,52 +396,6 @@ export default function PatientSettingsPage() {
             </CardContent>
           </Card>
         </div>
-
-        {/* Preview panel — 2 cols */}
-        <div className="lg:col-span-2">
-          <Card className="sticky top-6">
-            <CardHeader>
-              <CardTitle className="text-base">Ön İzleme</CardTitle>
-              <p className="text-xs text-gray-400">Müşteri listesinde böyle görünecek</p>
-            </CardHeader>
-            <CardContent>
-              <div className="rounded-xl border border-gray-200 overflow-hidden">
-                {/* Header */}
-                <div className="flex bg-gray-50 border-b border-gray-200">
-                  <div className="px-3 py-2 text-[10px] font-semibold uppercase text-gray-400 w-8 text-center">#</div>
-                  {previewListCols.map((f) => (
-                    <div key={f.key} className="px-3 py-2 text-[10px] font-semibold uppercase text-gray-400 flex-1 truncate">
-                      {f.name}
-                    </div>
-                  ))}
-                </div>
-                {/* Sample rows */}
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex border-b border-gray-50 last:border-0">
-                    <div className="px-3 py-2 text-xs text-gray-400 w-8 text-center">{i}</div>
-                    {previewListCols.map((f, j) => (
-                      <div key={f.key} className="px-3 py-2 flex-1 truncate">
-                        {j === 0 ? (
-                          <div className="flex items-center gap-2">
-                            <div className="h-6 w-6 rounded-full bg-[#EEF2FF] flex items-center justify-center text-[9px] font-bold text-[#4F46E5]">
-                              {["AY", "MK", "FÖ"][i - 1]}
-                            </div>
-                            <span className="text-xs font-medium text-gray-700">{["Ahmet Yılmaz", "Mehmet Kaya", "Fatma Öz"][i - 1]}</span>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-gray-500">
-                            {f.type === "phone" ? "05XX XXX XX XX" : f.type === "email" ? "ornek@mail.com" : f.key === "treatmentCount" ? `${i * 3}` : f.key === "createdAt" ? "01.01.2026" : "—"}
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
     </div>
   );
 }
