@@ -207,8 +207,8 @@ export type InvoiceItemInput = z.infer<typeof invoiceItemSchema>;
 export const appointmentTransactionsSchema = z.object({
   transactions: z.array(z.object({
     patientId: z.string().min(1),
-    name: z.string().min(2, "İşlem adı girin"),
-    amount: z.number().min(1, "Tutar girin"),
+    name: z.string().min(1, "İşlem adı girin"),
+    amount: z.number().min(0, "Tutar negatif olamaz"),
     date: z.string().min(1),
     category: z.string().optional().default("GENEL"),
     paymentMethod: z.string().optional(),

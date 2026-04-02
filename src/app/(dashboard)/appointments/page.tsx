@@ -413,7 +413,7 @@ export default function AppointmentsPage() {
 
   async function handleSaveTransactions() {
     if (!selectedAppointment) return;
-    const valid = transactionItems.filter((t) => t.name.trim() && Number(t.amount) > 0);
+    const valid = transactionItems.filter((t) => t.name.trim());
     if (valid.length === 0) return;
 
     setSavingTransactions(true);
@@ -1007,7 +1007,7 @@ export default function AppointmentsPage() {
                                   setDetailTab("detail");
                                   setAppointmentTreatments([]);
                                   fetchAppointmentTreatments(appointment.id);
-                                  setTransactionItems([{ name: "", amount: "", paymentMethod: "Nakit", notes: "" }]);
+                                  setTransactionItems([{ name: appointment.treatmentType || "", amount: "", paymentMethod: "Nakit", notes: "" }]);
                                   setMarkCompleted(false);
                                   setDialogOpen(true);
                                 }}
@@ -1140,7 +1140,13 @@ export default function AppointmentsPage() {
                                   return (
                                     <button
                                       key={appt.id}
-                                      onClick={() => { setSelectedAppointment(appt); setDialogOpen(true); }}
+                                      onClick={() => {
+                                        setSelectedAppointment(appt);
+                                        setTransactionItems([{ name: appt.treatmentType || "", amount: "", paymentMethod: "Nakit", notes: "" }]);
+                                        setAppointmentTreatments([]);
+                                        fetchAppointmentTreatments(appt.id);
+                                        setDialogOpen(true);
+                                      }}
                                       className={cn(
                                         "w-full rounded-md text-left transition-all hover:shadow-sm",
                                         "px-1.5 py-1 text-[10px] sm:text-xs",
@@ -1558,7 +1564,7 @@ export default function AppointmentsPage() {
 
                     <button
                       onClick={handleSaveTransactions}
-                      disabled={savingTransactions || transactionItems.every((t) => !t.name.trim() || !Number(t.amount))}
+                      disabled={savingTransactions || transactionItems.every((t) => !t.name.trim())}
                       className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#1E1E2D] px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2A2A3C] disabled:opacity-50"
                     >
                       {savingTransactions ? <><Loader2 className="h-4 w-4 animate-spin" /> Kaydediliyor...</> : "Kaydet"}
