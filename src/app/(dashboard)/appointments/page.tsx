@@ -1274,9 +1274,12 @@ export default function AppointmentsPage() {
               </DialogHeader>
               <Tabs value={detailTab} onValueChange={setDetailTab}>
                 <TabsList className="w-full">
-                  <TabsTrigger value="detail" className="flex-1">Detay</TabsTrigger>
-                  <TabsTrigger value="transactions" className="flex-1 gap-1.5">
-                    <Receipt className="h-3.5 w-3.5" /> İşlem & Ücret
+                  <TabsTrigger value="detail" className="flex-1 text-xs sm:text-sm">Detay</TabsTrigger>
+                  <TabsTrigger value="transactions" className="flex-1 text-xs sm:text-sm gap-1">
+                    <Receipt className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> İşlem
+                  </TabsTrigger>
+                  <TabsTrigger value="next-appointment" className="flex-1 text-xs sm:text-sm gap-1">
+                    <Calendar className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Sonraki
                   </TabsTrigger>
                 </TabsList>
 
@@ -1326,12 +1329,24 @@ export default function AppointmentsPage() {
                         </span>
                       </div>
                     </div>
-                    {selectedAppointment.notes && (
-                      <div>
-                        <span className="text-sm text-gray-500">Notlar</span>
-                        <p className="mt-1 text-sm text-gray-700">{selectedAppointment.notes}</p>
-                      </div>
-                    )}
+                    {/* Notes — always visible, inline editable */}
+                    <div>
+                      <span className="text-sm text-gray-500">Görüşme Notları</span>
+                      <textarea
+                        value={selectedAppointment.notes || ""}
+                        onChange={(e) => setSelectedAppointment({ ...selectedAppointment, notes: e.target.value })}
+                        onBlur={async () => {
+                          await fetch(`/api/appointments/${selectedAppointment.id}`, {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ notes: selectedAppointment.notes || "" }),
+                          }).catch(() => {});
+                        }}
+                        placeholder="Görüşme ile ilgili notlarınızı yazın..."
+                        rows={3}
+                        className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-[#6366F1] focus:outline-none focus:ring-1 focus:ring-[#6366F1]/20"
+                      />
+                    </div>
                   </div>
                 </TabsContent>
 
@@ -1470,6 +1485,91 @@ export default function AppointmentsPage() {
                       <ShoppingCart className="h-4 w-4" />
                       Sipariş Oluştur
                     </Link>
+                  </div>
+                </TabsContent>
+
+                {/* Next Appointment Tab */}
+                <TabsContent value="next-appointment">
+                  <div className="space-y-4 pt-2">
+                    <p className="text-xs text-gray-500">Bu görüşme sonrası yeni bir randevu/görüşme oluşturun.</p>
+                    <div className="space-y-3">
+                      <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-gray-700">Tarih *</label>
+                        <input
+                          type="date"
+                          id="nextApptDate"
+                          defaultValue=""
+                          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-gray-700">Saat *</label>
+                        <select id="nextApptTime" defaultValue="" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20">
+                          <option value="">Seçin...</option>
+                          {ALL_TIME_SLOTS.map((t) => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-gray-700">Çalışan</label>
+                        <select id="nextApptEmployee" defaultValue={selectedAppointment.employeeId || ""} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20">
+                          <option value="">Seçin...</option>
+                          {employees.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
+                        </select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-gray-700">Konu</label>
+                        <input
+                          type="text"
+                          id="nextApptSubject"
+                          defaultValue={selectedAppointment.treatmentType || ""}
+                          placeholder="Görüşme konusu..."
+                          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-gray-700">Not</label>
+                        <textarea
+                          id="nextApptNotes"
+                          placeholder="Görüşme notu..."
+                          rows={2}
+                          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        const date = (document.getElementById("nextApptDate") as HTMLInputElement)?.value;
+                        const startTime = (document.getElementById("nextApptTime") as HTMLSelectElement)?.value;
+                        const employeeId = (document.getElementById("nextApptEmployee") as HTMLSelectElement)?.value;
+                        const treatmentType = (document.getElementById("nextApptSubject") as HTMLInputElement)?.value;
+                        const notes = (document.getElementById("nextApptNotes") as HTMLTextAreaElement)?.value;
+                        if (!date || !startTime) { alert("Tarih ve saat zorunludur."); return; }
+                        try {
+                          const res = await fetch("/api/appointments", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              patientId: selectedAppointment.patientId,
+                              date,
+                              startTime,
+                              endTime: getEndTime(startTime),
+                              employeeId: employeeId || undefined,
+                              treatmentType: treatmentType || undefined,
+                              notes: notes || undefined,
+                            }),
+                          });
+                          if (res.ok) {
+                            setDialogOpen(false);
+                            if (viewMode === "daily") fetchDayAppointments(selectedDate, selectedEmployee, selectedService);
+                            else fetchWeekAppointments(selectedDate, selectedEmployee, selectedService);
+                          }
+                        } catch {}
+                      }}
+                      className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#4F46E5] px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#4338CA]"
+                    >
+                      <Calendar className="h-4 w-4" />
+                      Randevu Oluştur
+                    </button>
                   </div>
                 </TabsContent>
               </Tabs>
