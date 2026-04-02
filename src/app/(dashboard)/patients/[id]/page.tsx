@@ -115,6 +115,14 @@ export default function PatientDetailPage() {
   const [patient, setPatient] = useState<Patient | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [photos, setPhotos] = useState<PatientPhoto[]>([]);
+  const [fieldVisibility, setFieldVisibility] = useState<Record<string, { list: boolean; detail: boolean }>>({});
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("poby-field-visibility");
+      if (saved) setFieldVisibility(JSON.parse(saved));
+    } catch {}
+  }, []);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [editing, setEditing] = useState(false);
@@ -626,6 +634,7 @@ export default function PatientDetailPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.05 }}
         className="overflow-hidden rounded-xl border border-gray-100 bg-white"
+        style={{ display: fieldVisibility.photos?.detail === false ? "none" : undefined }}
       >
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
           <div className="flex items-center gap-2">

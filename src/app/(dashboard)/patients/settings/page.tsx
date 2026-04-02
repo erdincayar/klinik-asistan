@@ -96,6 +96,7 @@ export default function PatientSettingsPage() {
     { key: "dateOfBirth", name: "Doğum Tarihi", type: "date", isDefault: true, isRequired: false, showInList: false, showInDetail: visibility.dateOfBirth?.detail !== false },
     { key: "treatmentCount", name: "İşlem Sayısı", type: "number", isDefault: true, isRequired: false, showInList: visibility.treatmentCount?.list !== false, showInDetail: false },
     { key: "createdAt", name: "Kayıt Tarihi", type: "date", isDefault: true, isRequired: false, showInList: visibility.createdAt?.list !== false, showInDetail: visibility.createdAt?.detail !== false },
+    { key: "photos", name: "Fotoğraflar", type: "text", isDefault: true, isRequired: false, showInList: false, showInDetail: visibility.photos?.detail !== false },
   ];
 
   const customFields: FieldConfig[] = columns.map((col) => ({
