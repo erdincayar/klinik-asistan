@@ -407,13 +407,6 @@ export default function PatientDetailPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setEditing(!editing)}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50"
-            >
-              <Pencil className="h-3.5 w-3.5" />
-              {editing ? "İptal" : "Düzenle"}
-            </button>
             <Link
               href="/patients/settings"
               className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50"
@@ -440,122 +433,76 @@ export default function PatientDetailPage() {
         </div>
 
         <div className="p-6">
-          {editing ? (
-            <div className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium text-gray-600">Ad Soyad</label>
+          {(() => {
+            // Inline editable field helper
+            const InlineField = ({ label, field, value, icon: Icon }: { label: string; field: string; value: string; icon?: any }) => (
+              <div className="flex items-center gap-2 text-sm">
+                {Icon && <Icon className="h-4 w-4 text-gray-400 shrink-0" />}
+                {!Icon && <span className="text-gray-400 text-xs font-medium shrink-0">{label}:</span>}
+                {editingCell?.field === field ? (
                   <input
-                    value={editForm.name}
-                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                    className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
+                    autoFocus
+                    value={cellEditValue}
+                    onChange={(e) => setCellEditValue(e.target.value)}
+                    onBlur={async () => {
+                      if (field === "name" || field === "phone" || field === "email" || field === "notes") {
+                        await fetch(`/api/patients/${patient.id}`, {
+                          method: "PUT",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ ...editForm, [field]: cellEditValue }),
+                        });
+                      } else if (field.startsWith("cv_")) {
+                        await fetch(`/api/customers/${patient.id}/custom-value`, {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ columnKey: field.replace("cv_", ""), value: cellEditValue }),
+                        });
+                      }
+                      fetchPatient();
+                      setEditingCell(null);
+                    }}
+                    onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); if (e.key === "Escape") setEditingCell(null); }}
+                    className="flex-1 rounded-lg border border-[#4F46E5] px-2.5 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-[#4F46E5]"
                   />
-                </div>
-                {fieldVisibility.phone?.detail !== false && (
-                  <div>
-                    <label className="mb-1.5 block text-xs font-medium text-gray-600">Telefon</label>
-                    <input
-                      value={editForm.phone}
-                      onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
-                    />
-                  </div>
-                )}
-                {fieldVisibility.email?.detail !== false && (
-                  <div>
-                    <label className="mb-1.5 block text-xs font-medium text-gray-600">Email</label>
-                    <input
-                      value={editForm.email}
-                      onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                      className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
-                    />
-                  </div>
+                ) : (
+                  <span
+                    className="cursor-pointer text-gray-600 hover:text-[#4F46E5] rounded px-1 py-0.5 hover:bg-[#EEF2FF] transition-colors"
+                    onClick={() => { setEditingCell({ id: patient.id, field }); setCellEditValue(value); }}
+                  >
+                    {value || <span className="text-gray-300 italic">Ekle...</span>}
+                  </span>
                 )}
               </div>
-              {fieldVisibility.notes?.detail !== false && (
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium text-gray-600">Notlar</label>
-                  <textarea
-                    value={editForm.notes}
-                    onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
-                    rows={2}
-                    className="block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
-                  />
-                </div>
-              )}
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="inline-flex items-center gap-2 rounded-xl bg-[#1E1E2D] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2A2A3C] disabled:opacity-50"
-              >
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                {saving ? "Kaydediliyor..." : "Kaydet"}
-              </button>
-            </div>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {fieldVisibility.phone?.detail !== false && (
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Phone className="h-4 w-4 text-gray-400" />
-                  {patient.phone || "Telefon girilmemiş"}
-                </div>
-              )}
-              {fieldVisibility.email?.detail !== false && (
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Mail className="h-4 w-4 text-gray-400" />
-                  {patient.email || "Email girilmemiş"}
-                </div>
-              )}
-              {fieldVisibility.createdAt?.detail !== false && (
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Calendar className="h-4 w-4 text-gray-400" />
-                  Kayıt: {formatDate(patient.createdAt)}
-                </div>
-              )}
-              {fieldVisibility.notes?.detail !== false && patient.notes && (
-                <div className="flex items-start gap-2 text-sm text-gray-600 sm:col-span-2">
-                  <FileText className="mt-0.5 h-4 w-4 text-gray-400" />
-                  {patient.notes}
-                </div>
-              )}
-              {/* Custom field values — all visible fields shown, inline editable */}
-              {customColumns
-                .filter(col => fieldVisibility[col.columnKey]?.detail !== false)
-                .map(col => {
-                  const cv = patient.customValues?.find(v => v.columnKey === col.columnKey);
-                  return (
-                    <div key={col.columnKey} className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-400 text-xs font-medium shrink-0">{col.columnName}:</span>
-                      {editingCell?.id === patient.id && editingCell?.field === `cv_${col.columnKey}` ? (
-                        <input
-                          autoFocus
-                          value={cellEditValue}
-                          onChange={(e) => setCellEditValue(e.target.value)}
-                          onBlur={async () => {
-                            await fetch(`/api/customers/${patient.id}/custom-value`, {
-                              method: "PATCH",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ columnKey: col.columnKey, value: cellEditValue }),
-                            });
-                            fetchPatient();
-                            setEditingCell(null);
-                          }}
-                          onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); if (e.key === "Escape") setEditingCell(null); }}
-                          className="rounded border border-[#4F46E5] px-2 py-0.5 text-sm focus:outline-none"
-                        />
-                      ) : (
-                        <span
-                          className="cursor-pointer text-gray-600 hover:text-[#4F46E5] rounded px-1 hover:bg-[#EEF2FF]"
-                          onClick={() => { setEditingCell({ id: patient.id, field: `cv_${col.columnKey}` }); setCellEditValue(cv?.value || ""); }}
-                        >
-                          {cv?.value || <span className="text-gray-300 italic">Ekle...</span>}
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
-            </div>
-          )}
+            );
+
+            const fv = fieldVisibility as any;
+            return (
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {fv.phone?.deleted !== true && fv.phone?.detail !== false && (
+                  <InlineField label="Telefon" field="phone" value={patient.phone || ""} icon={Phone} />
+                )}
+                {fv.email?.deleted !== true && fv.email?.detail !== false && (
+                  <InlineField label="Email" field="email" value={patient.email || ""} icon={Mail} />
+                )}
+                {fv.createdAt?.deleted !== true && fv.createdAt?.detail !== false && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Calendar className="h-4 w-4 text-gray-400" />
+                    Kayıt: {formatDate(patient.createdAt)}
+                  </div>
+                )}
+                {fv.notes?.deleted !== true && fv.notes?.detail !== false && (
+                  <InlineField label="Notlar" field="notes" value={patient.notes || ""} icon={FileText} />
+                )}
+                {/* Custom fields */}
+                {customColumns
+                  .filter(col => fv[col.columnKey]?.detail !== false && fv[col.columnKey]?.deleted !== true)
+                  .map(col => {
+                    const cv = patient.customValues?.find(v => v.columnKey === col.columnKey);
+                    return <InlineField key={col.columnKey} label={col.columnName} field={`cv_${col.columnKey}`} value={cv?.value || ""} />;
+                  })}
+              </div>
+            );
+          })()}
         </div>
       </motion.div>
 
