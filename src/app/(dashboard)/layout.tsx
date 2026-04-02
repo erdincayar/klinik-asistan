@@ -51,6 +51,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { ToastProvider, Toaster, useToast } from "@/components/ui/toast";
+import { ConfirmProvider } from "@/components/ui/confirm-dialog";
 
 /* ──────────────────────── MODULE CONFIG ──────────────────────── */
 
@@ -763,6 +764,15 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<{ id: string; message: string; createdAt: string; isRead: boolean }[]>([]);
   const [notiLoading, setNotiLoading] = useState(false);
+  const [topBarUnreadCount, setTopBarUnreadCount] = useState(0);
+
+  // Fetch unread count for top bar bell
+  useEffect(() => {
+    fetch("/api/alarms/logs/unread-count")
+      .then((r) => r.ok ? r.json() : { count: 0 })
+      .then((d) => setTopBarUnreadCount(d.count ?? 0))
+      .catch(() => {});
+  }, []);
   const pathname = usePathname();
   const pageTitle = getPageTitle(pathname);
   const { data: session } = useSession();
@@ -881,7 +891,9 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
               className={`relative rounded-lg p-2 transition-colors ${showNotifications ? "bg-[#EEF2FF] text-[#6366F1]" : "text-[#6C7293] hover:bg-[#F3F4F6] hover:text-[#1A1A2E]"}`}
             >
               <Bell className="h-5 w-5" />
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#6366F1]" />
+              {topBarUnreadCount > 0 && (
+                <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#EF4444]" />
+              )}
             </button>
 
             {/* Divider */}
@@ -959,12 +971,26 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
           <div className="absolute right-4 sm:right-6 top-16 z-50 w-80 sm:w-96 rounded-xl border border-gray-200 bg-white shadow-xl overflow-hidden">
             <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
               <h3 className="text-sm font-semibold text-gray-900">Bildirimler</h3>
-              <button
-                onClick={() => router.push("/alarmlar")}
-                className="text-xs font-medium text-[#6366F1] hover:underline"
-              >
-                Tümünü Gör
-              </button>
+              <div className="flex items-center gap-3">
+                {notifications.some(n => !n.isRead) && (
+                  <button
+                    onClick={async () => {
+                      await fetch("/api/alarms/logs/mark-all-read", { method: "POST" }).catch(() => {});
+                      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+                      setTopBarUnreadCount(0);
+                    }}
+                    className="text-[11px] font-medium text-gray-500 hover:text-[#6366F1]"
+                  >
+                    Tümünü Okundu İşaretle
+                  </button>
+                )}
+                <button
+                  onClick={() => router.push("/alarmlar")}
+                  className="text-xs font-medium text-[#6366F1] hover:underline"
+                >
+                  Tümünü Gör
+                </button>
+              </div>
             </div>
             <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
               {notiLoading ? (
@@ -975,15 +1001,27 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                 <p className="text-sm text-gray-400 text-center py-8">Bildirim yok</p>
               ) : (
                 notifications.map((n) => (
-                  <div
+                  <button
                     key={n.id}
-                    className={`px-4 py-3 text-sm ${n.isRead ? "bg-white" : "bg-[#EEF2FF]/30"}`}
+                    onClick={async () => {
+                      if (!n.isRead) {
+                        await fetch(`/api/alarms/logs/${n.id}/read`, { method: "POST" }).catch(() => {});
+                        setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, isRead: true } : x));
+                        setTopBarUnreadCount(prev => Math.max(0, prev - 1));
+                      }
+                    }}
+                    className={`w-full text-left px-4 py-3 text-sm transition-colors hover:bg-gray-50 ${n.isRead ? "bg-white" : "bg-[#EEF2FF]/30"}`}
                   >
-                    <p className="text-gray-700">{n.message}</p>
-                    <p className="text-[11px] text-gray-400 mt-1">
-                      {new Date(n.createdAt).toLocaleString("tr-TR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
-                    </p>
-                  </div>
+                    <div className="flex items-start gap-2">
+                      {!n.isRead && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#6366F1]" />}
+                      <div className="min-w-0">
+                        <p className="text-gray-700">{n.message}</p>
+                        <p className="text-[11px] text-gray-400 mt-1">
+                          {new Date(n.createdAt).toLocaleString("tr-TR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                        </p>
+                      </div>
+                    </div>
+                  </button>
                 ))
               )}
             </div>
@@ -1021,7 +1059,9 @@ export default function DashboardLayout({
   return (
     <SessionProvider>
       <ToastProvider>
-        <DashboardContent>{children}</DashboardContent>
+        <ConfirmProvider>
+          <DashboardContent>{children}</DashboardContent>
+        </ConfirmProvider>
         <Toaster />
       </ToastProvider>
     </SessionProvider>

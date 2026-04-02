@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { motion } from "framer-motion";
 import {
   Plus,
@@ -182,6 +183,7 @@ function ChartTooltip({ active, payload, label }: any) {
 /* ──────────────────────── COMPONENT ──────────────────────── */
 
 export default function FinanceOverview() {
+  const { confirm } = useConfirm();
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
@@ -289,7 +291,7 @@ export default function FinanceOverview() {
   }, [month, year]);
 
   async function handleDeleteTreatment(id: string) {
-    if (!confirm("Bu gelir kaydını silmek istediğinize emin misiniz?")) return;
+    if (!await confirm({ title: "Gelir Kaydını Sil", message: "Bu gelir kaydını silmek istediğinize emin misiniz?", confirmText: "Evet, Sil" })) return;
     try {
       const res = await fetch(`/api/treatments/${id}`, { method: "DELETE" });
       if (res.ok) fetchFinanceData();
@@ -297,7 +299,7 @@ export default function FinanceOverview() {
   }
 
   async function handleDeleteExpense(id: string) {
-    if (!confirm("Bu gider kaydını silmek istediğinize emin misiniz?")) return;
+    if (!await confirm({ title: "Gider Kaydını Sil", message: "Bu gider kaydını silmek istediğinize emin misiniz?", confirmText: "Evet, Sil" })) return;
     try {
       const res = await fetch(`/api/expenses/${id}`, { method: "DELETE" });
       if (res.ok) fetchFinanceData();
@@ -305,7 +307,7 @@ export default function FinanceOverview() {
   }
 
   async function handleDeleteInvoice(id: string) {
-    if (!confirm("Bu faturayı silmek istediğinize emin misiniz? Bağlı gelir/gider kayıtları ve stok hareketleri de silinecektir.")) return;
+    if (!await confirm({ title: "Faturayı Sil", message: "Bu faturayı silmek istediğinize emin misiniz? Bağlı gelir/gider kayıtları ve stok hareketleri de silinecektir.", confirmText: "Evet, Sil" })) return;
     try {
       const res = await fetch(`/api/invoices/ocr/${id}`, { method: "DELETE" });
       if (res.ok) fetchFinanceData();
