@@ -18,6 +18,7 @@ export interface Product {
   salePriceUSD: number | null;
   saleCurrency: string;
   vatIncluded: boolean;
+  trackStock: boolean;
   isActive: boolean;
   createdAt: string;
   movements?: StockMovement[];

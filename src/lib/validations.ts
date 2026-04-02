@@ -137,6 +137,7 @@ export const productSchema = z.object({
   reorderQty: z.number().int().min(0).nullable().optional(),
   autoReorder: z.boolean().optional(),
   vatIncluded: z.boolean().optional(),
+  trackStock: z.boolean().optional(),
 });
 
 export const stockAlarmSchema = z.object({

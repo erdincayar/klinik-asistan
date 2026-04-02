@@ -479,6 +479,7 @@ model Product {
   reorderQty       Int?            // Sipariş miktarı (adet)
   autoReorder      Boolean         @default(false) // Otomatik tedarik listesine ekle
   vatIncluded      Boolean         @default(true)  // Fiyatlara KDV dahil mi
+  trackStock       Boolean         @default(true)  // Stok takibi yapılsın mı (false = konsinye/stoksuz)
   clinicId         String
   clinic           Clinic          @relation(fields: [clinicId], references: [id])
   isActive         Boolean         @default(true)

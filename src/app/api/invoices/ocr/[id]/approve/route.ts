@@ -178,27 +178,35 @@ export async function POST(
             });
             if (!product) continue;
 
-            await tx.stockMovement.create({
-              data: {
-                productId: mapping.productId,
-                type: "IN",
-                quantity: mapping.quantity,
-                unitPrice: unitPriceKurus,
-                totalPrice: unitPriceKurus * mapping.quantity,
-                description: `Fatura: ${invoice.vendor || invoice.fileName} - ${mapping.description}`,
-                reference: `invoice-${id}`,
-                date: invoice.invoiceDate || new Date(),
-                clinicId,
-              },
-            });
+            if (product.trackStock) {
+              await tx.stockMovement.create({
+                data: {
+                  productId: mapping.productId,
+                  type: "IN",
+                  quantity: mapping.quantity,
+                  unitPrice: unitPriceKurus,
+                  totalPrice: unitPriceKurus * mapping.quantity,
+                  description: `Fatura: ${invoice.vendor || invoice.fileName} - ${mapping.description}`,
+                  reference: `invoice-${id}`,
+                  date: invoice.invoiceDate || new Date(),
+                  clinicId,
+                },
+              });
 
-            await tx.product.update({
-              where: { id: mapping.productId },
-              data: {
-                currentStock: (product.currentStock ?? 0) + mapping.quantity,
-                purchasePrice: unitPriceKurus,
-              },
-            });
+              await tx.product.update({
+                where: { id: mapping.productId },
+                data: {
+                  currentStock: (product.currentStock ?? 0) + mapping.quantity,
+                  purchasePrice: unitPriceKurus,
+                },
+              });
+            } else {
+              // Stoksuz ürün — sadece alış fiyatı güncelle
+              await tx.product.update({
+                where: { id: mapping.productId },
+                data: { purchasePrice: unitPriceKurus },
+              });
+            }
           } else if (mapping.description && mapping.quantity > 0) {
             // Unmatched product: create new product + add stock
             const sku = `INV-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
@@ -277,7 +285,7 @@ export async function POST(
           if (mapping.productId) {
             const product = await tx.product.findFirst({
               where: { id: mapping.productId, clinicId },
-              select: { id: true, name: true, purchasePrice: true, currentStock: true, vatIncluded: true },
+              select: { id: true, name: true, purchasePrice: true, currentStock: true, vatIncluded: true, trackStock: true },
             });
             if (!product) continue;
 
@@ -297,26 +305,28 @@ export async function POST(
               profit: itemProfit,
             });
 
-            // Stock OUT for sales
-            const newStock = Math.max(0, (product.currentStock ?? 0) - mapping.quantity);
-            await tx.stockMovement.create({
-              data: {
-                productId: mapping.productId,
-                type: "OUT",
-                quantity: mapping.quantity,
-                unitPrice: salePriceKurus,
-                totalPrice: salePriceKurus * mapping.quantity,
-                description: `Satış Faturası: ${invoice.vendor || invoice.fileName} - ${mapping.description}`,
-                reference: `invoice-${id}`,
-                date: invoice.invoiceDate || new Date(),
-                clinicId,
-              },
-            });
+            // Stock OUT for sales — only if trackStock enabled
+            if (product.trackStock) {
+              const newStock = Math.max(0, (product.currentStock ?? 0) - mapping.quantity);
+              await tx.stockMovement.create({
+                data: {
+                  productId: mapping.productId,
+                  type: "OUT",
+                  quantity: mapping.quantity,
+                  unitPrice: salePriceKurus,
+                  totalPrice: salePriceKurus * mapping.quantity,
+                  description: `Satış Faturası: ${invoice.vendor || invoice.fileName} - ${mapping.description}`,
+                  reference: `invoice-${id}`,
+                  date: invoice.invoiceDate || new Date(),
+                  clinicId,
+                },
+              });
 
-            await tx.product.update({
-              where: { id: mapping.productId },
-              data: { currentStock: newStock },
-            });
+              await tx.product.update({
+                where: { id: mapping.productId },
+                data: { currentStock: newStock },
+              });
+            }
           } else if (mapping.description) {
             unmatchedItems.push({
               description: mapping.description,

@@ -78,27 +78,36 @@ export async function POST(request: Request) {
           });
           if (!product) continue;
 
-          await prisma.stockMovement.create({
-            data: {
-              productId: item.productId,
-              type: "IN",
-              quantity: item.quantity,
-              unitPrice: item.unitPrice,
-              totalPrice: item.unitPrice * item.quantity,
-              description: `Alış: ${item.description}`,
-              reference: `expense-${expense.id}`,
-              date: new Date(date),
-              clinicId,
-            },
-          });
+          // Sadece stok takibi açık ürünlerde stok artır
+          if (product.trackStock) {
+            await prisma.stockMovement.create({
+              data: {
+                productId: item.productId,
+                type: "IN",
+                quantity: item.quantity,
+                unitPrice: item.unitPrice,
+                totalPrice: item.unitPrice * item.quantity,
+                description: `Alış: ${item.description}`,
+                reference: `expense-${expense.id}`,
+                date: new Date(date),
+                clinicId,
+              },
+            });
 
-          await prisma.product.update({
-            where: { id: item.productId },
-            data: {
-              currentStock: (product.currentStock ?? 0) + item.quantity,
-              purchasePrice: item.unitPrice,
-            },
-          });
+            await prisma.product.update({
+              where: { id: item.productId },
+              data: {
+                currentStock: (product.currentStock ?? 0) + item.quantity,
+                purchasePrice: item.unitPrice,
+              },
+            });
+          } else {
+            // Stoksuz ürünlerde sadece alış fiyatını güncelle
+            await prisma.product.update({
+              where: { id: item.productId },
+              data: { purchasePrice: item.unitPrice },
+            });
+          }
         }
       }
     }

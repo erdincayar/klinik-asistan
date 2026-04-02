@@ -87,28 +87,30 @@ export async function POST(request: Request) {
       if (Array.isArray(lineItems)) {
         for (const item of lineItems) {
           if (item.quantity > 0 && item.productId) {
-            // Stoktan ürün — stok düş + maliyet kaydet
             const product = await prisma.product.findFirst({
               where: { id: item.productId, clinicId },
             });
             if (!product) continue;
-            await prisma.stockMovement.create({
-              data: {
-                productId: item.productId,
-                type: "OUT",
-                quantity: item.quantity,
-                unitPrice: item.unitPrice,
-                totalPrice: item.unitPrice * item.quantity,
-                description: `Satış: ${rest.name || item.description}`,
-                reference: `expense-income-${incomeRecord.id}`,
-                date: new Date(date),
-                clinicId,
-              },
-            });
-            await prisma.product.update({
-              where: { id: item.productId },
-              data: { currentStock: Math.max(0, (product.currentStock ?? 0) - item.quantity) },
-            });
+            // Sadece stok takibi açık ürünlerde stok düş
+            if (product.trackStock) {
+              await prisma.stockMovement.create({
+                data: {
+                  productId: item.productId,
+                  type: "OUT",
+                  quantity: item.quantity,
+                  unitPrice: item.unitPrice,
+                  totalPrice: item.unitPrice * item.quantity,
+                  description: `Satış: ${rest.name || item.description}`,
+                  reference: `expense-income-${incomeRecord.id}`,
+                  date: new Date(date),
+                  clinicId,
+                },
+              });
+              await prisma.product.update({
+                where: { id: item.productId },
+                data: { currentStock: Math.max(0, (product.currentStock ?? 0) - item.quantity) },
+              });
+            }
           }
         }
         // Toplam maliyeti description'a ekle (raporlar için)
@@ -171,26 +173,29 @@ export async function POST(request: Request) {
           });
           if (!product) continue;
 
-          await prisma.stockMovement.create({
-            data: {
-              productId: item.productId,
-              type: "OUT",
-              quantity: item.quantity,
-              unitPrice: item.unitPrice,
-              totalPrice: item.unitPrice * item.quantity,
-              description: `Satış: ${rest.name || item.description}`,
-              reference: `treatment-${treatment.id}`,
-              date: new Date(date),
-              clinicId,
-            },
-          });
+          // Sadece stok takibi açık ürünlerde stok düş
+          if (product.trackStock) {
+            await prisma.stockMovement.create({
+              data: {
+                productId: item.productId,
+                type: "OUT",
+                quantity: item.quantity,
+                unitPrice: item.unitPrice,
+                totalPrice: item.unitPrice * item.quantity,
+                description: `Satış: ${rest.name || item.description}`,
+                reference: `treatment-${treatment.id}`,
+                date: new Date(date),
+                clinicId,
+              },
+            });
 
-          await prisma.product.update({
-            where: { id: item.productId },
-            data: {
-              currentStock: Math.max(0, (product.currentStock ?? 0) - item.quantity),
-            },
-          });
+            await prisma.product.update({
+              where: { id: item.productId },
+              data: {
+                currentStock: Math.max(0, (product.currentStock ?? 0) - item.quantity),
+              },
+            });
+          }
         }
       }
     }

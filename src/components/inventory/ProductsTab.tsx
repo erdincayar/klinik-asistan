@@ -566,11 +566,13 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
                           if (key === "unit") return <TableCell key={key} className="hidden md:table-cell">{getUnitLabel(product.unit)}</TableCell>;
                           if (key === "stock") return (
                             <TableCell key={key} className="text-right tabular-nums">
-                              {product.currentStock === null || product.currentStock === undefined
-                                ? <span className="text-gray-400">-</span>
-                                : product.currentStock === 0
-                                  ? <span className="text-gray-400">0</span>
-                                  : <>{product.currentStock}</>}
+                              {!product.trackStock
+                                ? <span className="text-[10px] text-gray-400 bg-gray-100 rounded px-1.5 py-0.5">Takipsiz</span>
+                                : product.currentStock === null || product.currentStock === undefined
+                                  ? <span className="text-gray-400">-</span>
+                                  : product.currentStock === 0
+                                    ? <span className="text-gray-400">0</span>
+                                    : <>{product.currentStock}</>}
                             </TableCell>
                           );
                           if (key === "purchasePriceTRY") return <TableCell key={key} className="text-right tabular-nums">{formatCurrency(product.purchasePrice)}</TableCell>;
@@ -1010,7 +1012,7 @@ function NewProductDialog({
     currentStock: 0, minStock: 0, orderAlert: false,
     purchasePrice: 0, purchasePriceUSD: "", currency: "TRY",
     minProfitMargin: 20, salePrice: 0, salePriceUSD: "", saleCurrency: "TRY",
-    vatIncluded: true,
+    vatIncluded: true, trackStock: true,
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -1020,7 +1022,7 @@ function NewProductDialog({
     currentStock: 0, minStock: 0, orderAlert: false,
     purchasePrice: 0, purchasePriceUSD: "", currency: "TRY",
     minProfitMargin: 20, salePrice: 0, salePriceUSD: "", saleCurrency: "TRY",
-    vatIncluded: true,
+    vatIncluded: true, trackStock: true,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1146,7 +1148,11 @@ function NewProductDialog({
             <Label htmlFor="minProfitMargin">Min Kâr Marjı (%)</Label>
             <Input id="minProfitMargin" type="number" min={0} value={form.minProfitMargin} onChange={(e) => setForm({ ...form, minProfitMargin: Number(e.target.value) })} />
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <input type="checkbox" id="trackStock" checked={form.trackStock} onChange={(e) => setForm({ ...form, trackStock: e.target.checked })} className="h-4 w-4 rounded border-gray-300 text-[#6366F1]" />
+              <Label htmlFor="trackStock" className="text-sm font-normal cursor-pointer">Stok takibi yap</Label>
+            </div>
             <div className="flex items-center gap-2">
               <input type="checkbox" id="vatIncluded" checked={form.vatIncluded} onChange={(e) => setForm({ ...form, vatIncluded: e.target.checked })} className="h-4 w-4 rounded border-gray-300 text-[#6366F1]" />
               <Label htmlFor="vatIncluded" className="text-sm font-normal cursor-pointer">Fiyatlara KDV dahil</Label>
