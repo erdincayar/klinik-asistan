@@ -1467,7 +1467,7 @@ function EditProductDialog({
     currentStock: 0, minStock: 0, orderAlert: false,
     purchasePrice: 0, purchasePriceUSD: "", currency: "TRY",
     minProfitMargin: 20, salePrice: 0, salePriceUSD: "", saleCurrency: "TRY",
-    vatIncluded: true,
+    vatIncluded: true, trackStock: true,
   });
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
@@ -1492,6 +1492,7 @@ function EditProductDialog({
         salePriceUSD: product.salePriceUSD != null ? String(product.salePriceUSD) : "",
         saleCurrency: product.saleCurrency || "TRY",
         vatIncluded: product.vatIncluded,
+        trackStock: product.trackStock,
       });
       setCustomFieldValues(product.customFields || {});
       setError("");
@@ -1631,7 +1632,11 @@ function EditProductDialog({
             <Label htmlFor="editMinProfitMargin">Min Kâr Marjı (%)</Label>
             <Input id="editMinProfitMargin" type="number" min={0} value={form.minProfitMargin} onChange={(e) => setForm({ ...form, minProfitMargin: Number(e.target.value) })} />
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <input type="checkbox" id="editTrackStock" checked={form.trackStock} onChange={(e) => setForm({ ...form, trackStock: e.target.checked })} className="h-4 w-4 rounded border-gray-300 text-[#6366F1]" />
+              <Label htmlFor="editTrackStock" className="text-sm font-normal cursor-pointer">Stok takibi yap</Label>
+            </div>
             <div className="flex items-center gap-2">
               <input type="checkbox" id="editVatIncluded" checked={form.vatIncluded} onChange={(e) => setForm({ ...form, vatIncluded: e.target.checked })} className="h-4 w-4 rounded border-gray-300 text-[#6366F1]" />
               <Label htmlFor="editVatIncluded" className="text-sm font-normal cursor-pointer">Fiyatlara KDV dahil</Label>

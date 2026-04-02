@@ -378,6 +378,23 @@ function Sidebar({
       .catch(() => {});
   }, [unlockAll]);
 
+  // Sector config for dynamic sidebar labels
+  const [sectorLabels, setSectorLabels] = useState<Record<string, string>>({});
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (!data?.sectorConfig) return;
+        const c = data.sectorConfig;
+        const labels: Record<string, string> = {};
+        if (c.customerPlural) labels["/patients"] = c.customerPlural;
+        if (c.appointmentPlural) labels["/appointments"] = c.appointmentPlural;
+        if (c.employeePlural) labels["/employees"] = c.employeePlural;
+        setSectorLabels(labels);
+      })
+      .catch(() => {});
+  }, []);
+
   // Unread alarm count
   const [unreadAlarmCount, setUnreadAlarmCount] = useState(0);
 
@@ -524,19 +541,23 @@ function Sidebar({
                   }
                   return true;
                 }).map((item) => {
+                  // Override label from sector config
+                  const displayItem = sectorLabels[item.href]
+                    ? { ...item, label: sectorLabels[item.href] }
+                    : item;
                   const isActive =
-                    pathname === item.href ||
-                    pathname.startsWith(item.href + "/");
-                  const isYakinda = !!item.moduleSlug && LOCKED_MODULES.includes(item.moduleSlug);
-                  const isNotSubscribed = !unlockAll && !!item.moduleSlug && !activeModules.includes(item.moduleSlug);
+                    pathname === displayItem.href ||
+                    pathname.startsWith(displayItem.href + "/");
+                  const isYakinda = !!displayItem.moduleSlug && LOCKED_MODULES.includes(displayItem.moduleSlug);
+                  const isNotSubscribed = !unlockAll && !!displayItem.moduleSlug && !activeModules.includes(displayItem.moduleSlug);
                   const isLocked = isYakinda || isNotSubscribed;
                   return (
-                    <div key={item.href}>
-                      {navGroupLabels.has(item.href) && (
+                    <div key={displayItem.href}>
+                      {navGroupLabels.has(displayItem.href) && (
                         <div className="mt-4 pt-2 first:mt-0 first:pt-0">
                           {!collapsed && (
                             <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-wider text-[#6C7293]">
-                              {navGroupLabels.get(item.href)}
+                              {navGroupLabels.get(displayItem.href)}
                             </p>
                           )}
                           {collapsed && <div className="border-t border-white/[0.06] mx-2 mb-1" />}
@@ -544,15 +565,15 @@ function Sidebar({
                       )}
                       <div className="relative">
                         <SortableNavItem
-                          item={item}
+                          item={displayItem}
                           isActive={isActive}
                           isLocked={isLocked}
                           isYakinda={isYakinda}
                           collapsed={collapsed}
                           onClose={onClose}
-                          onLockedClick={() => handleLockedClick(item)}
+                          onLockedClick={() => handleLockedClick(displayItem)}
                         />
-                        {item.href === "/alarmlar" && unreadAlarmCount > 0 && !isLocked && (
+                        {displayItem.href === "/alarmlar" && unreadAlarmCount > 0 && !isLocked && (
                           <span className="absolute right-2 top-1/2 -translate-y-1/2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#EF4444] px-1 text-[10px] font-bold text-white">
                             {unreadAlarmCount > 99 ? "99+" : unreadAlarmCount}
                           </span>
