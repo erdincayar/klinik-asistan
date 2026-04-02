@@ -69,7 +69,7 @@ export const appointmentSchema = z.object({
   date: z.string().min(1, "Tarih seçin"),
   startTime: z.string().min(1, "Başlangıç saati seçin"),
   endTime: z.string().min(1, "Bitiş saati seçin"),
-  treatmentType: z.string().min(1, "İşlem türü seçin"),
+  treatmentType: z.string().optional().default(""),
   notes: z.string().optional(),
 });
 

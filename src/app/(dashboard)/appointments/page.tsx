@@ -188,6 +188,7 @@ export default function AppointmentsPage() {
   });
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
+  const [formErrors, setFormErrors] = useState<Record<string, boolean>>({});
   // Treatment autocomplete
   const [dialogServiceSuggestions, setDialogServiceSuggestions] = useState<string[]>([]);
   const [dialogLoadingSuggestions, setDialogLoadingSuggestions] = useState(false);
@@ -526,8 +527,13 @@ export default function AppointmentsPage() {
 
   async function handleCreateAppointment() {
     setCreateError("");
-    if (!newAppt.patientId || !newAppt.date || !newAppt.startTime || !newAppt.treatmentType) {
-      setCreateError("Lütfen tüm zorunlu alanları doldurun.");
+    const errors: Record<string, boolean> = {};
+    if (!newAppt.patientId) errors.patientId = true;
+    if (!newAppt.date) errors.date = true;
+    if (!newAppt.startTime) errors.startTime = true;
+    setFormErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      setCreateError("Kırmızı ile işaretli alanları doldurun.");
       return;
     }
     setCreating(true);
@@ -1203,12 +1209,12 @@ export default function AppointmentsPage() {
             )}
 
             {/* Müşteri */}
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-gray-700">Müşteri *</label>
+            <div className={`space-y-1.5 ${formErrors.patientId ? "rounded-lg ring-2 ring-red-300 p-1" : ""}`}>
+              <label className={`text-sm font-medium ${formErrors.patientId ? "text-red-600" : "text-gray-700"}`}>Müşteri *</label>
               <SmartSelect
                 items={patients.map((p) => ({ id: p.id, label: p.name }))}
                 value={newAppt.patientId}
-                onChange={(val) => setNewAppt({ ...newAppt, patientId: val })}
+                onChange={(val) => { setNewAppt({ ...newAppt, patientId: val }); setFormErrors(p => ({ ...p, patientId: false })); }}
                 displayValue={patients.find((p) => p.id === newAppt.patientId)?.name}
                 placeholder="Müşteri ara veya seç..."
                 required
@@ -1300,19 +1306,19 @@ export default function AppointmentsPage() {
             </div>
 
             {/* Tarih */}
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-gray-700">Tarih *</label>
+            <div className={`space-y-1.5 ${formErrors.date ? "rounded-lg ring-2 ring-red-300 p-1" : ""}`}>
+              <label className={`text-sm font-medium ${formErrors.date ? "text-red-600" : "text-gray-700"}`}>Tarih *</label>
               <input
                 type="date"
                 value={newAppt.date}
-                onChange={(e) => setNewAppt({ ...newAppt, date: e.target.value })}
+                onChange={(e) => { setNewAppt({ ...newAppt, date: e.target.value }); setFormErrors(p => ({ ...p, date: false })); }}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
               />
             </div>
 
             {/* Saat */}
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-gray-700">Saat *</label>
+            <div className={`space-y-1.5 ${formErrors.startTime ? "rounded-lg ring-2 ring-red-300 p-1" : ""}`}>
+              <label className={`text-sm font-medium ${formErrors.startTime ? "text-red-600" : "text-gray-700"}`}>Saat *</label>
               <select
                 value={newAppt.startTime}
                 onChange={(e) => setNewAppt({ ...newAppt, startTime: e.target.value })}
@@ -1325,17 +1331,16 @@ export default function AppointmentsPage() {
               </select>
             </div>
 
-            {/* İşlem Türü */}
+            {/* Konu */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-gray-700">İşlem Türü *</label>
+              <label className="text-sm font-medium text-gray-700">Konu</label>
               <SmartSelect
                 freetext
                 items={dialogServiceSuggestions.map((s) => ({ id: s, label: s }))}
                 value={newAppt.treatmentType}
                 onChange={(val) => setNewAppt({ ...newAppt, treatmentType: val })}
                 loading={dialogLoadingSuggestions}
-                placeholder="İşlem türünü yazın..."
-                required
+                placeholder="Görüşme konusu veya işlem..."
                 filterLocally={false}
               />
             </div>
@@ -1411,9 +1416,9 @@ export default function AppointmentsPage() {
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-500">İşlem</span>
+                      <span className="text-sm text-gray-500">Konu</span>
                       <Badge className="bg-gray-100 text-gray-700">
-                        {getTreatmentLabel(selectedAppointment.treatmentType)}
+                        {selectedAppointment.treatmentType || "Belirtilmemiş"}
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between">
