@@ -196,7 +196,13 @@ export default function PatientSettingsPage() {
     }
   }, [columns]);
 
-  const orderedFields = fieldOrder.map(k => allFieldMap.get(k)).filter(Boolean) as FieldConfig[];
+  const orderedFields = fieldOrder
+    .map(k => allFieldMap.get(k))
+    .filter(Boolean)
+    .filter(f => !(f!.isDefault && (vis[f!.key] as any)?.deleted)) as FieldConfig[];
+
+  // Deleted default fields — show in "quick add" section
+  const deletedDefaults = defaultFields.filter(f => f.key !== "name" && (vis[f.key] as any)?.deleted);
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -228,9 +234,10 @@ export default function PatientSettingsPage() {
 
   function deleteField(field: FieldConfig) {
     if (field.isDefault) {
-      const next = { ...vis, [field.key]: { list: false, detail: false, order: vis[field.key]?.order } };
-      setVis(next);
-      saveVis(next);
+      // Varsayılan alan: "deleted" olarak işaretle — listeden çıkar, hızlı ekle'ye döner
+      const next = { ...vis, [field.key]: { ...vis[field.key], list: false, detail: false, deleted: true } };
+      setVis(next as any);
+      saveVis(next as any);
     } else {
       if (!confirm("Bu alanı silmek istediğinize emin misiniz?")) return;
       fetch("/api/clinic/custom-columns", {
@@ -239,6 +246,12 @@ export default function PatientSettingsPage() {
         body: JSON.stringify({ columnKey: field.key }),
       }).then(() => fetchColumns());
     }
+  }
+
+  function restoreDefaultField(key: string) {
+    const next = { ...vis, [key]: { list: true, detail: true, deleted: false, order: vis[key]?.order } };
+    setVis(next as any);
+    saveVis(next as any);
   }
 
   async function renameField(key: string, newName: string) {
@@ -267,7 +280,8 @@ export default function PatientSettingsPage() {
   // Preview: visible list columns
   const previewListCols = orderedFields.filter(f => {
     if (f.key === "name") return true;
-    const v = vis[f.key];
+    const v = vis[f.key] as any;
+    if (v?.deleted) return false;
     return v?.list !== false;
   });
 
@@ -360,6 +374,14 @@ export default function PatientSettingsPage() {
             <div>
               <p className="text-[11px] font-semibold uppercase text-gray-400 mb-2">Hızlı Ekle</p>
               <div className="flex flex-wrap gap-2">
+                {/* Silinen varsayılan alanlar — geri eklenebilir */}
+                {deletedDefaults.map((f) => (
+                  <button key={f.key} onClick={() => restoreDefaultField(f.key)}
+                    className="rounded-lg border border-[#E0E7FF] bg-[#EEF2FF]/50 px-3 py-1.5 text-xs font-medium text-[#4F46E5] hover:bg-[#EEF2FF] transition-colors">
+                    <Plus className="inline h-3 w-3 mr-1" />{f.name}
+                  </button>
+                ))}
+                {/* Özel alan presetleri */}
                 {PRESET_FIELDS.filter(p => !columns.some(c => c.columnName === p.name)).map((preset) => (
                   <button key={preset.name} onClick={() => addColumn(preset.name, preset.type)} disabled={saving}
                     className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-[#EEF2FF] hover:text-[#4F46E5] hover:border-[#E0E7FF] transition-colors disabled:opacity-50">
