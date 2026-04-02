@@ -46,6 +46,17 @@ interface Patient {
   notes: string | null;
   createdAt: string;
   treatments: Treatment[];
+  debts?: Array<{
+    id: string;
+    direction: string;
+    description: string | null;
+    totalAmount: number;
+    paidAmount: number;
+    status: string;
+    dueDate: string | null;
+    createdAt: string;
+    payments: Array<{ amount: number; paidAt: string }>;
+  }>;
 }
 
 interface PatientPhoto {
@@ -926,6 +937,52 @@ export default function PatientDetailPage() {
           </div>
         )}
       </motion.div>
+
+      {/* Cari Hesap / Sipariş Geçmişi */}
+      {patient.debts && patient.debts.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.15 }}
+          className="overflow-hidden rounded-xl border border-gray-100 bg-white"
+        >
+          <div className="border-b border-gray-100 px-6 py-4">
+            <h2 className="text-sm font-semibold text-gray-900">Cari Hesap / Sipariş Geçmişi</h2>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {patient.debts.map((debt: any) => {
+              const remaining = debt.totalAmount - debt.paidAmount;
+              const isPaid = debt.status === "PAID";
+              return (
+                <div key={debt.id} className="flex items-center justify-between px-6 py-3">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <span className={`rounded-md px-2 py-0.5 text-[10px] font-semibold ${
+                        debt.direction === "RECEIVABLE" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"
+                      }`}>
+                        {debt.direction === "RECEIVABLE" ? "Alacak" : "Borç"}
+                      </span>
+                      <span className="text-sm font-medium text-gray-900">{debt.description || "—"}</span>
+                    </div>
+                    <p className="text-xs text-gray-400">
+                      {formatDate(debt.createdAt)}
+                      {debt.dueDate && ` · Vade: ${formatDate(debt.dueDate)}`}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-gray-800">{formatCurrency(debt.totalAmount)}</p>
+                    {isPaid ? (
+                      <p className="text-[11px] text-emerald-600 font-medium">Ödendi</p>
+                    ) : remaining > 0 ? (
+                      <p className="text-[11px] text-orange-600 font-medium">Kalan: {formatCurrency(remaining)}</p>
+                    ) : null}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }

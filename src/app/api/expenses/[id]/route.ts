@@ -176,6 +176,17 @@ export async function DELETE(
         await tx.stockMovement.deleteMany({ where: { clinicId, reference: ref } });
       }
 
+      // Delete linked cari hesap records
+      const descFirstLine = existing.description?.split("\n")[0]?.trim();
+      if (descFirstLine) {
+        await tx.debt.deleteMany({
+          where: { clinicId, OR: [
+            { description: descFirstLine },
+            { description: { contains: descFirstLine } },
+          ]},
+        }).catch(() => {});
+      }
+
       // Delete the expense
       await tx.expense.delete({ where: { id: params.id } });
     });
