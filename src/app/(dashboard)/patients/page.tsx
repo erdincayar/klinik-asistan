@@ -109,6 +109,16 @@ export default function PatientsPage() {
   const [columnEditMode, setColumnEditMode] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
+  // Field visibility from settings
+  const [fieldVisibility, setFieldVisibility] = useState<Record<string, { list: boolean; detail: boolean }>>({});
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("poby-field-visibility");
+      if (saved) setFieldVisibility(JSON.parse(saved));
+    } catch {}
+  }, []);
+  const isFieldVisible = (key: string) => fieldVisibility[key]?.list !== false;
+
   // Edit modal
   const [editPatient, setEditPatient] = useState<Patient | null>(null);
   const [editForm, setEditForm] = useState({ name: "", phone: "", email: "" });
@@ -679,11 +689,11 @@ export default function PatientsPage() {
                       <TableRow>
                         <TableHead className="w-12 text-center">#</TableHead>
                         <TableHead>Müşteri</TableHead>
-                        <TableHead>Telefon</TableHead>
-                        <TableHead>Email</TableHead>
+                        {isFieldVisible("phone") && <TableHead>Telefon</TableHead>}
+                        {isFieldVisible("email") && <TableHead>Email</TableHead>}
                         <TableHead>İşlem Sayısı</TableHead>
                         <TableHead>Kayıt Tarihi</TableHead>
-                        {customColumns.map((col) => (
+                        {customColumns.filter(col => isFieldVisible(col.columnKey)).map((col) => (
                           <TableHead key={col.columnKey}>
                             {col.columnName}
                           </TableHead>
@@ -752,6 +762,7 @@ export default function PatientsPage() {
                               })()}
                             </div>
                           </TableCell>
+                          {isFieldVisible("phone") && (
                           <TableCell>
                             {editingCell?.id === patient.id && editingCell.field === "phone" ? (
                               <Input
@@ -774,6 +785,8 @@ export default function PatientsPage() {
                               </span>
                             )}
                           </TableCell>
+                          )}
+                          {isFieldVisible("email") && (
                           <TableCell>
                             {editingCell?.id === patient.id && editingCell.field === "email" ? (
                               <Input
@@ -796,9 +809,10 @@ export default function PatientsPage() {
                               </span>
                             )}
                           </TableCell>
+                          )}
                           <TableCell>{patient._count?.treatments ?? 0}</TableCell>
                           <TableCell>{formatDate(patient.createdAt)}</TableCell>
-                          {customColumns.map((col) => {
+                          {customColumns.filter(col => isFieldVisible(col.columnKey)).map((col) => {
                             const cv = patient.customValues?.find((v) => v.columnKey === col.columnKey);
                             const cellKey = `custom_${col.columnKey}`;
                             return (
