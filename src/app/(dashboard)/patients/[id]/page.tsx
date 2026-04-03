@@ -425,15 +425,16 @@ export default function PatientDetailPage() {
             </button>
             <Link
               href={`/finance/new-income?patientId=${patient.id}`}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-[#1E1E2D] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#2A2A3C]"
+              className="inline-flex items-center gap-1 rounded-lg bg-[#1E1E2D] px-2 py-1.5 sm:px-3 sm:py-2 text-[10px] sm:text-xs font-semibold text-white transition-colors hover:bg-[#2A2A3C]"
             >
-              <Plus className="h-3.5 w-3.5" />
-              Yeni İşlem
+              <Plus className="h-3 w-3" />
+              <span className="hidden sm:inline">Yeni İşlem</span>
+              <span className="sm:hidden">İşlem</span>
             </Link>
           </div>
         </div>
 
-        <div className="p-6">
+        <div className="p-3 sm:p-6">
           {(() => {
             // Inline editable field helper
             const InlineField = ({ label, field, value, icon: Icon }: { label: string; field: string; value: string; icon?: any }) => (
@@ -664,7 +665,7 @@ export default function PatientDetailPage() {
           <BellRing className="h-4 w-4 text-orange-500" />
           <h2 className="text-sm font-semibold text-gray-900">Alarmlar</h2>
         </div>
-        <div className="p-6">
+        <div className="p-3 sm:p-6">
           {isAlarmsModuleActive ? (
             <div className="flex items-center justify-between">
               <p className="text-sm text-gray-600">
@@ -703,12 +704,12 @@ export default function PatientDetailPage() {
       </motion.div>
 
       {/* Photos Section */}
+      {(fieldVisibility as any).photos?.deleted !== true && (fieldVisibility as any).photos?.detail !== false && (
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.05 }}
         className="overflow-hidden rounded-xl border border-gray-100 bg-white"
-        style={{ display: fieldVisibility.photos?.detail === false ? "none" : undefined }}
       >
         <div className="flex items-center justify-between border-b border-gray-100 px-3 sm:px-6 py-2.5 sm:py-4 gap-2">
           <div className="flex items-center gap-2">
@@ -915,6 +916,7 @@ export default function PatientDetailPage() {
           )}
         </div>
       </motion.div>
+      )}
 
       {/* Photo Lightbox */}
       <AnimatePresence>

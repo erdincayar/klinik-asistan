@@ -1055,18 +1055,19 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         )}
 
         {/* Main content */}
-        <main className="flex-1 overflow-y-auto px-3 py-3 sm:px-6 sm:py-4">
+        <main className="flex-1 flex flex-col overflow-y-auto px-3 py-3 sm:px-6 sm:py-4">
           <motion.div
             key={pathname}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, ease: "easeOut" as const }}
+            className="flex-1"
           >
             {children}
           </motion.div>
-          {/* Footer logo */}
-          <div className="flex items-center justify-center py-8 mt-8 border-t border-gray-100">
-            <span className="text-xs text-gray-300 font-medium">poby.ai</span>
+          {/* Footer logo — always at bottom */}
+          <div className="flex items-center justify-center py-6 mt-auto pt-8 border-t border-gray-100">
+            <span className="text-[11px] text-gray-300 font-medium tracking-wider">poby.ai</span>
           </div>
         </main>
       </div>
