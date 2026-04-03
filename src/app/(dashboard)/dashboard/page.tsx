@@ -819,14 +819,14 @@ export default function DashboardPage() {
                 initial="hidden"
                 animate="visible"
                 custom={i}
-                className="group cursor-pointer rounded-xl border border-gray-100 bg-white p-3 sm:p-6 transition-all hover:shadow-md active:scale-[0.98]"
+                className="group cursor-pointer rounded-xl border border-gray-100 bg-white p-3 sm:p-5 transition-all hover:shadow-md active:scale-[0.98] h-full"
               >
-                <div className="flex items-start justify-between">
-                  <div className="min-w-0">
-                    <p className="text-[11px] sm:text-[13px] font-medium text-gray-500 truncate">
+                <div className="flex items-start justify-between h-full">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] sm:text-xs font-medium text-gray-500 truncate">
                       {stat.title}
                     </p>
-                    <p className="mt-1 sm:mt-2 text-base sm:text-2xl font-bold tracking-tight text-gray-900">
+                    <p className="mt-1 text-lg sm:text-xl font-bold tracking-tight text-gray-900">
                       {stat.value}
                     </p>
                     {stat.change && (
