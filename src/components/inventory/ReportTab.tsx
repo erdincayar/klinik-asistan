@@ -57,28 +57,28 @@ export default function ReportTab() {
     <div className="space-y-6">
       {/* Financial summary cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-[#E0E7FF] bg-gradient-to-br from-[#EEF2FF] to-white p-5">
+        <div className="rounded-xl border border-[#E0E7FF] bg-gradient-to-br from-[#EEF2FF] to-white p-4">
           <div className="flex items-center gap-2 mb-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#E0E7FF] text-lg">📦</span>
+            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#E0E7FF] text-sm">📦</span>
             <p className="text-sm font-medium text-[#4F46E5]">Stok Maliyeti</p>
           </div>
-          <p className="text-2xl font-bold text-[#5C1B0F]">{formatCurrency(summary.totalStockValue.purchase)}</p>
+          <p className="text-lg font-bold text-[#5C1B0F]">{formatCurrency(summary.totalStockValue.purchase)}</p>
           <p className="mt-1 text-xs text-[#6366F1]">{summary.trackedCount} ürünün maliyet toplamı</p>
         </div>
-        <div className="rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-5">
+        <div className="rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-4">
           <div className="flex items-center gap-2 mb-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-lg">💰</span>
+            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-100 text-sm">💰</span>
             <p className="text-sm font-medium text-emerald-700">Tahmini Satış Geliri</p>
           </div>
-          <p className="text-2xl font-bold text-emerald-900">{formatCurrency(summary.totalStockValue.sale)}</p>
+          <p className="text-lg font-bold text-emerald-900">{formatCurrency(summary.totalStockValue.sale)}</p>
           <p className="mt-1 text-xs text-emerald-500">Tüm stoklar satılırsa</p>
         </div>
         <div className={`rounded-xl border p-5 ${estimatedProfit >= 0 ? "border-purple-100 bg-gradient-to-br from-purple-50 to-white" : "border-red-100 bg-gradient-to-br from-red-50 to-white"}`}>
           <div className="flex items-center gap-2 mb-2">
-            <span className={`flex h-8 w-8 items-center justify-center rounded-lg text-lg ${estimatedProfit >= 0 ? "bg-purple-100" : "bg-red-100"}`}>📈</span>
+            <span className={`flex h-6 w-6 items-center justify-center rounded-lg text-sm ${estimatedProfit >= 0 ? "bg-purple-100" : "bg-red-100"}`}>📈</span>
             <p className={`text-sm font-medium ${estimatedProfit >= 0 ? "text-purple-700" : "text-red-700"}`}>Tahmini Kar</p>
           </div>
-          <p className={`text-2xl font-bold ${estimatedProfit >= 0 ? "text-purple-900" : "text-red-900"}`}>{formatCurrency(estimatedProfit)}</p>
+          <p className={`text-lg font-bold ${estimatedProfit >= 0 ? "text-purple-900" : "text-red-900"}`}>{formatCurrency(estimatedProfit)}</p>
           <p className={`mt-1 text-xs ${estimatedProfit >= 0 ? "text-purple-500" : "text-red-500"}`}>Satış Geliri - Maliyet</p>
         </div>
       </div>
@@ -86,27 +86,27 @@ export default function ReportTab() {
       {/* Count cards */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <p className="text-sm text-gray-500">Toplam Ürün</p>
-            <p className="text-2xl font-bold">{summary.totalProducts}</p>
+            <p className="text-lg font-bold">{summary.totalProducts}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <p className="text-sm text-gray-500">Stok Takip Edilen</p>
-            <p className="text-2xl font-bold text-[#6366F1]">{summary.trackedCount}</p>
+            <p className="text-lg font-bold text-[#6366F1]">{summary.trackedCount}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <p className="text-sm text-gray-500">Stok Takip Edilmeyen</p>
-            <p className="text-2xl font-bold text-gray-400">{summary.untrackedCount}</p>
+            <p className="text-lg font-bold text-gray-400">{summary.untrackedCount}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <p className="text-sm text-gray-500">Düşük Stok</p>
-            <p className={`text-2xl font-bold ${summary.lowStockCount > 0 ? "text-red-600" : "text-green-600"}`}>
+            <p className={`text-lg font-bold ${summary.lowStockCount > 0 ? "text-red-600" : "text-green-600"}`}>
               {summary.lowStockCount}
             </p>
           </CardContent>
@@ -116,7 +116,7 @@ export default function ReportTab() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Kategori Dağılımı</CardTitle>
+            <CardTitle className="text-sm">Kategori Dağılımı</CardTitle>
             <CardDescription>Ürün kategorilerine göre dağılım</CardDescription>
           </CardHeader>
           <CardContent>
@@ -138,7 +138,7 @@ export default function ReportTab() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Son 30 Gün Hareketler</CardTitle>
+            <CardTitle className="text-sm">Son 30 Gün Hareketler</CardTitle>
             <CardDescription>Giriş ve çıkış hareketleri</CardDescription>
           </CardHeader>
           <CardContent>
@@ -163,7 +163,7 @@ export default function ReportTab() {
 
       <Card>
         <CardHeader>
-          <CardTitle>En Çok Tüketilen Ürünler</CardTitle>
+          <CardTitle className="text-sm">En Çok Tüketilen Ürünler</CardTitle>
           <CardDescription>Son 30 günde en çok çıkış yapılan ürünler</CardDescription>
         </CardHeader>
         <CardContent>

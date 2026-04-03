@@ -2123,15 +2123,15 @@ function ImportDialog({
               </div>
               <div className="grid grid-cols-3 gap-3 text-sm">
                 <div className="rounded-lg bg-white p-3 text-center">
-                  <p className="text-2xl font-bold text-green-600">{result.added}</p>
+                  <p className="text-lg font-bold text-green-600">{result.added}</p>
                   <p className="text-xs text-gray-500">Yeni eklendi</p>
                 </div>
                 <div className="rounded-lg bg-white p-3 text-center">
-                  <p className="text-2xl font-bold text-[#6366F1]">{result.updated}</p>
+                  <p className="text-lg font-bold text-[#6366F1]">{result.updated}</p>
                   <p className="text-xs text-gray-500">Güncellendi</p>
                 </div>
                 <div className="rounded-lg bg-white p-3 text-center">
-                  <p className={`text-2xl font-bold ${result.errors > 0 ? "text-red-600" : "text-gray-400"}`}>{result.errors}</p>
+                  <p className={`text-lg font-bold ${result.errors > 0 ? "text-red-600" : "text-gray-400"}`}>{result.errors}</p>
                   <p className="text-xs text-gray-500">Hatalı</p>
                   {result.errors > 0 && result.errorDetails && result.errorDetails.length > 0 && (
                     <button onClick={() => setShowErrorDetails(!showErrorDetails)} className="mt-1 text-xs text-red-600 hover:text-red-800 underline">
