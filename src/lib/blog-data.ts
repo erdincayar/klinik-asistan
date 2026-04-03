@@ -124,10 +124,21 @@ AI kullanmaya başlamak için teknik bilgiye ihtiyacınız yok. Poby.ai'ın sezg
   },
 ];
 
+import { extraBlogPosts } from "./blog-posts-extra";
+
+// Merge all posts
+const allPosts = [...blogPosts, ...extraBlogPosts].sort(
+  (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+);
+
 export function getBlogPost(slug: string): BlogPost | undefined {
-  return blogPosts.find((post) => post.slug === slug);
+  return allPosts.find((post) => post.slug === slug);
 }
 
 export function getAllSlugs(): string[] {
-  return blogPosts.map((post) => post.slug);
+  return allPosts.map((post) => post.slug);
+}
+
+export function getAllPosts(): BlogPost[] {
+  return allPosts;
 }

@@ -39,6 +39,7 @@ const navLinks = [
   { href: "#features", label: "Özellikler" },
   { href: "#modules", label: "Modüller" },
   { href: "#reviews", label: "Yorumlar" },
+  { href: "/blog", label: "Blog" },
 ];
 
 const footerLinks = {
