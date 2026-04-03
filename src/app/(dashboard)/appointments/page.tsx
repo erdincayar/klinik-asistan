@@ -1640,10 +1640,10 @@ export default function AppointmentsPage() {
                             body: JSON.stringify({
                               type: "REMINDER",
                               name: text.trim(),
-                              description: `Randevu: ${selectedAppointment.patientName} - ${formatDateDisplay(selectedAppointment.date)}`,
-                              patientId: selectedAppointment.patientId,
+                              customerId: selectedAppointment.patientId,
                               conditions: {
                                 appointmentId: selectedAppointment.id,
+                                note: `Randevu: ${selectedAppointment.patientName} - ${formatDateDisplay(selectedAppointment.date)}`,
                                 ...(date ? { dueDate: date } : {}),
                               },
                             }),
@@ -1690,11 +1690,10 @@ export default function AppointmentsPage() {
                     </>
                   ) : (
                     <button
-                      disabled={updating}
-                      onClick={() => updateAppointmentStatus(selectedAppointment.id, "SCHEDULED")}
-                      className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#4F46E5] px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#4338CA] disabled:opacity-50"
+                      onClick={() => setDetailTab("next-appointment")}
+                      className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#4F46E5] px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#4338CA]"
                     >
-                      <RefreshCw className="h-4 w-4" /> Tekrar Planla
+                      <Calendar className="h-4 w-4" /> Yeni Randevu Oluştur
                     </button>
                   )}
                 </div>

@@ -4,7 +4,7 @@ import { z } from "zod";
 
 const createSchema = z.object({
   name: z.string().min(1),
-  type: z.enum(["STOCK", "CUSTOMER_VISIT", "CUSTOMER_BIRTHDAY", "FINANCE"]),
+  type: z.enum(["STOCK", "CUSTOMER_VISIT", "CUSTOMER_BIRTHDAY", "FINANCE", "REMINDER"]),
   conditions: z.record(z.string(), z.any()),
   isActive: z.boolean().optional(),
   isGroup: z.boolean().optional(),
