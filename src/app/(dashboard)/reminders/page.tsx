@@ -102,7 +102,8 @@ const CATEGORY_LABELS: Record<string, string> = {
 // --- Component ---
 
 export default function RemindersPage() {
-  const [activeTab, setActiveTab] = useState("pending");
+  const [activeTab, setActiveTab] = useState("appointment-reminders");
+  const [appointmentAlarms, setAppointmentAlarms] = useState<any[]>([]);
 
   // Stats
   const [stats, setStats] = useState<Stats>({ pendingCount: 0, sentToday: 0, sentMonth: 0 });
@@ -210,6 +211,17 @@ export default function RemindersPage() {
   }, [fetchStats, fetchPending]);
 
   // Fetch tab-specific data on tab change
+  // Fetch appointment reminders (REMINDER type alarms)
+  useEffect(() => {
+    fetch("/api/alarms")
+      .then(r => r.ok ? r.json() : [])
+      .then(data => {
+        const alarms = Array.isArray(data) ? data : [];
+        setAppointmentAlarms(alarms.filter((a: any) => a.type === "REMINDER"));
+      })
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     if (activeTab === "history") fetchHistory();
     if (activeTab === "rules") fetchRules();
@@ -434,7 +446,7 @@ export default function RemindersPage() {
             <Bell className="h-6 w-6 text-orange-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Hatirlatmalar</h1>
+            <h1 className="text-lg font-bold">Hatırlatmalar</h1>
             <p className="text-sm text-muted-foreground">
               Müşteri hatırlatmalarını yönetin ve gönderin
             </p>
@@ -460,7 +472,7 @@ export default function RemindersPage() {
             <Clock className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-lg font-bold">
               {statsLoading ? "..." : stats.pendingCount}
             </div>
             <p className="text-xs text-muted-foreground">hatirlatma bekliyor</p>
@@ -475,7 +487,7 @@ export default function RemindersPage() {
             <Send className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-lg font-bold">
               {statsLoading ? "..." : stats.sentToday}
             </div>
             <p className="text-xs text-muted-foreground">bugun gonderildi</p>
@@ -490,7 +502,7 @@ export default function RemindersPage() {
             <Users className="h-4 w-4 text-[#6366F1]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-lg font-bold">
               {statsLoading ? "..." : stats.sentMonth}
             </div>
             <p className="text-xs text-muted-foreground">bu ay gonderildi</p>
@@ -500,18 +512,63 @@ export default function RemindersPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="pending">Bekleyenler</TabsTrigger>
-          <TabsTrigger value="history">Gecmis</TabsTrigger>
-          <TabsTrigger value="rules">Kurallar</TabsTrigger>
-          <TabsTrigger value="preferences">Tercihler</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-1 px-1">
+          <TabsList className="w-max sm:w-full sm:grid sm:grid-cols-5">
+            <TabsTrigger value="appointment-reminders" className="text-xs sm:text-sm">Hatırlatmalar</TabsTrigger>
+            <TabsTrigger value="pending" className="text-xs sm:text-sm">Bekleyenler</TabsTrigger>
+            <TabsTrigger value="history" className="text-xs sm:text-sm">Geçmiş</TabsTrigger>
+            <TabsTrigger value="rules" className="text-xs sm:text-sm">Kurallar</TabsTrigger>
+            <TabsTrigger value="preferences" className="text-xs sm:text-sm">Tercihler</TabsTrigger>
+          </TabsList>
+        </div>
+
+        {/* ==================== RANDEVU HATIRLATMALARI TAB ==================== */}
+        <TabsContent value="appointment-reminders">
+          <Card>
+            <CardContent className="p-4">
+              {appointmentAlarms.length === 0 ? (
+                <div className="flex min-h-[120px] items-center justify-center">
+                  <div className="text-center">
+                    <Bell className="mx-auto mb-2 h-8 w-8 text-gray-300" />
+                    <p className="text-sm text-gray-500">Henüz randevu hatırlatması yok</p>
+                    <p className="text-xs text-gray-400 mt-1">Randevu detayından hatırlatma ekleyebilirsiniz</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-50">
+                  {appointmentAlarms.map((alarm: any) => (
+                    <div key={alarm.id} className="flex items-center justify-between py-2.5">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-gray-900">{alarm.name}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {alarm.customer?.name && <span className="text-xs text-[#4F46E5]">{alarm.customer.name}</span>}
+                          {alarm.conditions?.note && <span className="text-xs text-gray-400">{alarm.conditions.note}</span>}
+                          {alarm.conditions?.dueDate && <span className="text-xs text-orange-600">Tarih: {new Date(alarm.conditions.dueDate).toLocaleDateString("tr-TR")}</span>}
+                        </div>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          await fetch(`/api/alarms/${alarm.id}`, { method: "DELETE" }).catch(() => {});
+                          setAppointmentAlarms(prev => prev.filter(a => a.id !== alarm.id));
+                        }}
+                        className="shrink-0 rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                        title="Tamamlandı / Sil"
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* ==================== BEKLEYENLER TAB ==================== */}
         <TabsContent value="pending">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">Bekleyen Hatirlatmalar</CardTitle>
+              <CardTitle className="text-sm">Bekleyen Hatirlatmalar</CardTitle>
               {pendingList.length > 0 && (
                 <Button
                   size="sm"
@@ -583,7 +640,7 @@ export default function RemindersPage() {
         <TabsContent value="history">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Gonderim Gecmisi</CardTitle>
+              <CardTitle className="text-sm">Gonderim Gecmisi</CardTitle>
             </CardHeader>
             <CardContent>
               {logsLoading ? (
@@ -631,7 +688,7 @@ export default function RemindersPage() {
         <TabsContent value="rules">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">Hatirlatma Kurallari</CardTitle>
+              <CardTitle className="text-sm">Hatirlatma Kurallari</CardTitle>
               <Button
                 size="sm"
                 onClick={() => setShowNewRuleForm((prev) => !prev)}
@@ -797,7 +854,7 @@ export default function RemindersPage() {
         <TabsContent value="preferences">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Müşteri Tercihleri</CardTitle>
+              <CardTitle className="text-sm">Müşteri Tercihleri</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Patient Search */}
