@@ -935,7 +935,7 @@ export default function EmployeesPage() {
                   type="button"
                   onClick={() => !isUsed && setForm({ ...form, color: c })}
                   disabled={isUsed}
-                  className={`h-8 w-8 rounded-full border-2 transition-all ${
+                  className={`h-5 w-5 rounded-full border-2 transition-all ${
                     isSelected
                       ? "border-gray-900 scale-110 ring-2 ring-offset-1 ring-gray-400"
                       : isUsed
