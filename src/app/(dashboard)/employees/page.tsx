@@ -123,6 +123,7 @@ interface Employee {
   permissions: ModulePermissions | null;
   roleTemplate: string | null;
   isActive: boolean;
+  showInCalendar: boolean;
   salaryGross: number | null;
   salaryNet: number | null;
   salarySSI: number | null;
@@ -166,6 +167,7 @@ interface EmployeeForm {
   manualSalaryEntry: boolean;
   salaryGross: string;
   salaryNet: string;
+  showInCalendar: boolean;
 }
 
 interface InlineFieldRow {
@@ -229,6 +231,7 @@ const emptyForm: EmployeeForm = {
   manualSalaryEntry: false,
   salaryGross: "",
   salaryNet: "",
+  showInCalendar: true,
 };
 
 function formatTL(amount: number): string {
@@ -461,6 +464,7 @@ export default function EmployeesPage() {
             commissionPct: parseFloat(t.commissionPct) || 0,
           })) : [],
           color: form.color,
+          showInCalendar: form.showInCalendar,
           permissions: form.permissions,
           ...salary,
           salaryPayDay: form.salaryPayDay || null,
@@ -523,6 +527,7 @@ export default function EmployeesPage() {
             commissionPct: parseFloat(t.commissionPct) || 0,
           })) : [],
           color: form.color,
+          showInCalendar: form.showInCalendar,
           permissions: form.permissions,
           ...salary,
           salaryPayDay: form.salaryPayDay || null,
@@ -631,6 +636,7 @@ export default function EmployeesPage() {
       manualSalaryEntry: emp.manualSalaryEntry || false,
       salaryGross: emp.salaryGross ? String(emp.salaryGross / 100) : "",
       salaryNet: emp.salaryNet ? String(emp.salaryNet / 100) : "",
+      showInCalendar: emp.showInCalendar !== false,
     });
   }
 
@@ -942,6 +948,12 @@ export default function EmployeesPage() {
               );
             })}
           </div>
+        </div>
+
+        {/* Calendar visibility */}
+        <div className="flex items-center gap-2">
+          <input type="checkbox" id="showInCalendar" checked={form.showInCalendar} onChange={(e) => setForm({ ...form, showInCalendar: e.target.checked })} className="h-4 w-4 rounded border-gray-300 text-[#6366F1]" />
+          <Label htmlFor="showInCalendar" className="text-sm font-normal cursor-pointer">Randevu takviminde göster</Label>
         </div>
 
         {/* Salary Section */}

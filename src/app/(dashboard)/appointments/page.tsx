@@ -287,7 +287,8 @@ export default function AppointmentsPage() {
     fetch("/api/employees")
       .then((res) => (res.ok ? res.json() : { employees: [] }))
       .then((data) => {
-        setEmployees(data.employees || data || []);
+        const all = data.employees || data || [];
+        setEmployees(all.filter((e: any) => e.showInCalendar !== false));
       })
       .catch(() => {});
     fetch("/api/patients")
@@ -400,7 +401,8 @@ export default function AppointmentsPage() {
       const res = await fetch("/api/employees");
       if (res.ok) {
         const data = await res.json();
-        setEmployees(data.employees || data || []);
+        const all = data.employees || data || [];
+        setEmployees(all.filter((e: any) => e.showInCalendar !== false));
       }
     } catch { /* silently handle */ }
   }, []);
@@ -819,6 +821,9 @@ export default function AppointmentsPage() {
                         </div>
                       </th>
                     ))}
+                    <th className="px-1 py-2 text-center">
+                      <span className="text-[10px] sm:text-xs font-medium text-gray-400">Genel</span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -855,6 +860,25 @@ export default function AppointmentsPage() {
                             </td>
                           );
                         })}
+                        {/* Genel (unassigned) column */}
+                        {(() => {
+                          const unassigned = appointments.filter(a => a.startTime === time && !a.employeeId);
+                          return (
+                            <td className={cn("px-0.5 py-0.5 align-top", unassigned.length === 0 && "cursor-pointer hover:bg-[#EEF2FF]/20")}
+                              onClick={() => { if (unassigned.length === 0) { setNewAppt((prev) => ({ ...prev, date: formatDateISO(selectedDate), startTime: time, employeeId: "" })); setCreateDialogOpen(true); } }}
+                            >
+                              {unassigned.map((appt) => (
+                                <button key={appt.id}
+                                  onClick={(e) => { e.stopPropagation(); setSelectedAppointment(appt); setTransactionItems([{ name: appt.treatmentType || "", amount: "", paymentMethod: "Nakit", notes: "" }]); setAppointmentTreatments([]); fetchAppointmentTreatments(appt.id); setDialogOpen(true); }}
+                                  className="w-full rounded-md px-1.5 py-1 text-left text-[10px] sm:text-xs bg-gray-50 border-l-2 border-gray-300 hover:shadow-sm"
+                                >
+                                  <div className="font-semibold text-gray-900 truncate">{appt.patientName}</div>
+                                  {appt.treatmentType && <div className="text-gray-500 truncate">{appt.treatmentType}</div>}
+                                </button>
+                              ))}
+                            </td>
+                          );
+                        })()}
                       </tr>
                     );
                   })}
