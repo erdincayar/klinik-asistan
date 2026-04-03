@@ -151,6 +151,17 @@ export async function DELETE(
       return Response.json({ error: "Randevu bulunamadı" }, { status: 404 });
     }
 
+    // Cascade cleanup
+    const safeDelete = async (fn: () => Promise<any>) => { try { await fn(); } catch {} };
+    await safeDelete(() => prisma.transactionCustomValue.deleteMany({ where: { treatment: { appointmentId: params.id } } }));
+    await safeDelete(() => prisma.treatment.deleteMany({ where: { appointmentId: params.id } }));
+    // Delete related REMINDER alarms
+    const alarms = await prisma.alarm.findMany({ where: { clinicId, conditions: { path: ["appointmentId"], equals: params.id } } }).catch(() => []);
+    for (const alarm of alarms) {
+      await safeDelete(() => prisma.alarmLog.deleteMany({ where: { alarmId: alarm.id } }));
+      await safeDelete(() => prisma.alarm.delete({ where: { id: alarm.id } }));
+    }
+
     await prisma.appointment.delete({
       where: { id: params.id },
     });

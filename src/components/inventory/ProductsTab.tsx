@@ -405,16 +405,10 @@ export default function ProductsTab({ onDataChange }: { onDataChange?: () => voi
             {showAddMenu && (
               <div className="absolute right-0 top-full z-50 mt-1 w-48 rounded-md border bg-white py-1 shadow-lg">
                 <button
-                  onClick={() => { setShowNewProduct(true); setShowAddMenu(false); }}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-gray-100"
-                >
-                  <Pencil className="h-4 w-4" /> Tekli Ekle
-                </button>
-                <button
                   onClick={() => { setShowBulkAdd(true); setShowAddMenu(false); }}
                   className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-gray-100"
                 >
-                  <FileSpreadsheet className="h-4 w-4" /> Toplu Ekle
+                  <Pencil className="h-4 w-4" /> Manuel Ekle
                 </button>
                 <button
                   onClick={() => { setShowImport(true); setShowAddMenu(false); }}
@@ -1275,7 +1269,7 @@ function BulkAddDialog({
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); else onOpenChange(v); }}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Toplu Ürün Ekle</DialogTitle>
+          <DialogTitle>Ürün Ekle</DialogTitle>
           <DialogDescription>Ürünleri alt alta girin, tek seferde kaydedin</DialogDescription>
         </DialogHeader>
 

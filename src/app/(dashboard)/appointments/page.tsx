@@ -836,27 +836,39 @@ export default function AppointmentsPage() {
                         {employees.map((emp) => {
                           const empAppts = appointments.filter(a => a.startTime === time && a.employeeId === emp.id);
                           return (
-                            <td key={emp.id} className={cn("px-0.5 py-0.5 align-top border-r border-gray-50 last:border-0", empAppts.length === 0 && "cursor-pointer hover:bg-[#EEF2FF]/20")}
-                              onClick={() => {
-                                if (empAppts.length === 0) {
-                                  setNewAppt((prev) => ({ ...prev, date: formatDateISO(selectedDate), startTime: time, employeeId: emp.id }));
-                                  setCreateDialogOpen(true);
-                                }
-                              }}
-                            >
-                              {empAppts.map((appt) => {
-                                const statusInfo = getStatusInfo(appt.status);
-                                return (
-                                  <button key={appt.id}
-                                    onClick={(e) => { e.stopPropagation(); setSelectedAppointment(appt); setTransactionItems([{ name: appt.treatmentType || "", amount: "", paymentMethod: "Nakit", notes: "" }]); setAppointmentTreatments([]); fetchAppointmentTreatments(appt.id); setDialogOpen(true); }}
+                            <td key={emp.id} className="px-0.5 py-0.5 align-top border-r border-gray-50 last:border-0">
+                              {empAppts.map((appt) => (
+                                <div key={appt.id} className="relative group mb-0.5">
+                                  <button
+                                    onClick={() => { setSelectedAppointment(appt); setTransactionItems([{ name: appt.treatmentType || "", amount: "", paymentMethod: "Nakit", notes: "" }]); setAppointmentTreatments([]); fetchAppointmentTreatments(appt.id); setDialogOpen(true); }}
                                     className="w-full rounded-md px-1.5 py-1 text-left text-[10px] sm:text-xs transition-all hover:shadow-sm"
                                     style={{ backgroundColor: `${emp.color}15`, borderLeft: `2px solid ${emp.color}` }}
                                   >
                                     <div className="font-semibold text-gray-900 truncate">{appt.patientName}</div>
                                     {appt.treatmentType && <div className="text-gray-500 truncate">{appt.treatmentType}</div>}
                                   </button>
-                                );
-                              })}
+                                  <button
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      if (!confirm("Bu randevuyu silmek istediğinize emin misiniz?")) return;
+                                      await fetch(`/api/appointments/${appt.id}`, { method: "DELETE" }).catch(() => {});
+                                      if (viewMode === "daily") fetchDayAppointments(selectedDate, selectedEmployee, selectedService);
+                                      else fetchWeekAppointments(selectedDate, selectedEmployee, selectedService);
+                                    }}
+                                    className="absolute -top-1 -right-1 hidden group-hover:flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white text-[8px] hover:bg-red-600 shadow-sm"
+                                    title="Sil"
+                                  >
+                                    <X className="h-2.5 w-2.5" />
+                                  </button>
+                                </div>
+                              ))}
+                              {/* Always show + button */}
+                              <button
+                                onClick={() => { setNewAppt((prev) => ({ ...prev, date: formatDateISO(selectedDate), startTime: time, employeeId: emp.id })); setCreateDialogOpen(true); }}
+                                className="w-full rounded-md py-0.5 text-center text-[9px] text-gray-300 hover:text-[#4F46E5] hover:bg-[#EEF2FF]/30 transition-colors"
+                              >
+                                +
+                              </button>
                             </td>
                           );
                         })}
@@ -864,18 +876,37 @@ export default function AppointmentsPage() {
                         {(() => {
                           const unassigned = appointments.filter(a => a.startTime === time && !a.employeeId);
                           return (
-                            <td className={cn("px-0.5 py-0.5 align-top", unassigned.length === 0 && "cursor-pointer hover:bg-[#EEF2FF]/20")}
-                              onClick={() => { if (unassigned.length === 0) { setNewAppt((prev) => ({ ...prev, date: formatDateISO(selectedDate), startTime: time, employeeId: "" })); setCreateDialogOpen(true); } }}
-                            >
+                            <td className="px-0.5 py-0.5 align-top">
                               {unassigned.map((appt) => (
-                                <button key={appt.id}
-                                  onClick={(e) => { e.stopPropagation(); setSelectedAppointment(appt); setTransactionItems([{ name: appt.treatmentType || "", amount: "", paymentMethod: "Nakit", notes: "" }]); setAppointmentTreatments([]); fetchAppointmentTreatments(appt.id); setDialogOpen(true); }}
-                                  className="w-full rounded-md px-1.5 py-1 text-left text-[10px] sm:text-xs bg-gray-50 border-l-2 border-gray-300 hover:shadow-sm"
-                                >
-                                  <div className="font-semibold text-gray-900 truncate">{appt.patientName}</div>
-                                  {appt.treatmentType && <div className="text-gray-500 truncate">{appt.treatmentType}</div>}
-                                </button>
+                                <div key={appt.id} className="relative group mb-0.5">
+                                  <button
+                                    onClick={() => { setSelectedAppointment(appt); setTransactionItems([{ name: appt.treatmentType || "", amount: "", paymentMethod: "Nakit", notes: "" }]); setAppointmentTreatments([]); fetchAppointmentTreatments(appt.id); setDialogOpen(true); }}
+                                    className="w-full rounded-md px-1.5 py-1 text-left text-[10px] sm:text-xs bg-gray-50 border-l-2 border-gray-300 hover:shadow-sm"
+                                  >
+                                    <div className="font-semibold text-gray-900 truncate">{appt.patientName}</div>
+                                    {appt.treatmentType && <div className="text-gray-500 truncate">{appt.treatmentType}</div>}
+                                  </button>
+                                  <button
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      if (!confirm("Bu randevuyu silmek istediğinize emin misiniz?")) return;
+                                      await fetch(`/api/appointments/${appt.id}`, { method: "DELETE" }).catch(() => {});
+                                      if (viewMode === "daily") fetchDayAppointments(selectedDate, selectedEmployee, selectedService);
+                                      else fetchWeekAppointments(selectedDate, selectedEmployee, selectedService);
+                                    }}
+                                    className="absolute -top-1 -right-1 hidden group-hover:flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white text-[8px] hover:bg-red-600 shadow-sm"
+                                    title="Sil"
+                                  >
+                                    <X className="h-2.5 w-2.5" />
+                                  </button>
+                                </div>
                               ))}
+                              <button
+                                onClick={() => { setNewAppt((prev) => ({ ...prev, date: formatDateISO(selectedDate), startTime: time, employeeId: "" })); setCreateDialogOpen(true); }}
+                                className="w-full rounded-md py-0.5 text-center text-[9px] text-gray-300 hover:text-[#4F46E5] hover:bg-[#EEF2FF]/30 transition-colors"
+                              >
+                                +
+                              </button>
                             </td>
                           );
                         })()}
