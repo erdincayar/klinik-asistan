@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600", "700"] });
@@ -77,6 +78,9 @@ export const metadata: Metadata = {
     canonical: "https://poby.ai",
     languages: { "tr-TR": "https://poby.ai", "en-US": "https://poby.ai/en" },
   },
+  verification: {
+    google: "xIw_PuE5bzwB4oLaxMErij3Q9RKFmf-1aBtfPdCBlhw",
+  },
 };
 
 const organizationJsonLd = {
@@ -112,6 +116,18 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="Poby" />
       </head>
       <body className={inter.className}>
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-GRLG7XVZ6R"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-GRLG7XVZ6R');
+          `}
+        </Script>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
