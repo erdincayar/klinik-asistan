@@ -721,6 +721,13 @@ export default function EmployeesPage() {
   const totalEmployees = employees.length;
   const activeEmployees = employees.filter((e) => e.isActive).length;
   const totalMonthlyCommission = employees.reduce((sum, e) => sum + e.monthlyCommission, 0);
+  const salarySummary = employees
+    .filter((e) => e.isActive)
+    .reduce((acc, e) => {
+      acc.totalNet += (e.salaryNet || 0) / 100;
+      acc.totalGross += (e.salaryGross || 0) / 100;
+      return acc;
+    }, { totalNet: 0, totalGross: 0 });
   const totalMonthlySalary = employees
     .filter((e) => e.isActive)
     .reduce((sum, e) => {
@@ -1350,8 +1357,9 @@ export default function EmployeesPage() {
           <CardContent className="py-3 px-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground">Aylık Maaş Gideri</p>
-                <p className="text-lg font-bold">{formatTL(totalMonthlySalary)}</p>
+                <p className="text-xs text-muted-foreground">Aylık Net Maaş</p>
+                <p className="text-lg font-bold text-emerald-600">{formatTL(salarySummary.totalNet)}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Brüt: {formatTL(salarySummary.totalGross)}</p>
               </div>
               <Banknote className="h-5 w-5 text-muted-foreground/50" />
             </div>
