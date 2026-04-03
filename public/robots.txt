@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /patients/
+Disallow: /appointments/
+Disallow: /finance/
+Disallow: /inventory/
+Disallow: /employees/
+Disallow: /settings/
+Disallow: /billing/
+Disallow: /admin/
+Disallow: /onboarding/
+
+Sitemap: https://poby.ai/sitemap.xml

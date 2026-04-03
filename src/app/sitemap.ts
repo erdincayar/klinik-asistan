@@ -14,6 +14,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/kuafor`, lastModified, changeFrequency: "monthly", priority: 0.8 },
     { url: `${baseUrl}/blog`, lastModified, changeFrequency: "weekly", priority: 0.7 },
     { url: `${baseUrl}/iletisim`, lastModified, changeFrequency: "yearly", priority: 0.5 },
+    { url: `${baseUrl}/sektorler/klinik-yonetim`, lastModified, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${baseUrl}/sektorler/guzellik-merkezi`, lastModified, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${baseUrl}/sektorler/kuafor-berber`, lastModified, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${baseUrl}/sektorler/restoran-kafe`, lastModified, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${baseUrl}/sektorler/distributor-toptan`, lastModified, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${baseUrl}/sektorler/otel-konaklama`, lastModified, changeFrequency: "monthly", priority: 0.8 },
   ];
 
   const blogPages: MetadataRoute.Sitemap = blogPosts.map((post) => ({

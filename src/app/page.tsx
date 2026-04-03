@@ -42,9 +42,23 @@ const navLinks = [
 ];
 
 const footerLinks = {
-  Ürün: ["Özellikler", "Fiyatlandırma", "Entegrasyonlar"],
-  Destek: ["Yardım Merkezi", "İletişim", "SSS"],
-  Yasal: ["Kullanım Koşulları", "Gizlilik Politikası", "KVKK"],
+  Ürün: [
+    { label: "Özellikler", href: "/ozellikler" },
+    { label: "Fiyatlandırma", href: "/fiyatlandirma" },
+    { label: "Blog", href: "/blog" },
+  ],
+  Sektörler: [
+    { label: "Klinik Yönetimi", href: "/sektorler/klinik-yonetim" },
+    { label: "Güzellik Merkezi", href: "/sektorler/guzellik-merkezi" },
+    { label: "Kuaför & Berber", href: "/sektorler/kuafor-berber" },
+    { label: "Restoran & Kafe", href: "/sektorler/restoran-kafe" },
+    { label: "Distribütör", href: "/sektorler/distributor-toptan" },
+    { label: "Otel", href: "/sektorler/otel-konaklama" },
+  ],
+  Destek: [
+    { label: "İletişim", href: "/iletisim" },
+    { label: "SSS", href: "#faq" },
+  ],
 };
 
 const dashboardTabs = [
@@ -1513,10 +1527,10 @@ export default function Home() {
                   {title}
                 </h5>
                 <ul className="space-y-2.5">
-                  {links.map((link) => (
-                    <li key={link}>
-                      <Link href="#" className="text-[13px] text-[#6C7293] transition-colors hover:text-[#6366F1]">
-                        {link}
+                  {(links as Array<{ label: string; href: string }>).map((link) => (
+                    <li key={link.label}>
+                      <Link href={link.href} className="text-[13px] text-[#6C7293] transition-colors hover:text-[#6366F1]">
+                        {link.label}
                       </Link>
                     </li>
                   ))}
