@@ -797,7 +797,7 @@ export default function AppointmentsPage() {
         </div>
         {viewMode === "daily" ? (
           /* ── Daily view — employee columns ── */
-          <div ref={dailyScrollRef} className="max-h-[calc(100vh-280px)] overflow-x-auto overflow-y-auto rounded-xl border border-gray-100 bg-white">
+          <div ref={dailyScrollRef} className="overflow-x-auto rounded-xl border border-gray-100 bg-white">
             {loading ? (
               <div className="space-y-0 divide-y divide-gray-50 p-0">
                 {[...Array(6)].map((_, i) => (
@@ -1025,7 +1025,7 @@ export default function AppointmentsPage() {
           </div>
         ) : (
           /* ── Weekly view ── */
-          <div ref={weeklyScrollRef} className="overflow-y-auto sm:max-h-[calc(100vh-280px)] rounded-xl border border-gray-100 bg-white">
+          <div ref={weeklyScrollRef} className="overflow-x-auto rounded-xl border border-gray-100 bg-white">
             {loading ? (
               <div className="p-6">
                 <Skeleton className="h-[400px] w-full" />
