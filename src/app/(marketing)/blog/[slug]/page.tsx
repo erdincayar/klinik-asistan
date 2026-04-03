@@ -2,7 +2,8 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
-import { getBlogPost, getAllSlugs, blogPosts } from "@/lib/blog-data";
+import { getBlogPost, getAllSlugs, getAllPosts } from "@/lib/blog-data";
+import PobySVG from "@/components/PobySVG";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -38,10 +39,11 @@ export default async function BlogPostPage({ params }: Props) {
   const post = getBlogPost(slug);
   if (!post) notFound();
 
-  const currentIndex = blogPosts.findIndex((p) => p.slug === slug);
-  const prevPost = currentIndex > 0 ? blogPosts[currentIndex - 1] : null;
+  const allPosts = getAllPosts();
+  const currentIndex = allPosts.findIndex((p) => p.slug === slug);
+  const prevPost = currentIndex > 0 ? allPosts[currentIndex - 1] : null;
   const nextPost =
-    currentIndex < blogPosts.length - 1 ? blogPosts[currentIndex + 1] : null;
+    currentIndex < allPosts.length - 1 ? allPosts[currentIndex + 1] : null;
 
   return (
     <div className="min-h-screen bg-white">
@@ -63,8 +65,8 @@ export default async function BlogPostPage({ params }: Props) {
 
       <nav className="border-b border-gray-100 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="text-xl font-bold text-gray-900">
-            Poby<span className="text-[#6366F1]">.ai</span>
+          <Link href="/">
+            <PobySVG className="h-7 w-auto" />
           </Link>
           <Link
             href="/login"

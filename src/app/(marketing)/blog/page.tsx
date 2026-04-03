@@ -1,7 +1,8 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
-import { blogPosts } from "@/lib/blog-data";
+import { getAllPosts } from "@/lib/blog-data";
+import PobySVG from "@/components/PobySVG";
 
 export const metadata: Metadata = {
   title: "Blog — İşletme Yönetimi ve AI Rehberleri",
@@ -28,8 +29,8 @@ export default function BlogPage() {
 
       <nav className="border-b border-gray-100 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="text-xl font-bold text-gray-900">
-            Poby<span className="text-[#6366F1]">.ai</span>
+          <Link href="/">
+            <PobySVG className="h-7 w-auto" />
           </Link>
           <Link
             href="/login"
@@ -52,7 +53,7 @@ export default function BlogPage() {
         </div>
 
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {blogPosts.map((post) => (
+          {getAllPosts().map((post) => (
             <article
               key={post.slug}
               className="rounded-xl border border-gray-200 overflow-hidden hover:border-indigo-200 hover:shadow-md transition-all"
