@@ -52,6 +52,7 @@ import {
 } from "lucide-react";
 import { ToastProvider, Toaster, useToast } from "@/components/ui/toast";
 import { ConfirmProvider } from "@/components/ui/confirm-dialog";
+import PobySVG from "@/components/PobySVG";
 
 /* ──────────────────────── MODULE CONFIG ──────────────────────── */
 
@@ -494,7 +495,7 @@ function Sidebar({
               </div>
             ) : (
               <div className="flex items-center gap-2.5">
-                <img src="/poby-logo.svg" alt="Poby" width={100} height={36} className="h-7 w-auto brightness-0 invert" />
+                <PobySVG inverted className="h-6 w-auto" />
               </div>
             )}
           </Link>
@@ -1062,7 +1063,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
           </motion.div>
           {/* Footer logo — always at bottom */}
           <div className="flex items-center justify-center py-6 mt-auto pt-8 border-t border-gray-100">
-            <img src="/poby-logo.svg" alt="Poby" width={80} height={30} className="h-5 w-auto opacity-20" />
+            <PobySVG className="h-4 w-auto opacity-20" />
           </div>
         </main>
       </div>

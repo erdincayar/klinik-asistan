@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { SoftwareApplicationJsonLd, FAQJsonLd } from "@/components/seo/JsonLd";
+import PobySVG from "@/components/PobySVG";
 import {
   Users,
   Calendar,
@@ -760,7 +761,7 @@ export default function Home() {
       >
         <div className="mx-auto flex max-w-[1200px] items-center justify-between px-6 py-4">
           <Link href="/">
-            <img src="/poby-logo.svg" alt="Poby" width={120} height={44} className="h-8 sm:h-10 w-auto" />
+            <PobySVG className="h-7 sm:h-9 w-auto" />
           </Link>
 
           <div className="hidden items-center gap-8 md:flex">
@@ -1484,7 +1485,7 @@ export default function Home() {
           <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr]">
             <div>
               <Link href="/">
-                <img src="/poby-logo.svg" alt="Poby" width={110} height={40} className="h-8 w-auto brightness-0 invert" />
+                <PobySVG inverted className="h-7 w-auto" />
               </Link>
               <p className="mt-3 max-w-[280px] text-[13px] leading-relaxed text-[#6C7293]">
                 İşletmenizin cebindeki akıllı asistan. Tüm operasyonlarınızı tek
