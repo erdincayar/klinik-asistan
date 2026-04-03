@@ -494,12 +494,7 @@ function Sidebar({
               </div>
             ) : (
               <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#6366F1]">
-                  <span className="text-sm font-bold text-white">P</span>
-                </div>
-                <span className="text-lg font-bold tracking-tight text-white">
-                  poby<span className="text-[#818CF8]">.</span>
-                </span>
+                <img src="/poby-logo.svg" alt="Poby" width={100} height={36} className="h-7 w-auto brightness-0 invert" />
               </div>
             )}
           </Link>
@@ -1067,7 +1062,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
           </motion.div>
           {/* Footer logo — always at bottom */}
           <div className="flex items-center justify-center py-6 mt-auto pt-8 border-t border-gray-100">
-            <span className="text-[11px] text-gray-300 font-medium tracking-wider">poby.ai</span>
+            <img src="/poby-logo.svg" alt="Poby" width={80} height={30} className="h-5 w-auto opacity-20" />
           </div>
         </main>
       </div>
