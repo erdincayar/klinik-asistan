@@ -391,13 +391,13 @@ export default function PatientDetailPage() {
         transition={{ duration: 0.4 }}
         className="overflow-hidden rounded-xl border border-gray-100 bg-white"
       >
-        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1E1E2D] text-sm font-semibold text-white">
+        <div className="flex items-center justify-between border-b border-gray-100 px-3 sm:px-6 py-2.5 sm:py-4 gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="hidden sm:flex h-10 w-10 items-center justify-center rounded-full bg-[#1E1E2D] text-sm font-semibold text-white shrink-0">
               {patient.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
             </div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold text-gray-900">{patient.name}</h2>
+            <div className="flex items-center gap-2 min-w-0">
+              <h2 className="text-sm sm:text-lg font-semibold text-gray-900 truncate">{patient.name}</h2>
               {sc && (
                 <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${sc.color}`}>
                   <span className={`h-1.5 w-1.5 rounded-full ${sc.dot}`} />
@@ -406,21 +406,22 @@ export default function PatientDetailPage() {
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 shrink-0">
             <Link
               href="/patients/settings"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+              className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-2 py-1.5 sm:px-3 sm:py-2 text-[10px] sm:text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50"
             >
-              <Settings2 className="h-3.5 w-3.5" />
-              Alanları Yönet
+              <Settings2 className="h-3 w-3" />
+              <span className="hidden sm:inline">Alanları Yönet</span>
+              <span className="sm:hidden">Alanlar</span>
             </Link>
             <button
               onClick={handleDeletePatient}
               disabled={deleting}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 px-4 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+              className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2 py-1.5 sm:px-3 sm:py-2 text-[10px] sm:text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
             >
-              <Trash2 className="h-3.5 w-3.5" />
-              {deleting ? "Siliniyor..." : "Sil"}
+              <Trash2 className="h-3 w-3" />
+              <span className="hidden sm:inline">{deleting ? "Siliniyor..." : "Sil"}</span>
             </button>
             <Link
               href={`/finance/new-income?patientId=${patient.id}`}
@@ -557,7 +558,7 @@ export default function PatientDetailPage() {
           transition={{ duration: 0.4, delay: 0.03 }}
           className="overflow-hidden rounded-xl border border-gray-100 bg-white"
         >
-          <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+          <div className="flex items-center justify-between border-b border-gray-100 px-3 sm:px-6 py-2.5 sm:py-4 gap-2">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-[#6366F1]" />
               <h2 className="text-sm font-semibold text-gray-900">CRM Özeti</h2>
@@ -709,7 +710,7 @@ export default function PatientDetailPage() {
         className="overflow-hidden rounded-xl border border-gray-100 bg-white"
         style={{ display: fieldVisibility.photos?.detail === false ? "none" : undefined }}
       >
-        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-gray-100 px-3 sm:px-6 py-2.5 sm:py-4 gap-2">
           <div className="flex items-center gap-2">
             <Camera className="h-4 w-4 text-[#6366F1]" />
             <h2 className="text-sm font-semibold text-gray-900">Fotoğraflar</h2>

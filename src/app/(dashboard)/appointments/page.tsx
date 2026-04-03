@@ -691,9 +691,9 @@ export default function AppointmentsPage() {
           />
           <button
             onClick={openCreateDialog}
-            className="inline-flex items-center gap-1.5 sm:gap-2 rounded-xl bg-[#1E1E2D] px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-[#2A2A3C] hover:shadow-lg hover:shadow-[#1E1E2D]/20"
+            className="hidden sm:inline-flex items-center gap-2 rounded-xl bg-[#1E1E2D] px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[#2A2A3C]"
           >
-            <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <Plus className="h-4 w-4" />
             Randevu Ekle
           </button>
         </div>
@@ -1025,7 +1025,7 @@ export default function AppointmentsPage() {
           </div>
         ) : (
           /* ── Weekly view ── */
-          <div ref={weeklyScrollRef} className="max-h-[calc(100vh-280px)] overflow-y-auto rounded-xl border border-gray-100 bg-white">
+          <div ref={weeklyScrollRef} className="overflow-y-auto sm:max-h-[calc(100vh-280px)] rounded-xl border border-gray-100 bg-white">
             {loading ? (
               <div className="p-6">
                 <Skeleton className="h-[400px] w-full" />
@@ -1143,7 +1143,7 @@ export default function AppointmentsPage() {
 
       {/* Create Appointment Dialog */}
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent className="rounded-xl sm:max-w-md">
+        <DialogContent className="rounded-xl max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-lg">Yeni Randevu</DialogTitle>
           </DialogHeader>
@@ -1323,7 +1323,7 @@ export default function AppointmentsPage() {
 
       {/* Detail Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="rounded-xl max-w-lg">
+        <DialogContent className="rounded-xl max-w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto">
           {selectedAppointment && (
             <>
               <DialogHeader>

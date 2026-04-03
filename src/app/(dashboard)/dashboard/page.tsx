@@ -819,18 +819,18 @@ export default function DashboardPage() {
                 initial="hidden"
                 animate="visible"
                 custom={i}
-                className="group cursor-pointer rounded-xl border border-gray-100 bg-white p-6 transition-all hover:shadow-md active:scale-[0.98]"
+                className="group cursor-pointer rounded-xl border border-gray-100 bg-white p-3 sm:p-6 transition-all hover:shadow-md active:scale-[0.98]"
               >
                 <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-[13px] font-medium text-gray-500">
+                  <div className="min-w-0">
+                    <p className="text-[11px] sm:text-[13px] font-medium text-gray-500 truncate">
                       {stat.title}
                     </p>
-                    <p className="mt-2 text-2xl font-bold tracking-tight text-gray-900">
+                    <p className="mt-1 sm:mt-2 text-base sm:text-2xl font-bold tracking-tight text-gray-900">
                       {stat.value}
                     </p>
                     {stat.change && (
-                      <div className="mt-2 flex items-center gap-1">
+                      <div className="mt-1 sm:mt-2 hidden sm:flex items-center gap-1">
                         {"changeUp" in stat ? (
                           stat.changeUp ? (
                             <TrendingUp className="h-3 w-3 text-emerald-500" />
@@ -865,7 +865,7 @@ export default function DashboardPage() {
                   </div>
                   <div
                     className={cn(
-                      "flex h-12 w-12 items-center justify-center rounded-xl",
+                      "hidden sm:flex h-12 w-12 items-center justify-center rounded-xl",
                       stat.iconBg
                     )}
                   >

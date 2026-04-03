@@ -881,8 +881,8 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         {/* Trial / Subscription Banner */}
         <TrialBanner status={subStatus} trialEnd={subTrialEnd} />
 
-        {/* Top header */}
-        <header className="flex h-16 shrink-0 items-center justify-between border-b border-[#E5E7EB] bg-white px-6">
+        {/* Top header — sticky on mobile */}
+        <header className="sticky top-0 z-30 flex h-12 sm:h-16 shrink-0 items-center justify-between border-b border-[#E5E7EB] bg-white px-3 sm:px-6">
           {/* Left side */}
           <div className="flex items-center gap-4">
             <button
@@ -891,7 +891,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             >
               <Menu className="h-5 w-5" />
             </button>
-            <h1 className="text-lg font-semibold text-[#1A1A2E]">
+            <h1 className="text-sm sm:text-lg font-semibold text-[#1A1A2E]">
               {pageTitle}
             </h1>
           </div>
@@ -1055,7 +1055,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         )}
 
         {/* Main content */}
-        <main className="flex-1 overflow-y-auto px-4 py-4 sm:p-6">
+        <main className="flex-1 overflow-y-auto px-3 py-3 sm:px-6 sm:py-4">
           <motion.div
             key={pathname}
             initial={{ opacity: 0, y: 8 }}
@@ -1064,6 +1064,10 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
           >
             {children}
           </motion.div>
+          {/* Footer logo */}
+          <div className="flex items-center justify-center py-8 mt-8 border-t border-gray-100">
+            <span className="text-xs text-gray-300 font-medium">poby.ai</span>
+          </div>
         </main>
       </div>
     </div>

@@ -391,7 +391,7 @@ export default function PatientsPage() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <Input
-              placeholder="Müşteri ara..."
+              placeholder="Ara..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="block w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm text-gray-900 placeholder:text-gray-400 transition-shadow focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
@@ -701,12 +701,12 @@ export default function PatientsPage() {
             ) : (
               <>
                 {/* Mobile card view */}
-                <div className="space-y-2 md:hidden">
+                <div className="space-y-1.5 md:hidden">
                   {filteredPatients.map((patient, i) => (
                     <motion.div key={patient.id} variants={fadeUp} initial="hidden" animate="visible" custom={i}>
-                      <div className="flex items-center gap-3 rounded-xl border border-gray-100 px-4 py-3">
-                        <span className="text-xs font-medium text-gray-400 w-5 shrink-0">{filteredPatients.length - i}</span>
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EEF2FF] text-sm font-semibold text-[#4F46E5]">
+                      <div className="flex items-center gap-2 rounded-lg border border-gray-100 px-3 py-2">
+                        <span className="text-[10px] font-medium text-gray-400 w-4 shrink-0">{filteredPatients.length - i}</span>
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#EEF2FF] text-xs font-semibold text-[#4F46E5]">
                           {patient.name
                             .split(" ")
                             .map((n) => n[0])
@@ -729,14 +729,14 @@ export default function PatientsPage() {
                               ) : null;
                             })()}
                           </div>
-                          <div className="flex items-center gap-3 text-xs text-gray-500">
-                            {patient.phone && (
-                              <span className="flex items-center gap-1">
-                                <Phone className="h-3 w-3" />
+                          <div className="flex items-center gap-2 text-[10px] text-gray-500">
+                            {isFieldVisible("phone") && patient.phone && (
+                              <span className="flex items-center gap-0.5">
+                                <Phone className="h-2.5 w-2.5" />
                                 {patient.phone}
                               </span>
                             )}
-                            <span>{patient._count?.treatments ?? 0} işlem</span>
+                            {isFieldVisible("treatmentCount") && <span>{patient._count?.treatments ?? 0} işlem</span>}
                           </div>
                         </Link>
                         <button
