@@ -595,13 +595,13 @@ export default function InvoiceUploadContent() {
               const monthTotal = monthInvoices.reduce((s, inv) => s + (inv.amount || 0), 0);
               return (
                 <div key={monthKey}>
-                  <div className="flex items-center justify-between bg-gray-50 px-6 py-2.5 border-b border-gray-100">
+                  <div className="flex items-center justify-between bg-[#EEF2FF]/50 px-6 py-3 border-b border-[#E0E7FF]">
                     <div className="flex items-center gap-2">
-                      <CalendarDays className="h-3.5 w-3.5 text-gray-400" />
-                      <span className="text-xs font-semibold text-gray-600">{monthName}</span>
-                      <span className="text-[10px] text-gray-400">{monthInvoices.length} fatura</span>
+                      <CalendarDays className="h-4 w-4 text-[#6366F1]" />
+                      <span className="text-sm font-bold text-gray-800">{monthName}</span>
+                      <span className="rounded-full bg-[#6366F1]/10 px-2 py-0.5 text-[10px] font-semibold text-[#6366F1]">{monthInvoices.length} fatura</span>
                     </div>
-                    <span className="text-xs font-semibold text-gray-600">
+                    <span className="text-sm font-bold text-gray-800">
                       {formatCurrency(Math.round(monthTotal * 100))}
                     </span>
                   </div>
