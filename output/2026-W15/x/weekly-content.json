@@ -1,0 +1,149 @@
+{
+  "week": "2026-W15",
+  "account": "@pobyai",
+  "status": "DRAFT",
+  "pricing": "₺499/ay + 7 gün ücretsiz deneme",
+  "content": [
+    {
+      "id": "short-mon",
+      "day": "monday",
+      "date": "2026-04-06",
+      "time": "21:00",
+      "type": "short",
+      "pillar": "isletme-egitim",
+      "text": "Klinik sahiplerine bir ipucu:\n\nRandevuları WhatsApp'tan alıp deftere yazmayı bırakın.\n\nDijital randevu sistemi kurmak 10 dakika sürer.\n\nİlk adım → poby.ai\n\n#dijitalklinik",
+      "char_count": 186
+    },
+    {
+      "id": "short-tue",
+      "day": "tuesday",
+      "date": "2026-04-07",
+      "time": "09:00",
+      "type": "short",
+      "pillar": "build-in-public",
+      "text": "Bugün Poby.ai'da neler yaptık:\n\n✅ Gider faturası → envantere ekleme opsiyonel\n✅ Cari hesap ödeme butonu eklendi\n✅ Fatura grupları daha okunabilir\n\nKüçük detaylar, büyük fark yaratır.\n\n#buildinpublic",
+      "char_count": 207
+    },
+    {
+      "id": "thread-wed",
+      "day": "wednesday",
+      "date": "2026-04-08",
+      "time": "09:00",
+      "type": "thread",
+      "pillar": "isletme-egitim",
+      "tweets": [
+        {
+          "order": 1,
+          "text": "İşletmenizde her ay en az 20 saat boşa gidiyor.\n\nNereye mi? İşte dijitalleşmeyen işletmelerin 5 sessiz zaman kaybı 🧵",
+          "char_count": 117
+        },
+        {
+          "order": 2,
+          "text": "1/ Randevu karışıklıkları\n\nAynı saate 2 hasta, kayıp randevular, telefonla \"saat kaçtı?\" soruları.\n\nÇözüm: Online randevu + otomatik hatırlatma.\n\nBiz Poby'de bunu WhatsApp üzerinden yapıyoruz.",
+          "char_count": 197
+        },
+        {
+          "order": 3,
+          "text": "2/ Manuel stok sayımı\n\n\"Bu üründen kaç tane kalmıştı?\" sorusu günde 10 kez soruluyorsa, sisteminiz yok demektir.\n\nDijital stok takibi = anlık bilgi + minimum fire.",
+          "char_count": 166
+        },
+        {
+          "order": 4,
+          "text": "3/ Fatura ve muhasebe kaosu\n\nAy sonunda kutudan çıkan faturalar, eksik girişler, muhasebeciyle tartışmalar.\n\nAnlık gelir-gider kaydı bu kabusu bitirir.",
+          "char_count": 155
+        },
+        {
+          "order": 5,
+          "text": "4/ Müşteri takibi yapılmaması\n\n\"Bu müşteri en son ne zaman geldi?\" sorusuna cevap veremiyorsanız, müşteri kaybediyorsunuz.\n\nCRM = müşteriyi tanımak = sadakat.",
+          "char_count": 161
+        },
+        {
+          "order": 6,
+          "text": "5/ Raporlama eksikliği\n\n\"Bu ay kâr ettik mi?\" sorusuna 3 gün sonra cevap veriyorsanız, geç kalıyorsunuz.\n\nTek dashboard, anlık raporlar.\n\nPoby.ai'ın temel felsefesi bu.",
+          "char_count": 176
+        },
+        {
+          "order": 7,
+          "text": "Bu 5 sorunu tek platformda çözüyoruz.\n\n7 gün ücretsiz deneyin, ₺499/ay ile devam edin.\n\npoby.ai → @pobyai",
+          "char_count": 108
+        }
+      ]
+    },
+    {
+      "id": "poll-wed",
+      "day": "wednesday",
+      "date": "2026-04-08",
+      "time": "21:00",
+      "type": "poll",
+      "pillar": "topluluk",
+      "text": "İşletme sahipleri, dürüst olun:\n\nEn çok hangi süreç canınızı sıkıyor?",
+      "char_count": 71,
+      "poll_options": [
+        "Randevu yönetimi",
+        "Fatura/muhasebe",
+        "Stok takibi",
+        "Müşteri iletişimi"
+      ]
+    },
+    {
+      "id": "short-thu",
+      "day": "thursday",
+      "date": "2026-04-09",
+      "time": "09:00",
+      "type": "short",
+      "pillar": "teknik",
+      "text": "Poby.ai'ın AI asistanı Claude ile çalışıyor.\n\n\"Bu ay en çok hangi hizmetten kazandık?\" diye soruyorsunuz.\n\nAI veritabanını tarıyor, cevabı Türkçe veriyor.\n\nİşletmeler için AI artık lüks değil, gereklilik.\n\n#ai #buildinpublic",
+      "char_count": 224
+    },
+    {
+      "id": "thread-fri",
+      "day": "friday",
+      "date": "2026-04-10",
+      "time": "09:00",
+      "type": "thread",
+      "pillar": "build-in-public",
+      "tweets": [
+        {
+          "order": 1,
+          "text": "Poby.ai W15 hafta özeti:\n\nBu hafta neler yaptık, neler öğrendik? 🧵",
+          "char_count": 67
+        },
+        {
+          "order": 2,
+          "text": "Bu hafta gönderdiğimiz güncellemeler:\n\n→ Mali tablo raporları iyileştirildi\n→ Gider faturası akışı yenilendi\n→ Envanter yönetimi opsiyonel hale geldi\n→ Yıl filtreleme 2015'e kadar genişletildi",
+          "char_count": 193
+        },
+        {
+          "order": 3,
+          "text": "En büyük dersimiz:\n\nKullanıcılar \"daha fazla özellik\" değil, \"mevcut özelliklerin daha basit çalışması\"nı istiyor.\n\nHer yeni özellikten önce mevcut olanı sadeleştiriyoruz.",
+          "char_count": 172
+        },
+        {
+          "order": 4,
+          "text": "Gelecek hafta odağımız:\n\n→ Ödeme sistemi entegrasyonu\n→ Envanter raporları\n\nBu yolculuğu takip edin → @pobyai\n\n7 gün ücretsiz deneyin → poby.ai",
+          "char_count": 151
+        }
+      ]
+    },
+    {
+      "id": "short-fri",
+      "day": "friday",
+      "date": "2026-04-10",
+      "time": "21:00",
+      "type": "short",
+      "pillar": "topluluk",
+      "text": "Haftayı kapattık.\n\nİşletmesini dijitale taşımak isteyen herkes için:\n\n\"En iyi zaman 5 yıl önceydi. İkinci en iyi zaman şimdi.\"\n\nGüzel bir hafta sonu olsun ✌️",
+      "char_count": 162
+    },
+    {
+      "id": "short-sat",
+      "day": "saturday",
+      "date": "2026-04-11",
+      "time": "20:00",
+      "type": "short",
+      "pillar": "topluluk",
+      "text": "Cumartesi akşamı bile ekibin bir kısmı çalışıyor.\n\nPoby.ai'ı daha iyi yapma motivasyonumuz: işletmelerin hayatını kolaylaştırmak.\n\nBu vizyonla her gün biraz daha ileri.\n\n#buildinpublic",
+      "char_count": 184
+    }
+  ]
+}
