@@ -585,7 +585,7 @@ function Sidebar({
           </DndContext>
 
           {/* Admin Section - only visible to ADMIN role */}
-          {(session?.user as any)?.role === "ADMIN" && (
+          {((session?.user as any)?.role === "ADMIN" || (session?.user as any)?.role === "SUPERADMIN") && (
             <div className="mt-4 border-t border-white/[0.06] pt-4">
               {!collapsed && (
                 <p className="mb-2 px-3 text-[11px] font-medium uppercase tracking-wider text-[#6C7293]">

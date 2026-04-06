@@ -7,6 +7,10 @@ export async function GET() {
   try {
     const session = await auth();
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const role = (session.user as any).role;
+    if (role !== "ADMIN" && role !== "SUPERADMIN") {
+      return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
+    }
     const clinicId = (session.user as any).clinicId;
     if (!clinicId) return NextResponse.json({ error: "No clinic" }, { status: 400 });
 
@@ -26,6 +30,10 @@ export async function POST(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const role = (session.user as any).role;
+    if (role !== "ADMIN" && role !== "SUPERADMIN") {
+      return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
+    }
     const clinicId = (session.user as any).clinicId;
     if (!clinicId) return NextResponse.json({ error: "No clinic" }, { status: 400 });
 
@@ -60,6 +68,10 @@ export async function PATCH(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const role = (session.user as any).role;
+    if (role !== "ADMIN" && role !== "SUPERADMIN") {
+      return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
+    }
     const clinicId = (session.user as any).clinicId;
     if (!clinicId) return NextResponse.json({ error: "No clinic" }, { status: 400 });
 
@@ -104,6 +116,10 @@ export async function DELETE(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const role = (session.user as any).role;
+    if (role !== "ADMIN" && role !== "SUPERADMIN") {
+      return NextResponse.json({ error: "Yetkisiz" }, { status: 403 });
+    }
     const clinicId = (session.user as any).clinicId;
     if (!clinicId) return NextResponse.json({ error: "No clinic" }, { status: 400 });
 
