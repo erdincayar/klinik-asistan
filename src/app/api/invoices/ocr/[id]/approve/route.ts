@@ -129,7 +129,7 @@ export async function POST(
 
       if (invoiceType === "EXPENSE") {
         // ─── EXPENSE INVOICE ───
-        if (parsedAmount > 0 && recordAsExpense) {
+        if (recordAsExpense) {
           const expense = await tx.expense.create({
             data: {
               clinicId,
@@ -147,7 +147,7 @@ export async function POST(
             where: { id },
             data: { linkedExpenseId: expense.id },
           });
-        } else if (parsedAmount > 0 && !recordAsExpense && recordVatDeduction && taxAmount > 0) {
+        } else if (!recordAsExpense && recordVatDeduction && taxAmount > 0) {
           // Only record KDV deduction — create expense with tax amount only
           const expense = await tx.expense.create({
             data: {

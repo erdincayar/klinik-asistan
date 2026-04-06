@@ -360,7 +360,7 @@ export default function InvoiceUploadContent() {
       const res = await fetch(`/api/invoices/ocr/${inv.id}/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stockMappings: [] }),
+        body: JSON.stringify({ stockMappings: [], recordAsExpense: true, recordVatDeduction: true, addToInventory: false }),
       });
       if (res.ok) {
         await fetchInvoices();
