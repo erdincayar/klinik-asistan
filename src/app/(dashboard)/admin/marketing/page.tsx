@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Send, Trash2, Check, Clock, AlertCircle, Twitter, Instagram, Edit, Calendar } from "lucide-react";
+import { Plus, Send, Trash2, Check, Clock, AlertCircle, Twitter, Instagram, Edit, Calendar, Sparkles, Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,6 +43,8 @@ export default function AdminMarketingPage() {
   const [tab, setTab] = useState("all");
   const [showCreate, setShowCreate] = useState(false);
   const [publishing, setPublishing] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [seeding, setSeeding] = useState(false);
 
   // Create form
   const [form, setForm] = useState({
@@ -149,9 +151,34 @@ export default function AdminMarketingPage() {
           <h1 className="text-lg font-bold text-gray-900">AI Content Studio</h1>
           <p className="text-xs text-gray-500">İçerik oluştur, zamanla, paylaş</p>
         </div>
-        <Button onClick={() => setShowCreate(true)} size="sm">
-          <Plus className="mr-1 h-3.5 w-3.5" /> İçerik Oluştur
-        </Button>
+        <div className="flex items-center gap-2">
+          {posts.length === 0 && (
+            <Button variant="outline" size="sm" onClick={async () => {
+              setSeeding(true);
+              await fetch("/api/admin/marketing/seed", { method: "POST" });
+              await fetchPosts();
+              setSeeding(false);
+            }} disabled={seeding}>
+              {seeding ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <Download className="mr-1 h-3.5 w-3.5" />}
+              Örnek İçe Aktar
+            </Button>
+          )}
+          <Button variant="outline" size="sm" onClick={async () => {
+            setGenerating(true);
+            const res = await fetch("/api/admin/marketing/generate", { method: "POST" });
+            const data = await res.json();
+            if (res.ok) alert(`${data.created} içerik AI ile oluşturuldu!`);
+            else alert(`Hata: ${data.error}`);
+            await fetchPosts();
+            setGenerating(false);
+          }} disabled={generating}>
+            {generating ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-1 h-3.5 w-3.5" />}
+            AI ile Üret
+          </Button>
+          <Button onClick={() => setShowCreate(true)} size="sm">
+            <Plus className="mr-1 h-3.5 w-3.5" /> Oluştur
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -256,9 +283,16 @@ export default function AdminMarketingPage() {
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
                           {post.status === "DRAFT" && (
-                            <button onClick={() => updateStatus(post.id, "APPROVED")} className="rounded-lg bg-blue-50 p-1.5 text-blue-600 hover:bg-blue-100" title="Onayla">
-                              <Check className="h-3.5 w-3.5" />
-                            </button>
+                            <>
+                              <button onClick={() => updateStatus(post.id, "APPROVED")} className="rounded-lg bg-blue-50 p-1.5 text-blue-600 hover:bg-blue-100" title="Onayla">
+                                <Check className="h-3.5 w-3.5" />
+                              </button>
+                              {post.platform === "twitter" && (
+                                <button onClick={async () => { await updateStatus(post.id, "APPROVED"); handlePublish(post.id); }} disabled={publishing === post.id} className="rounded-lg bg-emerald-50 p-1.5 text-emerald-600 hover:bg-emerald-100 disabled:opacity-50" title="Onayla & Paylaş">
+                                  <Send className="h-3.5 w-3.5" />
+                                </button>
+                              )}
+                            </>
                           )}
                           {(post.status === "APPROVED" || post.status === "SCHEDULED") && post.platform === "twitter" && (
                             <button onClick={() => handlePublish(post.id)} disabled={publishing === post.id} className="rounded-lg bg-emerald-50 p-1.5 text-emerald-600 hover:bg-emerald-100 disabled:opacity-50" title="Şimdi Paylaş">
