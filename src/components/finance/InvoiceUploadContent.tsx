@@ -129,6 +129,7 @@ export default function InvoiceUploadContent() {
   // Expense invoice approval options
   const [recordAsExpense, setRecordAsExpense] = useState(true);
   const [recordVatDeduction, setRecordVatDeduction] = useState(true);
+  const [addToInventory, setAddToInventory] = useState(false);
 
   useEffect(() => {
     fetchInvoices();
@@ -287,6 +288,7 @@ export default function InvoiceUploadContent() {
           invoiceType: invoiceTypeOverride || selectedInvoice.invoiceType,
           recordAsExpense,
           recordVatDeduction,
+          addToInventory,
         }),
       });
       const data = await res.json();
@@ -1306,6 +1308,18 @@ export default function InvoiceUploadContent() {
                           <div>
                             <span className="text-xs font-medium text-gray-700">KDV indirimine işle</span>
                             <p className="text-[10px] text-gray-400">İndirilecek KDV hesabına ekler.</p>
+                          </div>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
+                          <input
+                            type="checkbox"
+                            checked={addToInventory}
+                            onChange={(e) => setAddToInventory(e.target.checked)}
+                            className="h-4 w-4 rounded border-gray-300 text-[#6366F1]"
+                          />
+                          <div>
+                            <span className="text-xs font-medium text-gray-700">Envantere ekle</span>
+                            <p className="text-[10px] text-gray-400">Eşleşen ürünleri stoka ekler.</p>
                           </div>
                         </label>
                       </div>

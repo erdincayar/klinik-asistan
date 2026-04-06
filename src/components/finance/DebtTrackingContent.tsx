@@ -359,7 +359,7 @@ export default function DebtTrackingContent() {
                           }}
                           className="rounded-lg bg-[#6366F1] px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-[#4F46E5]"
                         >
-                          Ödeme Al
+                          Ödeme
                         </button>
                       )}
                       <button

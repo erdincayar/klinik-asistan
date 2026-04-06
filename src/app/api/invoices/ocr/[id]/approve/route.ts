@@ -49,6 +49,7 @@ export async function POST(
     // Expense invoice options
     const recordAsExpense: boolean = body.recordAsExpense !== false; // default true
     const recordVatDeduction: boolean = body.recordVatDeduction !== false; // default true
+    const addToInventory: boolean = body.addToInventory === true; // default false
 
     const invoice = await prisma.uploadedInvoice.findFirst({
       where: { id, clinicId },
@@ -167,8 +168,8 @@ export async function POST(
           });
         }
 
-        // Process stock mappings
-        for (const mapping of stockMappings) {
+        // Process stock mappings — only if addToInventory is checked
+        if (addToInventory) for (const mapping of stockMappings) {
           const unitPriceKurus = Math.round(mapping.unitPrice * 100);
 
           if (mapping.productId) {
