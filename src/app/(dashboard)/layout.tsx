@@ -147,6 +147,7 @@ navGroups.forEach((g) => {
 const adminNavItems = [
   { href: "/admin", label: "Admin Panel", icon: Shield },
   { href: "/admin/users", label: "Kullanıcılar", icon: Users },
+  { href: "/admin/marketing", label: "Content Studio", icon: Sparkles },
   { href: "/admin/activity", label: "Aktivite Log", icon: Activity },
 ];
 
@@ -178,6 +179,7 @@ const pageTitles: Record<string, string> = {
   "/settings": "Ayarlar",
   "/admin": "Admin Panel",
   "/admin/users": "Kullanıcı Yönetimi",
+  "/admin/marketing": "Content Studio",
   "/admin/activity": "Aktivite Logları",
 };
 
