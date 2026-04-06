@@ -623,7 +623,7 @@ export default function FinanceOverview() {
                   onChange={(e) => setYear(Number(e.target.value))}
                   className="rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-700 transition-shadow focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
                 >
-                  {[year - 1, year, year + 1].map((y) => (
+                  {Array.from({ length: new Date().getFullYear() - 2015 + 1 }, (_, i) => 2015 + i).map((y) => (
                     <option key={y} value={y}>{y}</option>
                   ))}
                 </select>

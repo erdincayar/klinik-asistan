@@ -1013,7 +1013,7 @@ export default function ReportsPage() {
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [activeTab, setActiveTab] = useState("income");
 
-  const years = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
+  const years = Array.from({ length: currentYear - 2015 + 1 }, (_, i) => 2015 + i);
 
   function handleDownloadPdf() {
     const printWindow = window.open("", "_blank");
