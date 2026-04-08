@@ -193,6 +193,11 @@ export function middleware(req: NextRequest) {
   ];
   const isDashboardPage = dashboardPages.some((p) => pathname === p || pathname.startsWith(p + "/"));
 
+  // /expired page — accessible when logged in, skip redirect
+  if (pathname === "/expired") {
+    return addSecurityHeaders(NextResponse.next());
+  }
+
   // Logged-in user on auth page or root → redirect to dashboard
   if (hasSession && (isAuthPage || pathname === "/")) {
     const dashboardUrl = new URL("/dashboard", req.url);

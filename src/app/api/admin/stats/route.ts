@@ -14,7 +14,7 @@ export async function GET() {
       select: { role: true },
     });
 
-    if (user?.role !== "ADMIN") {
+    if (user?.role !== "ADMIN" && user?.role !== "SUPERADMIN") {
       return NextResponse.json({ error: "Yetkiniz yok" }, { status: 403 });
     }
 
@@ -23,43 +23,43 @@ export async function GET() {
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay() + 1);
+    startOfWeek.setHours(0, 0, 0, 0);
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
     const [
       totalUsers,
       totalClinics,
       todayLogins,
       activeUsersLast24h,
+      activeUsersLast7d,
       passiveUsers,
-      // İşletme verileri
       totalPatients,
       totalEmployees,
       totalAppointments,
       totalTreatments,
-      // Son 30 gün yeni kayıtlar
       newUsersLast30d,
+      newUsersThisWeek,
+      newUsersThisMonth,
       newClinicsLast30d,
       newPatientsLast30d,
       newEmployeesLast30d,
-      // Sektör dağılımı
       sectorDistribution,
-      // Abonelik durumları
       subscriptionStats,
-      // Modül satın alma verileri
       moduleActivations,
-      // Ort çalışan / klinik
       employeesPerClinic,
-      // Ort müşteri / klinik
       patientsPerClinic,
-      // Tedavi gelir verileri (son 30 gün)
       treatmentRevenue,
-      // Ödeme yöntemi dağılımı
       paymentMethods,
-      // Randevu durum dağılımı
       appointmentStatuses,
-      // Sayfa görüntüleme (modül analiz)
       pageViews,
-      // Günlük giriş trendi (son 14 gün)
       loginTrend,
+      // Yeni: kullanıcı detayları + abonelik bilgileri
+      allUsers,
+      // Yeni: ödeme geçmişi
+      billingHistory,
+      subscriptionPayments,
     ] = await Promise.all([
       prisma.user.count(),
       prisma.clinic.count(),
@@ -67,6 +67,10 @@ export async function GET() {
       prisma.activityLog.groupBy({
         by: ["userId"],
         where: { action: { in: ["LOGIN", "PAGE_VIEW"] }, createdAt: { gte: twentyFourHoursAgo } },
+      }).then((r) => r.length),
+      prisma.activityLog.groupBy({
+        by: ["userId"],
+        where: { action: { in: ["LOGIN", "PAGE_VIEW"] }, createdAt: { gte: sevenDaysAgo } },
       }).then((r) => r.length),
       prisma.user.count({
         where: { isActive: true, OR: [{ lastLoginAt: { lt: sevenDaysAgo } }, { lastLoginAt: null }] },
@@ -76,50 +80,105 @@ export async function GET() {
       prisma.appointment.count(),
       prisma.treatment.count(),
       prisma.user.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
+      prisma.user.count({ where: { createdAt: { gte: startOfWeek } } }),
+      prisma.user.count({ where: { createdAt: { gte: startOfMonth } } }),
       prisma.clinic.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
       prisma.patient.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
       prisma.employee.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
-      // Sektör
       prisma.clinic.groupBy({ by: ["sector"], _count: { id: true } }),
-      // Abonelik
       prisma.subscriptionPlan.groupBy({ by: ["status"], _count: { id: true } }).catch(() => []),
-      // Modül aktivasyonları
       prisma.clinicModule.findMany({
         where: { isActive: true },
         include: { module: { select: { name: true, displayName: true } } },
       }).catch(() => []),
-      // Ort çalışan
       prisma.employee.groupBy({ by: ["clinicId"], _count: { id: true } }),
-      // Ort müşteri
       prisma.patient.groupBy({ by: ["clinicId"], _count: { id: true } }),
-      // Tedavi gelir
       prisma.treatment.aggregate({
         where: { createdAt: { gte: thirtyDaysAgo } },
         _sum: { amount: true },
         _count: { id: true },
       }),
-      // Ödeme yöntemi
       prisma.treatment.groupBy({
         by: ["paymentMethod"],
         _count: { id: true },
         _sum: { amount: true },
       }),
-      // Randevu durumu
       prisma.appointment.groupBy({
         by: ["status"],
         where: { createdAt: { gte: thirtyDaysAgo } },
         _count: { id: true },
       }),
-      // Sayfa görüntüleme
       prisma.activityLog.findMany({
         where: { action: "PAGE_VIEW", createdAt: { gte: thirtyDaysAgo } },
         select: { details: true, userId: true },
       }),
-      // Günlük giriş trendi (son 14 gün)
       prisma.activityLog.findMany({
         where: { action: "LOGIN", createdAt: { gte: new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000) } },
         select: { createdAt: true, userId: true },
       }),
+      // Kullanıcı detayları + klinik + abonelik
+      prisma.user.findMany({
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          isActive: true,
+          isDemo: true,
+          lastLoginAt: true,
+          createdAt: true,
+          clinic: {
+            select: {
+              id: true,
+              name: true,
+              plan: true,
+              sector: true,
+              subscriptionPlan: {
+                select: {
+                  status: true,
+                  trialEnd: true,
+                  monthlyTotal: true,
+                  activeModules: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+      // Ödeme geçmişi (BillingHistory)
+      prisma.billingHistory.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 100,
+        include: {
+          subscriptionPlan: {
+            include: {
+              clinic: {
+                include: {
+                  users: { select: { name: true, email: true }, take: 1 },
+                },
+              },
+            },
+          },
+        },
+      }).catch(() => []),
+      // Ödeme geçmişi (SubscriptionPayment)
+      prisma.subscriptionPayment.findMany({
+        where: { status: "SUCCESS" },
+        orderBy: { paidAt: "desc" },
+        take: 100,
+        include: {
+          subscription: {
+            include: {
+              clinic: {
+                include: {
+                  users: { select: { name: true, email: true }, take: 1 },
+                },
+              },
+            },
+          },
+        },
+      }).catch(() => []),
     ]);
 
     // ── Sektör dağılımı
@@ -134,7 +193,7 @@ export async function GET() {
       count: s._count.id,
     }));
 
-    // ── Modül popülerlik (kaç klinik satın almış)
+    // ── Modül popülerlik
     const modulePopularity: Record<string, { name: string; count: number }> = {};
     for (const cm of moduleActivations as any[]) {
       const name = cm.module?.displayName || cm.module?.name || "Bilinmeyen";
@@ -171,7 +230,7 @@ export async function GET() {
       count: a._count.id,
     }));
 
-    // ── Modül kullanım (sayfa görüntüleme bazlı)
+    // ── Modül kullanım
     const moduleMap: Record<string, { views: number; uniqueUsers: Set<string> }> = {};
     for (const pv of pageViews) {
       const pg = (pv.details as any)?.page;
@@ -222,7 +281,6 @@ export async function GET() {
       userModuleMap[pv.userId].modules[mod] = (userModuleMap[pv.userId].modules[mod] || 0) + 1;
       userModuleMap[pv.userId].total += 1;
     }
-    // Fetch user names
     const userIds = Object.keys(userModuleMap);
     if (userIds.length > 0) {
       const users = await prisma.user.findMany({
@@ -248,10 +306,107 @@ export async function GET() {
       }))
       .sort((a, b) => b.total - a.total);
 
+    // ── Kullanıcı listesi (deneme süresi bilgileriyle)
+    const userList = allUsers.map((u) => {
+      const sub = u.clinic?.subscriptionPlan;
+      const trialEnd = sub?.trialEnd ? new Date(sub.trialEnd) : null;
+      const daysLeft = trialEnd ? Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null;
+      const subStatus = sub?.status || "none";
+
+      let displayStatus: string;
+      if (u.role === "ADMIN" || u.role === "SUPERADMIN") displayStatus = "admin";
+      else if (u.isDemo) displayStatus = "demo";
+      else if (subStatus === "active") displayStatus = "paying";
+      else if (subStatus === "trial" && daysLeft !== null && daysLeft > 0) displayStatus = "trial";
+      else if (subStatus === "trial" && daysLeft !== null && daysLeft <= 0) displayStatus = "expired";
+      else if (subStatus === "suspended") displayStatus = "suspended";
+      else if (subStatus === "cancelled") displayStatus = "cancelled";
+      else displayStatus = "trial"; // no subscription plan = new user in trial
+
+      return {
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        isActive: u.isActive,
+        isDemo: u.isDemo,
+        lastLoginAt: u.lastLoginAt,
+        createdAt: u.createdAt,
+        clinicId: u.clinic?.id || null,
+        clinicName: u.clinic?.name || null,
+        clinicPlan: u.clinic?.plan || null,
+        sector: u.clinic?.sector || null,
+        subStatus,
+        trialEnd: trialEnd?.toISOString() || null,
+        daysLeft,
+        displayStatus,
+        monthlyTotal: sub?.monthlyTotal || 0,
+      };
+    });
+
+    // ── Deneme süresi istatistikleri
+    const trialActive = userList.filter(u => u.displayStatus === "trial").length;
+    const trialExpired = userList.filter(u => u.displayStatus === "expired").length;
+    const payingUsers = userList.filter(u => u.displayStatus === "paying").length;
+
+    // ── Ödeme geçmişi birleştir
+    const paymentHistory: Array<{
+      id: string;
+      date: string;
+      userName: string;
+      userEmail: string;
+      amount: number;
+      status: string;
+      method: string;
+      ref: string | null;
+    }> = [];
+
+    // BillingHistory kayıtları
+    for (const bh of billingHistory as any[]) {
+      const clinic = bh.subscriptionPlan?.clinic;
+      const u = clinic?.users?.[0];
+      paymentHistory.push({
+        id: bh.id,
+        date: bh.createdAt,
+        userName: u?.name || clinic?.name || "—",
+        userEmail: u?.email || "—",
+        amount: bh.amount / 100,
+        status: bh.status,
+        method: "PayTR",
+        ref: bh.paytrRef || null,
+      });
+    }
+
+    // SubscriptionPayment kayıtları
+    for (const sp of subscriptionPayments as any[]) {
+      const clinic = sp.subscription?.clinic;
+      const u = clinic?.users?.[0];
+      paymentHistory.push({
+        id: sp.id,
+        date: sp.paidAt || sp.createdAt,
+        userName: u?.name || "—",
+        userEmail: u?.email || "—",
+        amount: sp.amount,
+        status: sp.status,
+        method: sp.paytrOrderId ? "PayTR" : "Iyzico",
+        ref: sp.paytrOrderId || sp.iyzicoPaymentId || null,
+      });
+    }
+
+    // Tarihe göre sırala
+    paymentHistory.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    // Bu ay toplam gelir
+    const monthlyRevenue = paymentHistory
+      .filter(p => p.status === "success" || p.status === "SUCCESS")
+      .filter(p => new Date(p.date) >= startOfMonth)
+      .reduce((sum, p) => sum + p.amount, 0);
+
     return NextResponse.json({
       // Temel sayılar
       totalUsers,
       activeUsers: activeUsersLast24h,
+      activeUsersLast7d,
       passiveUsers,
       totalClinics,
       todayLogins,
@@ -259,8 +414,10 @@ export async function GET() {
       totalEmployees,
       totalAppointments,
       totalTreatments,
-      // Son 30 gün büyüme
+      // Büyüme
       newUsersLast30d,
+      newUsersThisWeek,
+      newUsersThisMonth,
       newClinicsLast30d,
       newPatientsLast30d,
       newEmployeesLast30d,
@@ -279,8 +436,16 @@ export async function GET() {
       // Modül kullanım
       topModules: topModulesUsage,
       userAnalytics,
-      // Giriş trendi
       loginChart,
+      // Yeni: kullanıcı listesi
+      userList,
+      // Yeni: deneme süresi istatistikleri
+      trialActive,
+      trialExpired,
+      payingUsers,
+      // Yeni: ödeme geçmişi
+      paymentHistory: paymentHistory.slice(0, 50),
+      monthlyRevenue,
     });
   } catch (error) {
     console.error("Admin stats error:", error);
