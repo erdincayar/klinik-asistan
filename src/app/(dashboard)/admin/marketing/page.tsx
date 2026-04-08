@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { formatDate } from "@/lib/utils";
 
 interface Post {
   id: string;
@@ -602,7 +601,7 @@ export default function AdminMarketingPage() {
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 mt-2 text-xs text-indigo-600 hover:underline"
                     >
-                      <Twitter className="h-3 w-3" /> X'te Görüntüle
+                      <Twitter className="h-3 w-3" /> X&apos;te Görüntüle
                     </a>
                   )}
                 </div>
