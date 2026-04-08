@@ -810,6 +810,31 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       .catch(() => {});
   }, []);
 
+  // Trial expired check — redirect non-admin users to /expired
+  const router2 = useRouter();
+  useEffect(() => {
+    if (!session?.user) return;
+    const role = (session.user as any)?.role;
+    if (role === "ADMIN" || role === "SUPERADMIN") return; // Admin muaf
+    if ((session.user as any)?.isDemo) return; // Demo muaf
+
+    const sessionSubStatus = (session.user as any)?.subStatus;
+    const sessionTrialEnd = (session.user as any)?.trialEnd;
+
+    // Check from session first
+    if (sessionSubStatus === "suspended" || sessionSubStatus === "cancelled") {
+      router2.replace("/expired");
+      return;
+    }
+    if (sessionSubStatus === "trial" && sessionTrialEnd) {
+      const daysLeft = Math.ceil((new Date(sessionTrialEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      if (daysLeft < 0) {
+        router2.replace("/expired");
+        return;
+      }
+    }
+  }, [session, router2]);
+
   // Log page views for analytics
   useEffect(() => {
     fetch("/api/activity/page-view", {

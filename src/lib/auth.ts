@@ -75,6 +75,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           activeModules: (user.clinic?.subscriptionPlan?.activeModules as string[]) || ["base", "messaging"],
           isDemo: user.isDemo || user.role === "DEMO",
           rememberMe: credentials.rememberMe === "true",
+          subStatus: user.clinic?.subscriptionPlan?.status || "trial",
+          trialEnd: user.clinic?.subscriptionPlan?.trialEnd?.toISOString() || null,
         };
       },
     }),
@@ -126,6 +128,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.isDemo = (user as any).isDemo ?? false;
         token.rememberMe = (user as any).rememberMe ?? false;
         token.loginAt = Math.floor(Date.now() / 1000);
+        token.subStatus = (user as any).subStatus || "trial";
+        token.trialEnd = (user as any).trialEnd || null;
       }
 
       // Google sign-in: look up user by email (no adapter, so token.sub is Google ID)
@@ -137,7 +141,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             role: true,
             clinicId: true,
             isDemo: true,
-            clinic: { select: { plan: true, subscriptionPlan: { select: { activeModules: true } } } },
+            clinic: { select: { plan: true, subscriptionPlan: { select: { activeModules: true, status: true, trialEnd: true } } } },
           },
         });
         if (dbUser) {
@@ -147,6 +151,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.clinicPlan = dbUser.clinic?.plan || "PRO";
           token.activeModules = (dbUser.clinic?.subscriptionPlan?.activeModules as string[]) || ["base", "messaging"];
           token.isDemo = dbUser.isDemo || dbUser.role === "DEMO";
+          token.subStatus = dbUser.clinic?.subscriptionPlan?.status || "trial";
+          token.trialEnd = dbUser.clinic?.subscriptionPlan?.trialEnd?.toISOString() || null;
         }
         token.rememberMe = true;
         token.loginAt = Math.floor(Date.now() / 1000);
@@ -160,7 +166,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             clinicId: true,
             role: true,
             isDemo: true,
-            clinic: { select: { plan: true, subscriptionPlan: { select: { activeModules: true } } } },
+            clinic: { select: { plan: true, subscriptionPlan: { select: { activeModules: true, status: true, trialEnd: true } } } },
           },
         });
         if (dbUser?.clinicId) {
@@ -169,6 +175,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.clinicPlan = dbUser.clinic?.plan || "PRO";
           token.activeModules = (dbUser.clinic?.subscriptionPlan?.activeModules as string[]) || ["base", "messaging"];
           token.isDemo = dbUser.isDemo || dbUser.role === "DEMO";
+          token.subStatus = dbUser.clinic?.subscriptionPlan?.status || "trial";
+          token.trialEnd = dbUser.clinic?.subscriptionPlan?.trialEnd?.toISOString() || null;
         }
       }
 
@@ -190,6 +198,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         (session.user as any).clinicPlan = token.clinicPlan ?? "PRO";
         (session.user as any).activeModules = token.activeModules || ["base", "messaging"];
         (session.user as any).isDemo = token.isDemo ?? false;
+        (session.user as any).subStatus = token.subStatus || "trial";
+        (session.user as any).trialEnd = token.trialEnd || null;
       }
       return session;
     },
