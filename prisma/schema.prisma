@@ -819,6 +819,12 @@ model ScheduledPost {
   errorMessage    String?   // Error details if failed
   approvedBy      String?   // Who approved
   approvedAt      DateTime?
+  feedback        String?   @db.Text // Admin feedback for revision
+  // Performance metrics
+  impressions     Int?
+  likes           Int?
+  replies         Int?
+  retweets        Int?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 }

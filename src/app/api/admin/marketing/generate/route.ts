@@ -25,7 +25,7 @@ export async function POST() {
       max_tokens: 2000,
       messages: [{
         role: "user",
-        content: `Poby.ai (küçük işletmeler için AI destekli yönetim platformu) için bu hafta paylaşılacak 7 tweet üret.
+        content: `Poby.ai (işletmeler için AI destekli yönetim platformu) için bu hafta paylaşılacak 7 tweet üret.
 
 Kurallar:
 - Her tweet Türkçe ve max 280 karakter

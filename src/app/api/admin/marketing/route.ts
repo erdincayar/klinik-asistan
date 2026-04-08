@@ -99,6 +99,12 @@ export async function PATCH(req: NextRequest) {
     }
     if (updateData.scheduledAt) data.scheduledAt = new Date(updateData.scheduledAt);
     if (updateData.occasion !== undefined) data.occasion = updateData.occasion;
+    if (updateData.imageUrl !== undefined) data.imageUrl = updateData.imageUrl;
+    // Performance metrics
+    if (updateData.impressions !== undefined) data.impressions = Number(updateData.impressions) || null;
+    if (updateData.likes !== undefined) data.likes = Number(updateData.likes) || null;
+    if (updateData.replies !== undefined) data.replies = Number(updateData.replies) || null;
+    if (updateData.retweets !== undefined) data.retweets = Number(updateData.retweets) || null;
 
     const post = await prisma.scheduledPost.update({
       where: { id },

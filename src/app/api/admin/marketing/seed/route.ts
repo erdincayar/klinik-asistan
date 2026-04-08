@@ -27,7 +27,7 @@ const SEED_CONTENT = [
   {
     type: "tweet",
     platform: "twitter",
-    content: "Küçük işletmelerin %60'ı finansal takip eksikliğinden kapanıyor.\n\nGelir, gider, KDV, cari hesap — hepsini tek yerden takip edin.\n\npoby.ai/register",
+    content: "İşletmelerin %60'ı finansal takip eksikliğinden kapanıyor.\n\nGelir, gider, KDV, cari hesap — hepsini tek yerden takip edin.\n\npoby.ai/register",
     scheduledAt: "2026-04-10T09:30:00",
     occasion: "Perşembe istatistik",
   },
@@ -41,9 +41,9 @@ const SEED_CONTENT = [
   {
     type: "thread",
     platform: "twitter",
-    content: "🧵 Küçük işletmenizi dijitalleştirmenin 5 adımı:",
+    content: "🧵 İşletmenizi dijitalleştirmenin 5 adımı:",
     threadContent: JSON.stringify([
-      "🧵 Küçük işletmenizi dijitalleştirmenin 5 adımı:",
+      "🧵 İşletmenizi dijitalleştirmenin 5 adımı:",
       "1/ Müşteri kartlarınızı oluşturun\n→ İsim, telefon, geçmiş işlemler tek yerde\n→ CRM ile müşteri sadakatini artırın",
       "2/ Randevu sistemi kurun\n→ Otomatik hatırlatma ile iptal oranını düşürün\n→ Çalışan bazlı takvim ile organize olun",
       "3/ Gelir-gider takibine başlayın\n→ Aylık kar/zarar analizi yapın\n→ KDV hesaplamasını otomatikleştirin",
