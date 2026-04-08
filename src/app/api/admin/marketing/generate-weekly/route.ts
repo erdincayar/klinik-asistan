@@ -69,6 +69,32 @@ export async function POST(req: Request) {
       return d.toISOString().split("T")[0];
     });
 
+    // Get strategy settings
+    const strategy = await prisma.tweetStrategy.findUnique({ where: { clinicId } });
+    const tweetsPerDay = strategy?.tweetsPerDay || 2;
+    const postTimes: string[] = strategy?.postTimes ? JSON.parse(strategy.postTimes) : ["09:00", "17:00"];
+    const contentMix = strategy?.contentMix ? JSON.parse(strategy.contentMix) : {};
+    const focusFeatures: string[] = strategy?.focusFeatures ? JSON.parse(strategy.focusFeatures) : [];
+    const videoRhythm = strategy?.videoRhythm || "evening";
+    const videoScenarios: string[] = strategy?.videoScenarios ? JSON.parse(strategy.videoScenarios) : [];
+    const toneStyle = strategy?.toneStyle || "samimi-profesyonel";
+    const hashtagStrategy = strategy?.hashtagStrategy || "#pobyai #işletmeyönetimi #dijitalleşme";
+    const avoidTopics = strategy?.avoidTopics || "";
+
+    const totalWeeklyContent = tweetsPerDay * 7;
+
+    const strategyContext = `
+STRATEJI AYARLARI:
+- Günde ${tweetsPerDay} tweet, saatler: ${postTimes.join(", ")} (Europe/Istanbul)
+- Ton: ${toneStyle}
+- Öne çıkarılacak özellikler: ${focusFeatures.join(", ") || "genel"}
+- Hashtag'ler: ${hashtagStrategy}
+- Video ritmi: ${videoRhythm === "evening" ? "Akşam video/görsel içerik" : videoRhythm === "morning" ? "Sabah video/görsel içerik" : videoRhythm === "both" ? "Sabah ve akşam video" : "Video yok"}
+- Video senaryoları: ${videoScenarios.join(", ") || "belirtilmedi"}
+${avoidTopics ? `- KAÇINILACAK: ${avoidTopics}` : ""}
+${Object.keys(contentMix).length > 0 ? `- İçerik karışımı: ${Object.entries(contentMix).map(([k, v]) => `${k} %${v}`).join(", ")}` : ""}
+`;
+
     // Get past performance data for context
     const pastPosts = await prisma.scheduledPost.findMany({
       where: {
@@ -92,27 +118,19 @@ export async function POST(req: Request) {
       max_tokens: 4000,
       messages: [{
         role: "user",
-        content: `${CONTENT_RULES}${performanceContext}
+        content: `${CONTENT_RULES}${strategyContext}${performanceContext}
 
-Gelecek hafta (${weekDates[0]} — ${weekDates[6]}) için toplam 9 içerik üret:
+Gelecek hafta (${weekDates[0]} — ${weekDates[6]}) için toplam ${totalWeeklyContent} içerik üret.
 
-1. 3 THREAD (her biri 5-7 tweet uzunluğunda, eğitici/bilgilendirici):
-   - Thread 1: Poby.ai özellik tanıtımı
-   - Thread 2: Sektörel ipuçları (işletme yönetimi)
-   - Thread 3: Başarı hikayesi / kullanım senaryosu
-
-2. 5 TEK TWEET (kısa, etkili, farklı konularda):
-   - Özellik tanıtımı
-   - İpucu/tavsiye
-   - İstatistik/veri paylaşımı
-   - Motivasyon/ilham
-   - CTA (kayıt çağrısı)
-
-3. 1 ANKET tweet'i (Twitter poll formatında, soru + 2-4 seçenek)
-
-Her içerik için saatler şöyle olsun (Europe/Istanbul):
-- Pazartesi-Cuma: 09:00, 12:00, 17:00 arası
-- Cumartesi-Pazar: 11:00, 14:00 arası
+İçerik planı kuralları:
+- Günde ${tweetsPerDay} içerik, saatler: ${postTimes.join(", ")} (Europe/Istanbul)
+- Haftada en az 2 THREAD (5-7 tweet, eğitici/bilgilendirici)
+- Haftada en az 1 ANKET (poll formatında)
+- Geri kalanı tek tweet
+- ${videoRhythm !== "none" ? `${videoRhythm === "evening" ? "Akşam saatlerinde" : videoRhythm === "morning" ? "Sabah saatlerinde" : "Hem sabah hem akşam"} video/görsel önerisi ekle. Video senaryoları: ${videoScenarios.join(", ")}` : "Video önerme"}
+- Sabah metin ağırlıklı (bilgi, ipucu, thread), akşam görsel/video ağırlıklı (etkileyici, CTA)
+- Öne çıkar: ${focusFeatures.join(", ") || "tüm özellikler"}
+- Hafta sonu daha rahat ton, hafta içi profesyonel
 
 Her içerik için MUTLAKA medya önerisi ekle:
 - mediaSuggestion: "image" | "video" | "none"

@@ -85,10 +85,10 @@ Adım adım rehberimizle 15 dakikada kurulum yapabilirsiniz.`,
   },
   {
     slug: "kucuk-isletmeler-icin-ai-rehberi",
-    title: "Küçük İşletmeler İçin AI Rehberi",
+    title: "İşletmeler İçin AI Rehberi",
     description:
-      "Yapay zekanın küçük işletmelere nasıl yardımcı olabileceğini, pratik kullanım alanlarını ve Poby.ai ile nasıl başlayacağınızı öğrenin.",
-    content: `Yapay zeka artık sadece büyük şirketlerin kullandığı bir teknoloji değil. Küçük işletmeler de AI'dan faydalanarak rekabet avantajı elde edebilir.
+      "Yapay zekanın işletmelere nasıl yardımcı olabileceğini, pratik kullanım alanlarını ve Poby.ai ile nasıl başlayacağınızı öğrenin.",
+    content: `Yapay zeka artık sadece büyük şirketlerin kullandığı bir teknoloji değil. İşletmeler de AI'dan faydalanarak rekabet avantajı elde edebilir.
 
 ## AI Kullanım Alanları
 
@@ -106,7 +106,7 @@ Hedefli reklam kampanyaları, e-posta otomasyonu ve müşteri segmentasyonu AI i
 
 ## Poby.ai ile AI Kullanımı
 
-Poby.ai, küçük işletmelerin AI teknolojisine kolay erişimini sağlar:
+Poby.ai, işletmelerin AI teknolojisine kolay erişimini sağlar:
 
 - **Poby Asistan:** İşletmenize özel eğitilmiş AI asistan
 - **AI İçerik Stüdyosu:** DALL-E 3 ile görsel üretimi

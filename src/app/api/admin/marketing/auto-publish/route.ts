@@ -33,7 +33,13 @@ export async function POST(req: Request) {
     const accessToken = process.env.TWITTER_ACCESS_TOKEN;
     const accessSecret = process.env.TWITTER_ACCESS_TOKEN_SECRET;
 
-    if (!apiKey || !accessToken) {
+    if (!apiKey || !apiSecret || !accessToken || !accessSecret) {
+      console.error("Twitter API keys missing:", {
+        TWITTER_API_KEY: !!apiKey,
+        TWITTER_API_SECRET: !!apiSecret,
+        TWITTER_ACCESS_TOKEN: !!accessToken,
+        TWITTER_ACCESS_TOKEN_SECRET: !!accessSecret,
+      });
       return NextResponse.json({ error: "X API anahtarları ayarlanmamış" }, { status: 500 });
     }
 
@@ -98,10 +104,13 @@ export async function POST(req: Request) {
           });
 
           if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
+            const errText = await res.text().catch(() => "");
+            let err: any = {};
+            try { err = JSON.parse(errText); } catch { err = { raw: errText }; }
+            console.error(`Twitter auto-publish error [${res.status}] for post ${post.id}:`, JSON.stringify(err, null, 2));
             await prisma.scheduledPost.update({
               where: { id: post.id },
-              data: { status: "FAILED", errorMessage: JSON.stringify(err).slice(0, 500) },
+              data: { status: "FAILED", errorMessage: `HTTP ${res.status}: ${JSON.stringify(err).slice(0, 480)}` },
             });
             break;
           }
@@ -189,11 +198,16 @@ async function uploadMedia(
       body: formData,
     });
 
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "");
+      console.error(`Twitter media upload error [${res.status}]:`, errText);
+      return null;
+    }
 
     const data = await res.json();
     return data.media_id_string || null;
-  } catch {
+  } catch (err) {
+    console.error("Twitter media upload exception:", err);
     return null;
   }
 }

@@ -1,17 +1,19 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import {
   Plus, Send, Trash2, Check, Clock, AlertCircle, Twitter,
   Edit, Calendar, Sparkles, Loader2, X, ImagePlus, Eye,
-  ThumbsDown, BarChart3, RefreshCw, Zap, Upload, Wand2,
-  RotateCcw, Film, FileText, Image as LucideImage, MessageSquare,
+  ThumbsDown, BarChart3, RefreshCw, Zap, Wand2,
+  Film, FileText, Image as LucideImage,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import AiImagePanel from "@/components/marketing/AiImagePanel";
+import EngagementContent from "@/components/marketing/EngagementContent";
 
 interface Post {
   id: string;
@@ -37,12 +39,6 @@ interface Post {
   createdAt: string;
 }
 
-interface Concept {
-  title: string;
-  description: string;
-  prompt: string;
-}
-
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
   DRAFT: { label: "Taslak", color: "bg-gray-100 text-gray-700", icon: Edit },
   APPROVED: { label: "Onaylı", color: "bg-blue-100 text-blue-700", icon: Check },
@@ -61,6 +57,7 @@ function formatIstanbul(dateStr: string) {
 }
 
 export default function AdminMarketingPage() {
+  const [mainTab, setMainTab] = useState<"content" | "engagement" | "strategy">("content");
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("all");
@@ -68,6 +65,10 @@ export default function AdminMarketingPage() {
   const [publishing, setPublishing] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  // Video generation
+  const [showVideoGen, setShowVideoGen] = useState(false);
+  const [videoScenario, setVideoScenario] = useState("dashboard");
+  const [videoGenerating, setVideoGenerating] = useState(false);
   const [fixing, setFixing] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
 
@@ -89,23 +90,10 @@ export default function AdminMarketingPage() {
   const [editOccasion, setEditOccasion] = useState("");
   const [editSaving, setEditSaving] = useState(false);
 
-  // Image upload & AI generation
+  // Image upload
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [imageMode, setImageMode] = useState<"none" | "ai" | "upload">("none");
-  // Concept flow states
-  const [aiStep, setAiStep] = useState<"concepts" | "generate" | "results">("concepts");
-  const [concepts, setConcepts] = useState<Concept[]>([]);
-  const [loadingConcepts, setLoadingConcepts] = useState(false);
-  const [selectedConcept, setSelectedConcept] = useState<Concept | null>(null);
-  const [conceptEdit, setConceptEdit] = useState("");
-  const [aiImageModel, setAiImageModel] = useState<"flux-schnell" | "flux-pro">("flux-schnell");
-  const [aiImageAspect, setAiImageAspect] = useState<"16:9" | "1:1" | "9:16">("16:9");
-  const [aiImageCount, setAiImageCount] = useState<1 | 2 | 3>(1);
-  const [aiGenerating, setAiGenerating] = useState(false);
-  const [aiGeneratedImages, setAiGeneratedImages] = useState<{ url: string; id: string }[]>([]);
-  const [feedbackMode, setFeedbackMode] = useState(false);
-  const [imageFeedback, setImageFeedback] = useState("");
+  const [imageMode, setImageMode] = useState<"none" | "ai">("none");
   // Lightbox
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
@@ -226,131 +214,11 @@ export default function AdminMarketingPage() {
     } catch {} finally { setUploading(false); }
   }
 
-  async function handleSuggestConcepts(post: Post) {
-    const content = post.content || (post.threadContent ? JSON.parse(post.threadContent)[0] : "");
-    if (!content) return;
-    setLoadingConcepts(true);
-    setConcepts([]);
-    setSelectedConcept(null);
-    setAiStep("concepts");
-    try {
-      const res = await fetch("/api/marketing/ai-studio/suggest-concepts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setConcepts(data.concepts || []);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Konsept önerisi başarısız");
-    } finally {
-      setLoadingConcepts(false);
-    }
-  }
-
-  function handlePickConcept(concept: Concept) {
-    setSelectedConcept(concept);
-    setConceptEdit(concept.prompt);
-    setAiStep("generate");
-    setAiGeneratedImages([]);
-    setFeedbackMode(false);
-    setImageFeedback("");
-  }
-
-  async function handleAiImageGenerate() {
-    const prompt = conceptEdit.trim() || selectedConcept?.prompt;
-    if (!prompt) return;
-    setAiGenerating(true);
-    setAiGeneratedImages([]);
-    setAiStep("results");
-    try {
-      const results: { url: string; id: string }[] = [];
-      const promises = Array.from({ length: aiImageCount }, () =>
-        fetch("/api/marketing/ai-studio/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            prompt,
-            model: aiImageModel,
-            aspectRatio: aiImageAspect,
-          }),
-        }).then(r => r.json())
-      );
-      const responses = await Promise.all(promises);
-      for (const data of responses) {
-        if (data.imageUrl) results.push({ url: data.imageUrl, id: data.id });
-      }
-      if (results.length === 0) throw new Error("Görsel üretilemedi");
-      setAiGeneratedImages(results);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Görsel üretimi başarısız");
-    } finally {
-      setAiGenerating(false);
-    }
-  }
-
-  async function handleRegenerateWithFeedback() {
-    if (!imageFeedback.trim() || !selectedConcept) return;
-    setAiGenerating(true);
-    try {
-      const res = await fetch("/api/marketing/ai-studio/refine-concept", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          originalPrompt: conceptEdit || selectedConcept.prompt,
-          feedback: imageFeedback,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setConceptEdit(data.prompt);
-      setFeedbackMode(false);
-      setImageFeedback("");
-      // Auto-generate with refined prompt
-      setAiGeneratedImages([]);
-      const results: { url: string; id: string }[] = [];
-      const promises = Array.from({ length: aiImageCount }, () =>
-        fetch("/api/marketing/ai-studio/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            prompt: data.prompt,
-            model: aiImageModel,
-            aspectRatio: aiImageAspect,
-          }),
-        }).then(r => r.json())
-      );
-      const responses = await Promise.all(promises);
-      for (const d of responses) {
-        if (d.imageUrl) results.push({ url: d.imageUrl, id: d.id });
-      }
-      setAiGeneratedImages(results);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Düzenleme başarısız");
-    } finally {
-      setAiGenerating(false);
-    }
-  }
-
   async function handleSelectAiImage(postId: string, imageUrl: string) {
     await updatePost(postId, { imageUrl });
     const updated = (await (await fetch("/api/admin/marketing")).json()).posts?.find((p: Post) => p.id === postId);
     if (updated) setSelectedPost(updated);
-    setAiGeneratedImages([]);
     setImageMode("none");
-    setAiStep("concepts");
-  }
-
-  function openImageAiPanel(post: Post) {
-    setImageMode("ai");
-    setAiStep("concepts");
-    setConcepts([]);
-    setSelectedConcept(null);
-    setAiGeneratedImages([]);
-    setFeedbackMode(false);
-    setImageFeedback("");
-    handleSuggestConcepts(post);
   }
 
   async function handleSaveEdit() {
@@ -393,12 +261,6 @@ export default function AdminMarketingPage() {
     setEditOccasion(post.occasion || "");
     setFeedbackText("");
     setImageMode("none");
-    setAiStep("concepts");
-    setConcepts([]);
-    setSelectedConcept(null);
-    setAiGeneratedImages([]);
-    setFeedbackMode(false);
-    setImageFeedback("");
     setShowMetrics(false);
     setMetrics({
       impressions: String(post.impressions || ""),
@@ -422,12 +284,31 @@ export default function AdminMarketingPage() {
 
   return (
     <div className="space-y-6">
+      {/* Main Tab Switcher */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1 rounded-xl bg-gray-100 p-1">
+          {[
+            { key: "content" as const, label: "İçerikler" },
+            { key: "engagement" as const, label: "Engagement" },
+            { key: "strategy" as const, label: "Strateji" },
+          ].map(t => (
+            <button key={t.key} onClick={() => setMainTab(t.key)} className={`rounded-lg px-4 py-2 text-xs font-semibold transition-colors ${mainTab === t.key ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {mainTab === "engagement" && <EngagementContent />}
+      {mainTab === "strategy" && <StrategySettings />}
+
+      {mainTab === "content" && <>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-bold text-gray-900">Content Studio</h1>
           <p className="text-xs text-gray-500">İçerik oluştur, zamanla, paylaş</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap justify-end">
           <Button variant="outline" size="sm" onClick={async () => {
             setGenerating(true);
             const res = await fetch("/api/admin/marketing/generate-weekly", { method: "POST" });
@@ -438,13 +319,64 @@ export default function AdminMarketingPage() {
             setGenerating(false);
           }} disabled={generating}>
             {generating ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-1 h-3.5 w-3.5" />}
-            Haftalık Üret
+            Haftalık Plan Oluştur
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setShowVideoGen(!showVideoGen)}>
+            <Film className="mr-1 h-3.5 w-3.5" /> Video Üret
           </Button>
           <Button onClick={() => setShowCreate(true)} size="sm">
             <Plus className="mr-1 h-3.5 w-3.5" /> Oluştur
           </Button>
         </div>
       </div>
+
+      {/* Video Generation Panel */}
+      {showVideoGen && (
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Film className="h-4 w-4 text-indigo-500" />
+                <span className="text-sm font-semibold text-gray-900">Video Senaryosu Seç</span>
+              </div>
+              <button onClick={() => setShowVideoGen(false)} className="rounded-lg p-1 hover:bg-gray-100"><X className="h-4 w-4 text-gray-400" /></button>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {[
+                { value: "dashboard", label: "Dashboard Özet", icon: "📊" },
+                { value: "randevu", label: "Randevu Demo", icon: "📅" },
+                { value: "crm", label: "CRM Demo", icon: "👥" },
+                { value: "fatura", label: "Fatura Demo", icon: "🧾" },
+                { value: "stok", label: "Stok Demo", icon: "📦" },
+                { value: "whatsapp", label: "WhatsApp Bot Demo", icon: "💬" },
+              ].map(s => (
+                <button
+                  key={s.value}
+                  onClick={() => setVideoScenario(s.value)}
+                  className={`rounded-xl border-2 p-3 text-left transition-all ${videoScenario === s.value ? "border-indigo-400 bg-indigo-50" : "border-gray-100 hover:border-gray-200"}`}
+                >
+                  <span className="text-lg">{s.icon}</span>
+                  <p className="text-xs font-medium text-gray-800 mt-1">{s.label}</p>
+                </button>
+              ))}
+            </div>
+            <Button
+              onClick={async () => {
+                setVideoGenerating(true);
+                alert(`Video üretimi başlatıldı: ${videoScenario}\n\nPuppeteer video üretim modülü yakında aktif olacak. Şimdilik senaryo kaydedildi.`);
+                setVideoGenerating(false);
+                setShowVideoGen(false);
+              }}
+              disabled={videoGenerating}
+              size="sm"
+              className="w-full"
+            >
+              {videoGenerating ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <Film className="mr-1 h-3.5 w-3.5" />}
+              {videoGenerating ? "Üretiliyor..." : `"${videoScenario}" Videosunu Üret`}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
@@ -696,190 +628,28 @@ export default function AdminMarketingPage() {
                   </div>
                 )}
 
-                {/* Two option buttons */}
+                {/* Action buttons */}
                 {imageMode === "none" && (
-                  <div className="mt-1 flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => openImageAiPanel(selectedPost)}>
+                  <div className="mt-1">
+                    <Button variant="outline" size="sm" onClick={() => setImageMode("ai")}>
                       <Wand2 className="mr-1 h-3.5 w-3.5 text-purple-500" />
-                      AI ile Üret
+                      Görsel Ekle
                     </Button>
                     <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={e => {
                       const file = e.target.files?.[0];
                       if (file && selectedPost) handleImageUpload(selectedPost.id, file);
                     }} />
-                    <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-                      {uploading ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <Upload className="mr-1 h-3.5 w-3.5" />}
-                      Dosya Yükle
-                    </Button>
                   </div>
                 )}
 
-                {/* AI Generation Panel — Concept Flow */}
+                {/* AI Image Panel */}
                 {imageMode === "ai" && (
-                  <div className="mt-2 rounded-xl border border-purple-200 bg-purple-50/50 p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <Wand2 className="h-3.5 w-3.5 text-purple-600" />
-                        <span className="text-xs font-semibold text-purple-800">AI ile Görsel Üret</span>
-                        <span className="text-[10px] text-purple-400">
-                          {aiStep === "concepts" && "1/3 Konsept"}
-                          {aiStep === "generate" && "2/3 Ayarlar"}
-                          {aiStep === "results" && "3/3 Sonuç"}
-                        </span>
-                      </div>
-                      <button onClick={() => { setImageMode("none"); setAiStep("concepts"); setAiGeneratedImages([]); }} className="rounded p-1 hover:bg-purple-100">
-                        <X className="h-3.5 w-3.5 text-purple-400" />
-                      </button>
-                    </div>
-
-                    {/* Step 1: Concept suggestions */}
-                    {aiStep === "concepts" && (
-                      <>
-                        {loadingConcepts ? (
-                          <div className="flex items-center justify-center py-6">
-                            <Loader2 className="h-5 w-5 animate-spin text-purple-500 mr-2" />
-                            <span className="text-xs text-purple-600">Konseptler hazırlanıyor...</span>
-                          </div>
-                        ) : concepts.length > 0 ? (
-                          <div className="space-y-2">
-                            <p className="text-[11px] text-gray-500">Bir konsept seçin veya düzenleyin:</p>
-                            {concepts.map((c, i) => (
-                              <button
-                                key={i}
-                                onClick={() => handlePickConcept(c)}
-                                className="w-full text-left rounded-lg border border-gray-200 bg-white p-3 hover:border-purple-400 hover:ring-1 hover:ring-purple-200 transition-all"
-                              >
-                                <p className="text-xs font-semibold text-gray-900">{c.title}</p>
-                                <p className="text-[11px] text-gray-500 mt-0.5">{c.description}</p>
-                              </button>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-xs text-gray-400 text-center py-4">Konsept önerisi yok</p>
-                        )}
-                      </>
-                    )}
-
-                    {/* Step 2: Settings & generate */}
-                    {aiStep === "generate" && selectedConcept && (
-                      <>
-                        <div>
-                          <div className="flex items-center justify-between mb-1">
-                            <label className="text-[11px] font-medium text-gray-600">Seçilen Konsept</label>
-                            <button onClick={() => { setAiStep("concepts"); setSelectedConcept(null); }} className="text-[10px] text-purple-600 hover:underline">Değiştir</button>
-                          </div>
-                          <p className="text-xs font-medium text-gray-800 mb-1">{selectedConcept.title}</p>
-                          <textarea
-                            value={conceptEdit}
-                            onChange={e => setConceptEdit(e.target.value)}
-                            rows={2}
-                            className="w-full rounded-lg border border-purple-200 bg-white px-3 py-2 text-[11px] text-gray-600 focus:ring-2 focus:ring-purple-300 focus:border-purple-400"
-                            placeholder="Prompt'u düzenleyebilirsiniz..."
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-2">
-                          <div>
-                            <label className="text-[10px] font-medium text-gray-500">Kalite</label>
-                            <select value={aiImageModel} onChange={e => setAiImageModel(e.target.value as any)} className="mt-0.5 w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs">
-                              <option value="flux-schnell">Hızlı Önizleme</option>
-                              <option value="flux-pro">Yüksek Kalite</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="text-[10px] font-medium text-gray-500">Boyut</label>
-                            <select value={aiImageAspect} onChange={e => setAiImageAspect(e.target.value as any)} className="mt-0.5 w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs">
-                              <option value="16:9">16:9 (X)</option>
-                              <option value="1:1">1:1 (Kare)</option>
-                              <option value="9:16">9:16 (Dikey)</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="text-[10px] font-medium text-gray-500">Varyasyon</label>
-                            <select value={aiImageCount} onChange={e => setAiImageCount(Number(e.target.value) as any)} className="mt-0.5 w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs">
-                              <option value={1}>1</option>
-                              <option value={2}>2</option>
-                              <option value={3}>3</option>
-                            </select>
-                          </div>
-                        </div>
-
-                        <Button onClick={handleAiImageGenerate} disabled={aiGenerating} size="sm" className="w-full bg-purple-600 hover:bg-purple-700">
-                          {aiGenerating ? <><Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> Üretiliyor...</> : <><Sparkles className="mr-1 h-3.5 w-3.5" /> Üret</>}
-                        </Button>
-                      </>
-                    )}
-
-                    {/* Step 3: Results */}
-                    {aiStep === "results" && (
-                      <>
-                        {aiGenerating ? (
-                          <div className="flex items-center justify-center py-8">
-                            <Loader2 className="h-5 w-5 animate-spin text-purple-500 mr-2" />
-                            <span className="text-xs text-purple-600">Görseller üretiliyor...</span>
-                          </div>
-                        ) : aiGeneratedImages.length > 0 ? (
-                          <div className="space-y-3">
-                            <p className="text-[11px] font-medium text-gray-600">{aiGeneratedImages.length} görsel — tıklayarak seçin, büyütmek için sağ tık:</p>
-                            <div className={`grid gap-2 ${aiGeneratedImages.length === 1 ? "grid-cols-1" : aiGeneratedImages.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
-                              {aiGeneratedImages.map((img, i) => (
-                                <div key={i} className="group relative rounded-lg overflow-hidden border border-gray-200 cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all">
-                                  <img
-                                    src={img.url}
-                                    alt={`Varyasyon ${i + 1}`}
-                                    className="w-full aspect-video object-cover"
-                                    onClick={() => handleSelectAiImage(selectedPost.id, img.url)}
-                                    onContextMenu={e => { e.preventDefault(); setLightboxUrl(img.url); }}
-                                  />
-                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center pointer-events-none">
-                                    <span className="text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity">Seç</span>
-                                  </div>
-                                  {/* Lightbox trigger */}
-                                  <button
-                                    onClick={e => { e.stopPropagation(); setLightboxUrl(img.url); }}
-                                    className="absolute top-1 right-1 rounded bg-black/40 p-1 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                                  >
-                                    <Eye className="h-3 w-3" />
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-
-                            {/* Regenerate options */}
-                            <div className="flex gap-2">
-                              <Button variant="outline" size="sm" className="flex-1" onClick={handleAiImageGenerate} disabled={aiGenerating}>
-                                <RotateCcw className="mr-1 h-3.5 w-3.5" /> Yeniden üret
-                              </Button>
-                              <Button variant="outline" size="sm" className="flex-1" onClick={() => setFeedbackMode(!feedbackMode)}>
-                                <MessageSquare className="mr-1 h-3.5 w-3.5" /> Feedback ile düzelt
-                              </Button>
-                            </div>
-
-                            {feedbackMode && (
-                              <div className="space-y-2">
-                                <textarea
-                                  value={imageFeedback}
-                                  onChange={e => setImageFeedback(e.target.value)}
-                                  rows={2}
-                                  placeholder="Ne değişmeli? (örn: daha sıcak renkler, insanlar olmasın, daha minimalist...)"
-                                  className="w-full rounded-lg border border-purple-200 bg-white px-3 py-2 text-xs"
-                                />
-                                <Button onClick={handleRegenerateWithFeedback} disabled={aiGenerating || !imageFeedback.trim()} size="sm" className="w-full bg-purple-600 hover:bg-purple-700">
-                                  {aiGenerating ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="mr-1 h-3.5 w-3.5" />}
-                                  Feedback ile yeniden üret
-                                </Button>
-                              </div>
-                            )}
-
-                            {/* Back to settings */}
-                            <button onClick={() => setAiStep("generate")} className="text-[10px] text-purple-600 hover:underline">
-                              Ayarlara geri dön
-                            </button>
-                          </div>
-                        ) : null}
-                      </>
-                    )}
-                  </div>
+                  <AiImagePanel
+                    tweetContent={selectedPost.content || (selectedPost.threadContent ? JSON.parse(selectedPost.threadContent)[0] : "") || ""}
+                    onSelectImage={(url) => handleSelectAiImage(selectedPost.id, url)}
+                    onUploadFile={() => { setImageMode("none"); fileInputRef.current?.click(); }}
+                    onClose={() => setImageMode("none")}
+                  />
                 )}
               </div>
 
@@ -1103,6 +873,233 @@ export default function AdminMarketingPage() {
           <img src={lightboxUrl} alt="Preview" className="max-h-[85vh] max-w-[90vw] rounded-xl object-contain shadow-2xl" onClick={e => e.stopPropagation()} />
         </div>
       )}
+      </>}
+    </div>
+  );
+}
+
+/* ══════════════════════════════ STRATEGY SETTINGS ══════════════════════════════ */
+
+const FEATURE_OPTIONS = [
+  { value: "randevu", label: "Randevu Yönetimi" },
+  { value: "whatsapp", label: "WhatsApp Bot" },
+  { value: "finans", label: "Finans Takibi" },
+  { value: "ai-asistan", label: "AI Asistan" },
+  { value: "crm", label: "Müşteri CRM" },
+  { value: "stok", label: "Stok Yönetimi" },
+  { value: "calisanlar", label: "Çalışan Yönetimi" },
+  { value: "raporlar", label: "Raporlar" },
+  { value: "sosyal-medya", label: "Sosyal Medya" },
+];
+
+const TONE_OPTIONS = [
+  { value: "samimi-profesyonel", label: "Samimi & Profesyonel" },
+  { value: "cesur-enerjik", label: "Cesur & Enerjik" },
+  { value: "egitici-otoriter", label: "Eğitici & Otoriter" },
+  { value: "eglenceli-rahat", label: "Eğlenceli & Rahat" },
+];
+
+const VIDEO_SCENARIO_OPTIONS = [
+  { value: "dashboard", label: "Dashboard Özet" },
+  { value: "randevu", label: "Randevu Demo" },
+  { value: "crm", label: "CRM Demo" },
+  { value: "fatura", label: "Fatura Demo" },
+  { value: "stok", label: "Stok Demo" },
+  { value: "whatsapp", label: "WhatsApp Bot Demo" },
+];
+
+function StrategySettings() {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [s, setS] = useState({
+    tweetsPerDay: 2,
+    postTimes: ["09:00", "17:00"] as string[],
+    toneStyle: "samimi-profesyonel",
+    focusFeatures: ["randevu", "whatsapp", "finans", "ai-asistan"] as string[],
+    avoidTopics: "",
+    hashtagStrategy: "#pobyai #işletmeyönetimi #dijitalleşme",
+    videoRhythm: "evening",
+    videoScenarios: ["dashboard", "randevu", "crm"] as string[],
+    contentMix: { feature: 25, tip: 20, stat: 15, motivation: 10, cta: 10, thread: 15, poll: 5 } as Record<string, number>,
+  });
+
+  useEffect(() => {
+    fetch("/api/admin/marketing/strategy")
+      .then(r => r.json())
+      .then(d => {
+        if (d.strategy) {
+          const st = d.strategy;
+          setS({
+            tweetsPerDay: st.tweetsPerDay || 2,
+            postTimes: st.postTimes ? JSON.parse(st.postTimes) : ["09:00", "17:00"],
+            toneStyle: st.toneStyle || "samimi-profesyonel",
+            focusFeatures: st.focusFeatures ? JSON.parse(st.focusFeatures) : [],
+            avoidTopics: st.avoidTopics || "",
+            hashtagStrategy: st.hashtagStrategy || "",
+            videoRhythm: st.videoRhythm || "evening",
+            videoScenarios: st.videoScenarios ? JSON.parse(st.videoScenarios) : [],
+            contentMix: st.contentMix ? JSON.parse(st.contentMix) : {},
+          });
+        }
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function handleSave() {
+    setSaving(true);
+    setSaved(false);
+    await fetch("/api/admin/marketing/strategy", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(s),
+    });
+    setSaving(false);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  }
+
+  function toggleFeature(f: string) {
+    setS(prev => ({
+      ...prev,
+      focusFeatures: prev.focusFeatures.includes(f) ? prev.focusFeatures.filter(x => x !== f) : [...prev.focusFeatures, f],
+    }));
+  }
+
+  function toggleVideoScenario(v: string) {
+    setS(prev => ({
+      ...prev,
+      videoScenarios: prev.videoScenarios.includes(v) ? prev.videoScenarios.filter(x => x !== v) : [...prev.videoScenarios, v],
+    }));
+  }
+
+  function addTime() {
+    setS(prev => ({ ...prev, postTimes: [...prev.postTimes, "12:00"] }));
+  }
+
+  function removeTime(i: number) {
+    setS(prev => ({ ...prev, postTimes: prev.postTimes.filter((_, idx) => idx !== i) }));
+  }
+
+  function updateTime(i: number, val: string) {
+    setS(prev => ({ ...prev, postTimes: prev.postTimes.map((t, idx) => idx === i ? val : t) }));
+  }
+
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-gray-400" /></div>;
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-lg font-bold text-gray-900">Tweet Stratejisi Ayarları</h1>
+        <p className="text-xs text-gray-500">Haftalık plan oluşturulurken bu ayarlar kullanılır</p>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Tweet Rhythm */}
+        <Card>
+          <CardHeader className="py-3 px-4"><CardTitle className="text-sm">Tweet Ritmi</CardTitle></CardHeader>
+          <CardContent className="p-4 space-y-4">
+            <div>
+              <Label className="text-xs">Günde kaç tweet?</Label>
+              <div className="flex gap-2 mt-1.5">
+                {[1, 2, 3, 4, 5].map(n => (
+                  <button key={n} onClick={() => setS({ ...s, tweetsPerDay: n })} className={`flex-1 rounded-lg py-2 text-xs font-semibold transition-colors ${s.tweetsPerDay === n ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Paylaşım Saatleri (Istanbul)</Label>
+              <div className="space-y-2 mt-1.5">
+                {s.postTimes.map((t, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <Input type="time" value={t} onChange={e => updateTime(i, e.target.value)} className="flex-1" />
+                    {s.postTimes.length > 1 && <button onClick={() => removeTime(i)} className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500"><X className="h-3.5 w-3.5" /></button>}
+                  </div>
+                ))}
+                <button onClick={addTime} className="text-xs text-indigo-600 hover:underline">+ Saat Ekle</button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Content Style */}
+        <Card>
+          <CardHeader className="py-3 px-4"><CardTitle className="text-sm">İçerik Tarzı</CardTitle></CardHeader>
+          <CardContent className="p-4 space-y-4">
+            <div>
+              <Label className="text-xs">Ton</Label>
+              <div className="grid grid-cols-2 gap-2 mt-1.5">
+                {TONE_OPTIONS.map(t => (
+                  <button key={t.value} onClick={() => setS({ ...s, toneStyle: t.value })} className={`rounded-lg px-3 py-2 text-xs font-medium transition-colors ${s.toneStyle === t.value ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Hashtag Stratejisi</Label>
+              <Input value={s.hashtagStrategy} onChange={e => setS({ ...s, hashtagStrategy: e.target.value })} className="mt-1.5" placeholder="#pobyai #dijitalleşme" />
+            </div>
+            <div>
+              <Label className="text-xs">Kaçınılacak Konular</Label>
+              <Input value={s.avoidTopics} onChange={e => setS({ ...s, avoidTopics: e.target.value })} className="mt-1.5" placeholder="Örn: rakip isimleri, politik konular..." />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Focus Features */}
+        <Card>
+          <CardHeader className="py-3 px-4"><CardTitle className="text-sm">Öne Çıkarılacak Özellikler</CardTitle></CardHeader>
+          <CardContent className="p-4">
+            <div className="flex flex-wrap gap-2">
+              {FEATURE_OPTIONS.map(f => (
+                <button key={f.value} onClick={() => toggleFeature(f.value)} className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${s.focusFeatures.includes(f.value) ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Video Settings */}
+        <Card>
+          <CardHeader className="py-3 px-4"><CardTitle className="text-sm">Video Ayarları</CardTitle></CardHeader>
+          <CardContent className="p-4 space-y-4">
+            <div>
+              <Label className="text-xs">Video Ritmi</Label>
+              <div className="grid grid-cols-2 gap-2 mt-1.5">
+                {[
+                  { v: "morning", l: "Sabah" },
+                  { v: "evening", l: "Akşam" },
+                  { v: "both", l: "Her İkisi" },
+                  { v: "none", l: "Video Yok" },
+                ].map(o => (
+                  <button key={o.v} onClick={() => setS({ ...s, videoRhythm: o.v })} className={`rounded-lg px-3 py-2 text-xs font-medium transition-colors ${s.videoRhythm === o.v ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                    {o.l}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Video Senaryoları</Label>
+              <div className="flex flex-wrap gap-2 mt-1.5">
+                {VIDEO_SCENARIO_OPTIONS.map(v => (
+                  <button key={v.value} onClick={() => toggleVideoScenario(v.value)} className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${s.videoScenarios.includes(v.value) ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                    {v.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
+        {saving ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : saved ? <Check className="mr-1 h-3.5 w-3.5" /> : null}
+        {saving ? "Kaydediliyor..." : saved ? "Kaydedildi!" : "Stratejiyi Kaydet"}
+      </Button>
     </div>
   );
 }

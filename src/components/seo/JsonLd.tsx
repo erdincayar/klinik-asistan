@@ -5,7 +5,7 @@ export function SoftwareApplicationJsonLd() {
     name: "Poby.ai",
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web, iOS, Android",
-    description: "Küçük işletmeler için AI destekli yönetim platformu",
+    description: "İşletmeler için AI destekli yönetim platformu",
     url: "https://poby.ai",
     offers: {
       "@type": "Offer",

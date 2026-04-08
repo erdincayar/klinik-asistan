@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Özellikler — AI Destekli İşletme Yönetimi | Poby.ai",
     description:
-      "Küçük işletmeler için tüm ihtiyaçlarınızı karşılayan AI destekli platform.",
+      "İşletmenizin tüm ihtiyaçlarını karşılayan AI destekli yönetim platformu.",
     url: "https://poby.ai/ozellikler",
   },
 };

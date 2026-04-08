@@ -130,6 +130,9 @@ model Clinic {
   hrDocuments           HrDocument[]
   styleProfile          ClinicStyleProfile?
   aiGeneratedContents   AiGeneratedContent[]
+  tweetStrategy         TweetStrategy?
+  targetAccounts        TargetAccount[]
+  engagementReplies     EngagementReply[]
   assistantConfig       ClinicAssistantConfig?
   knowledgeBase         ClinicKnowledgeBase[]
   clinicConversations   ClinicConversation[]
@@ -829,6 +832,68 @@ model ScheduledPost {
   retweets        Int?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+}
+
+// ═══════════════════════════════════════════════════════════
+// Tweet Strategy Settings
+
+model TweetStrategy {
+  id                String   @id @default(cuid())
+  clinicId          String   @unique
+  clinic            Clinic   @relation(fields: [clinicId], references: [id])
+  tweetsPerDay      Int      @default(2)
+  postTimes         String   @default("[\"09:00\",\"17:00\"]") // JSON array
+  contentMix        String   @default("{\"feature\":25,\"tip\":20,\"stat\":15,\"motivation\":10,\"cta\":10,\"thread\":15,\"poll\":5}") // JSON percentages
+  toneStyle         String   @default("samimi-profesyonel")
+  focusFeatures     String   @default("[\"randevu\",\"whatsapp\",\"finans\",\"ai-asistan\"]") // JSON array
+  avoidTopics       String?  @db.Text
+  hashtagStrategy   String   @default("#pobyai #işletmeyönetimi #dijitalleşme")
+  videoRhythm       String   @default("evening") // morning, evening, both, none
+  videoScenarios    String   @default("[\"dashboard\",\"randevu\",\"crm\"]") // JSON array
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+// ═══════════════════════════════════════════════════════════
+// Engagement — Target Accounts & Reply Tracking
+
+model TargetAccount {
+  id          String   @id @default(cuid())
+  clinicId    String
+  clinic      Clinic   @relation(fields: [clinicId], references: [id])
+  username    String   // X username without @
+  displayName String?
+  xUserId     String?  // X platform user ID
+  note        String?  // why we track this account
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  replies     EngagementReply[]
+
+  @@unique([clinicId, username])
+}
+
+model EngagementReply {
+  id              String   @id @default(cuid())
+  clinicId        String
+  clinic          Clinic   @relation(fields: [clinicId], references: [id])
+  targetAccountId String?
+  targetAccount   TargetAccount? @relation(fields: [targetAccountId], references: [id])
+  sourceTweetId   String   // tweet we're replying to
+  sourceTweetText String   @db.Text
+  sourceAuthor    String   // username of tweet author
+  suggestedReply  String   @db.Text
+  status          String   @default("PENDING") // PENDING, APPROVED, SENT, FAILED, REJECTED
+  sentTweetId     String?  // our reply tweet ID after posting
+  errorMessage    String?
+  // Engagement metrics of our reply
+  impressions     Int?
+  likes           Int?
+  replies         Int?
+  retweets        Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 // ═══════════════════════════════════════════════════════════

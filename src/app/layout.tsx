@@ -26,19 +26,20 @@ export const metadata: Metadata = {
     telephone: false,
   },
   title: {
-    default: "Poby.ai — Küçük İşletmeler için AI Destekli Yönetim Platformu",
+    default: "Poby.ai — İşletmelerin AI Dostu",
     template: "%s | Poby.ai",
   },
   description:
-    "Klinik, restoran, kuaför ve daha fazlası için WhatsApp entegrasyonlu yapay zeka asistan, randevu yönetimi, finansal takip ve pazarlama araçları.",
+    "Klinik, restoran, kuaför, otel — işletmenizi AI ile tek platformdan yönetin. 7 gün ücretsiz deneyin.",
   keywords: [
     "klinik yönetim yazılımı",
     "restoran yönetim programı",
     "berber randevu sistemi",
     "whatsapp müşteri yönetimi",
-    "yapay zeka asistan küçük işletme",
+    "yapay zeka asistan işletme",
     "randevu takip programı",
     "işletme yönetim platformu",
+    "AI işletme yönetimi",
     "poby",
     "poby.ai",
   ],
@@ -55,23 +56,25 @@ export const metadata: Metadata = {
     locale: "tr_TR",
     url: "https://poby.ai",
     siteName: "Poby.ai",
-    title: "Poby.ai — Küçük İşletmeler için AI Destekli Yönetim Platformu",
+    title: "Poby.ai — İşletmelerin AI Dostu",
     description:
-      "WhatsApp entegrasyonlu yapay zeka asistan, randevu yönetimi ve pazarlama araçları.",
+      "Klinik, restoran, kuaför, otel — işletmenizi AI ile tek platformdan yönetin. 7 gün ücretsiz deneyin.",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Poby.ai Platform",
+        alt: "Poby.ai — İşletmelerin AI Dostu",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Poby.ai — AI Destekli İşletme Yönetimi",
+    site: "@pobyai",
+    creator: "@pobyai",
+    title: "Poby.ai — İşletmelerin AI Dostu",
     description:
-      "Küçük işletmeler için WhatsApp entegrasyonlu yapay zeka asistan ve yönetim platformu.",
+      "Klinik, restoran, kuaför, otel — işletmenizi AI ile tek platformdan yönetin. 7 gün ücretsiz deneyin.",
     images: ["/og-image.png"],
   },
   alternates: {

@@ -25,6 +25,9 @@ import {
   Share2,
   Sparkles,
   MessageCircle,
+  ChevronDown,
+  Send,
+  Mail,
 } from "lucide-react";
 import {
   SECTOR_OPTIONS,
@@ -57,10 +60,23 @@ const footerLinks = {
     { label: "Otel", href: "/sektorler/otel-konaklama" },
   ],
   Destek: [
-    { label: "İletişim", href: "/iletisim" },
+    { label: "İletişim", href: "#contact" },
     { label: "SSS", href: "#faq" },
   ],
 };
+
+const FAQ_ITEMS = [
+  { q: "Poby.ai nedir ve ne işe yarar?", a: "Poby.ai, işletmelerin günlük operasyonlarını tek bir platformdan yönetmesini sağlayan AI destekli bir yönetim yazılımıdır. Randevu, finans, stok, müşteri takibi, WhatsApp entegrasyonu ve daha fazlasını sunar." },
+  { q: "Hangi sektörler Poby.ai kullanabilir?", a: "Klinikler, güzellik merkezleri, kuaför & berber salonları, restoranlar, kafeler, distribütörler, oteller ve tüm hizmet sektörleri Poby.ai'yı kullanabilir. Sektöre özel modüller ve arayüzler sunuyoruz." },
+  { q: "Poby.ai'ın fiyatı nedir?", a: "Poby.ai aylık ₺499'dan başlayan planlar sunar. 7 gün ücretsiz deneme süresi ile başlayabilirsiniz. Kredi kartı bilgisi gerekmez, taahhüt yoktur." },
+  { q: "Ücretsiz deneme süresi var mı?", a: "Evet! 7 gün tamamen ücretsiz deneyebilirsiniz. Deneme süresinde tüm özellikler açıktır. Kredi kartı bilgisi istenmez ve deneme sonunda otomatik ücretlendirme yapılmaz." },
+  { q: "WhatsApp entegrasyonu nasıl çalışır?", a: "Müşterileriniz WhatsApp üzerinden randevu alabilir, bilgi sorabilir ve hatırlatma mesajları alabilir. AI destekli chatbot, müşterilerinizle 7/24 otomatik iletişim kurar." },
+  { q: "AI asistan ne yapabilir?", a: "AI asistan randevu önerisi, akıllı hatırlatmalar, finansal analiz, stok uyarıları, müşteri segmentasyonu ve sosyal medya içerik üretimi gibi görevleri otomatik olarak gerçekleştirir." },
+  { q: "Verilerim güvende mi?", a: "Evet. Tüm veriler AES-256 ile şifrelenir, SSL/TLS ile korunur ve Türkiye'deki sunucularda barındırılır. KVKK uyumlu altyapımız ile verileriniz güvende." },
+  { q: "Mobil cihazlardan erişebilir miyim?", a: "Evet, Poby.ai tamamen responsive tasarıma sahiptir. Telefon, tablet veya bilgisayardan herhangi bir kurulum yapmadan web tarayıcınız üzerinden erişebilirsiniz." },
+  { q: "Mevcut müşteri verilerimi aktarabilir miyim?", a: "Evet, Excel veya CSV dosyalarından müşteri, ürün ve stok verilerinizi kolayca içe aktarabilirsiniz. Destek ekibimiz veri aktarımında size yardımcı olur." },
+  { q: "Teknik destek nasıl alabilirim?", a: "destek@poby.ai adresinden veya 0530 152 93 56 numarasından bize ulaşabilirsiniz. Hafta içi 09:00-18:00 arası canlı destek, 7/24 e-posta desteği sunuyoruz." },
+];
 
 const dashboardTabs = [
   "Genel Bakış",
@@ -758,13 +774,7 @@ export default function Home() {
     <div className="min-h-screen bg-white">
       <SoftwareApplicationJsonLd />
       <FAQJsonLd
-        items={[
-          { question: "Poby.ai nedir?", answer: "Poby.ai, küçük işletmeler için AI destekli bir yönetim platformudur. Klinik, restoran, kuaför gibi sektörlerde randevu yönetimi, finansal takip, WhatsApp entegrasyonu ve pazarlama araçları sunar." },
-          { question: "Fiyatlar nasıl?", answer: "Poby.ai aylık 99₺ sabit ücret ile başlar. Kullanım bazlı AI kredisi sistemiyle yalnızca kullandığınız kadar ödersiniz." },
-          { question: "WhatsApp entegrasyonu nasıl çalışır?", answer: "WhatsApp Business API entegrasyonu ile müşterilerinizden gelen mesajlara AI asistan otomatik yanıt verir, randevu oluşturur ve bilgi paylaşır." },
-          { question: "AI asistan ne yapabilir?", answer: "AI asistan müşteri sorularını yanıtlar, randevu oluşturur/değiştirir, hizmet ve fiyat bilgisi verir, konum gönderir ve kampanya paylaşır." },
-          { question: "Hangi sektörler kullanabilir?", answer: "Klinik, restoran, kuaför, güzellik merkezi, otel ve diğer küçük işletmeler Poby.ai'ı kullanabilir." },
-        ]}
+        items={FAQ_ITEMS.map(f => ({ question: f.q, answer: f.a }))}
       />
       {/* ════════════════════════ NAVBAR ════════════════════════ */}
       <nav
@@ -1442,6 +1452,12 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ════════════════════════ FAQ ════════════════════════ */}
+      <FaqSection />
+
+      {/* ════════════════════════ CONTACT ════════════════════════ */}
+      <ContactSection />
+
       {/* ════════════════════════ CTA ════════════════════════ */}
       <section className="relative overflow-hidden px-6 py-28">
         <div
@@ -1546,5 +1562,248 @@ export default function Home() {
       </footer>
 
     </div>
+  );
+}
+
+/* ══════════════════════════════ FAQ SECTION ══════════════════════════════ */
+
+function FaqItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border-b border-gray-100 last:border-0">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center justify-between py-5 text-left transition-colors hover:text-[#6366F1]"
+      >
+        <span className="pr-4 text-[15px] font-medium text-[#1A1A2E]">{q}</span>
+        <ChevronDown
+          className={`h-4 w-4 shrink-0 text-[#6C7293] transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <p className="pb-5 text-[14px] leading-relaxed text-[#6C7293]">{a}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function FaqSection() {
+  return (
+    <section id="faq" className="bg-[#F9FAFB] px-6 py-24">
+      <div className="mx-auto max-w-[760px]">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-12"
+        >
+          <span className="inline-block rounded-full bg-[#EEF2FF] px-4 py-1.5 text-[12px] font-semibold text-[#6366F1] mb-4">
+            SSS
+          </span>
+          <h2 className="text-[clamp(24px,3.5vw,36px)] font-bold text-[#1A1A2E]">
+            Sıkça Sorulan Sorular
+          </h2>
+          <p className="mt-3 text-[15px] text-[#6C7293]">
+            Merak ettiğiniz her şeyin cevabı burada
+          </p>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.1 }}
+          className="rounded-2xl border border-gray-100 bg-white px-6 sm:px-8"
+        >
+          {FAQ_ITEMS.map((item, i) => (
+            <FaqItem key={i} q={item.q} a={item.a} />
+          ))}
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+/* ══════════════════════════════ CONTACT SECTION ══════════════════════════════ */
+
+function ContactSection() {
+  const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSending(true);
+    setError("");
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setSent(true);
+      setForm({ name: "", email: "", subject: "", message: "" });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <section id="contact" className="px-6 py-24">
+      <div className="mx-auto max-w-[900px]">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-12"
+        >
+          <span className="inline-block rounded-full bg-[#EEF2FF] px-4 py-1.5 text-[12px] font-semibold text-[#6366F1] mb-4">
+            İletişim
+          </span>
+          <h2 className="text-[clamp(24px,3.5vw,36px)] font-bold text-[#1A1A2E]">
+            Bize Ulaşın
+          </h2>
+          <p className="mt-3 text-[15px] text-[#6C7293]">
+            Sorularınız mı var? Size yardımcı olmaktan mutluluk duyarız.
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.1 }}
+          className="grid gap-8 lg:grid-cols-[1fr_1.2fr]"
+        >
+          {/* Contact Info */}
+          <div className="space-y-5">
+            <div className="rounded-2xl border border-gray-100 bg-white p-6">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEF2FF]">
+                  <Mail className="h-5 w-5 text-[#6366F1]" />
+                </div>
+                <div>
+                  <p className="text-[13px] font-semibold text-[#1A1A2E]">E-posta</p>
+                  <a href="mailto:destek@poby.ai" className="text-[13px] text-[#6366F1] hover:underline">destek@poby.ai</a>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-gray-100 bg-white p-6">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEF2FF]">
+                  <MessageCircle className="h-5 w-5 text-[#6366F1]" />
+                </div>
+                <div>
+                  <p className="text-[13px] font-semibold text-[#1A1A2E]">Telefon</p>
+                  <a href="tel:+905301529356" className="text-[13px] text-[#6366F1] hover:underline">0530 152 93 56</a>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-gray-100 bg-white p-6">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEF2FF]">
+                  <Calendar className="h-5 w-5 text-[#6366F1]" />
+                </div>
+                <div>
+                  <p className="text-[13px] font-semibold text-[#1A1A2E]">Destek Saatleri</p>
+                  <p className="text-[13px] text-[#6C7293]">Hafta içi 09:00 – 18:00</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Contact Form */}
+          <div className="rounded-2xl border border-gray-100 bg-white p-6 sm:p-8">
+            {sent ? (
+              <div className="flex flex-col items-center justify-center py-10 text-center">
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50">
+                  <Check className="h-7 w-7 text-emerald-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-[#1A1A2E]">Mesajınız Gönderildi</h3>
+                <p className="mt-2 text-sm text-[#6C7293]">En kısa sürede size dönüş yapacağız.</p>
+                <button onClick={() => setSent(false)} className="mt-5 text-[13px] font-medium text-[#6366F1] hover:underline">
+                  Yeni mesaj gönder
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1.5 block text-[13px] font-medium text-[#1A1A2E]">Ad Soyad</label>
+                    <input
+                      type="text"
+                      required
+                      value={form.name}
+                      onChange={e => setForm({ ...form, name: e.target.value })}
+                      placeholder="Adınız Soyadınız"
+                      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-[#1A1A2E] transition-colors placeholder:text-gray-400 focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-[13px] font-medium text-[#1A1A2E]">E-posta</label>
+                    <input
+                      type="email"
+                      required
+                      value={form.email}
+                      onChange={e => setForm({ ...form, email: e.target.value })}
+                      placeholder="ornek@email.com"
+                      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-[#1A1A2E] transition-colors placeholder:text-gray-400 focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-[13px] font-medium text-[#1A1A2E]">Konu</label>
+                  <input
+                    type="text"
+                    required
+                    value={form.subject}
+                    onChange={e => setForm({ ...form, subject: e.target.value })}
+                    placeholder="Nasıl yardımcı olabiliriz?"
+                    className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-[#1A1A2E] transition-colors placeholder:text-gray-400 focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-[13px] font-medium text-[#1A1A2E]">Mesajınız</label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={form.message}
+                    onChange={e => setForm({ ...form, message: e.target.value })}
+                    placeholder="Mesajınızı buraya yazın..."
+                    className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-[#1A1A2E] transition-colors placeholder:text-gray-400 focus:border-[#6366F1] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
+                  />
+                </div>
+                {error && <p className="text-sm text-red-600">{error}</p>}
+                <button
+                  type="submit"
+                  disabled={sending}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#6366F1] py-3 text-sm font-semibold text-white transition-all hover:bg-[#4F46E5] hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-500/25 disabled:opacity-50 disabled:hover:translate-y-0"
+                >
+                  {sending ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> Gönderiliyor...</>
+                  ) : (
+                    <><Send className="h-4 w-4" /> Mesaj Gönder</>
+                  )}
+                </button>
+              </form>
+            )}
+          </div>
+        </motion.div>
+      </div>
+    </section>
   );
 }

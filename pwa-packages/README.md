@@ -92,13 +92,13 @@ Küçük işletmeler için tasarlanmış hepsi bir arada yönetim uygulaması.
 ✅ Alarm Sistemi — AI ile otomatik alarm kurma
 ✅ Belgeler — İK belgeleri, onam formları
 
-Klinikler, kuaförler, restoranlar ve tüm küçük işletmeler için ideal.
+Klinikler, kuaförler, restoranlar ve tüm işletmeler için ideal.
 ```
 
 ### Anahtar Kelimeler
 ```
 işletme yönetimi, randevu sistemi, müşteri takibi, stok yönetimi,
-AI asistan, küçük işletme, klinik yazılımı, kuaför randevu,
+AI asistan, işletme yönetim yazılımı, klinik yazılımı, kuaför randevu,
 restoran yönetim, finans takibi, fatura, WhatsApp
 ```
 
