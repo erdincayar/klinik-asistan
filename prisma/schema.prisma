@@ -820,6 +820,8 @@ model ScheduledPost {
   approvedBy      String?   // Who approved
   approvedAt      DateTime?
   feedback        String?   @db.Text // Admin feedback for revision
+  mediaSuggestion String?   // image, video, none — AI media recommendation
+  mediaSuggestionReason String? // Why this media type was suggested
   // Performance metrics
   impressions     Int?
   likes           Int?
@@ -995,7 +997,8 @@ model AiGeneratedContent {
   clinic       Clinic   @relation(fields: [clinicId], references: [id])
   userPrompt   String   @db.Text
   agentPrompt  String?  @db.Text
-  model        String   @default("dall-e-3")
+  model        String   @default("flux-pro")
+  aspectRatio  String   @default("1:1")
   status       String   @default("PENDING") // PENDING, GENERATING, COMPLETED, FAILED
   imageUrl     String?
   errorMessage String?

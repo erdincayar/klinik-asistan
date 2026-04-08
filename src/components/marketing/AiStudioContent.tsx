@@ -14,6 +14,12 @@ import {
   Settings2,
   Check,
   X,
+  Zap,
+  Crown,
+  Monitor,
+  Square,
+  Smartphone,
+  LayoutGrid,
 } from "lucide-react";
 
 interface StyleProfile {
@@ -33,6 +39,8 @@ interface GeneratedContent {
   id: string;
   userPrompt: string;
   agentPrompt: string | null;
+  model: string;
+  aspectRatio: string;
   imageUrl: string | null;
   status: string;
   isLiked: boolean | null;
@@ -77,6 +85,30 @@ const PRESET_COLORS = [
   "#EC4899", "#06B6D4", "#F97316", "#14B8A6", "#6366F1",
 ];
 
+const MODEL_OPTIONS = [
+  {
+    value: "flux-pro",
+    label: "FLUX Pro",
+    desc: "Yüksek kalite",
+    icon: Crown,
+    color: "purple",
+  },
+  {
+    value: "flux-schnell",
+    label: "FLUX Schnell",
+    desc: "Hızlı & ekonomik",
+    icon: Zap,
+    color: "amber",
+  },
+];
+
+const ASPECT_OPTIONS = [
+  { value: "16:9", label: "16:9", desc: "X / Twitter", icon: Monitor },
+  { value: "1:1", label: "1:1", desc: "IG Feed", icon: Square },
+  { value: "9:16", label: "9:16", desc: "Reel / TikTok", icon: Smartphone },
+  { value: "4:5", label: "4:5", desc: "IG Carousel", icon: LayoutGrid },
+];
+
 function Skeleton({ className }: { className?: string }) {
   return <div className={`animate-pulse rounded-xl bg-gray-100 ${className || ""}`} />;
 }
@@ -90,9 +122,18 @@ export default function AiStudioContent() {
   const [analyzing, setAnalyzing] = useState(false);
   const [savingStyle, setSavingStyle] = useState(false);
   const [prompt, setPrompt] = useState("");
+  const [selectedModel, setSelectedModel] = useState<"flux-pro" | "flux-schnell">("flux-pro");
+  const [selectedAspect, setSelectedAspect] = useState<"16:9" | "1:1" | "9:16" | "4:5">("1:1");
   const [showStyleSetup, setShowStyleSetup] = useState(false);
-  const [lastResult, setLastResult] = useState<{ id: string; imageUrl: string; agentPrompt: string } | null>(null);
+  const [lastResult, setLastResult] = useState<{
+    id: string;
+    imageUrl: string;
+    agentPrompt: string;
+    model: string;
+    aspectRatio: string;
+  } | null>(null);
   const [error, setError] = useState("");
+  const [previewImage, setPreviewImage] = useState<GeneratedContent | null>(null);
 
   // Manual style form
   const [styleForm, setStyleForm] = useState({
@@ -173,15 +214,21 @@ export default function AiStudioContent() {
     setGenerationPhase("Prompt planlanıyor...");
 
     try {
-      setTimeout(() => {
-        if (generating) setGenerationPhase("Görsel üretiliyor...");
+      const phaseTimer = setTimeout(() => {
+        setGenerationPhase("Görsel üretiliyor...");
       }, 5000);
 
       const res = await fetch("/api/marketing/ai-studio/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: prompt.trim() }),
+        body: JSON.stringify({
+          prompt: prompt.trim(),
+          model: selectedModel,
+          aspectRatio: selectedAspect,
+        }),
       });
+
+      clearTimeout(phaseTimer);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
@@ -189,6 +236,8 @@ export default function AiStudioContent() {
         id: data.id,
         imageUrl: data.imageUrl,
         agentPrompt: data.agentPrompt,
+        model: data.model,
+        aspectRatio: data.aspectRatio,
       });
       setPrompt("");
       // Refresh gallery
@@ -212,7 +261,6 @@ export default function AiStudioContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contentId, isLiked }),
       });
-      // Update local state
       setGallery((prev) =>
         prev.map((item) => (item.id === contentId ? { ...item, isLiked } : item))
       );
@@ -233,6 +281,15 @@ export default function AiStudioContent() {
       if (prev.colorPalette.length >= 6) return prev;
       return { ...prev, colorPalette: [...prev.colorPalette, color] };
     });
+  }
+
+  function getAspectClass(ratio: string) {
+    switch (ratio) {
+      case "16:9": return "aspect-video";
+      case "9:16": return "aspect-[9/16]";
+      case "4:5": return "aspect-[4/5]";
+      default: return "aspect-square";
+    }
   }
 
   if (loading) {
@@ -256,6 +313,9 @@ export default function AiStudioContent() {
         <div className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-purple-600" />
           <h2 className="text-lg font-semibold text-gray-900">AI Stüdyo</h2>
+          <span className="rounded-full bg-gradient-to-r from-purple-100 to-amber-100 px-2.5 py-0.5 text-[10px] font-semibold text-purple-700">
+            FLUX
+          </span>
         </div>
         {profile && (
           <button
@@ -311,9 +371,6 @@ export default function AiStudioContent() {
                 <p className="text-xs text-gray-500 mt-1">
                   Mevcut Instagram görsellerinizden stil çıkarın
                 </p>
-                <span className="mt-2 inline-block rounded-full bg-purple-50 px-2 py-0.5 text-[10px] font-semibold text-purple-600">
-                  5.000 token
-                </span>
               </div>
             </button>
 
@@ -327,9 +384,6 @@ export default function AiStudioContent() {
                 <p className="text-xs text-gray-500 mt-1">
                   Renk, ton ve stil tercihlerinizi kendiniz belirleyin
                 </p>
-                <span className="mt-2 inline-block rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-600">
-                  Ücretsiz
-                </span>
               </div>
             </button>
           </div>
@@ -515,10 +569,78 @@ export default function AiStudioContent() {
         <div className="border-b border-gray-100 px-6 py-4">
           <div className="flex items-center gap-2">
             <Wand2 className="h-4 w-4 text-purple-600" />
-            <h3 className="text-sm font-semibold text-gray-900">Görsel Oluştur</h3>
+            <h3 className="text-sm font-semibold text-gray-900">AI ile Görsel Üret</h3>
           </div>
         </div>
         <div className="p-6 space-y-4">
+          {/* Model Selection */}
+          <div>
+            <label className="mb-2 block text-xs font-medium text-gray-600">Model</label>
+            <div className="grid grid-cols-2 gap-2">
+              {MODEL_OPTIONS.map((m) => {
+                const Icon = m.icon;
+                const isSelected = selectedModel === m.value;
+                return (
+                  <button
+                    key={m.value}
+                    onClick={() => setSelectedModel(m.value as any)}
+                    disabled={generating}
+                    className={`flex items-center gap-2.5 rounded-xl border-2 px-4 py-3 text-left transition-all ${
+                      isSelected
+                        ? m.color === "purple"
+                          ? "border-purple-400 bg-purple-50"
+                          : "border-amber-400 bg-amber-50"
+                        : "border-gray-100 hover:border-gray-200 hover:bg-gray-50"
+                    }`}
+                  >
+                    <Icon
+                      className={`h-4 w-4 ${
+                        isSelected
+                          ? m.color === "purple" ? "text-purple-600" : "text-amber-600"
+                          : "text-gray-400"
+                      }`}
+                    />
+                    <div>
+                      <p className={`text-xs font-semibold ${isSelected ? "text-gray-900" : "text-gray-600"}`}>
+                        {m.label}
+                      </p>
+                      <p className="text-[10px] text-gray-400">{m.desc}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Aspect Ratio Selection */}
+          <div>
+            <label className="mb-2 block text-xs font-medium text-gray-600">Boyut</label>
+            <div className="grid grid-cols-4 gap-2">
+              {ASPECT_OPTIONS.map((a) => {
+                const Icon = a.icon;
+                const isSelected = selectedAspect === a.value;
+                return (
+                  <button
+                    key={a.value}
+                    onClick={() => setSelectedAspect(a.value as any)}
+                    disabled={generating}
+                    className={`flex flex-col items-center gap-1 rounded-xl border-2 px-2 py-2.5 transition-all ${
+                      isSelected
+                        ? "border-purple-400 bg-purple-50"
+                        : "border-gray-100 hover:border-gray-200 hover:bg-gray-50"
+                    }`}
+                  >
+                    <Icon className={`h-4 w-4 ${isSelected ? "text-purple-600" : "text-gray-400"}`} />
+                    <p className={`text-[11px] font-semibold ${isSelected ? "text-gray-900" : "text-gray-600"}`}>
+                      {a.label}
+                    </p>
+                    <p className="text-[9px] text-gray-400">{a.desc}</p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Quick prompts */}
           <div>
             <label className="mb-2 block text-xs font-medium text-gray-600">Hızlı Seçim</label>
@@ -563,10 +685,7 @@ export default function AiStudioContent() {
             ) : (
               <>
                 <Sparkles className="h-4 w-4" />
-                Oluştur
-                <span className="rounded-full bg-purple-500 px-2 py-0.5 text-[10px]">
-                  6.000 token
-                </span>
+                AI ile Görsel Üret
               </>
             )}
           </button>
@@ -579,26 +698,36 @@ export default function AiStudioContent() {
               <img
                 src={lastResult.imageUrl}
                 alt="AI Generated"
-                className="w-full"
+                className={`w-full object-cover ${getAspectClass(lastResult.aspectRatio)}`}
               />
             </div>
-            <div className="mt-3 flex items-center justify-between">
-              <p className="text-xs text-gray-500 max-w-[70%] truncate" title={lastResult.agentPrompt}>
-                {lastResult.agentPrompt}
-              </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleFeedback(lastResult.id, true)}
-                  className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-green-50 hover:text-green-600"
-                >
-                  <ThumbsUp className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => handleFeedback(lastResult.id, false)}
-                  className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
-                >
-                  <ThumbsDown className="h-4 w-4" />
-                </button>
+            <div className="mt-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-purple-50 px-2 py-0.5 text-[10px] font-semibold text-purple-600">
+                  {lastResult.model === "flux-pro" ? "FLUX Pro" : "FLUX Schnell"}
+                </span>
+                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600">
+                  {lastResult.aspectRatio}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-500 max-w-[70%] truncate" title={lastResult.agentPrompt}>
+                  {lastResult.agentPrompt}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleFeedback(lastResult.id, true)}
+                    className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-green-50 hover:text-green-600"
+                  >
+                    <ThumbsUp className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => handleFeedback(lastResult.id, false)}
+                    className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                  >
+                    <ThumbsDown className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -629,7 +758,8 @@ export default function AiStudioContent() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3, delay: i * 0.03 }}
-                className="group relative overflow-hidden rounded-xl border border-gray-100"
+                className="group relative cursor-pointer overflow-hidden rounded-xl border border-gray-100"
+                onClick={() => setPreviewImage(item)}
               >
                 {item.imageUrl && (
                   <img
@@ -638,18 +768,31 @@ export default function AiStudioContent() {
                     className="aspect-square w-full object-cover"
                   />
                 )}
+                {/* Model badge */}
+                <div className="absolute top-2 left-2">
+                  <span className="rounded-full bg-black/50 px-1.5 py-0.5 text-[9px] font-semibold text-white backdrop-blur-sm">
+                    {item.model === "flux-schnell" ? "Schnell" : "Pro"}
+                  </span>
+                </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100">
                   <div className="absolute bottom-0 left-0 right-0 p-3">
                     <p className="text-[11px] text-white/90 line-clamp-2">{item.userPrompt}</p>
                     <div className="mt-1.5 flex items-center justify-between">
-                      <p className="text-[10px] text-white/60">
-                        {new Date(item.createdAt).toLocaleDateString("tr-TR")}
-                      </p>
+                      <div className="flex items-center gap-1">
+                        <span className="text-[9px] text-white/60">
+                          {item.aspectRatio || "1:1"}
+                        </span>
+                        <span className="text-[9px] text-white/40">·</span>
+                        <span className="text-[10px] text-white/60">
+                          {new Date(item.createdAt).toLocaleDateString("tr-TR")}
+                        </span>
+                      </div>
                       <div className="flex gap-1">
                         <button
-                          onClick={() =>
-                            handleFeedback(item.id, item.isLiked === true ? null : true)
-                          }
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleFeedback(item.id, item.isLiked === true ? null : true);
+                          }}
                           className={`rounded p-1 transition-colors ${
                             item.isLiked === true
                               ? "bg-green-500/30 text-green-300"
@@ -659,9 +802,10 @@ export default function AiStudioContent() {
                           <ThumbsUp className="h-3 w-3" />
                         </button>
                         <button
-                          onClick={() =>
-                            handleFeedback(item.id, item.isLiked === false ? null : false)
-                          }
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleFeedback(item.id, item.isLiked === false ? null : false);
+                          }}
                           className={`rounded p-1 transition-colors ${
                             item.isLiked === false
                               ? "bg-red-500/30 text-red-300"
@@ -678,6 +822,82 @@ export default function AiStudioContent() {
             ))}
           </div>
         </motion.div>
+      )}
+
+      {/* Image Preview Modal */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={() => setPreviewImage(null)}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="relative mx-4 max-h-[90vh] max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute right-3 top-3 z-10 rounded-full bg-black/50 p-1.5 text-white transition-colors hover:bg-black/70"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            {previewImage.imageUrl && (
+              <img
+                src={previewImage.imageUrl}
+                alt={previewImage.userPrompt}
+                className={`w-full object-contain max-h-[60vh]`}
+              />
+            )}
+            <div className="p-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-purple-50 px-2 py-0.5 text-[10px] font-semibold text-purple-600">
+                  {previewImage.model === "flux-schnell" ? "FLUX Schnell" : "FLUX Pro"}
+                </span>
+                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600">
+                  {previewImage.aspectRatio || "1:1"}
+                </span>
+                <span className="text-[10px] text-gray-400">
+                  {new Date(previewImage.createdAt).toLocaleDateString("tr-TR", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              </div>
+              <p className="text-sm text-gray-700">{previewImage.userPrompt}</p>
+              {previewImage.agentPrompt && (
+                <p className="text-xs text-gray-400 italic">{previewImage.agentPrompt}</p>
+              )}
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  onClick={() => handleFeedback(previewImage.id, previewImage.isLiked === true ? null : true)}
+                  className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                    previewImage.isLiked === true
+                      ? "bg-green-100 text-green-700"
+                      : "bg-gray-100 text-gray-500 hover:bg-green-50 hover:text-green-600"
+                  }`}
+                >
+                  <ThumbsUp className="h-3.5 w-3.5" />
+                  Beğen
+                </button>
+                <button
+                  onClick={() => handleFeedback(previewImage.id, previewImage.isLiked === false ? null : false)}
+                  className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                    previewImage.isLiked === false
+                      ? "bg-red-100 text-red-700"
+                      : "bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-600"
+                  }`}
+                >
+                  <ThumbsDown className="h-3.5 w-3.5" />
+                  Beğenme
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
       )}
     </div>
   );

@@ -33,7 +33,13 @@ export async function POST(req: NextRequest) {
     const accessSecret = process.env.TWITTER_ACCESS_TOKEN_SECRET;
     const bearerToken = process.env.TWITTER_BEARER_TOKEN;
 
-    if (!apiKey || !accessToken) {
+    if (!apiKey || !apiSecret || !accessToken || !accessSecret) {
+      console.error("Twitter API keys missing:", {
+        TWITTER_API_KEY: !!apiKey,
+        TWITTER_API_SECRET: !!apiSecret,
+        TWITTER_ACCESS_TOKEN: !!accessToken,
+        TWITTER_ACCESS_TOKEN_SECRET: !!accessSecret,
+      });
       return NextResponse.json({ error: "X API anahtarları ayarlanmamış. .env dosyasını kontrol edin." }, { status: 500 });
     }
 
@@ -119,12 +125,27 @@ export async function POST(req: NextRequest) {
       });
 
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
+        const errText = await res.text().catch(() => "");
+        let err: any = {};
+        try { err = JSON.parse(errText); } catch { err = { raw: errText }; }
+        console.error(`Twitter API error [${res.status}]:`, JSON.stringify(err, null, 2));
+
+        let userMessage = "Tweet gönderilemedi";
+        if (res.status === 402 || err.title === "CreditsDepleted") {
+          userMessage = "X API kredi bakiyeniz tükenmiş. developer.x.com adresinden plan yükseltin veya kredi satın alın.";
+        } else if (res.status === 401) {
+          userMessage = "X API yetkilendirme hatası. API anahtarlarını kontrol edin.";
+        } else if (res.status === 403) {
+          userMessage = "X API erişim izni yok. Access Token'ın 'Read and Write' yetkisinde olduğundan emin olun.";
+        } else if (res.status === 429) {
+          userMessage = "X API istek limiti aşıldı. Biraz bekleyip tekrar deneyin.";
+        }
+
         await prisma.scheduledPost.update({
           where: { id },
-          data: { status: "FAILED", errorMessage: JSON.stringify(err).slice(0, 500) },
+          data: { status: "FAILED", errorMessage: `HTTP ${res.status}: ${JSON.stringify(err).slice(0, 480)}` },
         });
-        return NextResponse.json({ error: "Tweet gönderilemedi", details: err }, { status: 500 });
+        return NextResponse.json({ error: userMessage, details: err, status: res.status }, { status: 500 });
       }
 
       const data = await res.json();
@@ -193,10 +214,15 @@ async function uploadMediaToTwitter(
       body: formData,
     });
 
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "");
+      console.error(`Twitter media upload error [${res.status}]:`, errText);
+      return null;
+    }
     const data = await res.json();
     return data.media_id_string || null;
-  } catch {
+  } catch (err) {
+    console.error("Twitter media upload exception:", err);
     return null;
   }
 }

@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-// TOKEN_SYSTEM_DISABLED - import { TOKEN_COSTS } from "@/lib/token-costs";
-// TOKEN_SYSTEM_DISABLED - import { checkBalance, deductTokens } from "@/lib/token-service";
 import { runContentAgent } from "@/lib/ai-studio/content-agent";
-import { generateImage } from "@/lib/ai-studio/image-generator";
+import { generateImageWithFal, type FalModel, type AspectRatio } from "@/lib/ai-studio/fal-image-generator";
 
 const schema = z.object({
   prompt: z.string().min(3).max(1000),
+  model: z.enum(["flux-pro", "flux-schnell"]).default("flux-pro"),
+  aspectRatio: z.enum(["16:9", "1:1", "9:16", "4:5"]).default("1:1"),
 });
 
 export async function POST(req: NextRequest) {
@@ -19,51 +19,45 @@ export async function POST(req: NextRequest) {
   const clinicId = user.clinicId;
   if (!clinicId) return NextResponse.json({ error: "No clinic" }, { status: 400 });
 
-  const isDemo = user.isDemo || user.role === "ADMIN";
-  // TOKEN_SYSTEM_DISABLED
-  // if (!isDemo) {
-  //   const hasBalance = await checkBalance(clinicId, TOKEN_COSTS.AI_STUDIO_GENERATE);
-  //   if (!hasBalance) {
-  //     return NextResponse.json(
-  //       { error: "Token bakiyeniz yetersiz." },
-  //       { status: 402 }
-  //     );
-  //   }
-  // }
-
   const body = await req.json();
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: "Geçersiz veri" }, { status: 400 });
   }
 
+  const { prompt, model, aspectRatio } = parsed.data;
+
   // Create content record
   const content = await prisma.aiGeneratedContent.create({
     data: {
       clinicId,
-      userPrompt: parsed.data.prompt,
+      userPrompt: prompt,
+      model,
+      aspectRatio,
       status: "PENDING",
-      // TOKEN_SYSTEM_DISABLED - tokensCost: TOKEN_COSTS.AI_STUDIO_GENERATE,
       tokensCost: 0,
     },
   });
 
   try {
-    // Step 1: Agent creates DALL-E prompt
-    const dallePrompt = await runContentAgent(clinicId, parsed.data.prompt);
+    // Step 1: Agent creates FLUX prompt
+    const fluxPrompt = await runContentAgent(clinicId, prompt);
 
-    // Step 2: Generate image
-    const { imageUrl } = await generateImage(content.id, clinicId, dallePrompt);
-
-    // TOKEN_SYSTEM_DISABLED
-    // if (!isDemo) {
-    //   await deductTokens(clinicId, "AI_STUDIO_GENERATE", TOKEN_COSTS.AI_STUDIO_GENERATE, "AI görsel üretimi");
-    // }
+    // Step 2: Generate image with fal.ai
+    const { imageUrl } = await generateImageWithFal(
+      content.id,
+      clinicId,
+      fluxPrompt,
+      model as FalModel,
+      aspectRatio as AspectRatio
+    );
 
     return NextResponse.json({
       id: content.id,
       imageUrl,
-      agentPrompt: dallePrompt,
+      agentPrompt: fluxPrompt,
+      model,
+      aspectRatio,
       status: "COMPLETED",
     });
   } catch (error) {
