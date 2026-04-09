@@ -14,6 +14,8 @@ interface AiImagePanelProps {
   onSelectImage: (imageUrl: string) => void;
   onUploadFile: () => void;
   onClose: () => void;
+  onVideoGenerate?: () => void;
+  onScreenshot?: () => void;
 }
 
 interface Preferences {
@@ -55,7 +57,7 @@ const MOOD_OPTIONS = [
   { value: "fun", label: "Eğlenceli", icon: "🎉" },
 ];
 
-export default function AiImagePanel({ tweetContent, onSelectImage, onUploadFile, onClose }: AiImagePanelProps) {
+export default function AiImagePanel({ tweetContent, onSelectImage, onUploadFile, onClose, onVideoGenerate, onScreenshot }: AiImagePanelProps) {
   const [step, setStep] = useState<Step>("purpose");
   const [prefs, setPrefs] = useState<Preferences>({
     style: "", colorPalette: "brand", subject: "", textOverlay: "none",
@@ -276,18 +278,18 @@ export default function AiImagePanel({ tweetContent, onSelectImage, onUploadFile
                   <p className="text-[10px] text-gray-400">Soyut tasarım, infografik, illüstrasyon</p>
                 </div>
               </button>
-              <button onClick={() => alert("Ekran görüntüsü özelliği yakında aktif olacak")} className="w-full flex items-center gap-3 rounded-xl border-2 border-gray-100 p-3.5 hover:border-blue-300 hover:bg-blue-50/50 transition-all text-left opacity-80">
+              <button onClick={() => onScreenshot ? onScreenshot() : setStep("q1")} className="w-full flex items-center gap-3 rounded-xl border-2 border-gray-100 p-3.5 hover:border-blue-300 hover:bg-blue-50/50 transition-all text-left">
                 <span className="text-lg">📸</span>
                 <div>
                   <p className="text-xs font-semibold text-gray-900">Poby.ai ekran görüntüsü</p>
-                  <p className="text-[10px] text-gray-400">Dashboard, Randevu, CRM sayfaları (yakında)</p>
+                  <p className="text-[10px] text-gray-400">Dashboard, Randevu, CRM sayfaları</p>
                 </div>
               </button>
-              <button onClick={() => alert("Video özelliği yakında aktif olacak")} className="w-full flex items-center gap-3 rounded-xl border-2 border-gray-100 p-3.5 hover:border-amber-300 hover:bg-amber-50/50 transition-all text-left opacity-80">
+              <button onClick={() => onVideoGenerate ? onVideoGenerate() : null} className="w-full flex items-center gap-3 rounded-xl border-2 border-gray-100 p-3.5 hover:border-amber-300 hover:bg-amber-50/50 transition-all text-left">
                 <span className="text-lg">🎬</span>
                 <div>
-                  <p className="text-xs font-semibold text-gray-900">Poby.ai özellik tanıtım videosu</p>
-                  <p className="text-[10px] text-gray-400">Kısa demo video, ekran kaydı (yakında)</p>
+                  <p className="text-xs font-semibold text-gray-900">Ürün demo videosu</p>
+                  <p className="text-[10px] text-gray-400">Puppeteer ile otomatik ekran kaydı (MP4)</p>
                 </div>
               </button>
               <button onClick={onUploadFile} className="w-full flex items-center gap-3 rounded-xl border-2 border-gray-100 p-3.5 hover:border-gray-300 hover:bg-gray-50 transition-all text-left">

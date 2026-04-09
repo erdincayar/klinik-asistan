@@ -67,7 +67,7 @@ export default function AdminMarketingPage() {
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   // Video generation
   const [showVideoGen, setShowVideoGen] = useState(false);
-  const [videoScenario, setVideoScenario] = useState("dashboard");
+  const [videoScenario, setVideoScenario] = useState("dashboard-tour");
   const [videoGenerating, setVideoGenerating] = useState(false);
   const [fixing, setFixing] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
@@ -343,12 +343,12 @@ export default function AdminMarketingPage() {
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {[
-                { value: "dashboard", label: "Dashboard Özet", icon: "📊" },
-                { value: "randevu", label: "Randevu Demo", icon: "📅" },
-                { value: "crm", label: "CRM Demo", icon: "👥" },
-                { value: "fatura", label: "Fatura Demo", icon: "🧾" },
-                { value: "stok", label: "Stok Demo", icon: "📦" },
-                { value: "whatsapp", label: "WhatsApp Bot Demo", icon: "💬" },
+                { value: "dashboard-tour", label: "Dashboard Tur", icon: "📊" },
+                { value: "appointment-create", label: "Randevu Demo", icon: "📅" },
+                { value: "customer-add", label: "Müşteri Ekleme", icon: "👥" },
+                { value: "invoice-create", label: "Fatura Demo", icon: "🧾" },
+                { value: "stock-update", label: "Stok Demo", icon: "📦" },
+                { value: "whatsapp-demo", label: "WhatsApp Demo", icon: "💬" },
               ].map(s => (
                 <button
                   key={s.value}
@@ -363,17 +363,34 @@ export default function AdminMarketingPage() {
             <Button
               onClick={async () => {
                 setVideoGenerating(true);
-                alert(`Video üretimi başlatıldı: ${videoScenario}\n\nPuppeteer video üretim modülü yakında aktif olacak. Şimdilik senaryo kaydedildi.`);
-                setVideoGenerating(false);
-                setShowVideoGen(false);
+                try {
+                  const res = await fetch("/api/admin/marketing/video-generate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ scenarioId: videoScenario }),
+                  });
+                  const data = await res.json();
+                  if (res.ok) {
+                    alert(`Video oluşturuldu! (${data.frameCount} kare)\n\nDosya: ${data.videoUrl}`);
+                    fetchPosts();
+                  } else {
+                    alert(`Hata: ${data.error}`);
+                  }
+                } catch {
+                  alert("Video üretimi başarısız");
+                } finally {
+                  setVideoGenerating(false);
+                  setShowVideoGen(false);
+                }
               }}
               disabled={videoGenerating}
               size="sm"
               className="w-full"
             >
               {videoGenerating ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <Film className="mr-1 h-3.5 w-3.5" />}
-              {videoGenerating ? "Üretiliyor..." : `"${videoScenario}" Videosunu Üret`}
+              {videoGenerating ? "Puppeteer kaydediyor..." : "Video Üret"}
             </Button>
+            <p className="text-[10px] text-gray-400 text-center">Puppeteer ile poby.ai&apos;da demo senaryosu kaydedilir ve MP4 oluşturulur</p>
           </CardContent>
         </Card>
       )}
