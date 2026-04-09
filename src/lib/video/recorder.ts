@@ -82,7 +82,7 @@ export async function recordScenario(
     // Cleanup frames
     await fs.rm(framesPath, { recursive: true, force: true }).catch(() => {});
 
-    const videoUrl = `/uploads/videos/${outputFile}`;
+    const videoUrl = `/api/admin/marketing/videos?file=${encodeURIComponent(outputFile)}`;
     return { success: true, videoUrl, frameCount: frameIndex };
   } catch (error: any) {
     console.error("Video recording error:", error);

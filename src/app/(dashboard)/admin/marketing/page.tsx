@@ -57,7 +57,8 @@ function formatIstanbul(dateStr: string) {
 }
 
 export default function AdminMarketingPage() {
-  const [mainTab, setMainTab] = useState<"content" | "engagement" | "strategy">("content");
+  const [mainTab, setMainTab] = useState<"content" | "engagement" | "strategy" | "videos">("content");
+  const [videoList, setVideoList] = useState<Array<{ name: string; url: string; sizeMB: number; createdAt: string }>>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("all");
@@ -102,6 +103,16 @@ export default function AdminMarketingPage() {
   const [metrics, setMetrics] = useState({ impressions: "", likes: "", replies: "", retweets: "" });
 
   useEffect(() => { fetchPosts(); }, []);
+
+  // Auto-load videos when videos tab is selected
+  useEffect(() => {
+    if (mainTab === "videos" && videoList.length === 0) {
+      fetch("/api/admin/marketing/videos")
+        .then(r => r.ok ? r.json() : { videos: [] })
+        .then(d => setVideoList(d.videos || []))
+        .catch(() => {});
+    }
+  }, [mainTab]);
 
   async function fetchPosts() {
     try {
@@ -289,6 +300,7 @@ export default function AdminMarketingPage() {
         <div className="flex items-center gap-1 rounded-xl bg-gray-100 p-1">
           {[
             { key: "content" as const, label: "İçerikler" },
+            { key: "videos" as const, label: "Videolar" },
             { key: "engagement" as const, label: "Engagement" },
             { key: "strategy" as const, label: "Strateji" },
           ].map(t => (
@@ -301,6 +313,70 @@ export default function AdminMarketingPage() {
 
       {mainTab === "engagement" && <EngagementContent />}
       {mainTab === "strategy" && <StrategySettings />}
+
+      {mainTab === "videos" && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900">Üretilen Videolar</h3>
+              <p className="text-xs text-gray-400">Puppeteer ile oluşturulan ürün demo videoları</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={async () => {
+              const res = await fetch("/api/admin/marketing/videos");
+              if (res.ok) { const data = await res.json(); setVideoList(data.videos || []); }
+            }}>
+              <RefreshCw className="mr-1 h-3.5 w-3.5" /> Yenile
+            </Button>
+          </div>
+
+          {videoList.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <Film className="mx-auto mb-3 h-8 w-8 text-gray-300" />
+                <p className="text-sm text-gray-500">Henüz video yok</p>
+                <p className="text-xs text-gray-400 mt-1">Yukarıdaki &quot;Video Üret&quot; butonuyla oluşturabilirsiniz</p>
+                <Button size="sm" variant="outline" className="mt-4" onClick={async () => {
+                  const res = await fetch("/api/admin/marketing/videos");
+                  if (res.ok) { const data = await res.json(); setVideoList(data.videos || []); }
+                }}>
+                  Videoları Yükle
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {videoList.map(v => (
+                <Card key={v.name}>
+                  <CardContent className="p-0">
+                    <video
+                      src={v.url}
+                      controls
+                      className="w-full rounded-t-xl bg-black"
+                      style={{ maxHeight: 300 }}
+                      preload="metadata"
+                    />
+                    <div className="p-3 space-y-1.5">
+                      <p className="text-xs font-medium text-gray-800 truncate">{v.name}</p>
+                      <div className="flex items-center justify-between text-[10px] text-gray-400">
+                        <span>{v.sizeMB} MB</span>
+                        <span>{formatIstanbul(v.createdAt)}</span>
+                      </div>
+                      <div className="flex gap-2 pt-1">
+                        <a href={v.url} download={v.name} className="flex-1 text-center rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-100">
+                          İndir
+                        </a>
+                        <button onClick={() => { navigator.clipboard.writeText(window.location.origin + v.url); alert("URL kopyalandı!"); }} className="flex-1 text-center rounded-lg bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100">
+                          URL Kopyala
+                        </button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {mainTab === "content" && <>
       <div className="flex items-center justify-between">
