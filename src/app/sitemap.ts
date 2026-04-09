@@ -20,6 +20,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/sektorler/restoran-kafe`, lastModified, changeFrequency: "monthly", priority: 0.8 },
     { url: `${baseUrl}/sektorler/distributor-toptan`, lastModified, changeFrequency: "monthly", priority: 0.8 },
     { url: `${baseUrl}/sektorler/otel-konaklama`, lastModified, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${baseUrl}/privacy`, lastModified, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${baseUrl}/terms`, lastModified, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${baseUrl}/kvkk`, lastModified, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${baseUrl}/cookies`, lastModified, changeFrequency: "yearly", priority: 0.3 },
   ];
 
   const blogPages: MetadataRoute.Sitemap = getAllPosts().map((post) => ({

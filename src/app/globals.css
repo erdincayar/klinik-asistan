@@ -56,6 +56,27 @@
   }
 }
 
+/* PWA Standalone mode */
+@media all and (display-mode: standalone) {
+  body {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: contain;
+  }
+  /* Allow text selection in inputs and textareas */
+  input, textarea, [contenteditable] {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+}
+
+/* Mobile table scroll */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* Animations */
 @keyframes fade-in-up {
   from {

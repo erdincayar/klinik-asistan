@@ -49,6 +49,21 @@ export async function POST(request: Request) {
       },
     });
 
+    // Create subscription plan with 7-day free trial
+    const trialEnd = new Date();
+    trialEnd.setDate(trialEnd.getDate() + 7);
+
+    await prisma.subscriptionPlan.create({
+      data: {
+        clinicId: clinic.id,
+        status: "trial",
+        trialEnd,
+        activeModules: selectedModules.length > 0
+          ? selectedModules
+          : ["base", "messaging", "appointments", "customers", "inventory", "finance", "employees", "alarms", "reports"],
+      },
+    });
+
     return Response.json({ success: true, message: "Kayıt başarılı" });
   } catch (error: any) {
     if (

@@ -1078,7 +1078,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         )}
 
         {/* Main content */}
-        <main className="flex-1 flex flex-col overflow-y-auto px-3 py-3 sm:px-6 sm:py-4">
+        <main className="flex-1 flex flex-col overflow-y-auto px-3 py-3 sm:px-6 sm:py-4 pb-20 lg:pb-4">
           <motion.div
             key={pathname}
             initial={{ opacity: 0, y: 8 }}
@@ -1093,6 +1093,34 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             <PobySVG className="h-4 w-auto opacity-20" />
           </div>
         </main>
+
+        {/* ── Mobile Bottom Navigation ── */}
+        <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white/95 backdrop-blur-lg lg:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+          <div className="flex items-center justify-around px-1">
+            {[
+              { href: "/dashboard", label: "Ana Sayfa", icon: LayoutDashboard },
+              { href: "/patients", label: "Müşteriler", icon: Users },
+              { href: "/appointments", label: "Randevular", icon: Calendar },
+              { href: "/finance", label: "Finans", icon: DollarSign },
+              { href: "/settings", label: "Ayarlar", icon: Settings },
+            ].map((item) => {
+              const Icon = item.icon;
+              const isActive = item.href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex flex-col items-center gap-0.5 px-3 py-2 text-[10px] font-medium transition-colors ${
+                    isActive ? "text-[#6366F1]" : "text-gray-400"
+                  }`}
+                >
+                  <Icon className={`h-5 w-5 ${isActive ? "text-[#6366F1]" : "text-gray-400"}`} />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
       </div>
     </div>
   );

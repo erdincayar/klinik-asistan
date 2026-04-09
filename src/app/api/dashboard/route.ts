@@ -35,9 +35,9 @@ export async function GET() {
           data: {
             clinicId: clinic.id,
             status: "trial",
-            activeModules: ["base", "messaging"],
+            activeModules: ["base", "messaging", "appointments", "customers", "inventory", "finance", "employees", "alarms", "reports"],
             monthlyTotal: 0,
-            trialEnd: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days
+            trialEnd: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
           },
         }).catch(() => {});
         clinicId = clinic.id;

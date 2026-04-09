@@ -937,6 +937,18 @@ model ActivityLog {
   createdAt DateTime @default(now())
 }
 
+model PushSubscription {
+  id           String   @id @default(cuid())
+  userId       String
+  clinicId     String?
+  endpoint     String   @unique
+  p256dh       String
+  auth         String
+  userAgent    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
 // ═══════════════════════════════════════════════════════════
 // Stok Alarm & Demirbaş
 // ═══════════════════════════════════════════════════════════
