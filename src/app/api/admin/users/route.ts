@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
       select: { role: true },
     });
 
-    if (adminUser?.role !== "ADMIN") {
+    if (adminUser?.role !== "ADMIN" && adminUser?.role !== "SUPERADMIN") {
       return NextResponse.json({ error: "Yetkiniz yok" }, { status: 403 });
     }
 

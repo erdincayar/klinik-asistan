@@ -18,7 +18,7 @@ export async function PATCH(
       select: { role: true },
     });
 
-    if (adminUser?.role !== "ADMIN") {
+    if (adminUser?.role !== "ADMIN" && adminUser?.role !== "SUPERADMIN") {
       return NextResponse.json({ error: "Yetkiniz yok" }, { status: 403 });
     }
 
