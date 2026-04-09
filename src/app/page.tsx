@@ -63,6 +63,12 @@ const footerLinks = {
     { label: "İletişim", href: "#contact" },
     { label: "SSS", href: "#faq" },
   ],
+  Yasal: [
+    { label: "Gizlilik Politikası", href: "/privacy" },
+    { label: "Kullanım Koşulları", href: "/terms" },
+    { label: "KVKK Aydınlatma", href: "/kvkk" },
+    { label: "Çerez Politikası", href: "/cookies" },
+  ],
 };
 
 const FAQ_ITEMS = [

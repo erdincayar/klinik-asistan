@@ -367,10 +367,12 @@ export default function RegisterPage() {
         {/* Terms */}
         <p className="text-center text-xs leading-relaxed text-gray-400">
           Kayıt olarak{" "}
-          <Link href="#" className="text-[#6366F1] hover:underline">Kullanım Koşulları</Link>
+          <Link href="/terms" target="_blank" className="text-[#6366F1] hover:underline">Kullanım Koşulları</Link>
+          ,{" "}
+          <Link href="/privacy" target="_blank" className="text-[#6366F1] hover:underline">Gizlilik Politikası</Link>
           {" "}ve{" "}
-          <Link href="#" className="text-[#6366F1] hover:underline">Gizlilik Politikası</Link>
-          &apos;nı kabul etmiş olursunuz.
+          <Link href="/kvkk" target="_blank" className="text-[#6366F1] hover:underline">KVKK Aydınlatma Metni</Link>
+          &apos;ni kabul etmiş olursunuz.
         </p>
       </form>
 
