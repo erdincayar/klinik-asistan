@@ -1346,6 +1346,7 @@ function BulkAddDialog({
                     <th className="pb-2 pr-2 w-24 text-right">Alış ({getCurrencySymbol(currency)})</th>
                     <th className="pb-2 pr-2 w-24 text-right">Satış (₺)</th>
                     <th className="pb-2 pr-2 w-12 text-center">KDV</th>
+                    <th className="pb-2 pr-2 w-12 text-center">Stok</th>
                     <th className="pb-2 w-8"></th>
                   </tr>
                 </thead>
@@ -1407,6 +1408,16 @@ function BulkAddDialog({
                           checked={row.vatIncluded}
                           onChange={(e) => updateRow(row.id, "vatIncluded", e.target.checked)}
                           className="h-3.5 w-3.5 rounded border-gray-300 text-[#6366F1] cursor-pointer"
+                          title="KDV dahil"
+                        />
+                      </td>
+                      <td className="py-1.5 pr-2 text-center">
+                        <input
+                          type="checkbox"
+                          checked={row.trackStock}
+                          onChange={(e) => updateRow(row.id, "trackStock", e.target.checked)}
+                          className="h-3.5 w-3.5 rounded border-gray-300 text-[#6366F1] cursor-pointer"
+                          title="Stok takibi"
                         />
                       </td>
                       <td className="py-1.5">
@@ -1518,6 +1529,7 @@ function EditProductDialog({
           salePrice: toKurus(form.salePrice),
           salePriceUSD: form.salePriceUSD ? parseFloat(form.salePriceUSD) : null,
           saleCurrency: form.saleCurrency,
+          trackStock: form.trackStock,
           customFields: Object.keys(customFieldValues).length > 0 ? customFieldValues : null,
         }),
       });
