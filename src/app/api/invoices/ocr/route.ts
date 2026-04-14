@@ -14,12 +14,15 @@ const OCR_PROMPT = `Bu bir faturadır. Lütfen şu bilgileri JSON formatında ç
   "amount": toplam tutar (KDV dahil genel toplam, sayı, TL cinsinden, virgüllü ise noktaya çevir),
   "taxAmount": KDV tutarı (sayı, faturada KDV satırı varsa onu yaz, yoksa 0),
   "category": "MALZEME|KIRA|FATURA|MAAS|DIGER" (en uygun kategori),
-  "items": [{"description": "kalem açıklaması", "quantity": adet, "unitPrice": birim fiyat (KDV HARİÇ net birim fiyat), "total": toplam (KDV hariç net toplam)}]
+  "items": [{"description": "kalem açıklaması", "quantity": adet, "unitPrice": birim fiyat (KDV HARİÇ net birim fiyat), "total": toplam (KDV hariç net toplam), "discount": iskonto yüzdesi (0-100 arası sayı, iskonto yoksa 0)}]
 }
 ÖNEMLİ:
 - "amount" her zaman KDV DAHİL genel toplam olmalı.
 - "taxAmount" faturadaki KDV tutarı olmalı. Eğer faturada ayrı KDV satırı yoksa 0 yaz.
 - "items" içindeki "unitPrice" ve "total" KDV HARİÇ net tutarlar olmalı.
+- İSKONTO: Eğer bir kalemde iskonto varsa "discount" alanına yüzde olarak yaz (örn: %100 iskonto = 100, %50 iskonto = 50, iskonto yok = 0).
+- İskontolu kalemler genellikle faturada "iskonto", "indirim", "bedelsiz", "hediye", "promosyon", "%100" gibi ifadelerle belirtilir.
+- İskontolu kalemin "unitPrice" ve "total" değerleri İSKONTO ÖNCESİ orijinal fiyat olmalı. İskonto tutarı "discount" alanından hesaplanacak.
 Sadece JSON döndür, başka açıklama yapma.`;
 
 const SUPPORTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];

@@ -8,6 +8,7 @@ interface StockMapping {
   productId: string | null;
   quantity: number;
   unitPrice: number;
+  discount?: number; // iskonto yüzdesi (0-100)
 }
 
 function calculateSimilarity(a: string, b: string): number {
@@ -113,6 +114,7 @@ export async function POST(
             productId: bestMatch?.id || null,
             quantity: item.quantity || 1,
             unitPrice: item.unitPrice || 0,
+            discount: item.discount || 0,
           });
         }
       }
@@ -268,20 +270,31 @@ export async function POST(
           productName: string;
           quantity: number;
           salePrice: number;
+          actualSalePrice: number;
           costPrice: number;
           profit: number;
+          discount: number;
+          isGift: boolean;
         }> = [];
         const unmatchedItems: Array<{
           description: string;
           quantity: number;
           salePrice: number;
+          actualSalePrice: number;
+          discount: number;
         }> = [];
 
         for (const mapping of stockMappings) {
-          // unitPrice from OCR = KDV hariç net fiyat
+          const discountPct = mapping.discount || 0;
+          // unitPrice from OCR = KDV hariç net fiyat (iskonto öncesi)
           const unitPriceNetKurus = Math.round(mapping.unitPrice * 100);
-          // Satış fiyatı = KDV dahil (net fiyat + %vatRate)
+          // İskonto sonrası gerçek satış fiyatı (KDV hariç)
+          const discountedNetKurus = Math.round(unitPriceNetKurus * (1 - discountPct / 100));
+          // Satış fiyatı = KDV dahil
           const salePriceKurus = Math.round(unitPriceNetKurus * (1 + vatRate / 100));
+          // İskonto sonrası gerçek satış fiyatı = KDV dahil
+          const actualSalePriceKurus = Math.round(discountedNetKurus * (1 + vatRate / 100));
+          const isGift = discountPct >= 100;
 
           if (mapping.productId) {
             const product = await tx.product.findFirst({
@@ -294,7 +307,8 @@ export async function POST(
             const costPrice = product.vatIncluded
               ? product.purchasePrice
               : Math.round(product.purchasePrice * (1 + vatRate / 100));
-            const itemProfit = (salePriceKurus - costPrice) * mapping.quantity;
+            // Kar = İskonto sonrası gerçek satış fiyatı - Maliyet
+            const itemProfit = (actualSalePriceKurus - costPrice) * mapping.quantity;
 
             matchedItems.push({
               description: mapping.description,
@@ -302,8 +316,11 @@ export async function POST(
               productName: product.name,
               quantity: mapping.quantity,
               salePrice: salePriceKurus,
+              actualSalePrice: actualSalePriceKurus,
               costPrice,
               profit: itemProfit,
+              discount: discountPct,
+              isGift,
             });
 
             // Stock OUT for sales — only if trackStock enabled
@@ -333,20 +350,31 @@ export async function POST(
               description: mapping.description,
               quantity: mapping.quantity,
               salePrice: salePriceKurus,
+              actualSalePrice: actualSalePriceKurus,
+              discount: discountPct,
             });
           }
         }
 
         const totalRevenue = parsedAmount;
+        // Gerçek gelir = iskonto sonrası satış fiyatlarının toplamı
+        const actualRevenue = matchedItems.reduce((sum, item) => sum + item.actualSalePrice * item.quantity, 0)
+          + unmatchedItems.reduce((sum, item) => sum + item.actualSalePrice * item.quantity, 0);
         const totalCost = matchedItems.reduce((sum, item) => sum + item.costPrice * item.quantity, 0);
-        const grossProfit = totalRevenue - totalCost;
-        const totalVatCollected = taxAmount; // Hesaplanan KDV (satıştan)
+        const totalDiscount = matchedItems.reduce((sum, item) => sum + (item.salePrice - item.actualSalePrice) * item.quantity, 0)
+          + unmatchedItems.reduce((sum, item) => sum + (item.salePrice - item.actualSalePrice) * item.quantity, 0);
+        const grossProfit = actualRevenue - totalCost;
+        const totalVatCollected = taxAmount;
+        const giftItemCount = matchedItems.filter(i => i.isGift).length;
 
         const profitData = {
           totalRevenue,
+          actualRevenue,
           totalCost,
+          totalDiscount,
           grossProfit,
           vatCollected: totalVatCollected,
+          giftItemCount,
           matchedItems,
           unmatchedItems,
         };

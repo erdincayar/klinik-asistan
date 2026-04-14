@@ -38,21 +38,29 @@ interface UploadedInvoice {
   approved: boolean;
   profitData: {
     totalRevenue: number;
+    actualRevenue?: number;
     totalCost: number;
+    totalDiscount?: number;
     grossProfit: number;
+    giftItemCount?: number;
     matchedItems: Array<{
       description: string;
       productId: string;
       productName: string;
       quantity: number;
       salePrice: number;
+      actualSalePrice?: number;
       costPrice: number;
       profit: number;
+      discount?: number;
+      isGift?: boolean;
     }>;
     unmatchedItems: Array<{
       description: string;
       quantity: number;
       salePrice: number;
+      actualSalePrice?: number;
+      discount?: number;
     }>;
   } | null;
   createdAt: string;
@@ -74,6 +82,7 @@ interface StockMapping {
   productName: string | null;
   quantity: number;
   unitPrice: number;
+  discount: number; // iskonto yüzdesi (0-100)
 }
 
 interface ProductOption {
@@ -255,13 +264,15 @@ export default function InvoiceUploadContent() {
         if (res.ok) {
           const data = await res.json();
           setAllProducts(data.products || []);
+          const ocrItems = (inv.ocrData as any)?.items || [];
           setStockMappings(
-            data.matches.map((m: { description: string; quantity: number; unitPrice: number; matchedProduct: MatchedProduct | null }) => ({
+            data.matches.map((m: { description: string; quantity: number; unitPrice: number; matchedProduct: MatchedProduct | null }, i: number) => ({
               description: m.description,
               productId: m.matchedProduct?.id || null,
               productName: m.matchedProduct?.name || null,
               quantity: m.quantity || 1,
               unitPrice: m.unitPrice || 0,
+              discount: ocrItems[i]?.discount || 0,
             }))
           );
         }
@@ -1044,23 +1055,33 @@ export default function InvoiceUploadContent() {
                     <div className="space-y-2">
                       {stockMappings.map((mapping, idx) => {
                         const product = mapping.productId ? allProducts.find(p => p.id === mapping.productId) : null;
+                        const discountPct = (mapping as any).discount || 0;
+                        const isGift = discountPct >= 100;
                         // unitPrice from OCR = KDV hariç, KDV ekle
                         const unitPriceNetKurus = Math.round(mapping.unitPrice * 100);
+                        // İskonto sonrası gerçek fiyat
+                        const discountedNetKurus = Math.round(unitPriceNetKurus * (1 - discountPct / 100));
                         const salePriceKurus = Math.round(unitPriceNetKurus * 1.20);
+                        const actualSalePriceKurus = Math.round(discountedNetKurus * 1.20);
                         // Maliyet KDV dahil olarak karşılaştır
                         const rawCost = product?.purchasePrice || 0;
                         const costPriceKurus = product && !product.vatIncluded ? Math.round(rawCost * 1.20) : rawCost;
-                        const itemProfit = (salePriceKurus - costPriceKurus) * mapping.quantity;
+                        const itemProfit = (actualSalePriceKurus - costPriceKurus) * mapping.quantity;
                         const dropdownKey = `profit-${idx}`;
                         return (
-                          <div key={idx} className="rounded-lg bg-white px-3 py-2 text-xs">
+                          <div key={idx} className={`rounded-lg px-3 py-2 text-xs ${isGift ? "bg-amber-50 border border-amber-200" : "bg-white"}`}>
                             <div className="flex items-center justify-between">
                               <div className="flex-1 min-w-0">
-                                <span className="text-gray-700 truncate block">{mapping.description}</span>
+                                <span className="text-gray-700 truncate block">
+                                  {mapping.description}
+                                  {isGift && <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold text-amber-700">HEDİYE</span>}
+                                  {discountPct > 0 && discountPct < 100 && <span className="ml-1.5 rounded bg-blue-100 px-1.5 py-0.5 text-[9px] font-semibold text-blue-700">%{discountPct} İSK.</span>}
+                                </span>
                                 {mapping.productId && product ? (
                                   <div className="flex items-center gap-2 mt-0.5 text-[11px] text-gray-400">
                                     <span>Alış: {formatCurrency(costPriceKurus)}</span>
                                     <span>Satış: {formatCurrency(salePriceKurus)}</span>
+                                    {discountPct > 0 && <span className="text-amber-600">→ {formatCurrency(actualSalePriceKurus)}</span>}
                                     <span>x{mapping.quantity}</span>
                                   </div>
                                 ) : null}
