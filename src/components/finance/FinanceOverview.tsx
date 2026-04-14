@@ -86,6 +86,8 @@ interface IncomeStatement {
   totalExpense: number;
   totalProfit: number;
   vatAmount: number;
+  vatFromSales?: number;
+  vatFromPurchases?: number;
 }
 
 interface MonthlySummary {
@@ -201,11 +203,19 @@ export default function FinanceOverview() {
   const [vatLedger, setVatLedger] = useState<{
     vatCollected: number;
     vatPaid: number;
+    manualPayable: number;
+    manualCarried: number;
+    totalPayable: number;
+    totalCarried: number;
     netVat: number;
     vatCollectedItems: Array<{ description: string; amount: number; vatAmount: number; vatRate: number; date: string }>;
     vatPaidItems: Array<{ description: string; amount: number; vatAmount: number; vatRate: number; date: string }>;
+    manualItems: Array<{ id: string; type: string; amount: number; description: string | null; createdAt: string }>;
   } | null>(null);
-  const [vatExpanded, setVatExpanded] = useState<"collected" | "paid" | null>(null);
+  const [vatExpanded, setVatExpanded] = useState<"collected" | "paid" | "manual" | null>(null);
+  const [showManualVat, setShowManualVat] = useState(false);
+  const [manualVatForm, setManualVatForm] = useState({ type: "payable", amount: "", description: "" });
+  const [manualVatSaving, setManualVatSaving] = useState(false);
 
   // Recurring transactions state
   const [activeTab, setActiveTab] = useState("overview");
@@ -556,12 +566,12 @@ export default function FinanceOverview() {
       valueColor: "text-[#4F46E5]",
     },
     {
-      title: "Gelir",
-      value: formatCurrency(incomeStatement?.gelir ?? 0),
+      title: "Maliyet",
+      value: formatCurrency(incomeStatement?.cogs ?? 0),
       icon: DollarSign,
-      iconBg: "bg-emerald-50",
-      iconColor: "text-emerald-600",
-      valueColor: "text-emerald-700",
+      iconBg: "bg-amber-50",
+      iconColor: "text-amber-600",
+      valueColor: "text-amber-700",
     },
     {
       title: "Gider",
@@ -706,7 +716,7 @@ export default function FinanceOverview() {
             </div>
 
             {/* KDV Ledger */}
-            {vatLedger && (vatLedger.vatCollected > 0 || vatLedger.vatPaid > 0) && (
+            {vatLedger && (vatLedger.vatCollected > 0 || vatLedger.vatPaid > 0 || vatLedger.manualPayable > 0 || vatLedger.manualCarried > 0) && (
               <motion.div
                 variants={fadeUp}
                 initial="hidden"
@@ -714,38 +724,60 @@ export default function FinanceOverview() {
                 custom={2}
                 className="rounded-xl border border-gray-100 bg-white p-5"
               >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50">
-                    <FileText className="h-5 w-5 text-orange-600" />
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50">
+                      <FileText className="h-5 w-5 text-orange-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-900">KDV Özeti</h3>
+                      <p className="text-xs text-gray-400">{MONTHS_FULL[month - 1]} {year}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-900">KDV Özeti</h3>
-                    <p className="text-xs text-gray-400">{MONTHS_FULL[month - 1]} {year}</p>
-                  </div>
+                  <button
+                    onClick={() => setShowManualVat(!showManualVat)}
+                    className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-200"
+                  >
+                    + Manuel KDV Girişi
+                  </button>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                  {/* Hesaplanan KDV */}
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+                  {/* Ödenecek KDV (satışlardan) */}
                   <button
                     onClick={() => setVatExpanded(vatExpanded === "collected" ? null : "collected")}
                     className="rounded-xl bg-green-50 p-4 text-left transition-colors hover:bg-green-100"
                   >
                     <p className="text-[11px] font-medium text-gray-500">Hesaplanan KDV</p>
-                    <p className="text-xs text-gray-400 mb-1">Satışlardan tahsil edilen</p>
+                    <p className="text-xs text-gray-400 mb-1">Satışlardan</p>
                     <p className="text-lg font-bold text-green-700">{formatCurrency(vatLedger.vatCollected)}</p>
                   </button>
 
-                  {/* İndirilecek KDV */}
+                  {/* İndirilecek KDV (alışlardan) */}
                   <button
                     onClick={() => setVatExpanded(vatExpanded === "paid" ? null : "paid")}
                     className="rounded-xl bg-red-50 p-4 text-left transition-colors hover:bg-red-100"
                   >
                     <p className="text-[11px] font-medium text-gray-500">İndirilecek KDV</p>
-                    <p className="text-xs text-gray-400 mb-1">Alışlardan ödenen</p>
+                    <p className="text-xs text-gray-400 mb-1">Alışlardan</p>
                     <p className="text-lg font-bold text-red-600">{formatCurrency(vatLedger.vatPaid)}</p>
                   </button>
 
-                  {/* Ödenecek KDV */}
+                  {/* Manuel girişler */}
+                  <button
+                    onClick={() => setVatExpanded(vatExpanded === "manual" ? null : "manual")}
+                    className="rounded-xl bg-purple-50 p-4 text-left transition-colors hover:bg-purple-100"
+                  >
+                    <p className="text-[11px] font-medium text-gray-500">Manuel Girişler</p>
+                    <p className="text-xs text-gray-400 mb-1">Önceki dönem / düzeltme</p>
+                    <p className="text-lg font-bold text-purple-700">
+                      {vatLedger.manualPayable > 0 || vatLedger.manualCarried > 0
+                        ? `+${formatCurrency(vatLedger.manualPayable)} / -${formatCurrency(vatLedger.manualCarried)}`
+                        : "—"}
+                    </p>
+                  </button>
+
+                  {/* Net KDV Durumu */}
                   <div className={cn(
                     "rounded-xl p-4",
                     vatLedger.netVat >= 0 ? "bg-orange-50" : "bg-blue-50"
@@ -754,7 +786,7 @@ export default function FinanceOverview() {
                       {vatLedger.netVat >= 0 ? "Ödenecek KDV" : "Devreden KDV"}
                     </p>
                     <p className="text-xs text-gray-400 mb-1">
-                      {vatLedger.netVat >= 0 ? "Devlete ödenecek" : "Sonraki aya devir"}
+                      {vatLedger.netVat >= 0 ? "Devlete ödenecek net tutar" : "Sonraki aya devir"}
                     </p>
                     <p className={cn(
                       "text-lg font-bold",
@@ -765,10 +797,71 @@ export default function FinanceOverview() {
                   </div>
                 </div>
 
-                {/* Expanded Detail */}
+                {/* Manuel KDV Giriş Formu */}
+                {showManualVat && (
+                  <div className="mt-4 rounded-xl border border-purple-100 bg-purple-50/30 p-4 space-y-3">
+                    <p className="text-xs font-semibold text-gray-700">Manuel KDV Girişi</p>
+                    <p className="text-[10px] text-gray-400">Önceki dönemden devreden KDV veya ek ödenecek KDV ekleyin</p>
+                    <div className="flex flex-wrap gap-3">
+                      <select
+                        value={manualVatForm.type}
+                        onChange={e => setManualVatForm({ ...manualVatForm, type: e.target.value })}
+                        className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                      >
+                        <option value="payable">Ödenecek KDV (+)</option>
+                        <option value="carried">Devreden KDV (-)</option>
+                      </select>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="Tutar (₺)"
+                        value={manualVatForm.amount}
+                        onChange={e => setManualVatForm({ ...manualVatForm, amount: e.target.value })}
+                        className="w-32 rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Açıklama (opsiyonel)"
+                        value={manualVatForm.description}
+                        onChange={e => setManualVatForm({ ...manualVatForm, description: e.target.value })}
+                        className="flex-1 min-w-[150px] rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                      />
+                      <button
+                        onClick={async () => {
+                          if (!manualVatForm.amount) return;
+                          setManualVatSaving(true);
+                          try {
+                            const period = `${year}-${String(month).padStart(2, "0")}`;
+                            await fetch("/api/finance/manual-vat", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                type: manualVatForm.type,
+                                amount: Math.round(parseFloat(manualVatForm.amount) * 100),
+                                description: manualVatForm.description || null,
+                                period,
+                              }),
+                            });
+                            setManualVatForm({ type: "payable", amount: "", description: "" });
+                            // Refresh VAT ledger
+                            const res = await fetch(`/api/finance?type=vat-ledger&month=${month}&year=${year}`);
+                            if (res.ok) setVatLedger(await res.json());
+                          } catch {} finally { setManualVatSaving(false); }
+                        }}
+                        disabled={manualVatSaving || !manualVatForm.amount}
+                        className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50"
+                      >
+                        {manualVatSaving ? "..." : "Ekle"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Hesaplanan KDV Detayı */}
                 {vatExpanded === "collected" && vatLedger.vatCollectedItems.length > 0 && (
                   <div className="mt-4 rounded-xl border border-green-100 bg-green-50/30 p-4">
-                    <p className="text-xs font-semibold text-gray-500 mb-2">Hesaplanan KDV Detayı</p>
+                    <p className="text-xs font-semibold text-gray-500 mb-2">Hesaplanan KDV Detayı (Satışlardan)</p>
                     <div className="space-y-1.5 max-h-48 overflow-y-auto">
                       {vatLedger.vatCollectedItems.map((item, i) => (
                         <div key={i} className="flex items-center justify-between text-xs">
@@ -781,15 +874,48 @@ export default function FinanceOverview() {
                   </div>
                 )}
 
+                {/* İndirilecek KDV Detayı */}
                 {vatExpanded === "paid" && vatLedger.vatPaidItems.length > 0 && (
                   <div className="mt-4 rounded-xl border border-red-100 bg-red-50/30 p-4">
-                    <p className="text-xs font-semibold text-gray-500 mb-2">İndirilecek KDV Detayı</p>
+                    <p className="text-xs font-semibold text-gray-500 mb-2">İndirilecek KDV Detayı (Alışlardan)</p>
                     <div className="space-y-1.5 max-h-48 overflow-y-auto">
                       {vatLedger.vatPaidItems.map((item, i) => (
                         <div key={i} className="flex items-center justify-between text-xs">
                           <span className="text-gray-600 truncate flex-1 mr-2">{item.description}</span>
                           <span className="text-gray-400 mr-3">%{item.vatRate}</span>
                           <span className="font-semibold text-red-600 shrink-0">{formatCurrency(item.vatAmount)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Manuel Girişler Detayı */}
+                {vatExpanded === "manual" && vatLedger.manualItems && vatLedger.manualItems.length > 0 && (
+                  <div className="mt-4 rounded-xl border border-purple-100 bg-purple-50/30 p-4">
+                    <p className="text-xs font-semibold text-gray-500 mb-2">Manuel KDV Girişleri</p>
+                    <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                      {vatLedger.manualItems.map((item) => (
+                        <div key={item.id} className="flex items-center justify-between text-xs">
+                          <span className="text-gray-600 truncate flex-1 mr-2">{item.description || (item.type === "payable" ? "Ödenecek KDV" : "Devreden KDV")}</span>
+                          <span className={cn("font-semibold shrink-0 mr-2", item.type === "payable" ? "text-orange-600" : "text-blue-600")}>
+                            {item.type === "payable" ? "+" : "-"}{formatCurrency(item.amount)}
+                          </span>
+                          <button
+                            onClick={async () => {
+                              if (!window.confirm("Bu girişi silmek istediğinize emin misiniz?")) return;
+                              await fetch("/api/finance/manual-vat", {
+                                method: "DELETE",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ id: item.id }),
+                              });
+                              const res = await fetch(`/api/finance?type=vat-ledger&month=${month}&year=${year}`);
+                              if (res.ok) setVatLedger(await res.json());
+                            }}
+                            className="text-red-400 hover:text-red-600"
+                          >
+                            ×
+                          </button>
                         </div>
                       ))}
                     </div>

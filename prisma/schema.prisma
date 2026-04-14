@@ -114,6 +114,7 @@ model Clinic {
   adCampaignMetrics     AdCampaignMetric[]
   socialMediaAssets     SocialMediaAsset[]
   scheduledPosts        ScheduledPost[]
+  manualVatEntries      ManualVatEntry[]
   storageLimitMB        Int                    @default(100)
   storageUsedMB         Int                    @default(0)
   storagePlan           String                 @default("free")
@@ -935,6 +936,17 @@ model ActivityLog {
   details   Json?
   ipAddress String?
   createdAt DateTime @default(now())
+}
+
+model ManualVatEntry {
+  id          String   @id @default(cuid())
+  clinicId    String
+  clinic      Clinic   @relation(fields: [clinicId], references: [id])
+  type        String   // "payable" (ödenecek) or "carried" (devreden)
+  amount      Int      // kuruş cinsinden
+  description String?
+  period      String?  // "2026-01" gibi ay-yıl
+  createdAt   DateTime @default(now())
 }
 
 model PushSubscription {

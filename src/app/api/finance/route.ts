@@ -48,12 +48,12 @@ export async function GET(request: Request) {
         }),
       ]);
 
+      // CIRO = Toplam gelir (KDV dahil tutarlar olduğu gibi)
       const treatmentTotal = rawTreatments.reduce((sum, t) => sum + (t.amount ?? 0), 0);
       const incomeTotal = rawIncomeRecords.reduce((sum, i) => sum + (i.amount ?? 0), 0);
       const ciro = treatmentTotal + incomeTotal;
 
-      // Extract embedded cost ONLY from income records that have NO stock movements
-      // (to avoid double-counting: embedded cost + stock movement cost)
+      // COGS (Satılan Malın Maliyeti) hesaplama
       const incomeIdsWithStockMovements = new Set(
         rawOutMovements
           .filter(m => m.reference?.startsWith("expense-income-"))
@@ -61,13 +61,11 @@ export async function GET(request: Request) {
       );
       let embeddedCost = 0;
       for (const inc of rawIncomeRecords) {
-        if (incomeIdsWithStockMovements.has(inc.id)) continue; // skip — stock movements handle the cost
+        if (incomeIdsWithStockMovements.has(inc.id)) continue;
         const costMatch = inc.description?.match(/\[Maliyet: (\d+)\]/);
         if (costMatch) embeddedCost += parseInt(costMatch[1], 10);
       }
 
-      // COGS: non-invoice stock movements, excluding orphaned references
-      // First, collect treatment and expense-income references to validate
       const treatmentRefs = rawOutMovements
         .filter(m => m.reference?.startsWith("treatment-"))
         .map(m => m.reference!.replace("treatment-", ""));
@@ -75,7 +73,6 @@ export async function GET(request: Request) {
         .filter(m => m.reference?.startsWith("expense-income-"))
         .map(m => m.reference!.replace("expense-income-", ""));
 
-      // Check which parent records still exist
       const [existingTreatments, existingExpenseIncomes] = await Promise.all([
         treatmentRefs.length > 0
           ? prisma.treatment.findMany({ where: { id: { in: treatmentRefs }, clinicId }, select: { id: true } })
@@ -90,14 +87,13 @@ export async function GET(request: Request) {
       const nonInvoiceCogs = rawOutMovements
         .filter(m => {
           if (!m.reference) return true;
-          if (m.reference.startsWith("invoice-")) return false; // handled separately
+          if (m.reference.startsWith("invoice-")) return false;
           if (m.reference.startsWith("treatment-")) return validTreatmentIds.has(m.reference.replace("treatment-", ""));
           if (m.reference.startsWith("expense-income-")) return validExpenseIncomeIds.has(m.reference.replace("expense-income-", ""));
           return true;
         })
         .reduce((sum, m) => sum + (m.quantity * (m.product.purchasePrice ?? 0)), 0);
 
-      // Fetch approved income invoices for profitData-based costs
       const approvedIncomeInvoices = await prisma.uploadedInvoice.findMany({
         where: {
           clinicId,
@@ -114,7 +110,6 @@ export async function GET(request: Request) {
         if (pd && typeof pd.totalCost === "number") {
           invoiceCogs += pd.totalCost;
         } else {
-          // Fallback: use invoice-related stock movements for this invoice
           const invoiceMovementCogs = rawOutMovements
             .filter(m => m.reference === `invoice-${inv.id}`)
             .reduce((sum, m) => sum + (m.quantity * (m.product.purchasePrice ?? 0)), 0);
@@ -123,10 +118,39 @@ export async function GET(request: Request) {
       }
 
       const cogs = nonInvoiceCogs + invoiceCogs + embeddedCost;
-      const gelir = ciro - cogs;
+
+      // KAR HESABI: Ciro (KDV dahil) - Maliyet - Gider = Brüt Kar
+      // KDV ayrı takip edilir, kar hesabından çıkarılmaz
       const totalExpense = rawExpenses.reduce((sum, e) => sum + (e.amount ?? 0), 0);
-      const totalProfit = gelir - totalExpense;
-      const vatAmount = Math.round(ciro * taxRate / (100 + taxRate));
+      const brutKar = ciro - cogs - totalExpense;
+
+      // KDV hesaplaması (ayrı takip — kar hesabını etkilemez)
+      // Satışlardan oluşan KDV (Ödenecek KDV)
+      let vatFromSales = 0;
+      for (const inc of rawIncomeRecords) {
+        const rate = (inc as any).vatRate ?? taxRate;
+        if (rate === 0) continue;
+        const vatAmt = (inc as any).vatIncluded
+          ? Math.round(inc.amount * rate / (100 + rate))
+          : Math.round(inc.amount * rate / 100);
+        vatFromSales += vatAmt;
+      }
+      for (const t of rawTreatments) {
+        vatFromSales += Math.round(t.amount * taxRate / (100 + taxRate));
+      }
+
+      // Alışlardan ödenen KDV (Devreden/İndirilecek KDV)
+      let vatFromPurchases = 0;
+      for (const exp of rawExpenses) {
+        const rate = (exp as any).vatRate ?? taxRate;
+        if (rate === 0) continue;
+        const vatAmt = (exp as any).vatIncluded
+          ? Math.round(exp.amount * rate / (100 + rate))
+          : Math.round(exp.amount * rate / 100);
+        vatFromPurchases += vatAmt;
+      }
+
+      const vatAmount = vatFromSales; // backward compat
 
       const treatments = rawTreatments.map((t) => ({
         id: t.id,
@@ -179,7 +203,6 @@ export async function GET(request: Request) {
         }
       }
 
-      // Exclude income records that are linked to invoices (they show in invoiceProfitSummary)
       const invoiceLinkedExpenseIds = new Set(
         approvedIncomeInvoices
           .filter((inv) => (inv as any).linkedExpenseId)
@@ -195,7 +218,138 @@ export async function GET(request: Request) {
           amount: r.amount,
         }));
 
-      return Response.json({ ciro, cogs, gelir, totalExpense, totalProfit, vatAmount, taxRate, treatments, expenses, incomeRecords, invoiceProfitSummary });
+      return Response.json({
+        ciro,
+        cogs,
+        gelir: ciro - cogs, // backward compat: gelir = ciro - maliyet (KDV çıkarılmıyor)
+        totalExpense,
+        totalProfit: brutKar,
+        vatAmount,
+        vatFromSales,
+        vatFromPurchases,
+        taxRate,
+        treatments,
+        expenses,
+        incomeRecords,
+        invoiceProfitSummary,
+      });
+    }
+
+    if (type === "vat-ledger") {
+      const startDate = new Date(Date.UTC(year, month - 1, 1));
+      const endDate = new Date(Date.UTC(year, month, 1));
+      const periodStr = `${year}-${String(month).padStart(2, "0")}`;
+
+      const [incomeRecords, treatments, expenseRecords, manualEntries] = await Promise.all([
+        prisma.expense.findMany({
+          where: { clinicId, type: "INCOME", date: { gte: startDate, lt: endDate } },
+          select: { id: true, description: true, amount: true, vatRate: true, vatIncluded: true, date: true },
+        }),
+        prisma.treatment.findMany({
+          where: { clinicId, date: { gte: startDate, lt: endDate } },
+          select: { id: true, category: true, amount: true, date: true, patient: { select: { name: true } } },
+        }),
+        prisma.expense.findMany({
+          where: { clinicId, type: "EXPENSE", date: { gte: startDate, lt: endDate } },
+          select: { id: true, description: true, amount: true, vatRate: true, vatIncluded: true, date: true },
+        }),
+        // Manuel KDV girişleri
+        prisma.manualVatEntry.findMany({
+          where: { clinicId, period: periodStr },
+          orderBy: { createdAt: "desc" },
+        }),
+      ]);
+
+      // Hesaplanan KDV (Ödenecek KDV — satışlardan)
+      let vatCollected = 0;
+      const vatCollectedItems: Array<{ description: string; amount: number; vatAmount: number; vatRate: number; date: Date }> = [];
+
+      for (const inc of incomeRecords) {
+        const rate = inc.vatRate ?? taxRate;
+        if (rate === 0) continue;
+        const vatAmt = inc.vatIncluded
+          ? Math.round(inc.amount * rate / (100 + rate))
+          : Math.round(inc.amount * rate / 100);
+        vatCollected += vatAmt;
+        vatCollectedItems.push({
+          description: inc.description,
+          amount: inc.amount,
+          vatAmount: vatAmt,
+          vatRate: rate,
+          date: inc.date,
+        });
+      }
+
+      for (const t of treatments) {
+        const vatAmt = Math.round(t.amount * taxRate / (100 + taxRate));
+        vatCollected += vatAmt;
+        vatCollectedItems.push({
+          description: `Tedavi - ${t.patient.name} (${t.category})`,
+          amount: t.amount,
+          vatAmount: vatAmt,
+          vatRate: taxRate,
+          date: t.date,
+        });
+      }
+
+      // İndirilecek KDV (Devreden KDV — alışlardan)
+      let vatPaid = 0;
+      const vatPaidItems: Array<{ description: string; amount: number; vatAmount: number; vatRate: number; date: Date }> = [];
+
+      for (const exp of expenseRecords) {
+        const rate = exp.vatRate ?? taxRate;
+        if (rate === 0) continue;
+        const vatAmt = exp.vatIncluded
+          ? Math.round(exp.amount * rate / (100 + rate))
+          : Math.round(exp.amount * rate / 100);
+        vatPaid += vatAmt;
+        vatPaidItems.push({
+          description: exp.description,
+          amount: exp.amount,
+          vatAmount: vatAmt,
+          vatRate: rate,
+          date: exp.date,
+        });
+      }
+
+      // Manuel KDV girişleri
+      let manualPayable = 0; // manuel ödenecek
+      let manualCarried = 0; // manuel devreden
+      const manualItems: Array<{ id: string; type: string; amount: number; description: string | null; createdAt: Date }> = [];
+
+      for (const entry of manualEntries) {
+        if (entry.type === "payable") {
+          manualPayable += entry.amount;
+        } else {
+          manualCarried += entry.amount;
+        }
+        manualItems.push({
+          id: entry.id,
+          type: entry.type,
+          amount: entry.amount,
+          description: entry.description,
+          createdAt: entry.createdAt,
+        });
+      }
+
+      // Net KDV = (Ödenecek + Manuel Ödenecek) - (Devreden + Manuel Devreden)
+      const totalPayable = vatCollected + manualPayable;
+      const totalCarried = vatPaid + manualCarried;
+      const netVat = totalPayable - totalCarried;
+
+      return Response.json({
+        vatCollected,
+        vatPaid,
+        manualPayable,
+        manualCarried,
+        totalPayable,
+        totalCarried,
+        netVat,
+        vatCollectedItems,
+        vatPaidItems,
+        manualItems,
+        taxRate,
+      });
     }
 
     if (type === "vat-summary") {
@@ -212,91 +366,6 @@ export async function GET(request: Request) {
       const totalWithoutVat = totalWithVat - vatAmount;
 
       return Response.json({ totalWithVat, vatAmount, totalWithoutVat, taxRate });
-    }
-
-    if (type === "vat-ledger") {
-      const startDate = new Date(Date.UTC(year, month - 1, 1));
-      const endDate = new Date(Date.UTC(year, month, 1));
-
-      // Gelen KDV: Satışlardan tahsil edilen KDV (gelir faturaları + tedaviler)
-      const [incomeRecords, treatments, expenseRecords] = await Promise.all([
-        prisma.expense.findMany({
-          where: { clinicId, type: "INCOME", date: { gte: startDate, lt: endDate } },
-          select: { id: true, description: true, amount: true, vatRate: true, vatIncluded: true, date: true },
-        }),
-        prisma.treatment.findMany({
-          where: { clinicId, date: { gte: startDate, lt: endDate } },
-          select: { id: true, category: true, amount: true, date: true, patient: { select: { name: true } } },
-        }),
-        prisma.expense.findMany({
-          where: { clinicId, type: "EXPENSE", date: { gte: startDate, lt: endDate } },
-          select: { id: true, description: true, amount: true, vatRate: true, vatIncluded: true, date: true },
-        }),
-      ]);
-
-      // Hesaplanan KDV (satışlardan)
-      let vatCollected = 0;
-      const vatCollectedItems: Array<{ description: string; amount: number; vatAmount: number; vatRate: number; date: Date }> = [];
-
-      for (const inc of incomeRecords) {
-        const rate = inc.vatRate ?? taxRate;
-        if (rate === 0) continue; // KDV %0 = faturasız satış, KDV hesaplanmaz
-        const vatAmt = inc.vatIncluded
-          ? Math.round(inc.amount * rate / (100 + rate))
-          : Math.round(inc.amount * rate / 100);
-        vatCollected += vatAmt;
-        vatCollectedItems.push({
-          description: inc.description,
-          amount: inc.amount,
-          vatAmount: vatAmt,
-          vatRate: rate,
-          date: inc.date,
-        });
-      }
-
-      // Tedavilerden KDV
-      for (const t of treatments) {
-        const vatAmt = Math.round(t.amount * taxRate / (100 + taxRate));
-        vatCollected += vatAmt;
-        vatCollectedItems.push({
-          description: `Tedavi - ${t.patient.name} (${t.category})`,
-          amount: t.amount,
-          vatAmount: vatAmt,
-          vatRate: taxRate,
-          date: t.date,
-        });
-      }
-
-      // İndirilecek KDV (alışlardan / giderlerden)
-      let vatPaid = 0;
-      const vatPaidItems: Array<{ description: string; amount: number; vatAmount: number; vatRate: number; date: Date }> = [];
-
-      for (const exp of expenseRecords) {
-        const rate = exp.vatRate ?? taxRate;
-        if (rate === 0) continue; // KDV %0, KDV hesaplanmaz
-        const vatAmt = exp.vatIncluded
-          ? Math.round(exp.amount * rate / (100 + rate))
-          : Math.round(exp.amount * rate / 100);
-        vatPaid += vatAmt;
-        vatPaidItems.push({
-          description: exp.description,
-          amount: exp.amount,
-          vatAmount: vatAmt,
-          vatRate: rate,
-          date: exp.date,
-        });
-      }
-
-      const netVat = vatCollected - vatPaid;
-
-      return Response.json({
-        vatCollected,
-        vatPaid,
-        netVat,
-        vatCollectedItems,
-        vatPaidItems,
-        taxRate,
-      });
     }
 
     if (type === "monthly-summary") {
