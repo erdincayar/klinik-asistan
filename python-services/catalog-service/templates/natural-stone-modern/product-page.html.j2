@@ -1,0 +1,51 @@
+<section class="page product">
+
+  <div class="product__media">
+    {% if product.image_path %}
+      <img src="{{ product.image_path }}" alt="{{ product.name | e }}">
+    {% else %}
+      <span class="product__media-placeholder">görsel yok</span>
+    {% endif %}
+  </div>
+
+  <div class="product__body">
+    <div class="product__kicker">{{ category_name | e }}</div>
+
+    {% if product.product_code %}
+      <div class="product__code">{{ product.product_code | e }}</div>
+    {% endif %}
+
+    <h3 class="product__name">{{ product.name | e }}</h3>
+    <div class="product__rule"></div>
+
+    {% if product.description %}
+      <p class="product__description">{{ product.description | e }}</p>
+    {% endif %}
+
+    {% if product.technical_specs %}
+      <div class="product__specs-title">Teknik Özellikler</div>
+      <ul class="product__specs">
+        {% for key, value in product.technical_specs.items() %}
+          {% if value %}
+            <li class="product__spec">
+              <span class="product__spec-key">{{ key | replace('_', ' ') | e }}</span>
+              <span class="product__spec-val">{{ value | e }}</span>
+            </li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <div class="product__footer">
+      {% if product.price %}
+        <span class="product__price">
+          {{ '%.2f' % product.price }} {{ product.currency or '₺' }}
+        </span>
+      {% else %}
+        <span>&nbsp;</span>
+      {% endif %}
+      <span>{{ metadata.company_name | default('') | e }}</span>
+    </div>
+  </div>
+
+</section>

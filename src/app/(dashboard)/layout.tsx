@@ -41,6 +41,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Sparkles,
+  BookOpen,
   Megaphone,
   Shield,
   Activity,
@@ -148,6 +149,7 @@ const adminNavItems = [
   { href: "/admin", label: "Admin Panel", icon: Shield },
   { href: "/admin/users", label: "Kullanıcılar", icon: Users },
   { href: "/admin/marketing", label: "Content Studio", icon: Sparkles },
+  { href: "/admin/content-studio/catalog", label: "Katalog Üretici", icon: BookOpen },
   { href: "/admin/activity", label: "Aktivite Log", icon: Activity },
 ];
 
@@ -180,6 +182,8 @@ const pageTitles: Record<string, string> = {
   "/admin": "Admin Panel",
   "/admin/users": "Kullanıcı Yönetimi",
   "/admin/marketing": "Content Studio",
+  "/admin/content-studio/catalog": "Katalog Üretici",
+  "/admin/content-studio/catalog/new": "Yeni Katalog",
   "/admin/activity": "Aktivite Logları",
 };
 

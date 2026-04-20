@@ -1,0 +1,21 @@
+<section class="page cover">
+  <div class="cover__brand">
+    {% if brand_kit.logo_path %}
+      <img class="cover__logo" src="{{ brand_kit.logo_path }}" alt="{{ metadata.company_name | default('') | e }}">
+    {% endif %}
+    <div class="cover__company">{{ metadata.company_name | default('') | e }}</div>
+  </div>
+
+  <div>
+    <h1 class="cover__title">{{ metadata.title | default('Ürün Kataloğu') | e }}</h1>
+    {% if metadata.subtitle %}
+      <p class="cover__subtitle">{{ metadata.subtitle | e }}</p>
+    {% endif %}
+    <div class="cover__accent"></div>
+  </div>
+
+  <div class="cover__meta">
+    {% if metadata.edition %}{{ metadata.edition | e }} · {% endif %}
+    {{ metadata.year | default('') }}
+  </div>
+</section>

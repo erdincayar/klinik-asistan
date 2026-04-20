@@ -1,0 +1,41 @@
+<section class="page back">
+
+  <div>
+    <h2 class="back__heading">İletişim</h2>
+    <div class="back__accent"></div>
+
+    <div class="back__contacts">
+      {% if metadata.contact_info %}
+        {% if metadata.contact_info.address %}
+          <div class="back__contact">
+            <div class="back__contact-label">Adres</div>
+            <div class="back__contact-value">{{ metadata.contact_info.address | e }}</div>
+          </div>
+        {% endif %}
+        {% if metadata.contact_info.phone %}
+          <div class="back__contact">
+            <div class="back__contact-label">Telefon</div>
+            <div class="back__contact-value">{{ metadata.contact_info.phone | e }}</div>
+          </div>
+        {% endif %}
+        {% if metadata.contact_info.email %}
+          <div class="back__contact">
+            <div class="back__contact-label">E-posta</div>
+            <div class="back__contact-value">{{ metadata.contact_info.email | e }}</div>
+          </div>
+        {% endif %}
+        {% if metadata.contact_info.website %}
+          <div class="back__contact">
+            <div class="back__contact-label">Web</div>
+            <div class="back__contact-value">{{ metadata.contact_info.website | e }}</div>
+          </div>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="back__footer">
+    © {{ metadata.year | default('') }} {{ metadata.company_name | default('') | e }} — Tüm hakları saklıdır
+  </div>
+
+</section>

@@ -42,6 +42,7 @@
     "react-hook-form": "^7.71.2",
     "recharts": "^3.7.0",
     "resend": "^6.9.3",
+    "sharp": "^0.34.5",
     "tailwind-merge": "^3.5.0",
     "tailwindcss-animate": "^1.0.7",
     "web-push": "^3.6.7",

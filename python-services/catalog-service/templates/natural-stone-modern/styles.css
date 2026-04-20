@@ -1,0 +1,372 @@
+/* ─────────────────────────────────────────────────────────
+ * Natural Stone — Modern & Minimal
+ * A4, 20mm margin. WeasyPrint paged media.
+ * Brand CSS variables are injected by main.html.j2 :root block.
+ * ─────────────────────────────────────────────────────────
+ */
+
+@page {
+  size: A4;
+  margin: 20mm;
+  @bottom-right {
+    content: counter(page);
+    font-family: var(--brand-font, "Inter"), sans-serif;
+    font-size: 9pt;
+    color: #9CA3AF;
+  }
+  @bottom-left {
+    content: var(--brand-company, "Katalog");
+    font-family: var(--brand-font, "Inter"), sans-serif;
+    font-size: 9pt;
+    color: #9CA3AF;
+    letter-spacing: 0.05em;
+  }
+}
+
+@page :first {
+  margin: 0;
+  @bottom-left { content: ""; }
+  @bottom-right { content: ""; }
+}
+
+@page cover-page {
+  margin: 0;
+  @bottom-left { content: ""; }
+  @bottom-right { content: ""; }
+}
+
+@page back-page {
+  margin: 0;
+  @bottom-left { content: ""; }
+  @bottom-right { content: ""; }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--brand-font, "Inter"), "Helvetica Neue", sans-serif;
+  color: #111827;
+  font-size: 10pt;
+  line-height: 1.5;
+  -weasy-font-feature-settings: "liga", "kern";
+}
+
+.page {
+  page-break-after: always;
+  break-after: page;
+  position: relative;
+}
+
+.page:last-of-type {
+  page-break-after: auto;
+  break-after: auto;
+}
+
+/* ── COVER ── */
+.cover {
+  page: cover-page;
+  width: 210mm;
+  height: 297mm;
+  background: var(--brand-primary, #1F2937);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 30mm 25mm;
+}
+
+.cover__brand {
+  display: flex;
+  align-items: center;
+  gap: 10mm;
+}
+
+.cover__logo {
+  height: 18mm;
+  width: auto;
+  object-fit: contain;
+}
+
+.cover__company {
+  font-size: 14pt;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+.cover__title {
+  font-size: 44pt;
+  font-weight: 200;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.cover__subtitle {
+  margin-top: 6mm;
+  font-size: 14pt;
+  font-weight: 300;
+  max-width: 140mm;
+  opacity: 0.85;
+}
+
+.cover__accent {
+  width: 70mm;
+  height: 2pt;
+  background: var(--brand-accent, #D4A574);
+  margin: 14mm 0 0 0;
+}
+
+.cover__meta {
+  font-size: 9pt;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+/* ── TOC ── */
+.toc {
+  padding-top: 10mm;
+}
+.toc__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--brand-accent, #D4A574);
+  padding-bottom: 4mm;
+  margin-bottom: 10mm;
+}
+.toc__title {
+  font-size: 32pt;
+  font-weight: 200;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+.toc__section {
+  font-size: 9pt;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #6B7280;
+}
+.toc__list { list-style: none; padding: 0; margin: 0; }
+.toc__item {
+  display: flex;
+  align-items: baseline;
+  padding: 3mm 0;
+  border-bottom: 1px dashed #E5E7EB;
+}
+.toc__item-name {
+  font-size: 11pt;
+  color: #111827;
+}
+.toc__item-count {
+  margin-left: 4mm;
+  font-size: 9pt;
+  color: #9CA3AF;
+}
+.toc__dots {
+  flex: 1;
+  border-bottom: 1pt dotted #D1D5DB;
+  margin: 0 3mm 2mm 3mm;
+}
+.toc__page {
+  font-size: 10pt;
+  color: var(--brand-primary, #1F2937);
+  font-weight: 500;
+}
+
+/* ── CATEGORY DIVIDER ── */
+.divider {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  height: 257mm;
+  padding-left: 10mm;
+}
+.divider__kicker {
+  font-size: 10pt;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--brand-accent, #D4A574);
+  margin-bottom: 8mm;
+}
+.divider__name {
+  font-size: 56pt;
+  font-weight: 200;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  margin: 0;
+  color: var(--brand-primary, #1F2937);
+}
+.divider__meta {
+  margin-top: 10mm;
+  font-size: 10pt;
+  color: #6B7280;
+}
+
+/* ── PRODUCT PAGE ── */
+.product {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10mm;
+  min-height: 257mm;
+}
+.product__media {
+  background: #F3F4F6;
+  border: 1px solid #E5E7EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  min-height: 200mm;
+}
+.product__media img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.product__media-placeholder {
+  color: #9CA3AF;
+  font-size: 10pt;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+.product__body { padding: 4mm 0; }
+.product__kicker {
+  font-size: 9pt;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--brand-accent, #D4A574);
+  margin-bottom: 4mm;
+}
+.product__code {
+  font-size: 9pt;
+  color: #9CA3AF;
+  margin-bottom: 2mm;
+  font-family: "SF Mono", "Menlo", monospace;
+}
+.product__name {
+  font-size: 24pt;
+  font-weight: 300;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin: 0 0 6mm 0;
+  color: var(--brand-primary, #1F2937);
+}
+.product__rule {
+  width: 24mm;
+  height: 1.2pt;
+  background: var(--brand-accent, #D4A574);
+  margin: 0 0 6mm 0;
+}
+.product__description {
+  font-size: 10pt;
+  line-height: 1.6;
+  color: #374151;
+  margin: 0 0 8mm 0;
+}
+.product__specs-title {
+  font-size: 9pt;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #6B7280;
+  margin: 0 0 3mm 0;
+}
+.product__specs {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 6mm 0;
+  border-top: 1px solid #E5E7EB;
+}
+.product__spec {
+  display: flex;
+  padding: 2mm 0;
+  border-bottom: 1px solid #F3F4F6;
+  font-size: 10pt;
+}
+.product__spec-key {
+  flex: 0 0 35mm;
+  color: #6B7280;
+  text-transform: capitalize;
+}
+.product__spec-val {
+  flex: 1;
+  color: #111827;
+  font-weight: 500;
+}
+.product__footer {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 9pt;
+  color: #9CA3AF;
+  padding-top: 4mm;
+  border-top: 1px solid #E5E7EB;
+}
+.product__price {
+  font-size: 14pt;
+  font-weight: 400;
+  color: var(--brand-primary, #1F2937);
+  letter-spacing: -0.01em;
+}
+
+/* ── BACK COVER ── */
+.back {
+  page: back-page;
+  width: 210mm;
+  height: 297mm;
+  background: var(--brand-secondary, #F9FAFB);
+  color: #111827;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 30mm 25mm;
+}
+.back__heading {
+  font-size: 32pt;
+  font-weight: 200;
+  letter-spacing: -0.02em;
+  margin: 0;
+  color: var(--brand-primary, #1F2937);
+}
+.back__accent {
+  width: 70mm;
+  height: 2pt;
+  background: var(--brand-accent, #D4A574);
+  margin: 8mm 0 10mm 0;
+}
+.back__contacts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8mm 10mm;
+}
+.back__contact {
+  border-left: 2pt solid var(--brand-accent, #D4A574);
+  padding: 1mm 0 1mm 5mm;
+}
+.back__contact-label {
+  font-size: 8pt;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #6B7280;
+  margin-bottom: 1.5mm;
+}
+.back__contact-value {
+  font-size: 11pt;
+  color: #111827;
+  font-weight: 400;
+  word-break: break-word;
+}
+.back__footer {
+  font-size: 8pt;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #9CA3AF;
+  border-top: 1px solid #D1D5DB;
+  padding-top: 5mm;
+}

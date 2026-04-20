@@ -1,0 +1,50 @@
+{# Master template: renders full catalog HTML in a single document. #}
+<!DOCTYPE html>
+<html lang="{{ metadata.language | default('tr') }}">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ metadata.title | default('Katalog') | e }}</title>
+
+  {# Google Fonts: Inter + Manrope. WeasyPrint resolves @font-face via @import. #}
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&family=Manrope:wght@200;300;400;500;600&display=swap");
+  </style>
+
+  {# Base stylesheet (file contents are injected inline by the renderer) #}
+  <style>
+    {{ base_css | safe }}
+  </style>
+
+  {# Brand kit — overrides CSS variables #}
+  <style>
+    :root {
+      --brand-primary:   {{ brand_kit.primary   | default('#1F2937') }};
+      --brand-secondary: {{ brand_kit.secondary | default('#F9FAFB') }};
+      --brand-accent:    {{ brand_kit.accent    | default('#D4A574') }};
+      --brand-font:      {{ brand_kit.font_family | default('Inter') }};
+      --brand-company:   "{{ metadata.company_name | default('') | e }}";
+    }
+  </style>
+</head>
+<body>
+
+  {# Cover #}
+  {% include "cover.html.j2" %}
+
+  {# Table of contents #}
+  {% include "toc.html.j2" %}
+
+  {# Category sections — divider + product pages #}
+  {% for category, category_products in products_by_category %}
+    {% set category_name = category or "Genel" %}
+    {% include "category-divider.html.j2" %}
+    {% for product in category_products %}
+      {% include "product-page.html.j2" %}
+    {% endfor %}
+  {% endfor %}
+
+  {# Back cover #}
+  {% include "back-cover.html.j2" %}
+
+</body>
+</html>

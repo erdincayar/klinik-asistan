@@ -1,0 +1,18 @@
+<section class="page toc">
+  <div class="toc__header">
+    <h2 class="toc__title">İçindekiler</h2>
+    <span class="toc__section">Contents</span>
+  </div>
+
+  <ul class="toc__list">
+    {% for category, items in products_by_category %}
+      {% set cat_name = category or 'Genel' %}
+      <li class="toc__item">
+        <span class="toc__item-name">{{ cat_name | e }}</span>
+        <span class="toc__item-count">{{ items | length }} ürün</span>
+        <span class="toc__dots"></span>
+        <span class="toc__page">—</span>
+      </li>
+    {% endfor %}
+  </ul>
+</section>

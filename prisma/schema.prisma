@@ -21,7 +21,7 @@ model User {
   emailVerifyToken    String?              @unique
   emailVerifyExpires  DateTime?
   lastLoginAt         DateTime?
-  telegramChatId      String?              // Kullanıcının kendi Telegram chat ID'si
+  telegramChatId      String? // Kullanıcının kendi Telegram chat ID'si
   clinicId            String?
   clinic              Clinic?              @relation(fields: [clinicId], references: [id])
   onboardingCompleted Boolean              @default(false)
@@ -29,6 +29,7 @@ model User {
   activityLogs        ActivityLog[]
   accounts            Account[]
   telegramLinks       TelegramLink[]
+  catalogProjects     CatalogProject[]
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
 }
@@ -65,136 +66,137 @@ model PasswordResetToken {
 // Sector values: SAGLIK, RESTORAN, OTEL, KUAFOR, GUZELLIK, DIGER
 // MessagingPreference values: WHATSAPP, TELEGRAM, BOTH
 model Clinic {
-  id                    String                 @id @default(cuid())
-  name                  String
-  phone                 String?
-  address               String?
-  taxRate               Int                    @default(20)
-  sector                String?
-  sectorConfig          Json?    // Özel sektör etiketleri (SectorLabels override)
-  plan                  String?                @default("PRO") // BASIC, PRO, BUSINESS
-  selectedModules       String?                // JSON array string
-  messagingPreference   String?                // WHATSAPP, TELEGRAM, BOTH
-  workStartTime         String                 @default("09:00")
-  workEndTime           String                 @default("17:30")
-  users                 User[]
-  patients              Patient[]
-  treatments            Treatment[]
-  expenses              Expense[]
-  reminders             Reminder[]
-  appointments          Appointment[]
-  clinicSchedules       ClinicSchedule[]
-  patientPreferences    PatientPreference[]
-  patientVisitPatterns  PatientVisitPattern[]
-  reminderLogs          ReminderLog[]
-  employees             Employee[]
-  products              Product[]
-  stockMovements        StockMovement[]
-  invoices              Invoice[]
-  recurringTransactions RecurringTransaction[]
-  subscriptions         Subscription[]
-  telegramChatId        String?
-  telegramLinks         TelegramLink[]
-  whatsappPhone         String?
-  whatsappConnected     Boolean                @default(false)
-  clinicModules         ClinicModule[]
-  consentForms          ConsentForm[]
-  debts                 Debt[]
-  onboardingChats       OnboardingChat[]
-  onboardingProfiles    OnboardingProfile[]
-  uploadedInvoices      UploadedInvoice[]
-  financialReports      FinancialReport[]
-  metaAppId             String?
-  metaAccessToken       String?                // AES-256 encrypted
-  metaAdAccountId       String?
-  metaConnected         Boolean                @default(false)
-  metaTokenExpiresAt    DateTime?
-  metaAdsConnection     MetaAdsConnection?
-  adCampaigns           AdCampaign[]
-  adCampaignMetrics     AdCampaignMetric[]
-  socialMediaAssets     SocialMediaAsset[]
-  scheduledPosts        ScheduledPost[]
-  manualVatEntries      ManualVatEntry[]
-  storageLimitMB        Int                    @default(100)
-  storageUsedMB         Int                    @default(0)
-  storagePlan           String                 @default("free")
-  photoCategories       String[]               @default(["Genel"])
-  tokenBalance          TokenBalance?
-  tokenTransactions     TokenTransaction[]
-  stockAlarms           StockAlarm[]
-  alarms                Alarm[]
-  alarmLogs             AlarmLog[]
-  fixedAssets           FixedAsset[]
-  inventoryColumnConfig InventoryColumnConfig?
-  employeeRoles         EmployeeRole[]
-  employeeCustomFields  EmployeeCustomField[]
-  hrDocuments           HrDocument[]
-  styleProfile          ClinicStyleProfile?
-  aiGeneratedContents   AiGeneratedContent[]
-  tweetStrategy         TweetStrategy?
-  targetAccounts        TargetAccount[]
-  engagementReplies     EngagementReply[]
-  assistantConfig       ClinicAssistantConfig?
-  knowledgeBase         ClinicKnowledgeBase[]
-  clinicConversations   ClinicConversation[]
-  assistantAppointments AssistantAppointment[]
-  clinicServiceNames    ClinicServiceName[]
-  clinicCategories      ClinicCategory[]
-  customerCustomColumns CustomerCustomColumn[]
+  id                      String                   @id @default(cuid())
+  name                    String
+  phone                   String?
+  address                 String?
+  taxRate                 Int                      @default(20)
+  sector                  String?
+  sectorConfig            Json? // Özel sektör etiketleri (SectorLabels override)
+  plan                    String?                  @default("PRO") // BASIC, PRO, BUSINESS
+  selectedModules         String? // JSON array string
+  messagingPreference     String? // WHATSAPP, TELEGRAM, BOTH
+  workStartTime           String                   @default("09:00")
+  workEndTime             String                   @default("17:30")
+  users                   User[]
+  patients                Patient[]
+  treatments              Treatment[]
+  expenses                Expense[]
+  reminders               Reminder[]
+  appointments            Appointment[]
+  clinicSchedules         ClinicSchedule[]
+  patientPreferences      PatientPreference[]
+  patientVisitPatterns    PatientVisitPattern[]
+  reminderLogs            ReminderLog[]
+  employees               Employee[]
+  products                Product[]
+  stockMovements          StockMovement[]
+  invoices                Invoice[]
+  recurringTransactions   RecurringTransaction[]
+  subscriptions           Subscription[]
+  telegramChatId          String?
+  telegramLinks           TelegramLink[]
+  whatsappPhone           String?
+  whatsappConnected       Boolean                  @default(false)
+  clinicModules           ClinicModule[]
+  consentForms            ConsentForm[]
+  debts                   Debt[]
+  onboardingChats         OnboardingChat[]
+  onboardingProfiles      OnboardingProfile[]
+  uploadedInvoices        UploadedInvoice[]
+  financialReports        FinancialReport[]
+  metaAppId               String?
+  metaAccessToken         String? // AES-256 encrypted
+  metaAdAccountId         String?
+  metaConnected           Boolean                  @default(false)
+  metaTokenExpiresAt      DateTime?
+  metaAdsConnection       MetaAdsConnection?
+  adCampaigns             AdCampaign[]
+  adCampaignMetrics       AdCampaignMetric[]
+  socialMediaAssets       SocialMediaAsset[]
+  scheduledPosts          ScheduledPost[]
+  manualVatEntries        ManualVatEntry[]
+  catalogProjects         CatalogProject[]
+  storageLimitMB          Int                      @default(100)
+  storageUsedMB           Int                      @default(0)
+  storagePlan             String                   @default("free")
+  photoCategories         String[]                 @default(["Genel"])
+  tokenBalance            TokenBalance?
+  tokenTransactions       TokenTransaction[]
+  stockAlarms             StockAlarm[]
+  alarms                  Alarm[]
+  alarmLogs               AlarmLog[]
+  fixedAssets             FixedAsset[]
+  inventoryColumnConfig   InventoryColumnConfig?
+  employeeRoles           EmployeeRole[]
+  employeeCustomFields    EmployeeCustomField[]
+  hrDocuments             HrDocument[]
+  styleProfile            ClinicStyleProfile?
+  aiGeneratedContents     AiGeneratedContent[]
+  tweetStrategy           TweetStrategy?
+  targetAccounts          TargetAccount[]
+  engagementReplies       EngagementReply[]
+  assistantConfig         ClinicAssistantConfig?
+  knowledgeBase           ClinicKnowledgeBase[]
+  clinicConversations     ClinicConversation[]
+  assistantAppointments   AssistantAppointment[]
+  clinicServiceNames      ClinicServiceName[]
+  clinicCategories        ClinicCategory[]
+  customerCustomColumns   CustomerCustomColumn[]
   transactionCustomFields TransactionCustomField[]
-  alertRules            CustomerAlertRule[]
-  subscriptionPlan      SubscriptionPlan?
-  createdAt             DateTime               @default(now())
-  updatedAt             DateTime               @updatedAt
+  alertRules              CustomerAlertRule[]
+  subscriptionPlan        SubscriptionPlan?
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
 }
 
 model Patient {
-  id           String               @id @default(cuid())
-  name         String
-  phone        String?
-  email        String?
-  notes        String?
-  dateOfBirth  DateTime?
-  clinicId     String
-  clinic       Clinic               @relation(fields: [clinicId], references: [id])
-  treatments   Treatment[]
-  appointments Appointment[]
-  preferences  PatientPreference[]
-  visitPattern PatientVisitPattern?
-  reminderLogs ReminderLog[]
-  invoices     Invoice[]
-  photos       PatientPhoto[]
-  customValues CustomerCustomValue[]
-  alarms                Alarm[]
-  consentFormResponses  ConsentFormResponse[]
-  debts                 Debt[]
-  createdAt             DateTime             @default(now())
-  updatedAt             DateTime             @updatedAt
+  id                   String                @id @default(cuid())
+  name                 String
+  phone                String?
+  email                String?
+  notes                String?
+  dateOfBirth          DateTime?
+  clinicId             String
+  clinic               Clinic                @relation(fields: [clinicId], references: [id])
+  treatments           Treatment[]
+  appointments         Appointment[]
+  preferences          PatientPreference[]
+  visitPattern         PatientVisitPattern?
+  reminderLogs         ReminderLog[]
+  invoices             Invoice[]
+  photos               PatientPhoto[]
+  customValues         CustomerCustomValue[]
+  alarms               Alarm[]
+  consentFormResponses ConsentFormResponse[]
+  debts                Debt[]
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
 }
 
 // TreatmentCategory values: BOTOX, DOLGU, DIS_TEDAVI, GENEL
 // SQLite doesn't support enums, using String instead
 
 model Treatment {
-  id          String    @id @default(cuid())
-  patientId   String
-  patient     Patient   @relation(fields: [patientId], references: [id])
-  clinicId    String
-  clinic      Clinic    @relation(fields: [clinicId], references: [id])
-  name        String
-  description String?
-  amount      Int // kuruş cinsinden
-  date        DateTime  @default(now())
-  category    String    @default("GENEL") // BOTOX, DOLGU, DIS_TEDAVI, GENEL
+  id            String                   @id @default(cuid())
+  patientId     String
+  patient       Patient                  @relation(fields: [patientId], references: [id])
+  clinicId      String
+  clinic        Clinic                   @relation(fields: [clinicId], references: [id])
+  name          String
+  description   String?
+  amount        Int // kuruş cinsinden
+  date          DateTime                 @default(now())
+  category      String                   @default("GENEL") // BOTOX, DOLGU, DIS_TEDAVI, GENEL
   employeeId    String?
-  employee      Employee? @relation(fields: [employeeId], references: [id])
+  employee      Employee?                @relation(fields: [employeeId], references: [id])
   appointmentId String?
-  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
-  paymentMethod String?      // Nakit, Kart, Havale, Sigorta, Diger
+  appointment   Appointment?             @relation(fields: [appointmentId], references: [id])
+  paymentMethod String? // Nakit, Kart, Havale, Sigorta, Diger
   invoices      Invoice[]
   customValues  TransactionCustomValue[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
 }
 
 // Expense type values: EXPENSE, INCOME
@@ -203,11 +205,11 @@ model Expense {
   clinicId    String
   clinic      Clinic   @relation(fields: [clinicId], references: [id])
   description String
-  amount      Int      // kuruş cinsinden
+  amount      Int // kuruş cinsinden
   category    String
   type        String   @default("EXPENSE") // EXPENSE, INCOME
-  vatRate     Int      @default(20)    // KDV oranı %
-  vatIncluded Boolean  @default(true)  // Fiyata KDV dahil mi
+  vatRate     Int      @default(20) // KDV oranı %
+  vatIncluded Boolean  @default(true) // Fiyata KDV dahil mi
   date        DateTime @default(now())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -220,17 +222,17 @@ model Debt {
   id            String        @id @default(cuid())
   clinicId      String
   clinic        Clinic        @relation(fields: [clinicId], references: [id], onDelete: Cascade)
-  direction     String        // RECEIVABLE | PAYABLE
-  contactName   String        // Kişi/firma adı
-  description   String?       // Açıklama
-  totalAmount   Int           // Toplam tutar (kuruş)
+  direction     String // RECEIVABLE | PAYABLE
+  contactName   String // Kişi/firma adı
+  description   String? // Açıklama
+  totalAmount   Int // Toplam tutar (kuruş)
   paidAmount    Int           @default(0) // Ödenen tutar (kuruş)
   status        String        @default("OPEN") // OPEN | PARTIAL | PAID
-  dueDate       DateTime?     // Vade tarihi
-  patientId     String?       // Müşteri bağlantısı (alacak ise)
+  dueDate       DateTime? // Vade tarihi
+  patientId     String? // Müşteri bağlantısı (alacak ise)
   patient       Patient?      @relation(fields: [patientId], references: [id], onDelete: SetNull)
-  treatmentId   String?       // İşlem bağlantısı
-  appointmentId String?       // Randevu bağlantısı
+  treatmentId   String? // İşlem bağlantısı
+  appointmentId String? // Randevu bağlantısı
   payments      DebtPayment[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
@@ -245,8 +247,8 @@ model DebtPayment {
   id            String   @id @default(cuid())
   debtId        String
   debt          Debt     @relation(fields: [debtId], references: [id], onDelete: Cascade)
-  amount        Int      // Ödeme tutarı (kuruş)
-  paymentMethod String   // CASH | CARD | TRANSFER | OTHER
+  amount        Int // Ödeme tutarı (kuruş)
+  paymentMethod String // CASH | CARD | TRANSFER | OTHER
   notes         String?
   paidAt        DateTime @default(now())
   createdAt     DateTime @default(now())
@@ -268,23 +270,23 @@ model Reminder {
 
 // Appointment status values: SCHEDULED, COMPLETED, CANCELLED, NO_SHOW
 model Appointment {
-  id            String    @id @default(cuid())
+  id            String      @id @default(cuid())
   patientId     String
-  patient       Patient   @relation(fields: [patientId], references: [id])
+  patient       Patient     @relation(fields: [patientId], references: [id])
   clinicId      String
-  clinic        Clinic    @relation(fields: [clinicId], references: [id])
+  clinic        Clinic      @relation(fields: [clinicId], references: [id])
   employeeId    String?
-  employee      Employee? @relation(fields: [employeeId], references: [id])
+  employee      Employee?   @relation(fields: [employeeId], references: [id])
   date          DateTime // sadece tarih (gün)
   startTime     String // "09:00" formatında
   endTime       String // "09:30" formatında
-  status        String    @default("SCHEDULED") // SCHEDULED, COMPLETED, CANCELLED, NO_SHOW
-  treatmentType String    @default("GENEL") // BOTOX, DOLGU, DIS_TEDAVI, GENEL
+  status        String      @default("SCHEDULED") // SCHEDULED, COMPLETED, CANCELLED, NO_SHOW
+  treatmentType String      @default("GENEL") // BOTOX, DOLGU, DIS_TEDAVI, GENEL
   notes         String?
-  meetingNotes  String?   // Görüşme sırası/sonrası notlar
+  meetingNotes  String? // Görüşme sırası/sonrası notlar
   treatments    Treatment[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 }
 
 model ClinicSchedule {
@@ -354,15 +356,15 @@ model Employee {
   permissions           Json?
   isActive              Boolean                @default(true)
   showInCalendar        Boolean                @default(true) // Randevu takviminde gösterilsin mi
-  salaryGross           Int?                   // Brüt maaş (kuruş)
-  salaryNet             Int?                   // Net maaş (kuruş)
-  salarySSI             Int?                   // SGK işveren payı (kuruş)
-  salaryPayDay          Int?                   // Maaş ödeme günü (1-28)
+  salaryGross           Int? // Brüt maaş (kuruş)
+  salaryNet             Int? // Net maaş (kuruş)
+  salarySSI             Int? // SGK işveren payı (kuruş)
+  salaryPayDay          Int? // Maaş ödeme günü (1-28)
   manualSalaryEntry     Boolean                @default(false)
-  roleTemplate          String?                // full, view_only, custom
+  roleTemplate          String? // full, view_only, custom
   hasSystemAccess       Boolean                @default(false)
   systemEmail           String?
-  inviteStatus          String?                // not_invited, invited, active
+  inviteStatus          String? // not_invited, invited, active
   inviteToken           String?
   invitedAt             DateTime?
   clinicId              String
@@ -380,8 +382,8 @@ model CommissionTier {
   id            String   @id @default(cuid())
   employeeId    String
   employee      Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  minRevenue    Int      // Minimum ciro eşiği (kuruş) — bu cirodan itibaren geçerli
-  commissionPct Float    // Komisyon yüzdesi (ör: 5.0 = %5)
+  minRevenue    Int // Minimum ciro eşiği (kuruş) — bu cirodan itibaren geçerli
+  commissionPct Float // Komisyon yüzdesi (ör: 5.0 = %5)
   sortOrder     Int      @default(0)
   createdAt     DateTime @default(now())
 
@@ -400,16 +402,16 @@ model EmployeeRole {
 
 // Onam Formu şablonu — merkez tarafından oluşturulur
 model ConsentForm {
-  id          String   @id @default(cuid())
+  id          String                @id @default(cuid())
   clinicId    String
-  clinic      Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
-  title       String   // Form başlığı (ör: "Botox Onam Formu")
-  description String?  // Açıklama
-  content     String   @db.Text // Form HTML/markdown içeriği
-  fields      Json?    // Ek alanlar [{label, type, required}]
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  clinic      Clinic                @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  title       String // Form başlığı (ör: "Botox Onam Formu")
+  description String? // Açıklama
+  content     String                @db.Text // Form HTML/markdown içeriği
+  fields      Json? // Ek alanlar [{label, type, required}]
+  isActive    Boolean               @default(true)
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
   responses   ConsentFormResponse[]
 
   @@index([clinicId])
@@ -422,10 +424,10 @@ model ConsentFormResponse {
   consentForm   ConsentForm @relation(fields: [consentFormId], references: [id], onDelete: Cascade)
   patientId     String?
   patient       Patient?    @relation(fields: [patientId], references: [id])
-  patientName   String      // İsim (giriş yapmamış müşteri için)
-  patientTc     String?     // TC Kimlik No
+  patientName   String // İsim (giriş yapmamış müşteri için)
+  patientTc     String? // TC Kimlik No
   signature     String?     @db.Text // Base64 imza verisi
-  fieldValues   Json?       // Ek alan yanıtları
+  fieldValues   Json? // Ek alan yanıtları
   signedAt      DateTime    @default(now())
   ipAddress     String?
   clinicId      String
@@ -471,21 +473,21 @@ model Product {
   minStock         Int             @default(0)
   orderAlert       Boolean         @default(false)
   purchasePrice    Int             @default(0) // kuruş (TL)
-  purchasePriceUSD Float?          // Alış fiyatı USD
+  purchasePriceUSD Float? // Alış fiyatı USD
   currency         String          @default("TRY") // TRY, USD, EUR
   minProfitMargin  Int             @default(20) // minimum kar oranı %
   salePrice        Int             @default(0) // kuruş
-  salePriceUSD     Float?          // Satış fiyatı döviz karşılığı
+  salePriceUSD     Float? // Satış fiyatı döviz karşılığı
   saleCurrency     String          @default("TRY") // Satış para birimi
   customFields     Json?
   // Tedarik zinciri alanları
-  supplier         String?         // Tedarikçi adı
-  leadTimeDays     Int?            // Tedarik süresi (gün)
-  reorderPoint     Int?            // Yeniden sipariş noktası (adet)
-  reorderQty       Int?            // Sipariş miktarı (adet)
+  supplier         String? // Tedarikçi adı
+  leadTimeDays     Int? // Tedarik süresi (gün)
+  reorderPoint     Int? // Yeniden sipariş noktası (adet)
+  reorderQty       Int? // Sipariş miktarı (adet)
   autoReorder      Boolean         @default(false) // Otomatik tedarik listesine ekle
-  vatIncluded      Boolean         @default(true)  // Fiyatlara KDV dahil mi
-  trackStock       Boolean         @default(true)  // Stok takibi yapılsın mı (false = konsinye/stoksuz)
+  vatIncluded      Boolean         @default(true) // Fiyatlara KDV dahil mi
+  trackStock       Boolean         @default(true) // Stok takibi yapılsın mı (false = konsinye/stoksuz)
   clinicId         String
   clinic           Clinic          @relation(fields: [clinicId], references: [id])
   isActive         Boolean         @default(true)
@@ -743,31 +745,31 @@ model MetaAdsConnection {
 }
 
 model AdCampaign {
-  id              String    @id @default(cuid())
-  clinicId        String
-  clinic          Clinic    @relation(fields: [clinicId], references: [id])
-  metaCampaignId  String?
-  metaAdSetId     String?
-  metaAdId        String?
-  name            String
-  objective       String
-  status          String    @default("PAUSED")
-  dailyBudget     Float
-  startDate       DateTime
-  endDate         DateTime?
-  targetCity      String?
-  targetAgeMin    Int       @default(18)
-  targetAgeMax    Int       @default(65)
-  targetGender    String    @default("ALL")
-  interests       String?
-  platforms       String    @default("BOTH")
-  imageUrl        String?
-  headline        String?
-  description     String?
-  ctaType         String?
-  websiteUrl      String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id             String    @id @default(cuid())
+  clinicId       String
+  clinic         Clinic    @relation(fields: [clinicId], references: [id])
+  metaCampaignId String?
+  metaAdSetId    String?
+  metaAdId       String?
+  name           String
+  objective      String
+  status         String    @default("PAUSED")
+  dailyBudget    Float
+  startDate      DateTime
+  endDate        DateTime?
+  targetCity     String?
+  targetAgeMin   Int       @default(18)
+  targetAgeMax   Int       @default(65)
+  targetGender   String    @default("ALL")
+  interests      String?
+  platforms      String    @default("BOTH")
+  imageUrl       String?
+  headline       String?
+  description    String?
+  ctaType        String?
+  websiteUrl     String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 }
 
 model AdCampaignMetric {
@@ -805,96 +807,96 @@ model SocialMediaAsset {
 
 // ScheduledPost status values: SCHEDULED, POSTED, FAILED, CANCELLED
 model ScheduledPost {
-  id              String    @id @default(cuid())
-  clinicId        String
-  clinic          Clinic    @relation(fields: [clinicId], references: [id])
-  type            String    // tweet, thread, reel, carousel, tiktok, story
-  platform        String    // twitter, instagram, tiktok
-  content         String?   @db.Text
-  threadContent   String?   @db.Text // JSON array for thread posts
-  imageUrl        String?
-  mediaUrls       String?   @db.Text // JSON array for multiple media
-  scheduledAt     DateTime
-  postedAt        DateTime?
-  status          String    @default("DRAFT") // DRAFT, APPROVED, SCHEDULED, POSTED, FAILED, CANCELLED
-  isAutoGenerated Boolean   @default(false)
-  occasion        String?
-  externalPostId  String?   // Platform post ID after publishing
-  errorMessage    String?   // Error details if failed
-  approvedBy      String?   // Who approved
-  approvedAt      DateTime?
-  feedback        String?   @db.Text // Admin feedback for revision
-  mediaSuggestion String?   // image, video, none — AI media recommendation
+  id                    String    @id @default(cuid())
+  clinicId              String
+  clinic                Clinic    @relation(fields: [clinicId], references: [id])
+  type                  String // tweet, thread, reel, carousel, tiktok, story
+  platform              String // twitter, instagram, tiktok
+  content               String?   @db.Text
+  threadContent         String?   @db.Text // JSON array for thread posts
+  imageUrl              String?
+  mediaUrls             String?   @db.Text // JSON array for multiple media
+  scheduledAt           DateTime
+  postedAt              DateTime?
+  status                String    @default("DRAFT") // DRAFT, APPROVED, SCHEDULED, POSTED, FAILED, CANCELLED
+  isAutoGenerated       Boolean   @default(false)
+  occasion              String?
+  externalPostId        String? // Platform post ID after publishing
+  errorMessage          String? // Error details if failed
+  approvedBy            String? // Who approved
+  approvedAt            DateTime?
+  feedback              String?   @db.Text // Admin feedback for revision
+  mediaSuggestion       String? // image, video, none — AI media recommendation
   mediaSuggestionReason String? // Why this media type was suggested
   // Performance metrics
-  impressions     Int?
-  likes           Int?
-  replies         Int?
-  retweets        Int?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  impressions           Int?
+  likes                 Int?
+  replies               Int?
+  retweets              Int?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 }
 
 // ═══════════════════════════════════════════════════════════
 // Tweet Strategy Settings
 
 model TweetStrategy {
-  id                String   @id @default(cuid())
-  clinicId          String   @unique
-  clinic            Clinic   @relation(fields: [clinicId], references: [id])
-  tweetsPerDay      Int      @default(2)
-  postTimes         String   @default("[\"09:00\",\"17:00\"]") // JSON array
-  contentMix        String   @default("{\"feature\":25,\"tip\":20,\"stat\":15,\"motivation\":10,\"cta\":10,\"thread\":15,\"poll\":5}") // JSON percentages
-  toneStyle         String   @default("samimi-profesyonel")
-  focusFeatures     String   @default("[\"randevu\",\"whatsapp\",\"finans\",\"ai-asistan\"]") // JSON array
-  avoidTopics       String?  @db.Text
-  hashtagStrategy   String   @default("#pobyai #işletmeyönetimi #dijitalleşme")
-  videoRhythm       String   @default("evening") // morning, evening, both, none
-  videoScenarios    String   @default("[\"dashboard\",\"randevu\",\"crm\"]") // JSON array
-  isActive          Boolean  @default(true)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id              String   @id @default(cuid())
+  clinicId        String   @unique
+  clinic          Clinic   @relation(fields: [clinicId], references: [id])
+  tweetsPerDay    Int      @default(2)
+  postTimes       String   @default("[\"09:00\",\"17:00\"]") // JSON array
+  contentMix      String   @default("{\"feature\":25,\"tip\":20,\"stat\":15,\"motivation\":10,\"cta\":10,\"thread\":15,\"poll\":5}") // JSON percentages
+  toneStyle       String   @default("samimi-profesyonel")
+  focusFeatures   String   @default("[\"randevu\",\"whatsapp\",\"finans\",\"ai-asistan\"]") // JSON array
+  avoidTopics     String?  @db.Text
+  hashtagStrategy String   @default("#pobyai #işletmeyönetimi #dijitalleşme")
+  videoRhythm     String   @default("evening") // morning, evening, both, none
+  videoScenarios  String   @default("[\"dashboard\",\"randevu\",\"crm\"]") // JSON array
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 // ═══════════════════════════════════════════════════════════
 // Engagement — Target Accounts & Reply Tracking
 
 model TargetAccount {
-  id          String   @id @default(cuid())
+  id          String            @id @default(cuid())
   clinicId    String
-  clinic      Clinic   @relation(fields: [clinicId], references: [id])
-  username    String   // X username without @
+  clinic      Clinic            @relation(fields: [clinicId], references: [id])
+  username    String // X username without @
   displayName String?
-  xUserId     String?  // X platform user ID
-  note        String?  // why we track this account
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  xUserId     String? // X platform user ID
+  note        String? // why we track this account
+  isActive    Boolean           @default(true)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
   replies     EngagementReply[]
 
   @@unique([clinicId, username])
 }
 
 model EngagementReply {
-  id              String   @id @default(cuid())
+  id              String         @id @default(cuid())
   clinicId        String
-  clinic          Clinic   @relation(fields: [clinicId], references: [id])
+  clinic          Clinic         @relation(fields: [clinicId], references: [id])
   targetAccountId String?
   targetAccount   TargetAccount? @relation(fields: [targetAccountId], references: [id])
-  sourceTweetId   String   // tweet we're replying to
-  sourceTweetText String   @db.Text
-  sourceAuthor    String   // username of tweet author
-  suggestedReply  String   @db.Text
-  status          String   @default("PENDING") // PENDING, APPROVED, SENT, FAILED, REJECTED
-  sentTweetId     String?  // our reply tweet ID after posting
+  sourceTweetId   String // tweet we're replying to
+  sourceTweetText String         @db.Text
+  sourceAuthor    String // username of tweet author
+  suggestedReply  String         @db.Text
+  status          String         @default("PENDING") // PENDING, APPROVED, SENT, FAILED, REJECTED
+  sentTweetId     String? // our reply tweet ID after posting
   errorMessage    String?
   // Engagement metrics of our reply
   impressions     Int?
   likes           Int?
   replies         Int?
   retweets        Int?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -915,7 +917,7 @@ model TokenTransaction {
   id           String   @id @default(cuid())
   clinicId     String
   clinic       Clinic   @relation(fields: [clinicId], references: [id])
-  type         String   // "USE" or "ADD"
+  type         String // "USE" or "ADD"
   amount       Int
   action       String?
   description  String?
@@ -942,23 +944,23 @@ model ManualVatEntry {
   id          String   @id @default(cuid())
   clinicId    String
   clinic      Clinic   @relation(fields: [clinicId], references: [id])
-  type        String   // "payable" (ödenecek) or "carried" (devreden)
-  amount      Int      // kuruş cinsinden
+  type        String // "payable" (ödenecek) or "carried" (devreden)
+  amount      Int // kuruş cinsinden
   description String?
-  period      String?  // "2026-01" gibi ay-yıl
+  period      String? // "2026-01" gibi ay-yıl
   createdAt   DateTime @default(now())
 }
 
 model PushSubscription {
-  id           String   @id @default(cuid())
-  userId       String
-  clinicId     String?
-  endpoint     String   @unique
-  p256dh       String
-  auth         String
-  userAgent    String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id        String   @id @default(cuid())
+  userId    String
+  clinicId  String?
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -973,7 +975,7 @@ model StockAlarm {
   productId     String?
   product       Product?  @relation(fields: [productId], references: [id])
   name          String
-  type          String    // STOCK, PROFIT_MARGIN, CURRENCY
+  type          String // STOCK, PROFIT_MARGIN, CURRENCY
   threshold     Float
   currency      String?
   isActive      Boolean   @default(true)
@@ -984,26 +986,26 @@ model StockAlarm {
 // Alarm type values: STOCK, CUSTOMER_VISIT, CUSTOMER_BIRTHDAY, FINANCE, CUSTOM, SCHEDULED, AUTO_MESSAGE
 // triggerAction values: LOG, NOTIFY, SEND_MESSAGE
 model Alarm {
-  id              String    @id @default(cuid())
+  id              String     @id @default(cuid())
   clinicId        String
-  clinic          Clinic    @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  clinic          Clinic     @relation(fields: [clinicId], references: [id], onDelete: Cascade)
   name            String
-  type            String    // STOCK, CUSTOMER_VISIT, CUSTOMER_BIRTHDAY, FINANCE, CUSTOM, SCHEDULED, AUTO_MESSAGE
+  type            String // STOCK, CUSTOMER_VISIT, CUSTOMER_BIRTHDAY, FINANCE, CUSTOM, SCHEDULED, AUTO_MESSAGE
   conditions      Json
-  isActive        Boolean   @default(true)
-  isGroup         Boolean   @default(false)
+  isActive        Boolean    @default(true)
+  isGroup         Boolean    @default(false)
   groupName       String?
   customerId      String?
-  customer        Patient?  @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customer        Patient?   @relation(fields: [customerId], references: [id], onDelete: SetNull)
   // AI & Scheduled alarm fields
-  aiGenerated     Boolean   @default(false)    // AI tarafından oluşturuldu mu
-  schedule        String?                       // Cron expression veya "daily:09:00", "after_appointment", "after_treatment"
-  messageTemplate String?   @db.Text            // Gönderilecek mesaj şablonu
-  triggerAction   String    @default("LOG")     // LOG, NOTIFY, SEND_MESSAGE
-  targetChannel   String?                       // TELEGRAM, WHATSAPP, SYSTEM
+  aiGenerated     Boolean    @default(false) // AI tarafından oluşturuldu mu
+  schedule        String? // Cron expression veya "daily:09:00", "after_appointment", "after_treatment"
+  messageTemplate String?    @db.Text // Gönderilecek mesaj şablonu
+  triggerAction   String     @default("LOG") // LOG, NOTIFY, SEND_MESSAGE
+  targetChannel   String? // TELEGRAM, WHATSAPP, SYSTEM
   lastTriggeredAt DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
   logs            AlarmLog[]
 
   @@index([clinicId, groupName])
@@ -1031,7 +1033,7 @@ model InventoryColumnConfig {
   id        String   @id @default(cuid())
   clinicId  String   @unique
   clinic    Clinic   @relation(fields: [clinicId], references: [id])
-  columns   Json     // { order: string[], hidden: string[], customColumns: CustomColumn[] }
+  columns   Json // { order: string[], hidden: string[], customColumns: CustomColumn[] }
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -1063,20 +1065,20 @@ model HrDocument {
 
 // ClinicStyleProfile source values: INSTAGRAM, MANUAL
 model ClinicStyleProfile {
-  id                  String   @id @default(cuid())
-  clinicId            String   @unique
-  clinic              Clinic   @relation(fields: [clinicId], references: [id])
-  source              String   @default("MANUAL") // INSTAGRAM, MANUAL
-  colorPalette        String[] @default([])
+  id                  String    @id @default(cuid())
+  clinicId            String    @unique
+  clinic              Clinic    @relation(fields: [clinicId], references: [id])
+  source              String    @default("MANUAL") // INSTAGRAM, MANUAL
+  colorPalette        String[]  @default([])
   designTone          String?
   contentMood         String?
   compositionStyle    String?
   typographyStyle     String?
-  visualComplexity    String?  @default("medium")
-  stylePromptFragment String?  @db.Text
+  visualComplexity    String?   @default("medium")
+  stylePromptFragment String?   @db.Text
   analyzedAt          DateTime?
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 }
 
 // AiGeneratedContent status values: PENDING, GENERATING, COMPLETED, FAILED
@@ -1100,7 +1102,7 @@ model AiGeneratedContent {
 // OccasionCalendar category values: NATIONAL, RELIGIOUS, COMMERCIAL, AWARENESS
 model OccasionCalendar {
   id         String   @id @default(cuid())
-  date       String                        // "MM-DD"
+  date       String // "MM-DD"
   name       String
   nameEn     String?
   category   String   @default("NATIONAL") // NATIONAL, RELIGIOUS, COMMERCIAL, AWARENESS
@@ -1115,15 +1117,15 @@ model OccasionCalendar {
 
 // ClinicKnowledgeBase source_type values: manual, document, whatsapp_export, whatsapp_learned
 model ClinicKnowledgeBase {
-  id             String                      @id @default(cuid())
+  id             String                       @id @default(cuid())
   clinicId       String
-  clinic         Clinic                      @relation(fields: [clinicId], references: [id])
-  sourceType     String                      // manual, document, whatsapp_export, whatsapp_learned
+  clinic         Clinic                       @relation(fields: [clinicId], references: [id])
+  sourceType     String // manual, document, whatsapp_export, whatsapp_learned
   sourceFilename String?
-  content        String                      @db.Text
+  content        String                       @db.Text
   embedding      Unsupported("vector(1536)")?
   metadata       Json?
-  createdAt      DateTime                    @default(now())
+  createdAt      DateTime                     @default(now())
 }
 
 // ClinicAssistantConfig tone values: warm, formal, informative
@@ -1155,11 +1157,11 @@ model ClinicConversation {
   id                    String                 @id @default(cuid())
   clinicId              String
   clinic                Clinic                 @relation(fields: [clinicId], references: [id])
-  channel               String                 // whatsapp, telegram, instagram
+  channel               String // whatsapp, telegram, instagram
   customerPhone         String?
   customerChatId        String?
   customerName          String?
-  messages              Json                   // [{role, content, timestamp}]
+  messages              Json // [{role, content, timestamp}]
   lastMessageAt         DateTime
   assistantAppointments AssistantAppointment[]
   createdAt             DateTime               @default(now())
@@ -1225,7 +1227,7 @@ model FixedAsset {
   clinicId      String
   clinic        Clinic    @relation(fields: [clinicId], references: [id])
   name          String
-  category      String    // ELEKTRONIK, MOBILYA, CIHAZ, ARAC, DIGER
+  category      String // ELEKTRONIK, MOBILYA, CIHAZ, ARAC, DIGER
   purchaseDate  DateTime?
   purchasePrice Int       @default(0) // kuruş
   serialNumber  String?
@@ -1267,7 +1269,7 @@ model CustomerCustomColumn {
   columnName String
   columnKey  String
   fieldType  String   @default("text") // text, number, date, select, phone, email
-  options    String?  // JSON array for select type options
+  options    String? // JSON array for select type options
   isRequired Boolean  @default(false)
   sortOrder  Int      @default(0)
   createdAt  DateTime @default(now())
@@ -1336,8 +1338,8 @@ model SubscriptionPlan {
   storageUsedMb   Int              @default(0)
   monthlyTotal    Int              @default(0) // kuruş
   discountRate    Int              @default(0)
-  paytrUtoken     String?          // PayTR kart user token
-  paytrCtoken     String?          // PayTR kart card token
+  paytrUtoken     String? // PayTR kart user token
+  paytrCtoken     String? // PayTR kart card token
   cardLast4       String?
   cardBrand       String?
   nextBillingDate DateTime?
@@ -1353,7 +1355,114 @@ model BillingHistory {
   clinicId           String
   amount             Int
   description        String
-  status             String           // success | failed | pending
+  status             String // success | failed | pending
   paytrRef           String?
   createdAt          DateTime         @default(now())
+}
+
+// ═══════════════════════════════════════════════════════════
+// AI Catalog Generator
+// Multi-tenant: clinicId = tenant (ileride müşterilere açılacak)
+// ═══════════════════════════════════════════════════════════
+
+model CatalogProject {
+  id             String              @id @default(cuid())
+  clinicId       String // tenantId (Clinic = tenant)
+  clinic         Clinic              @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User                @relation(fields: [userId], references: [id])
+  name           String
+  description    String?             @db.Text
+  status         String              @default("DRAFT") // DRAFT, ANALYZING, READY_TO_GENERATE, GENERATING, COMPLETED, FAILED
+  sourceLanguage String              @default("tr")
+  targetLanguage String              @default("tr")
+  templateId     String? // nullable — henüz şablon seçilmemiş olabilir
+  template       CatalogTemplate?    @relation(fields: [templateId], references: [id])
+  sourceFiles    CatalogSourceFile[]
+  products       CatalogProduct[]
+  generations    CatalogGeneration[]
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@index([clinicId])
+  @@index([userId])
+  @@index([status])
+}
+
+model CatalogSourceFile {
+  id           String         @id @default(cuid())
+  projectId    String
+  project      CatalogProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  fileType     String // REFERENCE_PDF, PRODUCT_IMAGE, EXCEL_DATA
+  originalName String
+  storagePath  String // uploads/catalog/... veya S3 path
+  fileSize     Int
+  mimeType     String
+  uploadedAt   DateTime       @default(now())
+
+  @@index([projectId])
+  @@index([fileType])
+}
+
+model CatalogProduct {
+  id                  String         @id @default(cuid())
+  projectId           String
+  project             CatalogProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  productCode         String         @default(cuid()) // ürün kodu (UUID varsayılan)
+  order               Int            @default(0) // katalogda görüntülenme sırası
+  originalName        String?
+  name                String // Türkçe
+  originalDescription String?        @db.Text
+  description         String?        @db.Text // Türkçe
+  technicalSpecs      Json? // {boyut, agirlik, malzeme, vb}
+  category            String?
+  price               Float?
+  currency            String?        @default("TRY")
+  imageStoragePath    String?
+  aiConfidence        Float          @default(0) // 0-1 arası, extraction güven skoru
+  status              String         @default("DRAFT") // DRAFT, REVIEWED, APPROVED
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  @@index([projectId])
+  @@index([status])
+  @@index([order])
+}
+
+model CatalogTemplate {
+  id            String              @id @default(cuid())
+  name          String
+  slug          String              @unique
+  sector        String // NATURAL_STONE, COSMETICS, TEXTILE, RESTAURANT_MENU, GENERAL
+  thumbnailPath String?
+  htmlPath      String // templates/natural-stone/index.html
+  cssPath       String // templates/natural-stone/style.css
+  isSystem      Boolean             @default(false) // true: hazır sistem şablonu
+  createdById   String? // kullanıcı şablonu ise yaratan user ID
+  projects      CatalogProject[]
+  generations   CatalogGeneration[]
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@index([sector])
+  @@index([isSystem])
+}
+
+model CatalogGeneration {
+  id             String          @id @default(cuid())
+  projectId      String
+  project        CatalogProject  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  templateId     String
+  template       CatalogTemplate @relation(fields: [templateId], references: [id])
+  status         String // QUEUED, RENDERING, COMPLETED, FAILED
+  pdfPath        String? // output PDF yolu
+  pageCount      Int?
+  fileSize       Int?
+  generatedAt    DateTime?
+  errorLog       String?         @db.Text
+  tokensConsumed Int             @default(0)
+  createdAt      DateTime        @default(now())
+
+  @@index([projectId])
+  @@index([status])
 }
