@@ -56,15 +56,21 @@ _EXTRACT_SYSTEM = (
 )
 
 
-def _extract_prompt(pages: list[ParsedPage], sector: Optional[str], brand: Optional[str]) -> str:
+def _extract_prompt(
+    pages: list[ParsedPage],
+    sector: Optional[str],
+    brand: Optional[str],
+    extra_context: Optional[str] = None,
+) -> str:
     sector_hint = f"\nSektör: {sector}" if sector else ""
     brand_hint = f"\nMarka/firma: {brand}" if brand else ""
+    ctx_hint = f"\n\n{extra_context.strip()}" if extra_context and extra_context.strip() else ""
 
     pages_block = "\n\n".join(
         f"=== SAYFA {p.num} ===\n{p.text.strip() or '[boş]'}" for p in pages
     )
 
-    return f"""{sector_hint}{brand_hint}
+    return f"""{sector_hint}{brand_hint}{ctx_hint}
 
 Aşağıda bir ürün kataloğuna ait PDF sayfalarının metinleri var.
 Bu sayfalardan ürünleri çıkart. Her ürün için şu şemayı doldur:
@@ -97,6 +103,7 @@ async def extract_products(
     pages: list[ParsedPage],
     sector: Optional[str] = None,
     brand: Optional[str] = None,
+    extra_context: Optional[str] = None,
     progress_cb: Optional[Callable[[float, str], None]] = None,
 ) -> tuple[list[ExtractedProduct], int]:
     """Run Claude over page batches, collect products."""
@@ -109,7 +116,7 @@ async def extract_products(
 
     for bi, start in enumerate(range(0, len(pages), EXTRACT_BATCH)):
         batch = pages[start : start + EXTRACT_BATCH]
-        prompt = _extract_prompt(batch, sector, brand)
+        prompt = _extract_prompt(batch, sector, brand, extra_context)
 
         if progress_cb:
             progress_cb(bi / total_batches, f"Claude batch {bi + 1}/{total_batches}")

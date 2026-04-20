@@ -51,6 +51,8 @@ class ExtractProductsRequest(BaseModel):
     sector: Optional[str] = None
     # Optional vendor name
     brand: Optional[str] = None
+    # Free-form extra context (per-file user notes + AI analysis summaries)
+    extra_context: Optional[str] = None
 
 
 class TechnicalSpecs(BaseModel):

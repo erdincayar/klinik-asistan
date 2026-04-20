@@ -22,6 +22,7 @@ async def start_extract_products(req: ExtractProductsRequest) -> JobRef:
             pages=req.pages,
             sector=req.sector,
             brand=req.brand,
+            extra_context=req.extra_context,
             progress_cb=cb,
         )
         return {

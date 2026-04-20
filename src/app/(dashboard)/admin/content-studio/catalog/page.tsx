@@ -38,6 +38,31 @@ function formatDate(iso: string) {
 export default function CatalogListPage() {
   const router = useRouter();
   const { toast } = useToast();
+
+  // Canva OAuth feedback — read from window.location.search so that
+  // this client page can still be statically rendered at build time.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const qs = new URLSearchParams(window.location.search);
+    const canva = qs.get("canva");
+    const err = qs.get("canva_error");
+    if (canva === "connected") {
+      toast({
+        title: "Canva bağlandı",
+        description: "Artık kataloglarını Canva'da düzenleyebilirsin.",
+      });
+      // Clear query so reload doesn't re-fire the toast
+      window.history.replaceState({}, "", "/admin/content-studio/catalog");
+    } else if (err) {
+      toast({
+        title: "Canva bağlantısı başarısız",
+        description: err.slice(0, 200),
+        variant: "destructive",
+      });
+      window.history.replaceState({}, "", "/admin/content-studio/catalog");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [projects, setProjects] = useState<ProjectRow[] | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);

@@ -960,6 +960,55 @@ akışını uçtan uca dene.
 
 ---
 
+## 7f. Dosya Yorumları + Canva Entegrasyonu (20260420 güncelleme)
+
+### 7f.1 Yeni dosyalar (git pull sonrası VPS'te otomatik gelir)
+
+- `prisma/migrations/20260420_catalog_notes_and_canva/migration.sql`
+  → `CatalogSourceFile.userNote + aiNote + aiAnalyzedAt`
+  → `CatalogGeneration.canvaDesignId + canvaEditUrl + canvaSentAt`
+  → `CatalogCanvaConnection` (1 tablo)
+- API: `/api/admin/catalog/files/[fileId]` (PATCH — note), `/files/[fileId]/analyze`
+- API: `/api/admin/catalog/canva/{auth,callback,status}`, `/projects/[id]/canva-send`
+- Lib: `src/lib/catalog/canva.ts`
+- UI: `src/components/catalog/FileNoteCard.tsx`, detail page Files tab + Settings'te Canva kartı
+- Doc: `CANVA_SETUP.md` — Canva Developer App kurulumu
+
+### 7f.2 Deploy adımları
+
+```bash
+cd /var/www/klinik-asistan
+git pull origin main --rebase
+
+# Node paketleri değişmedi (xlsx zaten mevcut) — yine de güncelle
+npm ci
+
+# Migration uygula
+npx prisma migrate deploy
+npx prisma generate
+
+# FastAPI tarafında sadece prompt genişlemesi var, yeni paket yok
+pm2 restart catalog-service
+
+# Next.js build + restart
+npm run build
+pm2 restart inpobi-web
+
+# Doğrula
+curl -s http://127.0.0.1:8001/health | jq
+psql "postgresql://klinik:KlinikAsistan2026@localhost:5432/klinikasistan" \
+  -c "SELECT COUNT(*) FROM \"CatalogCanvaConnection\";"
+```
+
+### 7f.3 Canva kurulumu
+
+Ayrı dosyada: [CANVA_SETUP.md](CANVA_SETUP.md). 3 adım:
+1. https://www.canva.com/developers/ → yeni app
+2. `.env`'e `CANVA_CLIENT_ID`, `CANVA_CLIENT_SECRET`, `CANVA_REDIRECT_URI` ekle
+3. `pm2 restart inpobi-web` → Ayarlar → Canva'ya Bağla
+
+---
+
 ## 8. Doğrulama Checklist
 
 - [ ] Yedek alındı

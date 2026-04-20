@@ -117,6 +117,7 @@ model Clinic {
   scheduledPosts          ScheduledPost[]
   manualVatEntries        ManualVatEntry[]
   catalogProjects         CatalogProject[]
+  catalogCanva            CatalogCanvaConnection?
   storageLimitMB          Int                      @default(100)
   storageUsedMB           Int                      @default(0)
   storagePlan             String                   @default("free")
@@ -1398,6 +1399,9 @@ model CatalogSourceFile {
   storagePath  String // uploads/catalog/... veya S3 path
   fileSize     Int
   mimeType     String
+  userNote     String? // Kullanıcının dosya hakkında notu (AI'ya context)
+  aiNote       Json? // AI analiz çıktısı (summary, columns, issues, ...)
+  aiAnalyzedAt DateTime?
   uploadedAt   DateTime       @default(now())
 
   @@index([projectId])
@@ -1461,8 +1465,29 @@ model CatalogGeneration {
   generatedAt    DateTime?
   errorLog       String?         @db.Text
   tokensConsumed Int             @default(0)
+  canvaDesignId  String? // Canva'ya gönderildiyse design ID
+  canvaEditUrl   String? // Canva editor URL'i
+  canvaSentAt    DateTime?
   createdAt      DateTime        @default(now())
 
   @@index([projectId])
   @@index([status])
+}
+
+// ─── Canva OAuth Connection ───
+// Her klinik için 1 bağlantı. Token refresh flow kullanılıyor.
+model CatalogCanvaConnection {
+  id           String   @id @default(cuid())
+  clinicId     String   @unique
+  clinic       Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  userId       String // bağlantıyı kuran admin
+  accessToken  String   @db.Text
+  refreshToken String   @db.Text
+  tokenType    String   @default("Bearer")
+  scope        String?  @db.Text
+  expiresAt    DateTime
+  canvaUserId  String? // Canva hesap ID (telemetri için)
+  canvaDisplay String? // "Erdinç A." gibi
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

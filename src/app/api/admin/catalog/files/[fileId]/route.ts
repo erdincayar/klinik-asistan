@@ -3,6 +3,44 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/catalog/auth";
 import { deleteStoredFile, deleteImageWithThumb } from "@/lib/catalog/storage";
 
+// PATCH /api/admin/catalog/files/[fileId]
+// Fields: userNote (string | null)
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ fileId: string }> }
+) {
+  const ctx = await requireAdmin();
+  if (ctx instanceof NextResponse) return ctx;
+  const { fileId } = await params;
+
+  const file = await prisma.catalogSourceFile.findFirst({
+    where: { id: fileId, project: { clinicId: ctx.clinicId } },
+    select: { id: true },
+  });
+  if (!file) return NextResponse.json({ error: "Dosya bulunamadı" }, { status: 404 });
+
+  let body: any;
+  try { body = await req.json(); } catch { return NextResponse.json({ error: "Geçersiz JSON" }, { status: 400 }); }
+
+  const data: any = {};
+  if (body.userNote !== undefined) {
+    const n = body.userNote === null ? null : String(body.userNote).slice(0, 4000);
+    data.userNote = n;
+  }
+  if (Object.keys(data).length === 0) {
+    return NextResponse.json({ error: "Güncellenecek alan yok" }, { status: 400 });
+  }
+
+  const updated = await prisma.catalogSourceFile.update({
+    where: { id: fileId },
+    data,
+    select: {
+      id: true, userNote: true, aiNote: true, aiAnalyzedAt: true,
+    },
+  });
+  return NextResponse.json({ file: updated });
+}
+
 // DELETE /api/admin/catalog/files/[fileId]
 // Removes both the DB row and the stored file (with thumbnail if image).
 export async function DELETE(

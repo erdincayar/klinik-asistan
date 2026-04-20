@@ -83,10 +83,32 @@ export async function runAnalyze(opts: AnalyzeOptions): Promise<void> {
     }
 
     // 2) Extract products from all pages
+    //    Her dosyadaki kullanıcı notu + AI analizi özetini prompt context'ine ekle.
+    const contextLines: string[] = [];
+    for (const f of project.sourceFiles) {
+      const bits: string[] = [];
+      if (f.userNote?.trim()) bits.push(`kullanıcı notu: ${f.userNote.trim()}`);
+      const ai = f.aiNote as any;
+      if (ai?.summary) bits.push(`ai özeti: ${ai.summary}`);
+      if (Array.isArray(ai?.detectedColumns) && ai.detectedColumns.length) {
+        bits.push(`kolonlar: ${ai.detectedColumns.join(", ")}`);
+      }
+      if (Array.isArray(ai?.suggestions) && ai.suggestions.length) {
+        bits.push(`öneriler: ${ai.suggestions.slice(0, 3).join("; ")}`);
+      }
+      if (bits.length) {
+        contextLines.push(`• ${f.originalName} (${f.fileType}): ${bits.join(" | ")}`);
+      }
+    }
+    const extraContext = contextLines.length
+      ? `Kaynak dosya notları:\n${contextLines.join("\n")}`
+      : undefined;
+
     const extractRef = await CatalogService.startExtractProducts({
       pages: allPages,
       sector: opts.sector ?? undefined,
       brand: opts.brand ?? undefined,
+      extraContext,
     });
     const extracted = await CatalogService.waitForJob<ExtractProductsResult>(
       extractRef.jobId,

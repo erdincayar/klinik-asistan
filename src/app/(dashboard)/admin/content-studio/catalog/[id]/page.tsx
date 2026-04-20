@@ -17,6 +17,9 @@ import {
   Trash2,
   BookOpen,
   Settings as SettingsIcon,
+  Palette,
+  CheckCircle2,
+  Unlink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,6 +35,7 @@ import ProductEditModal, {
 } from "@/components/catalog/ProductEditModal";
 import GenerationProgressModal from "@/components/catalog/GenerationProgressModal";
 import { useProjectPolling } from "@/components/catalog/useProjectPolling";
+import FileNoteCard, { type CatalogFileRow } from "@/components/catalog/FileNoteCard";
 
 const FONT_OPTIONS = ["Inter", "Manrope", "Roboto", "Playfair Display"];
 
@@ -77,6 +81,70 @@ export default function CatalogDetailPage() {
     fontFamily: "Inter",
     contact: { address: "", phone: "", email: "", website: "" },
   });
+
+  // Canva state
+  const [canva, setCanva] = useState<{
+    configured: boolean;
+    connected: boolean;
+    display: string | null;
+    linkedAt: string | null;
+  } | null>(null);
+  const [canvaBusy, setCanvaBusy] = useState(false);
+
+  async function loadCanvaStatus() {
+    try {
+      const r = await fetch("/api/admin/catalog/canva/status", { cache: "no-store" });
+      if (r.ok) setCanva(await r.json());
+    } catch {}
+  }
+  useEffect(() => { loadCanvaStatus(); }, []);
+
+  async function sendToCanva() {
+    if (!canva?.configured) {
+      toast({
+        title: "Canva yapılandırılmamış",
+        description: "Sunucu tarafında CANVA_CLIENT_ID ayarlanmalı.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!canva?.connected) {
+      // Kick off OAuth
+      window.location.href = "/api/admin/catalog/canva/auth";
+      return;
+    }
+    setCanvaBusy(true);
+    try {
+      const res = await fetch(`/api/admin/catalog/projects/${id}/canva-send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (res.status === 428 || data?.needsAuth) {
+        // Canva bağlantısı kopmuş — yeniden auth gerek
+        window.location.href = "/api/admin/catalog/canva/auth";
+        return;
+      }
+      if (!res.ok) throw new Error(data.error || "Canva gönderim hatası");
+      toast({
+        title: "Canva'da açıldı",
+        description: "Tasarım yeni sekmede açıldı.",
+      });
+      window.open(data.editUrl, "_blank", "noopener");
+    } catch (e: any) {
+      toast({ title: "Hata", description: e.message, variant: "destructive" });
+    } finally {
+      setCanvaBusy(false);
+    }
+  }
+
+  async function disconnectCanva() {
+    if (!window.confirm("Canva bağlantısını kaldırmak istiyor musunuz?")) return;
+    await fetch("/api/admin/catalog/canva/status", { method: "DELETE" });
+    await loadCanvaStatus();
+    toast({ title: "Canva bağlantısı kaldırıldı" });
+  }
 
   // Hydrate defaults from wizard
   useEffect(() => {
@@ -339,6 +407,28 @@ export default function CatalogDetailPage() {
             <MessageCircle className="mr-1.5 h-3.5 w-3.5" />
             WhatsApp
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={sendToCanva}
+            disabled={!canDownload || canvaBusy || canva?.configured === false}
+            title={
+              !canDownload
+                ? "Önce katalog üretin"
+                : canva?.configured === false
+                ? "Canva sunucuda yapılandırılmamış"
+                : canva?.connected
+                ? `Canva (${canva.display || "bağlı"})`
+                : "Canva'ya bağlan ve aç"
+            }
+          >
+            {canvaBusy ? (
+              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Palette className="mr-1.5 h-3.5 w-3.5" />
+            )}
+            {canva?.connected ? "Canva'da Düzenle" : "Canva'ya Bağla"}
+          </Button>
         </div>
       </div>
 
@@ -368,26 +458,70 @@ export default function CatalogDetailPage() {
 
         {/* ─── Files ─── */}
         <TabsContent value="files">
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 px-4 py-3 text-xs text-indigo-700 mb-4">
+            <Sparkles className="inline h-3.5 w-3.5 mr-1" />
+            Her dosyaya yorum yazabilirsin. <b>AI ile Analiz Et</b> butonu
+            dosyayı Claude&apos;a gönderir; çıkan özet ve kolon bilgileri sonraki
+            analiz turunda ürün çıkartımına yön verir.
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-3">
             <FileGroup
               title="Referans PDF"
               icon={<FileText className="h-4 w-4 text-indigo-500" />}
-              files={pdfs}
-              onDelete={removeFile}
-            />
+              count={pdfs.length}
+            >
+              {pdfs.length === 0 ? (
+                <p className="py-4 text-center text-xs text-gray-400">—</p>
+              ) : (
+                pdfs.map((f) => (
+                  <FileNoteCard
+                    key={f.id}
+                    file={f as unknown as CatalogFileRow}
+                    onDelete={removeFile}
+                    onChanged={refresh}
+                  />
+                ))
+              )}
+            </FileGroup>
+
             <FileGroup
               title="Ürün Fotoğrafları"
               icon={<ImageIcon className="h-4 w-4 text-emerald-500" />}
-              files={photos}
-              onDelete={removeFile}
-              showThumb
-            />
+              count={photos.length}
+            >
+              {photos.length === 0 ? (
+                <p className="py-4 text-center text-xs text-gray-400">—</p>
+              ) : (
+                photos.map((f) => (
+                  <FileNoteCard
+                    key={f.id}
+                    file={f as unknown as CatalogFileRow}
+                    onDelete={removeFile}
+                    onChanged={refresh}
+                  />
+                ))
+              )}
+            </FileGroup>
+
             <FileGroup
               title="Excel / CSV"
               icon={<Sheet className="h-4 w-4 text-amber-500" />}
-              files={excel}
-              onDelete={removeFile}
-            />
+              count={excel.length}
+            >
+              {excel.length === 0 ? (
+                <p className="py-4 text-center text-xs text-gray-400">—</p>
+              ) : (
+                excel.map((f) => (
+                  <FileNoteCard
+                    key={f.id}
+                    file={f as unknown as CatalogFileRow}
+                    onDelete={removeFile}
+                    onChanged={refresh}
+                  />
+                ))
+              )}
+            </FileGroup>
           </div>
         </TabsContent>
 
@@ -712,6 +846,61 @@ export default function CatalogDetailPage() {
               </CardContent>
             </Card>
 
+            {/* Canva Connection */}
+            <Card className="lg:col-span-2">
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="shrink-0 rounded-xl bg-purple-50 p-2.5">
+                      <Palette className="h-5 w-5 text-purple-600" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-semibold text-gray-900">
+                        Canva Bağlantısı
+                      </h3>
+                      {canva?.configured === false ? (
+                        <p className="mt-0.5 text-xs text-red-500">
+                          Sunucuda CANVA_CLIENT_ID ayarlanmamış — yönetici kurulumu gerekli.
+                        </p>
+                      ) : canva?.connected ? (
+                        <p className="mt-0.5 text-xs text-gray-500">
+                          <CheckCircle2 className="inline h-3 w-3 text-emerald-500 mr-1" />
+                          Bağlı {canva.display ? `· ${canva.display}` : ""}
+                        </p>
+                      ) : (
+                        <p className="mt-0.5 text-xs text-gray-500">
+                          Kataloğu Canva&apos;ya gönderip orada düzenleyebilirsin.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {canva?.connected ? (
+                      <>
+                        <Button size="sm" onClick={sendToCanva} disabled={canvaBusy || !canDownload}>
+                          {canvaBusy ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Palette className="mr-1.5 h-3.5 w-3.5" />}
+                          Canva&apos;da Aç
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={disconnectCanva} className="text-red-600 hover:bg-red-50">
+                          <Unlink className="mr-1.5 h-3.5 w-3.5" />
+                          Bağlantıyı Kaldır
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        size="sm"
+                        onClick={() => (window.location.href = "/api/admin/catalog/canva/auth")}
+                        disabled={canva?.configured === false}
+                      >
+                        <Palette className="mr-1.5 h-3.5 w-3.5" />
+                        Canva Hesabı Bağla
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card className="lg:col-span-2 border-red-100">
               <CardContent className="p-5 flex items-center justify-between gap-3">
                 <div>
@@ -765,20 +954,13 @@ export default function CatalogDetailPage() {
 function FileGroup({
   title,
   icon,
-  files,
-  onDelete,
-  showThumb = false,
+  count,
+  children,
 }: {
   title: string;
   icon: React.ReactNode;
-  files: Array<{
-    id: string;
-    originalName: string;
-    fileSize: number;
-    uploadedAt: string;
-  }>;
-  onDelete: (id: string) => void;
-  showThumb?: boolean;
+  count: number;
+  children: React.ReactNode;
 }) {
   return (
     <Card>
@@ -788,43 +970,11 @@ function FileGroup({
             {icon}
             <span className="text-sm font-semibold text-gray-900">{title}</span>
           </div>
-          <span className="text-xs text-gray-400">{files.length}</span>
+          <span className="text-xs text-gray-400">{count}</span>
         </div>
-        {files.length === 0 ? (
-          <p className="py-6 text-center text-xs text-gray-400">—</p>
-        ) : (
-          <ul className="space-y-1.5 max-h-64 overflow-y-auto">
-            {files.map((f) => (
-              <li
-                key={f.id}
-                className="flex items-center gap-2 rounded-lg border border-gray-100 px-2 py-1.5"
-              >
-                {showThumb && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={`/api/admin/catalog/files/${f.id}/raw?thumb=1`}
-                    alt=""
-                    className="h-8 w-8 shrink-0 rounded object-cover bg-gray-100"
-                  />
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="truncate text-xs font-medium text-gray-800">
-                    {f.originalName}
-                  </p>
-                  <p className="text-[10px] text-gray-400">
-                    {formatBytes(f.fileSize)} · {formatDate(f.uploadedAt)}
-                  </p>
-                </div>
-                <button
-                  onClick={() => onDelete(f.id)}
-                  className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
+        <div className="space-y-2 max-h-[560px] overflow-y-auto pr-1">
+          {children}
+        </div>
       </CardContent>
     </Card>
   );

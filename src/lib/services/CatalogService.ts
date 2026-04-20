@@ -104,6 +104,8 @@ export interface ExtractProductsInput {
   pages: ParsedPage[];
   sector?: string;
   brand?: string;
+  /** Free-form notes from the user or per-file AI analyses, injected as prompt context. */
+  extraContext?: string;
 }
 
 export interface MatchImagesInput {
@@ -189,7 +191,12 @@ async function startParsePdf(input: ParsePdfInput): Promise<CatalogJobRef> {
 async function startExtractProducts(
   input: ExtractProductsInput
 ): Promise<CatalogJobRef> {
-  const body = { pages: input.pages, sector: input.sector, brand: input.brand };
+  const body = {
+    pages: input.pages,
+    sector: input.sector,
+    brand: input.brand,
+    extra_context: input.extraContext,
+  };
   const raw = await post<{ job_id: string }>("/extract-products", body);
   return { jobId: raw.job_id };
 }
