@@ -63,6 +63,13 @@ export async function POST(req: NextRequest) {
     const vatIncluded = vatIncludedStr !== "false";
     const trackStockStr = formData.get("trackStock") as string | null;
     const trackStock = trackStockStr !== "false";
+    // Aynı isim+unit kombinasyonu zaten varken ne yapılacak?
+    //   "create" (default)  — yeni kayıt olarak ekle (varyantlar için)
+    //   "update"            — mevcut üzerine yaz (eski davranış)
+    //   "skip"              — atla, ne ekle ne güncelle
+    const dupStrategyRaw = (formData.get("duplicateStrategy") as string | null)?.toLowerCase();
+    const duplicateStrategy: "create" | "update" | "skip" =
+      dupStrategyRaw === "update" || dupStrategyRaw === "skip" ? dupStrategyRaw : "create";
 
     if (!file) {
       return NextResponse.json({ error: "Dosya gerekli" }, { status: 400 });
@@ -92,6 +99,7 @@ export async function POST(req: NextRequest) {
 
     let added = 0;
     let updated = 0;
+    let skipped = 0;
     let errors = 0;
     let noBrandCount = 0;
     const errorDetails: { row: number; productName: string; reason: string }[] = [];
@@ -181,26 +189,42 @@ export async function POST(req: NextRequest) {
           ...(hasCustomFields && { customFields }),
         };
 
-        // Find existing product by name+unit (case-insensitive)
-        const existing = await prisma.product.findFirst({
-          where: {
-            clinicId,
-            name: { equals: name, mode: "insensitive" },
-            unit,
-          },
-          select: { id: true },
-        });
+        // Duplicate handling. Key = (clinicId, name, unit) case-insensitive.
+        // "create" default: her satır yeni kayıt — aynı Excel'de aynı isim+unit
+        // tekrar eden satırlar (farklı varyant olarak) bile birbirini ezmez.
+        // "update": eski davranış — mevcut kaydın üzerine yazar.
+        // "skip": mevcutsa hiç dokunma.
+        let didWrite = false;
 
-        if (existing) {
-          await prisma.product.update({
-            where: { id: existing.id },
-            data: {
-              ...productData,
-              ...(quantity !== undefined && { currentStock: quantity }),
+        if (duplicateStrategy !== "create") {
+          const existing = await prisma.product.findFirst({
+            where: {
+              clinicId,
+              name: { equals: name, mode: "insensitive" },
+              unit,
             },
+            select: { id: true },
           });
-          updated++;
-        } else {
+
+          if (existing) {
+            if (duplicateStrategy === "skip") {
+              skipped++;
+              didWrite = true;
+            } else if (duplicateStrategy === "update") {
+              await prisma.product.update({
+                where: { id: existing.id },
+                data: {
+                  ...productData,
+                  ...(quantity !== undefined && { currentStock: quantity }),
+                },
+              });
+              updated++;
+              didWrite = true;
+            }
+          }
+        }
+
+        if (!didWrite) {
           const sku = generateSku(name, i);
           await prisma.product.create({
             data: {
@@ -236,7 +260,16 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ added, updated, errors, total: rawRows.length, noBrandCount, errorDetails });
+    return NextResponse.json({
+      added,
+      updated,
+      skipped,
+      errors,
+      total: rawRows.length,
+      noBrandCount,
+      errorDetails,
+      duplicateStrategy,
+    });
   } catch (error) {
     console.error("Import error:", error);
     return NextResponse.json({ error: "İçe aktarma hatası" }, { status: 500 });

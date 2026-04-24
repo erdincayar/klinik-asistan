@@ -1717,10 +1717,12 @@ interface ImportErrorDetail {
 interface ImportResult {
   added: number;
   updated: number;
+  skipped?: number;
   errors: number;
   total: number;
   noBrandCount: number;
   errorDetails?: ImportErrorDetail[];
+  duplicateStrategy?: "create" | "update" | "skip";
 }
 
 const MAPPING_FIELDS = [
@@ -1765,6 +1767,7 @@ function ImportDialog({
   const [importBrand, setImportBrand] = useState("");
   const [importVatIncluded, setImportVatIncluded] = useState(true);
   const [importTrackStock, setImportTrackStock] = useState(true);
+  const [importDuplicateStrategy, setImportDuplicateStrategy] = useState<"create" | "update" | "skip">("create");
   const [showErrorDetails, setShowErrorDetails] = useState(false);
   const [customMappings, setCustomMappings] = useState<{ name: string; column: string }[]>([]);
   const [newCustomName, setNewCustomName] = useState("");
@@ -1864,6 +1867,7 @@ function ImportDialog({
       formData.append("currency", selectedCurrency);
       formData.append("vatIncluded", String(importVatIncluded));
       formData.append("trackStock", String(importTrackStock));
+      formData.append("duplicateStrategy", importDuplicateStrategy);
       if (importBrand.trim()) formData.append("brand", importBrand.trim());
       const res = await fetch("/api/products/import", { method: "POST", body: formData });
       const data = await res.json();
@@ -2033,6 +2037,40 @@ function ImportDialog({
               </label>
             </div>
 
+            {/* Duplicate strategy */}
+            <div className="rounded-lg border border-gray-200 p-4 space-y-2">
+              <Label className="text-xs font-semibold">Aynı isimde ürün bulunursa</Label>
+              <p className="text-xs text-muted-foreground">
+                Excel&apos;de aynı isim + aynı birim tekrar ediyorsa ya da envanterde zaten varsa ne yapılsın?
+              </p>
+              <div className="grid grid-cols-1 gap-2 mt-2 sm:grid-cols-3">
+                {([
+                  { v: "create", title: "Yeni ürün olarak ekle", hint: "Varyantlar için (500ml / 250ml)" },
+                  { v: "update", title: "Mevcut olanı güncelle", hint: "Stok/fiyat güncellemesi" },
+                  { v: "skip",   title: "Atla",                  hint: "Mevcut varsa dokunma" },
+                ] as const).map((opt) => (
+                  <label
+                    key={opt.v}
+                    className={`cursor-pointer rounded-lg border p-3 text-xs transition ${
+                      importDuplicateStrategy === opt.v
+                        ? "border-[#6366F1] bg-[#EEF2FF]"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="duplicateStrategy"
+                      checked={importDuplicateStrategy === opt.v}
+                      onChange={() => setImportDuplicateStrategy(opt.v)}
+                      className="mr-1.5"
+                    />
+                    <span className="font-semibold">{opt.title}</span>
+                    <p className="mt-1 text-[10px] text-gray-500 font-normal">{opt.hint}</p>
+                  </label>
+                ))}
+              </div>
+            </div>
+
             {/* Currency selection */}
             <div className="rounded-lg border border-gray-200 p-4 space-y-3">
               <div className="space-y-1">
@@ -2127,7 +2165,7 @@ function ImportDialog({
                 <CheckCircle className="h-5 w-5 text-green-600" />
                 <p className="font-semibold text-green-800">İçe aktarma tamamlandı</p>
               </div>
-              <div className="grid grid-cols-3 gap-3 text-sm">
+              <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
                 <div className="rounded-lg bg-white p-3 text-center">
                   <p className="text-lg font-bold text-green-600">{result.added}</p>
                   <p className="text-xs text-gray-500">Yeni eklendi</p>
@@ -2135,6 +2173,10 @@ function ImportDialog({
                 <div className="rounded-lg bg-white p-3 text-center">
                   <p className="text-lg font-bold text-[#6366F1]">{result.updated}</p>
                   <p className="text-xs text-gray-500">Güncellendi</p>
+                </div>
+                <div className="rounded-lg bg-white p-3 text-center">
+                  <p className={`text-lg font-bold ${(result.skipped ?? 0) > 0 ? "text-amber-600" : "text-gray-400"}`}>{result.skipped ?? 0}</p>
+                  <p className="text-xs text-gray-500">Atlandı</p>
                 </div>
                 <div className="rounded-lg bg-white p-3 text-center">
                   <p className={`text-lg font-bold ${result.errors > 0 ? "text-red-600" : "text-gray-400"}`}>{result.errors}</p>
