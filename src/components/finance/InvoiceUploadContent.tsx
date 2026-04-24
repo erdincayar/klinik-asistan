@@ -83,6 +83,9 @@ interface StockMapping {
   quantity: number;
   unitPrice: number;
   discount: number; // iskonto yüzdesi (0-100)
+  /** match-products birden fazla yakın aday bulduğunda true —
+   *  kullanıcının manuel seçim yapması beklenir. */
+  ambiguous?: boolean;
 }
 
 interface ProductOption {
@@ -266,14 +269,27 @@ export default function InvoiceUploadContent() {
           setAllProducts(data.products || []);
           const ocrItems = (inv.ocrData as any)?.items || [];
           setStockMappings(
-            data.matches.map((m: { description: string; quantity: number; unitPrice: number; matchedProduct: MatchedProduct | null }, i: number) => ({
-              description: m.description,
-              productId: m.matchedProduct?.id || null,
-              productName: m.matchedProduct?.name || null,
-              quantity: m.quantity || 1,
-              unitPrice: m.unitPrice || 0,
-              discount: ocrItems[i]?.discount || 0,
-            }))
+            data.matches.map(
+              (
+                m: {
+                  description: string;
+                  quantity: number;
+                  unitPrice: number;
+                  matchedProduct: MatchedProduct | null;
+                  ambiguous?: boolean;
+                  candidates?: Array<{ id: string; name: string; unit: string | null }>;
+                },
+                i: number
+              ) => ({
+                description: m.description,
+                productId: m.matchedProduct?.id || null,
+                productName: m.matchedProduct?.name || null,
+                quantity: m.quantity || 1,
+                unitPrice: m.unitPrice || 0,
+                discount: ocrItems[i]?.discount || 0,
+                ambiguous: m.ambiguous === true,
+              })
+            )
           );
         }
       } catch {
@@ -398,7 +414,11 @@ export default function InvoiceUploadContent() {
 
   function updateMapping(index: number, productId: string | null, productName: string | null) {
     setStockMappings((prev) =>
-      prev.map((m, i) => (i === index ? { ...m, productId, productName } : m))
+      prev.map((m, i) =>
+        i === index
+          ? { ...m, productId, productName, ambiguous: false }
+          : m
+      )
     );
     setOpenDropdown(null);
     setDropdownSearch("");
@@ -1104,7 +1124,9 @@ export default function InvoiceUploadContent() {
                                   className={`flex w-full items-center justify-between rounded-lg border px-2.5 py-1.5 text-[11px] transition-colors ${
                                     mapping.productId
                                       ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                                      : "border-yellow-200 bg-yellow-50 text-yellow-700 hover:border-yellow-300"
+                                      : mapping.ambiguous
+                                        ? "border-orange-300 bg-orange-50 text-orange-700 hover:border-orange-400"
+                                        : "border-yellow-200 bg-yellow-50 text-yellow-700 hover:border-yellow-300"
                                   }`}
                                 >
                                   <span className="flex items-center gap-1.5 truncate">
@@ -1112,6 +1134,11 @@ export default function InvoiceUploadContent() {
                                       <>
                                         <Link2 className="h-3 w-3 shrink-0" />
                                         {mapping.productName}
+                                      </>
+                                    ) : mapping.ambiguous ? (
+                                      <>
+                                        <AlertTriangle className="h-3 w-3 shrink-0" />
+                                        Aynı isimle birden fazla ürün — hangisi?
                                       </>
                                     ) : (
                                       <>
