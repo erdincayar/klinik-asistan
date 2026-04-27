@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { formatDate } from "@/lib/utils";
+import TodoTab from "@/components/reminders/TodoTab";
 
 // --- Types ---
 
@@ -102,7 +103,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 // --- Component ---
 
 export default function RemindersPage() {
-  const [activeTab, setActiveTab] = useState("appointment-reminders");
+  const [activeTab, setActiveTab] = useState("todos");
   const [appointmentAlarms, setAppointmentAlarms] = useState<any[]>([]);
 
   // Stats
@@ -513,7 +514,8 @@ export default function RemindersPage() {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <div className="overflow-x-auto -mx-1 px-1">
-          <TabsList className="w-max sm:w-full sm:grid sm:grid-cols-5">
+          <TabsList className="w-max sm:w-full sm:grid sm:grid-cols-6">
+            <TabsTrigger value="todos" className="text-xs sm:text-sm">Yapılacaklar</TabsTrigger>
             <TabsTrigger value="appointment-reminders" className="text-xs sm:text-sm">Hatırlatmalar</TabsTrigger>
             <TabsTrigger value="pending" className="text-xs sm:text-sm">Bekleyenler</TabsTrigger>
             <TabsTrigger value="history" className="text-xs sm:text-sm">Geçmiş</TabsTrigger>
@@ -521,6 +523,11 @@ export default function RemindersPage() {
             <TabsTrigger value="preferences" className="text-xs sm:text-sm">Tercihler</TabsTrigger>
           </TabsList>
         </div>
+
+        {/* ==================== YAPILACAKLAR TAB ==================== */}
+        <TabsContent value="todos">
+          <TodoTab />
+        </TabsContent>
 
         {/* ==================== RANDEVU HATIRLATMALARI TAB ==================== */}
         <TabsContent value="appointment-reminders">

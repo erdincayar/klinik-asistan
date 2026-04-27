@@ -30,6 +30,7 @@ model User {
   accounts            Account[]
   telegramLinks       TelegramLink[]
   catalogProjects     CatalogProject[]
+  todos               Todo[]
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
 }
@@ -118,6 +119,7 @@ model Clinic {
   manualVatEntries        ManualVatEntry[]
   catalogProjects         CatalogProject[]
   catalogCanva            CatalogCanvaConnection?
+  todos                   Todo[]
   storageLimitMB          Int                      @default(100)
   storageUsedMB           Int                      @default(0)
   storagePlan             String                   @default("free")
@@ -267,6 +269,27 @@ model Reminder {
   clinic            Clinic   @relation(fields: [clinicId], references: [id])
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+}
+
+// Personal to-do list (kullanıcı bazlı, klinik scoped)
+// Source: WEB | TELEGRAM | WHATSAPP — nereden eklendi
+// Status:  ACTIVE | COMPLETED
+model Todo {
+  id          String    @id @default(cuid())
+  clinicId    String
+  clinic      Clinic    @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  note        String?   @db.Text
+  status      String    @default("ACTIVE")
+  source      String    @default("WEB")
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([clinicId, userId, status])
+  @@index([userId, status])
 }
 
 // Appointment status values: SCHEDULED, COMPLETED, CANCELLED, NO_SHOW

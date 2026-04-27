@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { handleCommand } from "@/lib/commands/command-handler";
+import { handleTodoCommand } from "@/lib/commands/todo-handler";
 import { handleBotMessage } from "@/lib/bot-ai-handler";
 
 // ── Prisma ──────────────────────────────────────────────────────────────────
@@ -191,6 +192,20 @@ async function processMessage(msg: TgMessage): Promise<void> {
 
     // Commands
     if (text.startsWith("/")) {
+      // Personal todo komutları (kullanıcı bazlı). Bot komut handler'ı klinik
+      // bazlı olduğu için todo'ları ondan önce devreye alıyoruz.
+      const userRow = await prisma.user.findFirst({
+        where: { telegramChatId: String(chatId) },
+        select: { id: true },
+      });
+      if (userRow) {
+        const todoRes = await handleTodoCommand(text, { clinicId, userId: userRow.id });
+        if (todoRes.matched) {
+          if (todoRes.response) await tgSend(chatId, todoRes.response);
+          return;
+        }
+      }
+
       const result = await handleCommand(text, clinicId);
       if (result.type === "command") {
         await tgSend(chatId, result.response);
