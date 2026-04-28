@@ -1,0 +1,101 @@
+{# Compact A4 price list — header + grouped product table. #}
+<!DOCTYPE html>
+<html lang="{{ metadata.language | default('tr') }}">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ metadata.title | default('Fiyat Listesi') | e }}</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+  </style>
+  <style>
+    {{ base_css | safe }}
+  </style>
+  <style>
+    :root {
+      --brand-primary:   {{ brand_kit.primary   | default('#1F2937') }};
+      --brand-secondary: {{ brand_kit.secondary | default('#F9FAFB') }};
+      --brand-accent:    {{ brand_kit.accent    | default('#D4A574') }};
+      --brand-font:      {{ brand_kit.font_family | default('Inter') }};
+    }
+  </style>
+</head>
+<body>
+
+  <header class="pl-header">
+    <div>
+      <div class="pl-kicker">FİYAT LİSTESİ</div>
+      <h1 class="pl-title">{{ metadata.title | default('Fiyat Listesi') | e }}</h1>
+      {% if metadata.subtitle %}
+        <div class="pl-subtitle">{{ metadata.subtitle | e }}</div>
+      {% endif %}
+    </div>
+    <div class="pl-meta">
+      {% if metadata.company_name %}
+        <div class="pl-meta-line"><strong>{{ metadata.company_name | e }}</strong></div>
+      {% endif %}
+      {% if metadata.year %}
+        <div class="pl-meta-line">{{ metadata.year }}{% if metadata.edition %} · {{ metadata.edition | e }}{% endif %}</div>
+      {% endif %}
+      {% if metadata.contact_info and metadata.contact_info.phone %}
+        <div class="pl-meta-line">{{ metadata.contact_info.phone | e }}</div>
+      {% endif %}
+      {% if metadata.contact_info and metadata.contact_info.website %}
+        <div class="pl-meta-line">{{ metadata.contact_info.website | e }}</div>
+      {% endif %}
+    </div>
+  </header>
+
+  {% for category, category_products in products_by_category %}
+    {% set category_name = category or "Genel" %}
+    <section class="pl-section">
+      <h2 class="pl-cat">{{ category_name | e }}</h2>
+      <table class="pl-table">
+        <thead>
+          <tr>
+            <th>Ürün</th>
+            <th>Açıklama</th>
+            <th class="pl-num">Fiyat</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for product in category_products %}
+            <tr>
+              <td>
+                <div class="pl-name">{{ product.name | e }}</div>
+                {% if product.product_code %}
+                  <div class="pl-code">{{ product.product_code | e }}</div>
+                {% endif %}
+              </td>
+              <td class="pl-desc">
+                {% if product.description %}{{ product.description | e }}{% endif %}
+                {% if product.extra %}
+                  {% set extra_bits = [] %}
+                  {% for k, v in product.extra.items() %}
+                    {% if v %}{% set _ = extra_bits.append(k ~ ': ' ~ v) %}{% endif %}
+                  {% endfor %}
+                  {% if extra_bits %}
+                    <div class="pl-extra">{{ extra_bits | join(' · ') | e }}</div>
+                  {% endif %}
+                {% endif %}
+              </td>
+              <td class="pl-num pl-price">
+                {% if product.price %}
+                  {{ '%.2f' % product.price }} {{ product.currency or '₺' }}
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  {% endfor %}
+
+  <footer class="pl-footer">
+    <span>{{ metadata.company_name | default('') | e }}</span>
+    <span>Fiyatlar bilgilendirme amaçlıdır, KDV dahildir.</span>
+  </footer>
+
+</body>
+</html>

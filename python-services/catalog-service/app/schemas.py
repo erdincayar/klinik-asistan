@@ -143,6 +143,10 @@ class CatalogMetadata(BaseModel):
     year: Optional[int] = None
     language: str = "tr"
     contact_info: Optional[ContactInfo] = None
+    # Kullanıcının "ne istiyorsun" prompt'u — render kararlarına yardım eder.
+    user_prompt: Optional[str] = None
+    # PDF_CATALOG, PRICE_LIST, SOCIAL_POST, BROCHURE, CUSTOM
+    output_type: str = "PDF_CATALOG"
 
 
 class GenerateCatalogProduct(BaseModel):
@@ -152,6 +156,9 @@ class GenerateCatalogProduct(BaseModel):
     name: str
     description: Optional[str] = None
     technical_specs: dict[str, Any] = Field(default_factory=dict)
+    # Kullanıcı tanımlı dinamik alanlar (Excel kolon eşlemesi → "_extra:<isim>"
+    # ya da AI extract'ın özel olarak çıkardığı şema dışı veriler).
+    extra: dict[str, Any] = Field(default_factory=dict)
     category: Optional[str] = None
     image_path: Optional[str] = None  # CATALOG_STORAGE_ROOT-relative or absolute
     price: Optional[float] = None

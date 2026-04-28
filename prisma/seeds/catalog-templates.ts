@@ -40,6 +40,24 @@ const templates: SeedTemplate[] = [
     thumbnailPath: "/catalog/templates/natural-stone-modern.png",
     isSystem: true,
   },
+  {
+    slug: "price-list-modern",
+    name: "Fiyat Listesi — Modern A4",
+    sector: "GENERAL",
+    htmlPath: "price-list-modern/main.html.j2",
+    cssPath: "price-list-modern/styles.css",
+    thumbnailPath: null,
+    isSystem: true,
+  },
+  {
+    slug: "social-post-square",
+    name: "Sosyal Medya — 1080×1080 Kare",
+    sector: "GENERAL",
+    htmlPath: "social-post-square/main.html.j2",
+    cssPath: "social-post-square/styles.css",
+    thumbnailPath: null,
+    isSystem: true,
+  },
 ];
 
 async function main() {

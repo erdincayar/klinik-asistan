@@ -1400,6 +1400,15 @@ model CatalogProject {
   status         String              @default("DRAFT") // DRAFT, ANALYZING, READY_TO_GENERATE, GENERATING, COMPLETED, FAILED
   sourceLanguage String              @default("tr")
   targetLanguage String              @default("tr")
+  // Kullanıcının "yüklediğim verilerle şunu yap" serbest metni — Claude
+  // extract'a extraContext olarak iletilir, generate'de de metadata'ya eklenir.
+  userPrompt     String?             @db.Text
+  // Çıktı tipi — şablon ve render boyutunu belirler. Varsayılan PDF_CATALOG;
+  // ileride SOCIAL_POST / BROCHURE / PRICE_LIST / CUSTOM eklenecek.
+  outputType     String              @default("PDF_CATALOG")
+  // Kullanıcının veri eşlemesi (parça 2'de doldurulacak):
+  // { fields: [{ key, label, type, source: "column"|"prompt"|"ai", column?, ... }] }
+  dataSchema     Json?
   templateId     String? // nullable — henüz şablon seçilmemiş olabilir
   template       CatalogTemplate?    @relation(fields: [templateId], references: [id])
   sourceFiles    CatalogSourceFile[]
@@ -1442,6 +1451,9 @@ model CatalogProduct {
   originalDescription String?        @db.Text
   description         String?        @db.Text // Türkçe
   technicalSpecs      Json? // {boyut, agirlik, malzeme, vb}
+  // Kullanıcının kendi tanımladığı (dataSchema → "Özel" alanlar) için
+  // dinamik anahtar/değer haznesi. Render template'leri bu key'leri okur.
+  extra               Json?
   category            String?
   price               Float?
   currency            String?        @default("TRY")

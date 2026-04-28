@@ -15,13 +15,33 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Geçersiz JSON" }, { status: 400 });
   }
 
-  const { name, description, sourceLanguage, targetLanguage, templateId } = body || {};
+  const {
+    name,
+    description,
+    sourceLanguage,
+    targetLanguage,
+    templateId,
+    userPrompt,
+    outputType,
+    dataSchema,
+  } = body || {};
   if (!name || typeof name !== "string" || name.trim().length === 0) {
     return NextResponse.json({ error: "Proje adı gerekli" }, { status: 400 });
   }
   if (name.length > 200) {
     return NextResponse.json({ error: "Proje adı 200 karakterden uzun olamaz" }, { status: 400 });
   }
+  if (userPrompt && typeof userPrompt === "string" && userPrompt.length > 5000) {
+    return NextResponse.json(
+      { error: "İstek metni 5000 karakterden uzun olamaz" },
+      { status: 400 }
+    );
+  }
+  const VALID_OUTPUT_TYPES = ["PDF_CATALOG", "SOCIAL_POST", "BROCHURE", "PRICE_LIST", "CUSTOM"];
+  const safeOutputType =
+    typeof outputType === "string" && VALID_OUTPUT_TYPES.includes(outputType)
+      ? outputType
+      : "PDF_CATALOG";
 
   try {
     const project = await prisma.catalogProject.create({
@@ -34,6 +54,9 @@ export async function POST(req: NextRequest) {
         targetLanguage: targetLanguage || "tr",
         templateId: templateId || null,
         status: "DRAFT",
+        userPrompt: typeof userPrompt === "string" && userPrompt.trim() ? userPrompt.trim() : null,
+        outputType: safeOutputType,
+        dataSchema: dataSchema && typeof dataSchema === "object" ? dataSchema : undefined,
       },
     });
 

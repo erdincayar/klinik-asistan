@@ -1,0 +1,65 @@
+{# Social-square — her ürün için 1080x1080 ayrı sayfa. #}
+<!DOCTYPE html>
+<html lang="{{ metadata.language | default('tr') }}">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ metadata.title | default('Sosyal Medya') | e }}</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Manrope:wght@300;400;500;600;700&display=swap");
+  </style>
+  <style>
+    {{ base_css | safe }}
+  </style>
+  <style>
+    :root {
+      --brand-primary:   {{ brand_kit.primary   | default('#1F2937') }};
+      --brand-secondary: {{ brand_kit.secondary | default('#F9FAFB') }};
+      --brand-accent:    {{ brand_kit.accent    | default('#D4A574') }};
+      --brand-font:      {{ brand_kit.font_family | default('Inter') }};
+    }
+  </style>
+</head>
+<body>
+
+  {% for category, category_products in products_by_category %}
+    {% for product in category_products %}
+      <section class="post">
+        {% if product.image_path %}
+          <div class="post__media" style="background-image: url('{{ product.image_path }}');"></div>
+        {% else %}
+          <div class="post__media post__media--empty"></div>
+        {% endif %}
+
+        <div class="post__overlay">
+          <div class="post__top">
+            {% if metadata.company_name %}
+              <div class="post__brand">{{ metadata.company_name | upper | e }}</div>
+            {% endif %}
+            {% if category %}
+              <div class="post__cat">{{ category | e }}</div>
+            {% endif %}
+          </div>
+
+          <div class="post__bottom">
+            <h1 class="post__name">{{ product.name | e }}</h1>
+            {% if product.description %}
+              <p class="post__desc">{{ product.description | e | truncate(140) }}</p>
+            {% endif %}
+            <div class="post__row">
+              {% if product.price %}
+                <div class="post__price">
+                  {{ '%.2f' % product.price }} {{ product.currency or '₺' }}
+                </div>
+              {% endif %}
+              {% if metadata.contact_info and metadata.contact_info.website %}
+                <div class="post__cta">{{ metadata.contact_info.website | e }}</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </section>
+    {% endfor %}
+  {% endfor %}
+
+</body>
+</html>

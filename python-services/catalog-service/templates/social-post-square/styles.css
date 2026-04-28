@@ -1,0 +1,121 @@
+/* Social square — 1080x1080 px, her ürün ayrı sayfa */
+@page {
+  /* 1080px @ 96dpi ≈ 285.75mm — WeasyPrint 96dpi varsayılanı için yaklaşık */
+  size: 285.75mm 285.75mm;
+  margin: 0;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--brand-font, "Inter"), sans-serif;
+  color: var(--brand-primary, #1F2937);
+  background: #fff;
+}
+
+.post {
+  position: relative;
+  width: 285.75mm;
+  height: 285.75mm;
+  page-break-after: always;
+  page-break-inside: avoid;
+  overflow: hidden;
+  color: #fff;
+}
+.post:last-child { page-break-after: auto; }
+
+.post__media {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: var(--brand-secondary, #F9FAFB);
+}
+.post__media--empty {
+  background: linear-gradient(135deg,
+    var(--brand-primary, #1F2937) 0%,
+    var(--brand-accent, #D4A574) 100%);
+}
+
+.post__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 24mm;
+  background: linear-gradient(180deg,
+    rgba(0,0,0,0.0) 0%,
+    rgba(0,0,0,0.0) 40%,
+    rgba(0,0,0,0.55) 75%,
+    rgba(0,0,0,0.85) 100%);
+}
+
+.post__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  font-size: 11pt;
+  font-weight: 600;
+  letter-spacing: 2px;
+}
+.post__brand {
+  background: var(--brand-accent, #D4A574);
+  color: var(--brand-primary, #1F2937);
+  padding: 3mm 6mm;
+  border-radius: 100px;
+}
+.post__cat {
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  background: rgba(255,255,255,0.18);
+  backdrop-filter: blur(6px);
+  padding: 3mm 6mm;
+  border-radius: 100px;
+}
+
+.post__bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 6mm;
+}
+.post__name {
+  font-size: 36pt;
+  font-weight: 700;
+  line-height: 1.05;
+  margin: 0;
+  letter-spacing: -1.5px;
+  text-shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+.post__desc {
+  font-size: 14pt;
+  font-weight: 300;
+  line-height: 1.4;
+  margin: 0;
+  opacity: 0.92;
+  max-width: 80%;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.3);
+}
+.post__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4mm;
+  padding-top: 6mm;
+  border-top: 1px solid rgba(255,255,255,0.3);
+}
+.post__price {
+  font-size: 28pt;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--brand-accent, #D4A574);
+}
+.post__cta {
+  font-size: 11pt;
+  letter-spacing: 1.5px;
+  font-weight: 500;
+  opacity: 0.9;
+}

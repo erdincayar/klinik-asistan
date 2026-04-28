@@ -10,7 +10,8 @@
  */
 
 import path from "path";
-import { rm } from "fs/promises";
+import { rm, readFile } from "fs/promises";
+import * as XLSX from "xlsx";
 import { prisma } from "@/lib/prisma";
 import { CatalogService } from "@/lib/services/CatalogService";
 import type {
@@ -22,6 +23,101 @@ import type {
   ParsePdfResult,
   TranslateResult,
 } from "@/lib/services/CatalogService";
+import { CATALOG_STORAGE_ROOT } from "@/lib/catalog/storage";
+
+// Excel-only akış için: dataSchema.excel.mappings'i uygulayıp ExtractedProduct
+// listesi üretir. PDF/Claude extract atlanır.
+interface ExcelMapping {
+  column: string;
+  // standart key veya "_extra:<isim>"
+  key: string;
+}
+
+async function extractFromExcel(
+  absPath: string,
+  mappings: ExcelMapping[]
+): Promise<ExtractedProduct[]> {
+  const buf = await readFile(absPath);
+  const wb = XLSX.read(buf, { type: "buffer" });
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  if (!ws) return [];
+  const rows: Record<string, any>[] = XLSX.utils.sheet_to_json(ws, { defval: null });
+
+  const out: ExtractedProduct[] = [];
+  for (const row of rows) {
+    const product: Record<string, any> = {
+      product_code: null,
+      name: "",
+      description: null,
+      technical_specs: {},
+      category: null,
+      page_num: null,
+      confidence: 0.95, // user mapping → high trust
+    };
+    const extra: Record<string, any> = {};
+    let imageUrl: string | null = null;
+    let priceVal: number | null = null;
+    let currencyVal: string | null = null;
+    let brandVal: string | null = null;
+    let skuVal: string | null = null;
+
+    for (const m of mappings) {
+      const raw = row[m.column];
+      if (raw === null || raw === undefined || raw === "") continue;
+      const s = String(raw).trim();
+
+      if (m.key.startsWith("_extra:")) {
+        const fieldName = m.key.slice("_extra:".length);
+        if (fieldName) extra[fieldName] = raw;
+        continue;
+      }
+
+      switch (m.key) {
+        case "name":
+          product.name = s;
+          break;
+        case "description":
+          product.description = s;
+          break;
+        case "category":
+          product.category = s;
+          break;
+        case "brand":
+          brandVal = s;
+          break;
+        case "sku":
+          skuVal = s;
+          break;
+        case "price": {
+          const n = parseFloat(String(raw).replace(",", "."));
+          if (!isNaN(n)) priceVal = n;
+          break;
+        }
+        case "currency":
+          currencyVal = s.toUpperCase();
+          break;
+        case "imageUrl":
+          imageUrl = s;
+          break;
+      }
+    }
+
+    if (!product.name) continue; // skip rows without a name
+
+    if (brandVal) extra.marka = brandVal;
+    if (skuVal) {
+      extra.sku = skuVal;
+      product.product_code = skuVal;
+    }
+    if (priceVal !== null) (product as any)._price = priceVal;
+    if (currencyVal) (product as any)._currency = currencyVal;
+    if (imageUrl) (product as any)._imageUrl = imageUrl;
+    if (Object.keys(extra).length) (product as any)._extra = extra;
+
+    out.push(product as unknown as ExtractedProduct);
+  }
+  return out;
+}
 
 /* ─────────── Analyze ─────────── */
 
@@ -59,32 +155,68 @@ export async function runAnalyze(opts: AnalyzeOptions): Promise<void> {
 
     const pdfs = project.sourceFiles.filter((f) => f.fileType === "REFERENCE_PDF");
     const photos = project.sourceFiles.filter((f) => f.fileType === "PRODUCT_IMAGE");
+    const excels = project.sourceFiles.filter((f) => f.fileType === "EXCEL_DATA");
 
-    if (pdfs.length === 0) {
-      throw new Error("En az bir REFERENCE_PDF dosyası gerekli");
+    // Excel-only akış mı? Kullanıcı dataSchema.excel.mappings tanımladıysa
+    // Claude extract atlanır — kolon eşlemesi tek başına yeterli.
+    const dataSchema = (project.dataSchema as any) || null;
+    const excelMappings: ExcelMapping[] | null =
+      dataSchema?.excel?.mappings && Array.isArray(dataSchema.excel.mappings)
+        ? dataSchema.excel.mappings
+        : null;
+    const useExcelFlow = excelMappings && excels.length > 0;
+
+    if (!useExcelFlow && pdfs.length === 0) {
+      throw new Error(
+        "En az bir REFERENCE_PDF dosyası gerekli (veya Excel + kolon eşlemesi)"
+      );
     }
 
-    // 1) Parse every reference PDF, then concatenate pages + extracted images
+    // 1) PDF'leri parse et — sadece klasik (PDF) akışında.
     const allPages: ParsedPage[] = [];
     const allExtractedImages: ExtractedImage[] = [];
 
-    for (const pdf of pdfs) {
-      const ref = await CatalogService.startParsePdf({ pdfPath: pdf.storagePath });
-      const parsed = await CatalogService.waitForJob<ParsePdfResult>(ref.jobId, {
-        intervalMs: 2000,
-        timeoutMs: 10 * 60 * 1000,
-      });
-      allPages.push(...parsed.pages);
-      allExtractedImages.push(...parsed.extracted_images);
-    }
+    if (!useExcelFlow) {
+      for (const pdf of pdfs) {
+        const ref = await CatalogService.startParsePdf({ pdfPath: pdf.storagePath });
+        const parsed = await CatalogService.waitForJob<ParsePdfResult>(ref.jobId, {
+          intervalMs: 2000,
+          timeoutMs: 10 * 60 * 1000,
+        });
+        allPages.push(...parsed.pages);
+        allExtractedImages.push(...parsed.extracted_images);
+      }
 
-    if (allPages.length === 0) {
-      throw new Error("PDF'lerden metin çıkartılamadı");
+      if (allPages.length === 0) {
+        throw new Error("PDF'lerden metin çıkartılamadı");
+      }
     }
 
     // 2) Extract products from all pages
-    //    Her dosyadaki kullanıcı notu + AI analizi özetini prompt context'ine ekle.
-    const contextLines: string[] = [];
+    //    Prompt context'i 3 kaynaktan toplanır:
+    //    - Kullanıcının "Ne istiyorsun?" prompt'u (project.userPrompt) — en önemlisi
+    //    - Çıktı tipi (project.outputType) — Claude'un format kararını yönlendirir
+    //    - Her dosyanın userNote + AI analiz özeti
+    const contextSections: string[] = [];
+
+    if (project.userPrompt?.trim()) {
+      contextSections.push(
+        `Kullanıcının isteği:\n${project.userPrompt.trim()}`
+      );
+    }
+
+    if (project.outputType && project.outputType !== "PDF_CATALOG") {
+      const outputTypeLabel: Record<string, string> = {
+        SOCIAL_POST: "Sosyal medya postu (1080×1080)",
+        BROCHURE: "Tanıtım broşürü (A5)",
+        PRICE_LIST: "Fiyat listesi (A4 tablo)",
+        CUSTOM: "Özel format — kullanıcının isteğine göre",
+      };
+      const label = outputTypeLabel[project.outputType] || project.outputType;
+      contextSections.push(`Hedef çıktı: ${label}`);
+    }
+
+    const fileLines: string[] = [];
     for (const f of project.sourceFiles) {
       const bits: string[] = [];
       if (f.userNote?.trim()) bits.push(`kullanıcı notu: ${f.userNote.trim()}`);
@@ -97,46 +229,80 @@ export async function runAnalyze(opts: AnalyzeOptions): Promise<void> {
         bits.push(`öneriler: ${ai.suggestions.slice(0, 3).join("; ")}`);
       }
       if (bits.length) {
-        contextLines.push(`• ${f.originalName} (${f.fileType}): ${bits.join(" | ")}`);
+        fileLines.push(`• ${f.originalName} (${f.fileType}): ${bits.join(" | ")}`);
       }
     }
-    const extraContext = contextLines.length
-      ? `Kaynak dosya notları:\n${contextLines.join("\n")}`
-      : undefined;
-
-    const extractRef = await CatalogService.startExtractProducts({
-      pages: allPages,
-      sector: opts.sector ?? undefined,
-      brand: opts.brand ?? undefined,
-      extraContext,
-    });
-    const extracted = await CatalogService.waitForJob<ExtractProductsResult>(
-      extractRef.jobId,
-      { intervalMs: 3000, timeoutMs: 15 * 60 * 1000 }
-    );
-
-    let products: ExtractedProduct[] = extracted.products;
-
-    if (products.length === 0) {
-      throw new Error("Claude hiç ürün bulamadı");
+    if (fileLines.length) {
+      contextSections.push(`Kaynak dosya notları:\n${fileLines.join("\n")}`);
     }
 
-    // 3) Match images
-    const matchRef = await CatalogService.startMatchImages({
-      products,
-      photoFiles: photos.map((p) => p.storagePath),
-      extractedImages: allExtractedImages,
-      phashThreshold: opts.phashThreshold ?? 10,
-    });
-    const matchResult = await CatalogService.waitForJob<MatchImagesResult>(
-      matchRef.jobId,
-      { intervalMs: 2000, timeoutMs: 10 * 60 * 1000 }
-    );
+    const extraContext = contextSections.length
+      ? contextSections.join("\n\n")
+      : undefined;
 
-    // 4) Translate if requested
+    let products: ExtractedProduct[] = [];
+
+    if (useExcelFlow) {
+      // 2a) Excel akışı — kolon eşleme uygula
+      const targetExcel =
+        excels.find(
+          (e) => e.originalName === dataSchema?.excel?.fileName
+        ) || excels[0];
+      const absPath = path.isAbsolute(targetExcel.storagePath)
+        ? targetExcel.storagePath
+        : path.join(CATALOG_STORAGE_ROOT, targetExcel.storagePath);
+      products = await extractFromExcel(absPath, excelMappings!);
+      if (products.length === 0) {
+        throw new Error("Excel'den ürün çıkartılamadı — dosya boş veya isim kolonu eşlenmemiş");
+      }
+    } else {
+      // 2b) PDF akışı — Claude extract
+      const extractRef = await CatalogService.startExtractProducts({
+        pages: allPages,
+        sector: opts.sector ?? undefined,
+        brand: opts.brand ?? undefined,
+        extraContext,
+      });
+      const extracted = await CatalogService.waitForJob<ExtractProductsResult>(
+        extractRef.jobId,
+        { intervalMs: 3000, timeoutMs: 15 * 60 * 1000 }
+      );
+      products = extracted.products;
+
+      if (products.length === 0) {
+        throw new Error("Claude hiç ürün bulamadı");
+      }
+    }
+
+    // 3) Match images — Excel akışında da PDF gömülü görsellerini kullanma,
+    //    sadece foto klasöründekileri yedek olarak kullan.
+    let imageByCode: Record<string, string> = {};
+    const matchesByCode = new Map<string, string>();
+
+    if (photos.length > 0) {
+      const matchRef = await CatalogService.startMatchImages({
+        products,
+        photoFiles: photos.map((p) => p.storagePath),
+        extractedImages: useExcelFlow ? [] : allExtractedImages,
+        phashThreshold: opts.phashThreshold ?? 10,
+      });
+      const matchResult = await CatalogService.waitForJob<MatchImagesResult>(
+        matchRef.jobId,
+        { intervalMs: 2000, timeoutMs: 10 * 60 * 1000 }
+      );
+      imageByCode = matchResult.map || {};
+      for (const m of matchResult.matches) {
+        if (m.image_path && m.product_code) {
+          matchesByCode.set(m.product_code, m.image_path);
+        }
+      }
+    }
+
+    // 4) Translate if requested — Excel akışında pas geç (kullanıcı zaten
+    //    istediği dilde veri girdi).
     const src = (opts.sourceLanguage || "tr").toLowerCase();
     const tgt = (opts.targetLanguage || project.targetLanguage || "tr").toLowerCase();
-    if (src !== tgt) {
+    if (!useExcelFlow && src !== tgt) {
       const trRef = await CatalogService.startTranslate({
         products,
         sourceLanguage: src,
@@ -152,21 +318,20 @@ export async function runAnalyze(opts: AnalyzeOptions): Promise<void> {
 
     // 5) Persist products. Fresh-replace strategy for now
     //    (user re-runs analysis → old draft products replaced).
-    const imageByCode: Record<string, string> = matchResult.map || {};
-    const matchesByCode = new Map<string, string>();
-    for (const m of matchResult.matches) {
-      if (m.image_path && m.product_code) {
-        matchesByCode.set(m.product_code, m.image_path);
-      }
-    }
-
     await prisma.$transaction(async (tx) => {
       await tx.catalogProduct.deleteMany({ where: { projectId } });
       let order = 0;
       for (const p of products) {
         const code = p.product_code || undefined;
+        // Excel akışında imageUrl mapping'i varsa onu kullan; yoksa eşleşeni
+        const directImage = (p as any)._imageUrl as string | undefined;
         const image =
-          (code && (imageByCode[code] || matchesByCode.get(code))) || null;
+          directImage ||
+          (code && (imageByCode[code] || matchesByCode.get(code))) ||
+          null;
+        const priceVal = (p as any)._price as number | undefined;
+        const currencyVal = (p as any)._currency as string | undefined;
+        const extraVal = (p as any)._extra as Record<string, any> | undefined;
 
         await tx.catalogProduct.create({
           data: {
@@ -182,6 +347,9 @@ export async function runAnalyze(opts: AnalyzeOptions): Promise<void> {
             imageStoragePath: image,
             aiConfidence: p.confidence ?? 0.5,
             status: "DRAFT",
+            ...(priceVal !== undefined && { price: priceVal }),
+            ...(currencyVal && { currency: currencyVal }),
+            ...(extraVal && { extra: extraVal as any }),
           },
         });
       }
@@ -264,9 +432,21 @@ export async function runGenerate(
       throw new Error("Projede ürün yok — önce analiz çalıştırın");
     }
 
+    // outputType → varsayılan template haritası. Kullanıcı şablon seçtiyse
+    // ona saygı duyarız; yoksa outputType belirler. CUSTOM tipinde de varsayılan
+    // klasik katalog şablonu kullanılır (Python tarafı user_prompt'a bakar).
+    const OUTPUT_TYPE_DEFAULT_SLUG: Record<string, string> = {
+      PDF_CATALOG: "natural-stone-modern",
+      PRICE_LIST: "price-list-modern",
+      SOCIAL_POST: "social-post-square",
+      BROCHURE: "natural-stone-modern", // henüz özel broşür şablonu yok
+      CUSTOM: "natural-stone-modern",
+    };
     const templateSlug =
       opts.templateSlug ||
-      (project.template?.slug ?? "natural-stone-modern");
+      project.template?.slug ||
+      OUTPUT_TYPE_DEFAULT_SLUG[project.outputType] ||
+      "natural-stone-modern";
 
     // Find the template row (for book-keeping + ensuring it exists)
     const template = await prisma.catalogTemplate.findUnique({
@@ -288,6 +468,9 @@ export async function runGenerate(
         name: p.name,
         description: p.description,
         technical_specs: (p.technicalSpecs as Record<string, unknown>) || {},
+        // Kullanıcı tanımlı dinamik alanlar (CatalogProduct.extra). Render
+        // template'i bu alanları okuyup gösterebilir (P4).
+        extra: (p.extra as Record<string, unknown>) || {},
         category: p.category,
         image_path: p.imageStoragePath,
         price: p.price,
@@ -308,6 +491,10 @@ export async function runGenerate(
         edition: opts.metadata?.edition ?? null,
         year: opts.metadata?.year ?? new Date().getFullYear(),
         language: project.targetLanguage || "tr",
+        // Kullanıcının orijinal isteği — Python render tarafı bunu okuyup
+        // template seçimi/varyantı için kullanabilsin.
+        user_prompt: project.userPrompt || null,
+        output_type: project.outputType || "PDF_CATALOG",
         contact_info: opts.metadata?.contactInfo ?? {
           address: project.clinic?.address ?? null,
           phone: project.clinic?.phone ?? null,

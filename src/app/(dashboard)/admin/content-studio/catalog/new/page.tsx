@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import * as XLSX from "xlsx";
 import {
   ArrowLeft,
   ArrowRight,
@@ -14,6 +15,13 @@ import {
   Image as ImageIcon,
   Sheet,
   Palette,
+  Wand2,
+  FileImage,
+  Megaphone,
+  ListOrdered,
+  BookOpen,
+  Layers,
+  Table2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -34,7 +42,91 @@ const TEMPLATES = [
   },
 ] as const;
 
-const STEPS = ["Proje", "Dosyalar", "Marka Kiti", "Şablon"] as const;
+const STEPS = ["Proje", "İstek", "Dosyalar", "Veri Eşleme", "Marka Kiti", "Şablon"] as const;
+
+// Excel kolonu hangi standart alana karşılık geliyor? Boş = kullanma.
+// "_extra" seçilirse kullanıcı kendi alan adını yazar — extra map'ine yazılır.
+const FIELD_OPTIONS: { value: string; label: string }[] = [
+  { value: "", label: "— Kullanma —" },
+  { value: "name", label: "Ürün Adı *" },
+  { value: "description", label: "Açıklama" },
+  { value: "category", label: "Kategori" },
+  { value: "brand", label: "Marka" },
+  { value: "sku", label: "SKU / Kod" },
+  { value: "price", label: "Fiyat" },
+  { value: "currency", label: "Para Birimi" },
+  { value: "imageUrl", label: "Görsel URL / Yol" },
+  { value: "_extra", label: "Özel Alan (kendi adın)" },
+];
+
+type OutputType = "PDF_CATALOG" | "SOCIAL_POST" | "BROCHURE" | "PRICE_LIST" | "CUSTOM";
+
+const OUTPUT_TYPES: {
+  value: OutputType;
+  label: string;
+  description: string;
+  Icon: typeof FileImage;
+}[] = [
+  {
+    value: "PDF_CATALOG",
+    label: "PDF Katalog",
+    description: "A4 dikey, ürün başına detaylı sayfa",
+    Icon: BookOpen,
+  },
+  {
+    value: "PRICE_LIST",
+    label: "Fiyat Listesi",
+    description: "A4 tablo formatı, kompakt liste",
+    Icon: ListOrdered,
+  },
+  {
+    value: "BROCHURE",
+    label: "Broşür",
+    description: "A5 katlanır, öne çıkan ürünler",
+    Icon: Layers,
+  },
+  {
+    value: "SOCIAL_POST",
+    label: "Sosyal Medya Postu",
+    description: "1080×1080, ürün başına ayrı görsel",
+    Icon: Megaphone,
+  },
+  {
+    value: "CUSTOM",
+    label: "Özel",
+    description: "Sadece istek metnine göre — şablon yok",
+    Icon: Wand2,
+  },
+];
+
+// Kullanıcının "Ne istiyorsun?" alanını boş bırakmaması için hızlı örnekler.
+// Her preset bir output type'a denk gelir + sample prompt sunar.
+const PROMPT_PRESETS: { label: string; outputType: OutputType; prompt: string }[] = [
+  {
+    label: "Klasik ürün katalogu",
+    outputType: "PDF_CATALOG",
+    prompt:
+      "Yüklediğim verilerden modern bir ürün kataloğu hazırla. Her sayfada bir ürün olsun: ürün adı büyük, kısa açıklama, teknik özellikler ve fiyat. Fiyatları KDV dahil göster.",
+  },
+  {
+    label: "Sade fiyat listesi",
+    outputType: "PRICE_LIST",
+    prompt:
+      "Ürünleri tablo halinde A4 dikey fiyat listesine dök. Sütunlar: ürün adı, birim, KDV hariç fiyat, KDV dahil fiyat. Kategoriye göre grupla.",
+  },
+  {
+    label: "Sosyal medya kampanya",
+    outputType: "SOCIAL_POST",
+    prompt:
+      "Her ürün için 1080×1080 kare bir Instagram postu üret. Ürün görselini büyük göster, üstte marka logosu, altta ürün adı + fiyat + kısa bir slogan.",
+  },
+  {
+    label: "Tanıtım broşürü",
+    outputType: "BROCHURE",
+    prompt:
+      "Sadece öne çıkan ürünleri (ilk 6) seçerek A5 katlanır broşür yap. Görsel ağırlıklı, kısa açıklama, marka hikayesi için 1 sayfa giriş bırak.",
+  },
+];
 
 export default function NewCatalogWizardPage() {
   const router = useRouter();
@@ -53,12 +145,28 @@ export default function NewCatalogWizardPage() {
     targetLanguage: "tr",
   });
 
+  // Step 2 — user prompt + output type
+  const [userPrompt, setUserPrompt] = useState("");
+  const [outputType, setOutputType] = useState<OutputType>("PDF_CATALOG");
+
   // Step 2 — files staged until project exists
   const [pdfFiles, setPdfFiles] = useState<File[]>([]);
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [excelFiles, setExcelFiles] = useState<File[]>([]);
 
-  // Step 3 — brand kit
+  // Step 3 — column mapping (only meaningful if Excel uploaded)
+  // Browser-side parse of staged Excel — sheet → columns + sample rows.
+  const [excelPreview, setExcelPreview] = useState<{
+    fileName: string;
+    columns: string[];
+    rows: Record<string, any>[];
+  } | null>(null);
+  // columnName → field key from FIELD_OPTIONS, or "" to skip
+  const [columnMappings, setColumnMappings] = useState<Record<string, string>>({});
+  // For "_extra" mappings: columnName → user-supplied custom field name
+  const [extraNames, setExtraNames] = useState<Record<string, string>>({});
+
+  // Step 4 — brand kit
   const [brand, setBrand] = useState({
     primary: "#1F2937",
     secondary: "#F9FAFB",
@@ -67,7 +175,7 @@ export default function NewCatalogWizardPage() {
     logoFile: null as File | null,
   });
 
-  // Step 4 — template
+  // Step 5 — template
   const [templateSlug, setTemplateSlug] = useState(TEMPLATES[0].slug);
 
   function validateStep(): string | null {
@@ -76,21 +184,127 @@ export default function NewCatalogWizardPage() {
       if (form.name.length > 200) return "Proje adı 200 karakterden uzun olamaz";
     }
     if (step === 1) {
-      if (photoFiles.length === 0)
+      if (!userPrompt.trim()) return "Ne yapmak istediğinizi kısaca yazın";
+      if (userPrompt.length > 5000) return "İstek metni 5000 karakterden uzun olamaz";
+    }
+    if (step === 2) {
+      // CUSTOM dışında ürün fotoğrafı zorunlu — Excel-only flow için bile.
+      // (Görseller ürün-görsel eşleştirmeye girer; tamamen veri-odaklı bir
+      // PRICE_LIST'te zorunluluk gevşeyebilir.)
+      if (
+        outputType !== "CUSTOM" &&
+        outputType !== "PRICE_LIST" &&
+        photoFiles.length === 0
+      )
         return "En az bir ürün fotoğrafı yüklemelisiniz";
+    }
+    if (step === 3) {
+      // Excel yüklenmiş + step görünür → en az "name" haritalanmalı
+      if (excelPreview) {
+        const usedKeys = Object.values(columnMappings).filter((v) => v && v !== "_extra");
+        if (!usedKeys.includes("name"))
+          return "En az 'Ürün Adı' kolonunu eşlemelisiniz";
+        // _extra seçilen kolonlarda isim boş bırakılamaz
+        for (const [col, key] of Object.entries(columnMappings)) {
+          if (key === "_extra" && !(extraNames[col] || "").trim()) {
+            return `'${col}' için özel alan adı girmelisiniz`;
+          }
+        }
+      }
     }
     return null;
   }
 
-  function next() {
+  // Browser-side Excel parse: ilk sheet → kolonlar + ilk 5 satır.
+  // Boş kolonları toplamak için ilk 50 satırı tarar (XLSX bazı satırlarda
+  // boş hücreleri atladığı için sadece 1. satıra bakmak yetersiz).
+  async function parseStagedExcel(file: File): Promise<{
+    columns: string[];
+    rows: Record<string, any>[];
+  } | null> {
+    try {
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array" });
+      const sheetName = wb.SheetNames[0];
+      if (!sheetName) return null;
+      const ws = wb.Sheets[sheetName];
+      const all: Record<string, any>[] = XLSX.utils.sheet_to_json(ws, {
+        defval: null,
+      });
+      const colSet = new Set<string>();
+      for (const r of all.slice(0, 50)) for (const k of Object.keys(r)) colSet.add(k);
+      return { columns: Array.from(colSet), rows: all.slice(0, 5) };
+    } catch (e) {
+      console.error("excel parse error", e);
+      return null;
+    }
+  }
+
+  // Adım 2'den 3'e geçişte Excel'i parse et; yoksa eşleme adımını atla.
+  async function next() {
     const err = validateStep();
     if (err) {
       toast({ title: "Eksik", description: err, variant: "destructive" });
       return;
     }
+
+    if (step === 2) {
+      if (excelFiles.length === 0) {
+        // Eşleme yok — direkt marka kitine atla
+        setExcelPreview(null);
+        setColumnMappings({});
+        setExtraNames({});
+        setStep(4);
+        return;
+      }
+      const file = excelFiles[0];
+      const parsed = await parseStagedExcel(file);
+      if (!parsed || parsed.columns.length === 0) {
+        toast({
+          title: "Excel okunamadı",
+          description: "Dosya bozuk olabilir — eşleme adımı atlanıyor.",
+          variant: "destructive",
+        });
+        setExcelPreview(null);
+        setStep(4);
+        return;
+      }
+      setExcelPreview({ fileName: file.name, columns: parsed.columns, rows: parsed.rows });
+      // Heuristik: yaygın kolon adları için varsayılan eşleme
+      const initialMap: Record<string, string> = {};
+      for (const col of parsed.columns) {
+        const lc = col.toLowerCase();
+        if (!initialMap[col]) {
+          if (/(ürün ?adı|name|isim|ürün)/i.test(lc)) initialMap[col] = "name";
+          else if (/(açıklama|description|detay)/i.test(lc)) initialMap[col] = "description";
+          else if (/(kategori|category|grup)/i.test(lc)) initialMap[col] = "category";
+          else if (/(marka|brand)/i.test(lc)) initialMap[col] = "brand";
+          else if (/(sku|kod|code|stok kod)/i.test(lc)) initialMap[col] = "sku";
+          else if (/(fiyat|price|tutar|ücret)/i.test(lc)) initialMap[col] = "price";
+          else if (/(birim|currency|para)/i.test(lc)) initialMap[col] = "currency";
+          else if (/(görsel|image|resim|foto)/i.test(lc)) initialMap[col] = "imageUrl";
+        }
+      }
+      // Aynı key birden fazla kolona atanmışsa sadece ilkini bırak
+      const seen = new Set<string>();
+      for (const k of Object.keys(initialMap)) {
+        if (seen.has(initialMap[k])) initialMap[k] = "";
+        else seen.add(initialMap[k]);
+      }
+      setColumnMappings(initialMap);
+      setStep(3);
+      return;
+    }
+
     setStep((s) => Math.min(s + 1, STEPS.length - 1));
   }
+
   function back() {
+    // Veri Eşleme görünmediyse 4. adımdan 2. adıma direkt geç
+    if (step === 4 && !excelPreview) {
+      setStep(2);
+      return;
+    }
     setStep((s) => Math.max(0, s - 1));
   }
 
@@ -125,6 +339,25 @@ export default function NewCatalogWizardPage() {
     let projectId: string | null = null;
     try {
       // 1) Create project
+      // Eşleme yapıldıysa dataSchema oluştur (server-side pipeline bunu okur).
+      const dataSchema = excelPreview
+        ? {
+            excel: {
+              fileName: excelPreview.fileName,
+              mappings: Object.entries(columnMappings)
+                .filter(([, key]) => !!key)
+                .map(([column, key]) => ({
+                  column,
+                  // _extra ise key formatı: "_extra:<isim>" — pipeline parse eder
+                  key:
+                    key === "_extra"
+                      ? `_extra:${(extraNames[column] || column).trim()}`
+                      : key,
+                })),
+            },
+          }
+        : undefined;
+
       const res = await fetch("/api/admin/catalog/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -134,6 +367,9 @@ export default function NewCatalogWizardPage() {
           sourceLanguage: form.sourceLanguage,
           targetLanguage: form.targetLanguage,
           templateId: null, // set via generate step later
+          userPrompt: userPrompt.trim() || null,
+          outputType,
+          dataSchema,
         }),
       });
       const data = await res.json();
@@ -321,6 +557,96 @@ export default function NewCatalogWizardPage() {
 
           {step === 1 && (
             <>
+              <div className="flex items-start gap-2 rounded-lg bg-violet-50/60 px-3 py-2 text-xs text-violet-700">
+                <Wand2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                Yüklediğin verilerle ne yapmak istediğini kendi cümlelerinle yaz.
+                İstersen aşağıdaki örneklerden birini seçip üzerinde değişiklik
+                yapabilirsin.
+              </div>
+
+              <div>
+                <Label className="text-xs">Çıktı Tipi</Label>
+                <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {OUTPUT_TYPES.map((ot) => {
+                    const selected = ot.value === outputType;
+                    const Icon = ot.Icon;
+                    return (
+                      <button
+                        key={ot.value}
+                        type="button"
+                        onClick={() => setOutputType(ot.value)}
+                        className={`flex items-start gap-3 rounded-xl border p-3 text-left transition-all ${
+                          selected
+                            ? "border-violet-500 bg-violet-50/40 ring-1 ring-violet-200"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}
+                      >
+                        <Icon
+                          className={`mt-0.5 h-4 w-4 shrink-0 ${
+                            selected ? "text-violet-600" : "text-gray-400"
+                          }`}
+                        />
+                        <div className="min-w-0">
+                          <div className="text-sm font-semibold text-gray-900">
+                            {ot.label}
+                          </div>
+                          <div className="text-[11px] text-gray-500">
+                            {ot.description}
+                          </div>
+                        </div>
+                        {selected && (
+                          <CheckCircle2 className="ml-auto h-4 w-4 shrink-0 text-violet-500" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">İstek (Prompt) *</Label>
+                  <span className="text-[11px] text-gray-400">
+                    {userPrompt.length} / 5000
+                  </span>
+                </div>
+                <textarea
+                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                  rows={6}
+                  value={userPrompt}
+                  maxLength={5000}
+                  onChange={(e) => setUserPrompt(e.target.value)}
+                  placeholder="Örn: Yüklediğim Excel'den ürünlerin adını + fiyatını al, A4 dikey katalog yap. Kategoriye göre grupla. KDV dahil fiyatları büyük yaz, KDV hariç altında küçük göster."
+                />
+                <p className="mt-1 text-[11px] text-gray-400">
+                  Net yazarsan AI daha doğru çalışır: hangi alanları kullansın,
+                  hangileri es geçsin, neye göre sıralasın, hangi dilde yazsın?
+                </p>
+              </div>
+
+              <div>
+                <Label className="text-xs">Hızlı Örnekler</Label>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {PROMPT_PRESETS.map((p) => (
+                    <button
+                      key={p.label}
+                      type="button"
+                      onClick={() => {
+                        setUserPrompt(p.prompt);
+                        setOutputType(p.outputType);
+                      }}
+                      className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-[11px] text-gray-700 hover:border-violet-300 hover:bg-violet-50"
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {step === 2 && (
+            <>
               <div className="flex items-start gap-2 rounded-lg bg-indigo-50/60 px-3 py-2 text-xs text-indigo-700">
                 <Upload className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 Dosyalar, projeyi oluşturduğunuzda tek seferde yüklenir.
@@ -378,7 +704,93 @@ export default function NewCatalogWizardPage() {
             </>
           )}
 
-          {step === 2 && (
+          {step === 3 && excelPreview && (
+            <>
+              <div className="flex items-start gap-2 rounded-lg bg-violet-50/60 px-3 py-2 text-xs text-violet-700">
+                <Table2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <div>
+                  <span className="font-semibold">{excelPreview.fileName}</span>{" "}
+                  içindeki kolonların hangi alanları temsil ettiğini seç.
+                  Standart bir karşılığı yoksa <em>Özel Alan</em> seç ve kendi
+                  adını ver — render aşamasında bu alanlar da kullanılabilir.
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                {excelPreview.columns.map((col) => {
+                  const mapped = columnMappings[col] ?? "";
+                  const sampleVals = excelPreview.rows
+                    .map((r) => r[col])
+                    .filter((v) => v !== null && v !== undefined && v !== "")
+                    .slice(0, 2)
+                    .map((v) => String(v));
+                  return (
+                    <div
+                      key={col}
+                      className="rounded-lg border border-gray-200 p-3"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-medium text-gray-900 truncate">
+                            {col}
+                          </div>
+                          {sampleVals.length > 0 && (
+                            <div className="mt-0.5 text-[11px] text-gray-400 truncate">
+                              ör: {sampleVals.join(" · ")}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex shrink-0 items-center gap-2">
+                          <ArrowRight className="h-3.5 w-3.5 text-gray-300" />
+                          <select
+                            value={mapped}
+                            onChange={(e) =>
+                              setColumnMappings({
+                                ...columnMappings,
+                                [col]: e.target.value,
+                              })
+                            }
+                            className="rounded-lg border border-gray-200 px-2 py-1.5 text-xs"
+                          >
+                            {FIELD_OPTIONS.map((o) => (
+                              <option key={o.value} value={o.value}>
+                                {o.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                      {mapped === "_extra" && (
+                        <div className="mt-2">
+                          <Input
+                            placeholder="Alan adı (örn: kalori, metrekare, paket)"
+                            value={extraNames[col] || ""}
+                            onChange={(e) =>
+                              setExtraNames({
+                                ...extraNames,
+                                [col]: e.target.value,
+                              })
+                            }
+                            className="text-xs"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="text-[11px] text-gray-400">
+                {excelPreview.columns.length} kolon —{" "}
+                {
+                  Object.values(columnMappings).filter((v) => !!v).length
+                }{" "}
+                eşlendi
+              </div>
+            </>
+          )}
+
+          {step === 4 && (
             <>
               <div className="flex items-start gap-2 rounded-lg bg-amber-50/60 px-3 py-2 text-xs text-amber-700">
                 <Palette className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -508,7 +920,7 @@ export default function NewCatalogWizardPage() {
             </>
           )}
 
-          {step === 3 && (
+          {step === 5 && (
             <>
               <div className="flex items-start gap-2 rounded-lg bg-indigo-50/60 px-3 py-2 text-xs text-indigo-700">
                 <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0" />
