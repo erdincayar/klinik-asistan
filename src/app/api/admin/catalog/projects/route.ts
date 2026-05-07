@@ -23,6 +23,7 @@ export async function POST(req: NextRequest) {
     templateId,
     userPrompt,
     outputType,
+    pageSize,
     dataSchema,
   } = body || {};
   if (!name || typeof name !== "string" || name.trim().length === 0) {
@@ -43,6 +44,20 @@ export async function POST(req: NextRequest) {
       ? outputType
       : "PDF_CATALOG";
 
+  // pageSize doğrulama: { width, height, unit: mm|px } — boş bırakılırsa null
+  let safePageSize: { width: number; height: number; unit: string; label?: string } | null = null;
+  if (pageSize && typeof pageSize === "object") {
+    const w = Number(pageSize.width);
+    const h = Number(pageSize.height);
+    const unit = pageSize.unit === "px" ? "px" : "mm";
+    if (w >= 50 && w <= 5000 && h >= 50 && h <= 5000) {
+      safePageSize = { width: w, height: h, unit };
+      if (typeof pageSize.label === "string" && pageSize.label.length <= 40) {
+        safePageSize.label = pageSize.label;
+      }
+    }
+  }
+
   try {
     const project = await prisma.catalogProject.create({
       data: {
@@ -56,6 +71,7 @@ export async function POST(req: NextRequest) {
         status: "DRAFT",
         userPrompt: typeof userPrompt === "string" && userPrompt.trim() ? userPrompt.trim() : null,
         outputType: safeOutputType,
+        pageSize: safePageSize ?? undefined,
         dataSchema: dataSchema && typeof dataSchema === "object" ? dataSchema : undefined,
       },
     });

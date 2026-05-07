@@ -17,7 +17,11 @@ export const runtime = "nodejs";
  * and thumbnails without exposing the storage path directly.
  *
  * Query:
- *   thumb=1   — serve the small thumbnail (images only)
+ *   thumb=1     — serve the small thumbnail (images only, original)
+ *   variant=processed | lifestyle | original
+ *               — serve the BG-removed PNG or lifestyle-composed JPG
+ *   variant=auto&p=<relPath>
+ *               — explicit relative path (must be within tenant's CATALOG_STORAGE_ROOT)
  */
 export async function GET(
   req: NextRequest,
@@ -34,9 +38,37 @@ export async function GET(
     return NextResponse.json({ error: "Dosya bulunamadı" }, { status: 404 });
   }
 
+  const variant = req.nextUrl.searchParams.get("variant");
+  const explicitP = req.nextUrl.searchParams.get("p");
   let storagePath = file.storagePath;
+  let mimeOverride: string | null = null;
+
+  if (variant === "processed" && file.processedPath) {
+    storagePath = file.processedPath;
+    mimeOverride = "image/png";
+  } else if (variant === "lifestyle" && file.lifestylePath) {
+    storagePath = file.lifestylePath;
+    mimeOverride = "image/jpeg";
+  } else if (variant === "auto" && explicitP) {
+    // Doğrula: bu dosyaya ait bilinen path'lerden biri olmalı (yetkilendirme).
+    const allowed = new Set<string>(
+      [file.storagePath, file.processedPath, file.lifestylePath].filter(
+        Boolean
+      ) as string[]
+    );
+    if (!allowed.has(explicitP)) {
+      return NextResponse.json({ error: "Yetkisiz path" }, { status: 403 });
+    }
+    storagePath = explicitP;
+    if (storagePath.endsWith(".png")) mimeOverride = "image/png";
+    else if (storagePath.endsWith(".jpg") || storagePath.endsWith(".jpeg"))
+      mimeOverride = "image/jpeg";
+  }
+
   const wantsThumb =
-    req.nextUrl.searchParams.get("thumb") && file.fileType === "PRODUCT_IMAGE";
+    req.nextUrl.searchParams.get("thumb") &&
+    file.fileType === "PRODUCT_IMAGE" &&
+    !variant;
 
   if (wantsThumb) {
     // photos/<name>.webp → photos/thumbs/thumb_<name>.webp
@@ -64,7 +96,7 @@ export async function GET(
   return new NextResponse(stream, {
     status: 200,
     headers: {
-      "Content-Type": file.mimeType || "application/octet-stream",
+      "Content-Type": mimeOverride || file.mimeType || "application/octet-stream",
       "Content-Length": String(size),
       "Cache-Control": "private, max-age=600",
     },

@@ -44,6 +44,28 @@ const TEMPLATES = [
 
 const STEPS = ["Proje", "İstek", "Dosyalar", "Veri Eşleme", "Marka Kiti", "Şablon"] as const;
 
+// Belge boyutu presetleri. Custom seçilirse kullanıcı px/mm girer.
+type PageSize = { width: number; height: number; unit: "mm" | "px"; label?: string };
+const PAGE_PRESETS: { id: string; label: string; size: PageSize }[] = [
+  { id: "a4p", label: "A4 Dikey · 210×297mm", size: { width: 210, height: 297, unit: "mm", label: "A4 Dikey" } },
+  { id: "a4l", label: "A4 Yatay · 297×210mm", size: { width: 297, height: 210, unit: "mm", label: "A4 Yatay" } },
+  { id: "a5p", label: "A5 Dikey · 148×210mm", size: { width: 148, height: 210, unit: "mm", label: "A5 Dikey" } },
+  { id: "a3p", label: "A3 Dikey · 297×420mm", size: { width: 297, height: 420, unit: "mm", label: "A3 Dikey" } },
+  { id: "ig-square", label: "Instagram Kare · 1080×1080px", size: { width: 1080, height: 1080, unit: "px", label: "IG Kare" } },
+  { id: "ig-story", label: "Story · 1080×1920px", size: { width: 1080, height: 1920, unit: "px", label: "Story" } },
+  { id: "ig-landscape", label: "Yatay Post · 1920×1080px", size: { width: 1920, height: 1080, unit: "px", label: "Yatay Post" } },
+  { id: "photo-4x6", label: "4×6 inç Fotoğraf · 102×152mm", size: { width: 102, height: 152, unit: "mm", label: "Fotoğraf" } },
+];
+
+// outputType başına default preset id
+const DEFAULT_PRESET_BY_OUTPUT: Record<string, string> = {
+  PDF_CATALOG: "a4p",
+  PRICE_LIST: "a4p",
+  BROCHURE: "a5p",
+  SOCIAL_POST: "ig-square",
+  CUSTOM: "a4p",
+};
+
 // Excel kolonu hangi standart alana karşılık geliyor? Boş = kullanma.
 // "_extra" seçilirse kullanıcı kendi alan adını yazar — extra map'ine yazılır.
 const FIELD_OPTIONS: { value: string; label: string }[] = [
@@ -145,9 +167,24 @@ export default function NewCatalogWizardPage() {
     targetLanguage: "tr",
   });
 
-  // Step 2 — user prompt + output type
+  // Step 2 — user prompt + output type + page size
   const [userPrompt, setUserPrompt] = useState("");
   const [outputType, setOutputType] = useState<OutputType>("PDF_CATALOG");
+  const [pageSizePreset, setPageSizePreset] = useState<string>("a4p");
+  const [customSize, setCustomSize] = useState<{ width: string; height: string; unit: "mm" | "px" }>({
+    width: "",
+    height: "",
+    unit: "mm",
+  });
+
+  // outputType değiştiğinde uygun default preset'e atla — kullanıcı önce
+  // farklı bir şey seçmediyse.
+  function handleOutputTypeChange(next: OutputType) {
+    setOutputType(next);
+    if (pageSizePreset === DEFAULT_PRESET_BY_OUTPUT[outputType]) {
+      setPageSizePreset(DEFAULT_PRESET_BY_OUTPUT[next] || "a4p");
+    }
+  }
 
   // Step 2 — files staged until project exists
   const [pdfFiles, setPdfFiles] = useState<File[]>([]);
@@ -186,6 +223,13 @@ export default function NewCatalogWizardPage() {
     if (step === 1) {
       if (!userPrompt.trim()) return "Ne yapmak istediğinizi kısaca yazın";
       if (userPrompt.length > 5000) return "İstek metni 5000 karakterden uzun olamaz";
+      if (pageSizePreset === "custom") {
+        const w = parseFloat(customSize.width);
+        const h = parseFloat(customSize.height);
+        if (!w || !h || w < 50 || h < 50 || w > 5000 || h > 5000) {
+          return "Özel boyut: 50–5000 arasında geçerli genişlik/yükseklik girin";
+        }
+      }
     }
     if (step === 2) {
       // CUSTOM dışında ürün fotoğrafı zorunlu — Excel-only flow için bile.
@@ -339,6 +383,17 @@ export default function NewCatalogWizardPage() {
     let projectId: string | null = null;
     try {
       // 1) Create project
+      // pageSize'i preset veya custom'tan oluştur
+      const pageSize: PageSize | null =
+        pageSizePreset === "custom"
+          ? {
+              width: parseFloat(customSize.width),
+              height: parseFloat(customSize.height),
+              unit: customSize.unit,
+              label: "Özel",
+            }
+          : PAGE_PRESETS.find((p) => p.id === pageSizePreset)?.size || null;
+
       // Eşleme yapıldıysa dataSchema oluştur (server-side pipeline bunu okur).
       const dataSchema = excelPreview
         ? {
@@ -369,6 +424,7 @@ export default function NewCatalogWizardPage() {
           templateId: null, // set via generate step later
           userPrompt: userPrompt.trim() || null,
           outputType,
+          pageSize,
           dataSchema,
         }),
       });
@@ -574,7 +630,7 @@ export default function NewCatalogWizardPage() {
                       <button
                         key={ot.value}
                         type="button"
-                        onClick={() => setOutputType(ot.value)}
+                        onClick={() => handleOutputTypeChange(ot.value)}
                         className={`flex items-start gap-3 rounded-xl border p-3 text-left transition-all ${
                           selected
                             ? "border-violet-500 bg-violet-50/40 ring-1 ring-violet-200"
@@ -633,7 +689,7 @@ export default function NewCatalogWizardPage() {
                       type="button"
                       onClick={() => {
                         setUserPrompt(p.prompt);
-                        setOutputType(p.outputType);
+                        handleOutputTypeChange(p.outputType);
                       }}
                       className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-[11px] text-gray-700 hover:border-violet-300 hover:bg-violet-50"
                     >
@@ -641,6 +697,95 @@ export default function NewCatalogWizardPage() {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              <div>
+                <Label className="text-xs">Belge Boyutu</Label>
+                <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {PAGE_PRESETS.map((p) => {
+                    const selected = pageSizePreset === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setPageSizePreset(p.id)}
+                        className={`rounded-lg border px-3 py-2 text-left text-[11px] transition-all ${
+                          selected
+                            ? "border-violet-500 bg-violet-50/40 ring-1 ring-violet-200"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}
+                      >
+                        <div className="font-medium text-gray-900">
+                          {p.size.label}
+                        </div>
+                        <div className="text-gray-400">
+                          {p.size.width}×{p.size.height} {p.size.unit}
+                        </div>
+                      </button>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    onClick={() => setPageSizePreset("custom")}
+                    className={`rounded-lg border px-3 py-2 text-left text-[11px] transition-all ${
+                      pageSizePreset === "custom"
+                        ? "border-violet-500 bg-violet-50/40 ring-1 ring-violet-200"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="font-medium text-gray-900">Özel</div>
+                    <div className="text-gray-400">px / mm</div>
+                  </button>
+                </div>
+
+                {pageSizePreset === "custom" && (
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    <div>
+                      <Label className="text-[11px] text-gray-500">Genişlik</Label>
+                      <Input
+                        type="number"
+                        min={50}
+                        max={5000}
+                        className="mt-1"
+                        value={customSize.width}
+                        onChange={(e) =>
+                          setCustomSize({ ...customSize, width: e.target.value })
+                        }
+                        placeholder="ör: 1200"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[11px] text-gray-500">Yükseklik</Label>
+                      <Input
+                        type="number"
+                        min={50}
+                        max={5000}
+                        className="mt-1"
+                        value={customSize.height}
+                        onChange={(e) =>
+                          setCustomSize({ ...customSize, height: e.target.value })
+                        }
+                        placeholder="ör: 1500"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[11px] text-gray-500">Birim</Label>
+                      <select
+                        value={customSize.unit}
+                        onChange={(e) =>
+                          setCustomSize({
+                            ...customSize,
+                            unit: e.target.value as "mm" | "px",
+                          })
+                        }
+                        className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                      >
+                        <option value="mm">mm</option>
+                        <option value="px">px</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
               </div>
             </>
           )}

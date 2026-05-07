@@ -91,10 +91,36 @@ def _resolve_template_dir(template_slug: str) -> Path:
     return tdir
 
 
+def _page_size_override_css(metadata) -> str:
+    """
+    Build a `@page { size: ... }` override block from metadata.page_size.
+    Empty string if the user did not request a custom size — template's own
+    @page rule then applies.
+    """
+    ps = getattr(metadata, "page_size", None)
+    if not ps:
+        return ""
+    w = ps.width
+    h = ps.height
+    if ps.unit == "px":
+        # CSS @page expects physical units; convert px → mm at 96dpi.
+        w_mm = round(w * 25.4 / 96.0, 2)
+        h_mm = round(h * 25.4 / 96.0, 2)
+        return f"@page {{ size: {w_mm}mm {h_mm}mm; }}"
+    # mm
+    return f"@page {{ size: {w}mm {h}mm; }}"
+
+
 def _render_html_sync(req: GenerateCatalogRequest) -> tuple[str, Path]:
     tdir = _resolve_template_dir(req.template_slug)
     css_path = tdir / "styles.css"
     css_text = css_path.read_text(encoding="utf-8") if css_path.exists() else ""
+
+    # Kullanıcı boyut belirttiyse CSS sonuna ekle — sonradan tanımlanan
+    # @page kuralı önceki kuralları override eder.
+    size_override = _page_size_override_css(req.metadata)
+    if size_override:
+        css_text = f"{css_text}\n\n/* user-supplied page size */\n{size_override}\n"
 
     env = Environment(
         loader=ChoiceLoader([FileSystemLoader(str(tdir))]),

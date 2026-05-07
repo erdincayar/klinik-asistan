@@ -1406,6 +1406,11 @@ model CatalogProject {
   // Çıktı tipi — şablon ve render boyutunu belirler. Varsayılan PDF_CATALOG;
   // ileride SOCIAL_POST / BROCHURE / PRICE_LIST / CUSTOM eklenecek.
   outputType     String              @default("PDF_CATALOG")
+  // Belge boyutu — kullanıcı preset (A4P/A4L/A5/A3/1080x1080/1080x1920/...)
+  // veya custom (px/mm) seçebilir. Format:
+  //   { width: number, height: number, unit: "mm"|"px", label?: string }
+  // Boş bırakılırsa template'in kendi @page kuralı kullanılır.
+  pageSize       Json?
   // Kullanıcının veri eşlemesi (parça 2'de doldurulacak):
   // { fields: [{ key, label, type, source: "column"|"prompt"|"ai", column?, ... }] }
   dataSchema     Json?
@@ -1434,6 +1439,16 @@ model CatalogSourceFile {
   userNote     String? // Kullanıcının dosya hakkında notu (AI'ya context)
   aiNote       Json? // AI analiz çıktısı (summary, columns, issues, ...)
   aiAnalyzedAt DateTime?
+  // PRODUCT_IMAGE için işlenmiş varyantlar:
+  // - processedPath: arka planı temizlenmiş PNG (fal.ai birefnet)
+  // - lifestylePath: lifestyle background üzerine compose edilmiş JPG
+  // - lifestylePreset: hangi preset (white/wood/marble/...) kullanıldı
+  // - activeVariant: render'da hangi varyant kullanılsın
+  //   (original | processed | lifestyle)
+  processedPath   String?
+  lifestylePath   String?
+  lifestylePreset String?
+  activeVariant   String?  @default("original")
   uploadedAt   DateTime       @default(now())
 
   @@index([projectId])

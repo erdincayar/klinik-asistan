@@ -105,6 +105,25 @@ export async function PATCH(
   } else if (body.dataSchema && typeof body.dataSchema === "object") {
     data.dataSchema = body.dataSchema;
   }
+  if (body.pageSize === null) {
+    data.pageSize = null;
+  } else if (body.pageSize && typeof body.pageSize === "object") {
+    const w = Number(body.pageSize.width);
+    const h = Number(body.pageSize.height);
+    const unit = body.pageSize.unit === "px" ? "px" : "mm";
+    if (w >= 50 && w <= 5000 && h >= 50 && h <= 5000) {
+      const ps: any = { width: w, height: h, unit };
+      if (typeof body.pageSize.label === "string" && body.pageSize.label.length <= 40) {
+        ps.label = body.pageSize.label;
+      }
+      data.pageSize = ps;
+    } else {
+      return NextResponse.json(
+        { error: "Geçersiz pageSize: 50–5000 aralığında olmalı" },
+        { status: 400 }
+      );
+    }
+  }
   if (typeof body.sourceLanguage === "string") data.sourceLanguage = body.sourceLanguage;
   if (typeof body.targetLanguage === "string") data.targetLanguage = body.targetLanguage;
 

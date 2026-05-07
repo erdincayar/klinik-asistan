@@ -135,6 +135,13 @@ class ContactInfo(BaseModel):
     website: Optional[str] = None
 
 
+class PageSize(BaseModel):
+    width: float
+    height: float
+    unit: str = "mm"  # "mm" veya "px"
+    label: Optional[str] = None
+
+
 class CatalogMetadata(BaseModel):
     title: str = "Ürün Kataloğu"
     subtitle: Optional[str] = None
@@ -147,6 +154,8 @@ class CatalogMetadata(BaseModel):
     user_prompt: Optional[str] = None
     # PDF_CATALOG, PRICE_LIST, SOCIAL_POST, BROCHURE, CUSTOM
     output_type: str = "PDF_CATALOG"
+    # Boyut override — varsa CSS @page kuralını override eder.
+    page_size: Optional[PageSize] = None
 
 
 class GenerateCatalogProduct(BaseModel):

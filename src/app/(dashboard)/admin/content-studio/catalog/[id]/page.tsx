@@ -36,6 +36,7 @@ import ProductEditModal, {
 import GenerationProgressModal from "@/components/catalog/GenerationProgressModal";
 import { useProjectPolling } from "@/components/catalog/useProjectPolling";
 import FileNoteCard, { type CatalogFileRow } from "@/components/catalog/FileNoteCard";
+import ProductImageVariantBar from "@/components/catalog/ProductImageVariantBar";
 
 const FONT_OPTIONS = ["Inter", "Manrope", "Roboto", "Playfair Display"];
 
@@ -494,12 +495,25 @@ export default function CatalogDetailPage() {
                 <p className="py-4 text-center text-xs text-gray-400">—</p>
               ) : (
                 photos.map((f) => (
-                  <FileNoteCard
-                    key={f.id}
-                    file={f as unknown as CatalogFileRow}
-                    onDelete={removeFile}
-                    onChanged={refresh}
-                  />
+                  <div key={f.id} className="space-y-1">
+                    <FileNoteCard
+                      file={f as unknown as CatalogFileRow}
+                      onDelete={removeFile}
+                      onChanged={refresh}
+                    />
+                    <ProductImageVariantBar
+                      projectId={id}
+                      file={{
+                        id: f.id,
+                        storagePath: f.storagePath,
+                        processedPath: (f as any).processedPath ?? null,
+                        lifestylePath: (f as any).lifestylePath ?? null,
+                        lifestylePreset: (f as any).lifestylePreset ?? null,
+                        activeVariant: (f as any).activeVariant ?? "original",
+                      }}
+                      onChanged={refresh}
+                    />
+                  </div>
                 ))
               )}
             </FileGroup>

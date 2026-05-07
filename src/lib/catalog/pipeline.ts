@@ -276,8 +276,26 @@ export async function runAnalyze(opts: AnalyzeOptions): Promise<void> {
 
     // 3) Match images — Excel akışında da PDF gömülü görsellerini kullanma,
     //    sadece foto klasöründekileri yedek olarak kullan.
-    let imageByCode: Record<string, string> = {};
+    //
+    //    Eşleştirme orijinal görsel üzerinden yapılır (perceptual hash, BG
+    //    kaldırınca değişir). Sonuç path'leri kullanıcının seçtiği aktif
+    //    varyantla swap edilir.
+    const imageByCode: Record<string, string> = {};
     const matchesByCode = new Map<string, string>();
+
+    // originalPath → activeVariantPath haritası
+    const variantSwap = new Map<string, string>();
+    for (const p of photos) {
+      let active: string = p.storagePath;
+      if (p.activeVariant === "lifestyle" && p.lifestylePath) {
+        active = p.lifestylePath;
+      } else if (p.activeVariant === "processed" && p.processedPath) {
+        active = p.processedPath;
+      }
+      if (active !== p.storagePath) variantSwap.set(p.storagePath, active);
+    }
+    const swapPath = (orig: string | null | undefined) =>
+      orig ? variantSwap.get(orig) || orig : orig;
 
     if (photos.length > 0) {
       const matchRef = await CatalogService.startMatchImages({
@@ -290,10 +308,14 @@ export async function runAnalyze(opts: AnalyzeOptions): Promise<void> {
         matchRef.jobId,
         { intervalMs: 2000, timeoutMs: 10 * 60 * 1000 }
       );
-      imageByCode = matchResult.map || {};
+      // map: code → path; aktif varyantla replace et
+      const rawMap = matchResult.map || {};
+      for (const code of Object.keys(rawMap)) {
+        imageByCode[code] = swapPath(rawMap[code]) as string;
+      }
       for (const m of matchResult.matches) {
         if (m.image_path && m.product_code) {
-          matchesByCode.set(m.product_code, m.image_path);
+          matchesByCode.set(m.product_code, swapPath(m.image_path) as string);
         }
       }
     }
@@ -495,6 +517,8 @@ export async function runGenerate(
         // template seçimi/varyantı için kullanabilsin.
         user_prompt: project.userPrompt || null,
         output_type: project.outputType || "PDF_CATALOG",
+        // Belge boyutu — varsa Python @page CSS'ini override eder.
+        page_size: (project.pageSize as any) || null,
         contact_info: opts.metadata?.contactInfo ?? {
           address: project.clinic?.address ?? null,
           phone: project.clinic?.phone ?? null,
