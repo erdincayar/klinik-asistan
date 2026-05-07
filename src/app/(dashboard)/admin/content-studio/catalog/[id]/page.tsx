@@ -37,6 +37,7 @@ import GenerationProgressModal from "@/components/catalog/GenerationProgressModa
 import { useProjectPolling } from "@/components/catalog/useProjectPolling";
 import FileNoteCard, { type CatalogFileRow } from "@/components/catalog/FileNoteCard";
 import ProductImageVariantBar from "@/components/catalog/ProductImageVariantBar";
+import ProjectSettingsCard from "@/components/catalog/ProjectSettingsCard";
 
 const FONT_OPTIONS = ["Inter", "Manrope", "Roboto", "Playfair Display"];
 
@@ -439,6 +440,18 @@ export default function CatalogDetailPage() {
           <StatusTimeline status={project.status} />
         </CardContent>
       </Card>
+
+      {/* Proje Ayarları (istek + çıktı tipi + curator raporu) */}
+      <ProjectSettingsCard
+        projectId={id}
+        status={project.status}
+        userPrompt={(project as any).userPrompt ?? null}
+        outputType={(project as any).outputType || "PDF_CATALOG"}
+        name={project.name}
+        curatorReport={(project as any).curatorReport ?? null}
+        onSaved={refresh}
+        onReanalyze={reanalyze}
+      />
 
       {/* Tabs */}
       <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>

@@ -1414,6 +1414,11 @@ model CatalogProject {
   // Kullanıcının veri eşlemesi (parça 2'de doldurulacak):
   // { fields: [{ key, label, type, source: "column"|"prompt"|"ai", column?, ... }] }
   dataSchema     Json?
+  // AI Curator çıktısı — son analyze çalışmasında Claude kullanıcının
+  // userPrompt'unu yorumlayıp döndürdüğü filter/order/fake-name raporu.
+  // Format: { selectedCodes[], orderedCodes[], fakeNameCodes[], renderHint?,
+  //           notes, warnings[] }
+  curatorReport  Json?
   templateId     String? // nullable — henüz şablon seçilmemiş olabilir
   template       CatalogTemplate?    @relation(fields: [templateId], references: [id])
   sourceFiles    CatalogSourceFile[]

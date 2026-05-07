@@ -338,6 +338,56 @@ export async function runAnalyze(opts: AnalyzeOptions): Promise<void> {
       products = tr.products;
     }
 
+    // 4.5) AI Curator — kullanıcı isteğine göre filter/order/flag.
+    // Sadece userPrompt varsa ve makul ürün sayısında çalışır (token koruması).
+    let curatorReport: any = null;
+    if (project.userPrompt?.trim() && products.length > 0 && products.length <= 300) {
+      try {
+        const { runCurator } = await import("@/lib/catalog/curator");
+        const report = await runCurator({
+          products,
+          userPrompt: project.userPrompt,
+          outputType: project.outputType,
+          language: tgt,
+        });
+        curatorReport = report;
+
+        // Selected'a göre filtrele + ordered'a göre sırala
+        const selectedSet = new Set(report.selectedCodes);
+        const codeIndex = new Map<string, ExtractedProduct>();
+        for (const p of products) {
+          codeIndex.set(p.product_code || `ROW-?`, p);
+        }
+        // ROW-N fallback'i — pipeline'da product_code yoksa Curator'a "ROW-i" olarak
+        // verdik; aynı sırayla map'le.
+        products.forEach((p, i) => {
+          if (!p.product_code) codeIndex.set(`ROW-${i + 1}`, p);
+        });
+
+        const filtered: ExtractedProduct[] = [];
+        for (const code of report.orderedCodes) {
+          if (selectedSet.has(code)) {
+            const p = codeIndex.get(code);
+            if (p) filtered.push(p);
+          }
+        }
+
+        if (filtered.length > 0) {
+          console.log(
+            `[catalog] curator: ${products.length} → ${filtered.length} ürün; notes="${report.notes}"`
+          );
+          products = filtered;
+        } else {
+          console.warn(
+            `[catalog] curator: filtered list boş, fallback ile tüm ürünler korunuyor`
+          );
+        }
+      } catch (err) {
+        console.error(`[catalog] curator failed:`, err);
+        // Curator hatası analyze'ı durdurmaz — kullanıcı yine de kataloğunu alır
+      }
+    }
+
     // 5) Persist products. Fresh-replace strategy for now
     //    (user re-runs analysis → old draft products replaced).
     await prisma.$transaction(async (tx) => {
@@ -378,7 +428,10 @@ export async function runAnalyze(opts: AnalyzeOptions): Promise<void> {
 
       await tx.catalogProject.update({
         where: { id: projectId },
-        data: { status: "READY_TO_GENERATE" },
+        data: {
+          status: "READY_TO_GENERATE",
+          curatorReport: curatorReport ?? undefined,
+        },
       });
     });
 
