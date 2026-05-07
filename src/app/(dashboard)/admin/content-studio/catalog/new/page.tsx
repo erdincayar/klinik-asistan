@@ -22,6 +22,8 @@ import {
   BookOpen,
   Layers,
   Table2,
+  AlertTriangle,
+  Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -202,6 +204,10 @@ export default function NewCatalogWizardPage() {
   const [columnMappings, setColumnMappings] = useState<Record<string, string>>({});
   // For "_extra" mappings: columnName → user-supplied custom field name
   const [extraNames, setExtraNames] = useState<Record<string, string>>({});
+  // AI mapping suggestion state
+  const [aiSuggesting, setAiSuggesting] = useState(false);
+  const [aiNotes, setAiNotes] = useState<string>("");
+  const [aiWarnings, setAiWarnings] = useState<string[]>([]);
 
   // Step 4 — brand kit
   const [brand, setBrand] = useState({
@@ -254,9 +260,82 @@ export default function NewCatalogWizardPage() {
             return `'${col}' için özel alan adı girmelisiniz`;
           }
         }
+        // Sıkı validasyon: name olarak işaretlenen kolon kategorik görünüyorsa engelle.
+        // Bu, "Durum" / "Marka" / "Kategori" kolonunu yanlışlıkla name yapmayı önler.
+        const nameCol = Object.entries(columnMappings).find(([, k]) => k === "name")?.[0];
+        if (nameCol) {
+          const values = excelPreview.rows.map((r) => r[nameCol]);
+          if (looksCategorical(values)) {
+            return `"${nameCol}" kolonu Ürün Adı için uygun görünmüyor — değerleri çok tekrar ediyor (büyük ihtimalle Durum/Kategori). Lütfen gerçek ürün ismini içeren kolonu seçin.`;
+          }
+        }
       }
     }
     return null;
+  }
+
+  // Bir kolonun değerleri kategorik (çok az unique değer) mi?
+  // Örn. 5 satırda 2 farklı değer dönüyorsa bu büyük ihtimalle "Durum"
+  // veya "Kategori" — name OLMAMALI. Uyarı için kullanılır.
+  function looksCategorical(values: any[]): boolean {
+    const nonEmpty = values
+      .map((v) => (v === null || v === undefined ? "" : String(v).trim()))
+      .filter((s) => s.length > 0);
+    if (nonEmpty.length < 3) return false;
+    const unique = new Set(nonEmpty);
+    // 5+ satırda 3 ve altı unique değer → kategorik
+    if (nonEmpty.length >= 5 && unique.size <= 3) return true;
+    // Veya unique oranı %40'ın altındaysa
+    if (unique.size / nonEmpty.length < 0.4) return true;
+    return false;
+  }
+
+  async function requestAiMapping() {
+    if (!excelPreview) return;
+    setAiSuggesting(true);
+    setAiNotes("");
+    setAiWarnings([]);
+    try {
+      const res = await fetch("/api/admin/catalog/ai-suggest-mapping", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          columns: excelPreview.columns,
+          sampleRows: excelPreview.rows,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "AI önerisi başarısız");
+
+      // _extra:<isim> mapping'lerini ayır → key="_extra", extraNames'e isim koy
+      const newMappings: Record<string, string> = {};
+      const newExtras: Record<string, string> = { ...extraNames };
+      for (const col of excelPreview.columns) {
+        const v = (data.mappings || {})[col] || "";
+        if (typeof v === "string" && v.startsWith("_extra:")) {
+          newMappings[col] = "_extra";
+          newExtras[col] = v.slice("_extra:".length);
+        } else {
+          newMappings[col] = v;
+        }
+      }
+      setColumnMappings(newMappings);
+      setExtraNames(newExtras);
+      setAiNotes(data.notes || "");
+      setAiWarnings(Array.isArray(data.warnings) ? data.warnings : []);
+      toast({
+        title: "AI önerisi uygulandı",
+        description: "Eşlemeleri kontrol edip gerekirse değiştirebilirsin.",
+      });
+    } catch (e: any) {
+      toast({
+        title: "AI önerisi başarısız",
+        description: e.message,
+        variant: "destructive",
+      });
+    } finally {
+      setAiSuggesting(false);
+    }
   }
 
   // Browser-side Excel parse: ilk sheet → kolonlar + ilk 5 satır.
@@ -861,18 +940,76 @@ export default function NewCatalogWizardPage() {
                 </div>
               </div>
 
+              <div className="flex items-start gap-2 rounded-lg bg-sky-50/60 px-3 py-2 text-xs text-sky-700">
+                <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <div>
+                  <strong>Görseller nasıl eşleşir?</strong> Ya Excel&apos;de
+                  bir kolonu <em>Görsel URL / Yol</em> olarak işaretle, ya da
+                  yüklediğin foto dosyalarını ürün koduyla aynı isimde tut
+                  (örn. <code>JE001.jpg</code>). Aksi halde kataloğa görsel
+                  yerleştirilmez.
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-violet-200 bg-violet-50/30 p-3">
+                <div className="text-xs text-violet-900">
+                  <strong>Emin değil misin?</strong> AI eşlemeyi senin için
+                  yapsın — kolon başlıklarına ve örnek satırlara bakar,
+                  öneri döner. İstediğini sonra elle değiştirebilirsin.
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={aiSuggesting}
+                  onClick={requestAiMapping}
+                  className="shrink-0"
+                >
+                  {aiSuggesting ? (
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Wand2 className="mr-1.5 h-3.5 w-3.5" />
+                  )}
+                  AI Önersin
+                </Button>
+              </div>
+
+              {aiNotes && (
+                <div className="rounded-lg bg-violet-50/40 px-3 py-2 text-xs text-violet-800">
+                  <strong>AI notu:</strong> {aiNotes}
+                </div>
+              )}
+
+              {aiWarnings.length > 0 && (
+                <div className="space-y-1 rounded-lg border border-amber-200 bg-amber-50/60 px-3 py-2 text-xs text-amber-800">
+                  <div className="flex items-center gap-1.5 font-semibold">
+                    <AlertTriangle className="h-3.5 w-3.5" /> Kontrol et
+                  </div>
+                  <ul className="ml-5 list-disc">
+                    {aiWarnings.map((w, i) => (
+                      <li key={i}>{w}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               <div className="space-y-2">
                 {excelPreview.columns.map((col) => {
                   const mapped = columnMappings[col] ?? "";
-                  const sampleVals = excelPreview.rows
-                    .map((r) => r[col])
+                  const colVals = excelPreview.rows.map((r) => r[col]);
+                  const sampleVals = colVals
                     .filter((v) => v !== null && v !== undefined && v !== "")
                     .slice(0, 2)
                     .map((v) => String(v));
+                  // name olarak işaretliyse + değerleri kategorik görünüyorsa inline uyarı
+                  const nameLooksWrong =
+                    mapped === "name" && looksCategorical(colVals);
                   return (
                     <div
                       key={col}
-                      className="rounded-lg border border-gray-200 p-3"
+                      className={`rounded-lg border p-3 ${
+                        nameLooksWrong ? "border-amber-300 bg-amber-50/30" : "border-gray-200"
+                      }`}
                     >
                       <div className="flex items-start gap-3">
                         <div className="min-w-0 flex-1">
@@ -918,6 +1055,16 @@ export default function NewCatalogWizardPage() {
                             }
                             className="text-xs"
                           />
+                        </div>
+                      )}
+                      {nameLooksWrong && (
+                        <div className="mt-2 flex items-start gap-1.5 text-[11px] text-amber-700">
+                          <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+                          <span>
+                            Bu kolonun değerleri çok tekrar ediyor — büyük
+                            ihtimalle <em>Durum / Kategori</em>. Ürün Adı
+                            olarak başka bir kolonu seçin.
+                          </span>
                         </div>
                       )}
                     </div>
